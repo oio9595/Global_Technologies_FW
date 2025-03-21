@@ -256,122 +256,68 @@ void XC24_Init(void)
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
-    /* XC24 Reset */
-    _v_soft_reset_t* p_v_soft_reset = &gt_xc24_regs._r00;
-    p_v_soft_reset->ALL = 0;
-    p_v_soft_reset->rst1 = 1;
-    p_v_soft_reset->rst2 = 1;
-    p_v_soft_reset->rst3 = 1;
-    p_v_soft_reset->vs_rst1 = 0;
-    p_v_soft_reset->vs_rst2 = 0;
-    XC24_Write_Register(XC24_ADDR_SOFT_RESET, p_v_soft_reset->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set LD trans start pointer & LD diff threshold */
-    _v_ld_transfer_start_pointer_t* p_v_ld_transfer_start_pointer = &gt_xc24_regs._r0D;
-    p_v_ld_transfer_start_pointer->ALL = 0;
-    p_v_ld_transfer_start_pointer->ld_trans_start_pointer = 4;
-    p_v_ld_transfer_start_pointer->ld_diff_threshold = 4;
-    XC24_Write_Register(XC24_ADDR_LD_TRANSFER_START_POINTER_TH, p_v_ld_transfer_start_pointer->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set RW Pointer Reset */
-    _v_local_rw_pointer_reset_t* p_v_local_rw_pointer_reset = &gt_xc24_regs._r11;
-    p_v_local_rw_pointer_reset->ALL = 0;
-    p_v_local_rw_pointer_reset->local_rd_pointer_rst = 1;
-    p_v_local_rw_pointer_reset->local_wr_pointer_rst = 1;
-    XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, p_v_local_rw_pointer_reset->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set fault auto read timer */
-    _v_fault_auto_read_timer_t* p_v_fault_auto_read_timer = &gt_xc24_regs._r12;
-    p_v_fault_auto_read_timer->ALL = 0;
-    p_v_fault_auto_read_timer->fault_auto_rd_timer = 0xFFFF;
-    XC24_Write_Register(XC24_ADDR_FAULT_AUTO_READ_TIMER, p_v_fault_auto_read_timer->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set fault auto read event */
-    _v_fault_auto_read_event_t* p_v_fault_auto_read_event = &gt_xc24_regs._r13;
-    p_v_fault_auto_read_event->ALL = 0;
-    p_v_fault_auto_read_event->fault_auto_rd_interval = 1;
-    p_v_fault_auto_read_event->fault_auto_rd_event = 1;
-    XC24_Write_Register(XC24_ADDR_FAULT_AUTO_READ_EVENT, p_v_fault_auto_read_event->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set SERIAL CLK */
-    _v_serializer_clock_gen_t* p_v_serializer_clock_gen = &gt_xc24_regs._r14;
-    p_v_serializer_clock_gen->ALL = 0;
-    p_v_serializer_clock_gen->sck_low = XC_SERIAL_CLK_CNT_LOW;
-    p_v_serializer_clock_gen->sck_high = XC_SERIAL_CLK_CNT_HIGH;
-    XC24_Write_Register(XC24_ADDR_SERIALIZER_CLOCK_GEN, p_v_serializer_clock_gen->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set daisied_dev_ch_size */
-    _v_daisied_device_channel_size1_t* p_v_daisied_device_channel_size1 = &gt_xc24_regs._r20;
-    p_v_daisied_device_channel_size1->ALL = 0;
-    p_v_daisied_device_channel_size1->daisied_dev_ch_size_1 = XD_CH_SIZE;
-    XC24_Write_Register(XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1, p_v_daisied_device_channel_size1->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set DAISY SIZE 1 */
-    _v_daisy_size1_t* p_v_daisy_size1 = &gt_xc24_regs._r30;
-    p_v_daisy_size1->ALL = 0;
-    p_v_daisy_size1->daisy_size_ch1 = XD_DAISY_SIZE;
-    p_v_daisy_size1->daisy_size_ch2 = 0;
-    p_v_daisy_size1->daisy_size_ch3 = 0;
-    XC24_Write_Register(XC24_ADDR_DAISY_SIZE1, p_v_daisy_size1->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set BLOCK SIZE 1 */
-    _v_block_size1_t* p_v_block_size1 = &gt_xc24_regs._r38;
-    p_v_block_size1->ALL = 0;
-    p_v_block_size1->block_size_ch1 = XD_DAISY_SIZE * XD_CH_SIZE;
-    p_v_block_size1->block_size_ch2 = 0;
-    XC24_Write_Register(XC24_ADDR_BLOCK_SIZE1, p_v_block_size1->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set Channel Enable 1 */
-    _v_channel_enable1_t* p_v_channel_enable1 = &gt_xc24_regs._r45;
-    p_v_channel_enable1->ALL = 0;
-    p_v_channel_enable1->ch1_en = 1;
-    XC24_Write_Register(XC24_ADDR_CHANNEL_ENABLE1, p_v_channel_enable1->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    /* XC24 Set Channel Enable 2 */
-    _v_channel_enable2_t* p_v_channel_enable2 = &gt_xc24_regs._r46;
-    p_v_channel_enable2->ALL = 0;
-    p_v_channel_enable2->ch_size = 1;
-    p_v_channel_enable2->ld_width = 3;
-    XC24_Write_Register(XC24_ADDR_CHANNEL_ENABLE2, p_v_channel_enable2->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    _v_ldo_t* p_v_ldo = &gt_xc24_regs._r2A;
-    p_v_ldo->ldo = 8;
-    XC24_Write_Register(XC24_ADDR_LDO, p_v_ldo->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    _v_cmd_auto_enable_t* p_v_cmd_auto_enable = &gt_xc24_regs._r08;
-    p_v_cmd_auto_enable->ALL = 0;
-    p_v_cmd_auto_enable->timeout_en = 1;
-    p_v_cmd_auto_enable->fault_auto_en = 1;
-    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, p_v_cmd_auto_enable->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    _v_interrupt_enable_t* p_v_interrupt_enable = &gt_xc24_regs._r15;
-    p_v_interrupt_enable->ALL = 0;
-    p_v_interrupt_enable->int_fb_en = 1;
-    XC24_Write_Register(XC24_ADDR_INTERRUPT_ENABLE, p_v_interrupt_enable->ALL);
-    us_tdelay(XD12_WRITE_DELAY);
-
-    print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
-
-
-#if 1
-    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
-        print(LOG_INFO, "0x%02X - %s - 0x%04X\r\n", xc_addr, gs_xc24_addr_str[xc_addr], *(gt_xc24_regs.ALL + xc_addr));
+        switch (xc_addr)
+        {
+        case XC24_ADDR_SOFT_RESET:
+            gt_xc24_regs._r00.rst1 = 1;
+            gt_xc24_regs._r00.rst2 = 1;
+            gt_xc24_regs._r00.rst3 = 1;
+            break;
+        case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
+            gt_xc24_regs._r0D.ld_trans_start_pointer = 4;
+            gt_xc24_regs._r0D.ld_diff_threshold = 4;
+            break;
+        case XC24_ADDR_LOCAL_RW_POINTER_RESET :
+            gt_xc24_regs._r11.local_rd_pointer_rst = 1;
+            gt_xc24_regs._r11.local_wr_pointer_rst = 1;
+            break;
+        case XC24_ADDR_FAULT_AUTO_READ_TIMER :
+            gt_xc24_regs._r12.fault_auto_rd_timer = 0xFFFF;
+            break;
+        case XC24_ADDR_FAULT_AUTO_READ_EVENT :
+            gt_xc24_regs._r13.fault_auto_rd_interval = 1;
+            gt_xc24_regs._r13.fault_auto_rd_event = 1;
+            break;
+        case XC24_ADDR_SERIALIZER_CLOCK_GEN :
+            gt_xc24_regs._r14.sck_low = XC_SERIAL_CLK_CNT_LOW;
+            gt_xc24_regs._r14.sck_high = XC_SERIAL_CLK_CNT_HIGH;
+            break;
+        case XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 :
+            gt_xc24_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
+            break;
+        case XC24_ADDR_DAISY_SIZE1 :
+            gt_xc24_regs._r30.daisy_size_ch1 = XD_DAISY_SIZE;
+            break;
+        case XC24_ADDR_BLOCK_SIZE1 :
+            gt_xc24_regs._r38.block_size_ch1 = XD_DAISY_SIZE * XD_CH_SIZE;
+            break;
+        case XC24_ADDR_CHANNEL_ENABLE1 :
+            gt_xc24_regs._r45.ch1_en = 1;
+            break;
+        case XC24_ADDR_CHANNEL_ENABLE2 :
+            gt_xc24_regs._r46.ch_size = 1;
+            gt_xc24_regs._r46.ld_width = 3;
+            break;
+        case XC24_ADDR_LDO :
+            gt_xc24_regs._r2A.ldo = 8;
+            break;
+        case XC24_ADDR_AUTO_ENABLE :
+            gt_xc24_regs._r08.timeout_en = 1;
+            gt_xc24_regs._r08.fault_auto_en = 1;
+            break;
+        case XC24_ADDR_INTERRUPT_ENABLE :
+            gt_xc24_regs._r15.int_fb_en = 1;
+            break;
+        default :
+            continue;
+        }
+        XC24_Write_Register(xc_addr, gt_xc24_regs.ALL[xc_addr]);
+        us_tdelay(XD12_WRITE_DELAY);
     }
-#endif
+    print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
+    XC24_Read_Register_All();
 }
 
 void XC24_Start_MCLK_Oscillation(bool en)

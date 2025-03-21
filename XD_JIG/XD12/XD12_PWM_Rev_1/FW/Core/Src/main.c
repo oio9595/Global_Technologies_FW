@@ -315,7 +315,6 @@ int main(void)
     print(LOG_INFO, "\r\nstart %s TRIMMING_JIG application....\r\n", TARGET_CHIP_NAME);
     print(LOG_INFO, "Build time : %s / %s\r\n", __DATE__, __TIME__ );
 
-    print(LOG_INFO, "hello world\r\n");
     /* for GUI App */
     print(LOG_INFO, "XD12 PWM IS SELECTED!\r\n");
     print(LOG_INFO, "XC24 ES2 IS SELECTED!\r\n");
