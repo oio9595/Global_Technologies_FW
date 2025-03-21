@@ -1,0 +1,32 @@
+﻿  main.cpp
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(4,9): warning C4005: 'VK_LBUTTON': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(463,9):
+      'VK_LBUTTON'의 이전 정의를 참조하십시오.
+  
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(5,9): warning C4005: 'VK_RBUTTON': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(464,9):
+      'VK_RBUTTON'의 이전 정의를 참조하십시오.
+  
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(6,9): warning C4005: 'VK_CANCEL': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(465,9):
+      'VK_CANCEL'의 이전 정의를 참조하십시오.
+  
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(7,9): warning C4005: 'VK_MBUTTON': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(466,9):
+      'VK_MBUTTON'의 이전 정의를 참조하십시오.
+  
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(8,9): warning C4005: 'VK_BACK': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(478,9):
+      'VK_BACK'의 이전 정의를 참조하십시오.
+  
+C:\working\01_Project\Jig\Linearity_Macro\VK_CODE.h(9,9): warning C4005: 'VK_TAB': 매크로 재정의
+  (소스 파일 'main.cpp'을(를) 컴파일하는 중)
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\winuser.h(479,9):
+      'VK_TAB'의 이전 정의를 참조하십시오.
+  
+  Linearity_Macro.vcxproj -> C:\working\01_Project\Jig\Linearity_Macro\x64\Debug\Linearity_Macro.exe

@@ -1,0 +1,18 @@
+{
+  "workspace": {
+    "path": "${workspaceFolder}\\CQ24_Reliable\\EWARM\\Project.eww"
+  },
+  "workspaces": {
+    "${workspaceFolder}\\CQ24_Reliable\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\CQ24_Reliable\\EWARM\\CQ24_Reliable.ewp": "CQ24_Reliable"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\CQ24_Reliable\\EWARM\\CQ24_Reliable.ewp"
+      }
+    }
+  },
+  "workbench": {
+    "path": "C:\\Program Files\\IAR Systems\\Embedded Workbench 9.0"
+  }
+}

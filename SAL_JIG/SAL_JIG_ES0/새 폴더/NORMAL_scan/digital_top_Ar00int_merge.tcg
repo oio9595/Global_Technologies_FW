@@ -1,0 +1,26 @@
+#Test Condition Group File
+#
+#Version  "CATVert-W for T2000 R2.02A Build 150213"
+#Date     "Aug 09 10:27:08 2024"
+#TRF      "C:\Program Files\ADVANTEST\CATWGLTSS\data\CATVERT\trf\DM1GBPS.trf"
+#WGL      "D:\WorkFolder\HANA\GLOBALTECH\digital_top_A.r0.0.int_merge.wgl"
+#PAT      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pat"
+#PXR      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pxr"
+#PIN      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pin"
+#PLIST    "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.plist"
+#SOC      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.soc"
+#TIM      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.tim"
+#TMAP     "NONE"
+#LEVEL    "NONE"
+#SPEC     "NONE"
+#
+
+Version 1.0;
+
+Import digital_top_Ar00int_merge.tim;
+
+TestConditionGroup default_TCG {
+ Timings {
+  Timing    = Waveform_Tim;
+ }
+}

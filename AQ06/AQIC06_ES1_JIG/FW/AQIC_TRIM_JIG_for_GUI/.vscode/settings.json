@@ -1,0 +1,7 @@
+{
+    "workbench.colorTheme": "Quiet Light",
+    "files.associations": {
+        "stdlib.h": "c",
+        "main.h": "c"
+    }
+}

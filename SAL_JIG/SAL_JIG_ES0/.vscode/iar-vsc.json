@@ -1,0 +1,18 @@
+{
+  "workspace": {
+    "path": "${workspaceFolder}\\FW\\EWARM\\Project.eww"
+  },
+  "workspaces": {
+    "${workspaceFolder}\\FW\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\FW\\EWARM\\SAL_JIG_ES0.ewp": "SAL_JIG_ES0"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\FW\\EWARM\\SAL_JIG_ES0.ewp"
+      }
+    }
+  },
+  "workbench": {
+    "path": "C:\\Program Files\\IAR Systems\\Embedded Workbench 9.0"
+  }
+}

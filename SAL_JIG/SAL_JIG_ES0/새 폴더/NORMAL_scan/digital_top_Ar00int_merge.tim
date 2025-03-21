@@ -1,0 +1,149 @@
+#Timing File
+#
+#Version  "CATVert-W for T2000 R2.02A Build 150213"
+#Date     "Aug 09 10:27:08 2024"
+#TRF      "C:\Program Files\ADVANTEST\CATWGLTSS\data\CATVERT\trf\DM1GBPS.trf"
+#WGL      "D:\WorkFolder\HANA\GLOBALTECH\digital_top_A.r0.0.int_merge.wgl"
+#PAT      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pat"
+#PXR      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pxr"
+#PIN      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.pin"
+#PLIST    "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.plist"
+#SOC      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.soc"
+#TMAP     "NONE"
+#LEVEL    "NONE"
+#SPEC     "NONE"
+#TCG      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Ar00int_merge.tcg"
+#
+
+Version 1.0;
+
+Import digital_top_Ar00int_merge.pin;
+
+TSTiming Waveform_Tim {
+ CommonSection {
+  Domain digital_top_Ar00int_merge {
+   PeriodTable {
+    TS1 100nS; # timeplate: _default_WFT_
+    TS2 100nS; # timeplate: _multiclock_capture_WFT_
+   }
+
+   Pin I_TESTMODE1 {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+   }
+
+   Pin I_TESTMODE0 {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+   }
+
+   Pin I_SIO1_SING_DIN_N {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {D@0S,E1;}}
+     {1 {D@0S,E1; U@50nS,E2; D@80nS,E3;}}
+     {N {D@0S,E1;}}
+     {P {D@0S,E1; Z@50nS,E2; D@80nS,E3;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {D@0S,E1;}}
+     {1 {D@0S,E1; U@50nS,E2; D@80nS,E3;}}
+     {N {D@0S,E1;}}
+     {P {D@0S,E1; Z@50nS,E2; D@80nS,E3;}}
+    }
+   }
+
+   Pin I_SIO1_SING_DIN_P {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+   }
+
+   Pin I_TEST_V {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {U@0S,E1; D@50nS,E2; U@80nS,E3;}}
+     {1 {U@0S,E1;}}
+     {N {U@0S,E1;}}
+     {P {U@0S,E1; Z@50nS,E2; U@80nS,E3;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {U@0S,E1; D@50nS,E2; U@80nS,E3;}}
+     {1 {U@0S,E1;}}
+     {N {U@0S,E1;}}
+     {P {U@0S,E1; Z@50nS,E2; U@80nS,E3;}}
+    }
+   }
+
+   Pin I_SIO2_SING_DIN_N {
+    DefaultState=D;
+    TS1 { # timeplate: _default_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {0 {D@0S,E1;}}
+     {1 {U@0S,E1;}}
+     {N {}}
+     {P {Z@0S,E1;}}
+    }
+   }
+
+   Pin O_SIO2_SING_DOUT_P {
+    TS1 { # timeplate: _default_WFT_
+     {L {L@40nS,E6;}}
+     {H {H@40nS,E5;}}
+     {X {}}
+     {Z {T@40nS,E5;}}
+    }
+
+    TS2 { # timeplate: _multiclock_capture_WFT_
+     {L {L@40nS,E6;}}
+     {H {H@40nS,E5;}}
+     {X {}}
+     {Z {T@40nS,E5;}}
+    }
+   }
+  }
+ }
+}

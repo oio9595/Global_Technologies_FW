@@ -1,0 +1,21 @@
+{
+  "ewp": "${workspaceFolder}\\EWARM\\APIC_TRIM_JIG.ewp",
+  "configuration": "APIC_TRIM_JIG",
+  "toolchain": "C:\\\\Program Files\\\\IAR Systems\\\\Embedded Workbench 9.0",
+  "workspace": {
+    "path": "${workspaceFolder}\\EWARM\\Project.eww"
+  },
+  "workspaces": {
+    "${workspaceFolder}\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\EWARM\\APIC_TRIM_JIG.ewp": "APIC_TRIM_JIG"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\EWARM\\APIC_TRIM_JIG.ewp"
+      }
+    }
+  },
+  "workbench": {
+    "path": "C:\\\\Program Files\\\\IAR Systems\\\\Embedded Workbench 9.0"
+  }
+}

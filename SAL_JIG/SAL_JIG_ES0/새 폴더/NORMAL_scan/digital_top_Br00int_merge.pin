@@ -1,0 +1,42 @@
+#Pin Description File
+#
+#Version  "CATVert-W for T2000 R2.02A Build 150213"
+#Date     "Aug 09 10:28:05 2024"
+#TRF      "C:\Program Files\ADVANTEST\CATWGLTSS\data\CATVERT\trf\DM1GBPS.trf"
+#WGL      "D:\WorkFolder\HANA\GLOBALTECH\digital_top_B.r0.0.int_merge.wgl"
+#PAT      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.pat"
+#PXR      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.pxr"
+#PLIST    "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.plist"
+#SOC      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.soc"
+#TIM      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.tim"
+#TMAP     "NONE"
+#LEVEL    "NONE"
+#SPEC     "NONE"
+#TCG      "D:\WorkFolder\HANA\GLOBALTECH\WGL\digital_top_Br00int_merge.tcg"
+#
+
+Version 1.0;
+
+PinDescription {
+ Resource AT.Digital.dpin {
+  I_TESTMODE1;
+  I_TESTMODE0;
+  I_SIO1_SING_DIN_N;
+  I_SIO1_SING_DIN_P;
+  I_TEST_V;
+  I_SIO2_SING_DIN_N;
+  O_SIO2_SING_DOUT_P;
+
+  Group AllPins_digital_top_Br00int_merge {
+   I_TESTMODE1,I_TESTMODE0,I_SIO1_SING_DIN_N,I_SIO1_SING_DIN_P,I_TEST_V,I_SIO2_SING_DIN_N,O_SIO2_SING_DOUT_P
+  }
+
+  Domain digital_top_Br00int_merge {
+   I_TESTMODE1,I_TESTMODE0,I_SIO1_SING_DIN_N,I_SIO1_SING_DIN_P,I_TEST_V,I_SIO2_SING_DIN_N,O_SIO2_SING_DOUT_P
+  }
+
+  SynchronizationGroup DefaultDG {
+   digital_top_Br00int_merge
+  }
+ }
+}

@@ -1,0 +1,6 @@
+*.sal
+*.ninja_deps
+*.ninja_log
+*.pbw
+*.pbi
+**/EWARM/
