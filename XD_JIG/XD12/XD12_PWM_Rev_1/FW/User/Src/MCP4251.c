@@ -35,7 +35,7 @@ __STATIC_INLINE void spi3_write(SPI_TypeDef *SPIx, uint8_t* p_buffer, uint16_t l
 {
     LL_GPIO_ResetOutputPin(MCP_SPI_CS_GPIO_Port, MCP_SPI_CS_Pin);
 
-    if(LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != 1)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);
@@ -57,7 +57,7 @@ __STATIC_INLINE void spi3_read(SPI_TypeDef *SPIx, uint8_t* p_tx_buffer, uint8_t*
     LL_GPIO_ResetOutputPin(MCP_SPI_CS_GPIO_Port, MCP_SPI_CS_Pin);
 
 #if 1
-    if(LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != 1)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);

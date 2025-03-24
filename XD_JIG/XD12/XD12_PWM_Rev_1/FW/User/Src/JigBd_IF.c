@@ -75,7 +75,7 @@ void us_tdelay(uint16_t us_delay)
 
 void JigBD_IF_Detect_XC24(void)
 {
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_Init();
     }
@@ -96,7 +96,7 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
 
 void JigBD_IF_XD_VCC_EN(uint8_t on)
 {
-    if(on == PWR_ON)
+    if (on == PWR_ON)
     {
         /* VCC_EN : ON, LOW */
         LL_GPIO_ResetOutputPin(XD12_VCC_EN_GPIO_Port, XD12_VCC_EN_Pin);
@@ -112,11 +112,11 @@ void JigBD_IF_XD_VCC_EN(uint8_t on)
 void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
 {
     uint32_t pin_mask = 0;
-    if(pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
+    if (pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
     {
         pin_mask |= (XD12_5_7V_Pin << 16);   /* reset */
     }
-    else if(pwr == PWR_ON_5V7) /*5.0V off, 5.7V On */
+    else if (pwr == PWR_ON_5V7) /*5.0V off, 5.7V On */
     {
         pin_mask |= (XD12_5_7V_Pin <<  0);   /* set */
     }
@@ -127,7 +127,7 @@ void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
 
 void JigBD_IF_VLED_9V_EN(uint8_t on)
 {
-    if(on == PWR_ON)
+    if (on == PWR_ON)
     {
         LL_GPIO_ResetOutputPin(VLED_CTR_9V_GPIO_Port, VLED_CTR_9V_Pin);
     }
@@ -147,7 +147,7 @@ CTL_UPPER_GAIN
 void JigBD_IF_Change_Current_Gain(current_gain_t gain)
 {
     static current_gain_t t_gain;
-    if(gain == GAIN_HIGH)
+    if (gain == GAIN_HIGH)
     {
         LL_GPIO_SetOutputPin(LTC_HIGH_CURRENT_GPIO_Port, LTC_HIGH_CURRENT_Pin);
         LL_GPIO_ResetOutputPin(LTC_MID_CURRENT_GPIO_Port, LTC_MID_CURRENT_Pin);
@@ -343,18 +343,18 @@ void JigBD_IF_Input_Capture_Stop(void)
 uint16_t JigBD_IF_Input_Capture_Get_Freq(void)
 {
     uint32_t input_freq = (uint32_t)(gf_xd12_internal_freq_Hz + 0.5f);
-    if(input_freq > 65535) //2^16-1
+    if (input_freq > 65535) //2^16-1
     {
         print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
         return 0;
     }
-    print(LOG_DEBUG, "\r\n JigBD_IF_Input_Capture_Get_Freq() : %d", input_freq);
+    //print(LOG_DEBUG, "\r\n JigBD_IF_Input_Capture_Get_Freq() : %d", input_freq);
     return (uint16_t)input_freq;
 }
 
 void JigBD_IF_Input_Capture_Calculate_Freq(void)
 {
-    if(gb_timer_input_capture_activated == 1)
+    if (gb_timer_input_capture_activated == 1)
     {
         double f_freq = 0;
         double f_freq_avg = 0;
@@ -363,7 +363,7 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
 
         for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
         {
-            if(gu32_input_freq_capture[i + 1] > gu32_input_freq_capture[i + 0])
+            if (gu32_input_freq_capture[i + 1] > gu32_input_freq_capture[i + 0])
             {
                 delta = (gu32_input_freq_capture[i + 1] - gu32_input_freq_capture[i + 0]);
             }
@@ -379,12 +379,12 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
         }
 
         gf_xd12_internal_freq_Hz = (f_freq_avg / n_count);
-        if(gf_freq_min > gf_xd12_internal_freq_Hz)
+        if (gf_freq_min > gf_xd12_internal_freq_Hz)
         {
             gf_freq_min = gf_xd12_internal_freq_Hz;
         }
 
-        if(gf_freq_max < gf_xd12_internal_freq_Hz)
+        if (gf_freq_max < gf_xd12_internal_freq_Hz)
         {
             gf_freq_max = gf_xd12_internal_freq_Hz;
         }
@@ -394,15 +394,15 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
 uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq) //input must be 'MHz'
 {
     // Convert to 'Hz' and Divide by TIM_CAPTURE_EXT_PRESCALER
-    uint32_t u32_rtn_val = (uint32_t)(((in_freq * 1000000) / TIM_CAPTURE_EXT_PRESCALER) + 0.5f);
+    uint32_t u32_rtn_val = (uint32_t)(((in_freq * CONST_MHz_TO_Hz) / TIM_CAPTURE_EXT_PRESCALER) + 0.5f);
 
-    if( u32_rtn_val > 65535) //2^16-1
+    if (u32_rtn_val > 65535) //2^16-1
     {
         print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_ConvertByPrescaler(%lf) INPUT TOO BIG\r\n", in_freq);
         return 0;
     }
 
-    if( u32_rtn_val < 1374) // 1374 = ( 90Mhz / 2^16 ) + 1;
+    if (u32_rtn_val < 1374) // 1374 = ( 90Mhz / 2^16 ) + 1;
     {
         print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_ConvertByPrescaler(%lf) INPUT TOO SMALL\r\n", in_freq);
         return 0;
@@ -414,13 +414,13 @@ uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq) //input must be 'MHz'
 double JigBD_IF_Freq_Count_to_MHZ(uint16_t count)
 {
     double rtn_freq = 0.0;
-    if(count >= 65535) //2^16-1
+    if (count >= 65535) //2^16-1
     {
         print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", count);
         return 0;
     }
 
-    rtn_freq = ((double)count * TIM_CAPTURE_EXT_PRESCALER) / 1000000;
+    rtn_freq = ((double)count * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz;
     return rtn_freq;
 }
 /* END - PWM Read Frequency ******************************************/
@@ -515,7 +515,7 @@ __STATIC_INLINE float getParseReadCommand(uint32_t* pdata, uint16_t len)
         ++count;
     }
 
-    if(count)
+    if (count)
     {
         f_tim1_count_avg = ((float)freq_count_sum / count);
 
@@ -523,13 +523,13 @@ __STATIC_INLINE float getParseReadCommand(uint32_t* pdata, uint16_t len)
         logic_1_duty_cnt_max = (uint16_t)LOGIC_1_COUNT_MAX(f_tim1_count_avg);
     }
 
-    if(pdata)
+    if (pdata)
     {
         uint32_t n_xd12_response = 0;
 
         for (volatile uint16_t j = 0 ; j < len ; ++j)
         {
-            if((p_falling[j] > logic_1_duty_cnt_min) && (p_falling[j] < logic_1_duty_cnt_max))
+            if ((p_falling[j] > logic_1_duty_cnt_min) && (p_falling[j] < logic_1_duty_cnt_max))
             {
                 n_xd12_response |= (1U << ((len - 1) - j));
             }
@@ -538,7 +538,7 @@ __STATIC_INLINE float getParseReadCommand(uint32_t* pdata, uint16_t len)
         *pdata = n_xd12_response;
     }
 
-    if(f_tim1_count_avg > 0)
+    if (f_tim1_count_avg > 0)
     {
         f_input_frequency = (APB1_TIM_FREQ / f_tim1_count_avg);
     }
@@ -569,7 +569,7 @@ void MCU_IF_Write_XD12(uint8_t in_addr, uint16_t in_data)
         //bit17 ~ bit12 : addr[5:0]
         for (uint8_t i = 0 ; i < 6 ; ++i)
         {
-            if(getAbit((uint16_t)in_addr, 5-i) == 1)
+            if (getAbit((uint16_t)in_addr, 5-i) == 1)
             {
                 gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
             }
@@ -582,7 +582,7 @@ void MCU_IF_Write_XD12(uint8_t in_addr, uint16_t in_data)
         //bit11 ~ bit00 : data[11:0]
         for (uint8_t i = 0 ; i < 12 ; ++i)
         {
-            if(getAbit(in_data, 11-i) == 1)
+            if (getAbit(in_data, 11-i) == 1)
             {
                 gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
             }
@@ -636,7 +636,7 @@ static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
         //bit5 ~ bit0 : addr[5:0]
         for (uint8_t i = 0 ; i < 6 ; ++i)
         {
-            if(getAbit((uint16_t)in_addr, 5-i) == 1)
+            if (getAbit((uint16_t)in_addr, 5-i) == 1)
             {
                 gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
             }
@@ -719,7 +719,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             for (uint8_t i = 0 ; i < 16 ; ++i)
             {
-                if(getAbit((uint16_t)in_LD_data, 15-i) == 1)
+                if (getAbit((uint16_t)in_LD_data, 15-i) == 1)
                 {
                     gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
                 }
@@ -898,7 +898,7 @@ static void MCU_IF_SyncGen_Command()
 
 void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data)
 {
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_IF_Write_XD12(in_addr, in_data);
     }
@@ -906,12 +906,13 @@ void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data)
     {
         MCU_IF_Write_XD12(in_addr, in_data);
     }
+    us_tdelay(10);
 }
 
 uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
 {
     uint16_t ret = 0;
-    if(IS_XC24())
+    if (IS_XC24())
     {
         ret = XC24_IF_Read_XD12(in_addr);
     }
@@ -919,12 +920,13 @@ uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
     {
         ret = MCU_IF_Read_XD12(in_addr);
     }
+    us_tdelay(10);
     return ret;
 }
 
 void JigBD_IF_Write_LD_Command(uint16_t in_LD_data)
 {
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_IF_Write_LD(in_LD_data);
     }
@@ -932,12 +934,13 @@ void JigBD_IF_Write_LD_Command(uint16_t in_LD_data)
     {
         MCU_IF_Write_LD(in_LD_data);
     }
+    us_tdelay(10);
 }
 
 uint16_t JigBD_IF_Fault_Read_Command(void)
 {
     uint16_t ret = 0;
-    if(IS_XC24())
+    if (IS_XC24())
     {
         ret = XC24_IF_Read_XD12(0xFF);
     }
@@ -945,13 +948,14 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
     {
         ret = MCU_IF_Fault_Read_Command();
     }
+    us_tdelay(10);
     return ret;
 }
 
 void JigBD_IF_Reset_Command(void)
 {
     uint16_t data = (1 << 11);
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_IF_Write_XD12(XD12_ADDR_RESET_ID, data);
     }
@@ -959,11 +963,12 @@ void JigBD_IF_Reset_Command(void)
     {
         MCU_IF_Write_XD12(XD12_ADDR_RESET_ID, data);
     }
+    us_tdelay(10);
 }
 
 void JigBD_IF_IdGen_Command(void)
 {
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_IF_IdGen_Command();
     }
@@ -971,11 +976,12 @@ void JigBD_IF_IdGen_Command(void)
     {
         MCU_IF_IdGen_Command();
     }
+    us_tdelay(10);
 }
 
 void JigBD_IF_SyncGen_Command(void)
 {
-    if(IS_XC24())
+    if (IS_XC24())
     {
         XC24_IF_SyncGen_Command();
     }
@@ -983,6 +989,7 @@ void JigBD_IF_SyncGen_Command(void)
     {
         MCU_IF_SyncGen_Command();
     }
+    us_tdelay(10);
 }
 
 /*** end of file ***/

@@ -10,7 +10,7 @@
 
 static SPI_TypeDef *g_hSPIx;
 
-static bool gb_XC24_SUPPORT;
+static bool gb_XC24_support;
 
 static _xc24_regs_t gt_xc24_regs;
 
@@ -107,7 +107,7 @@ __STATIC_INLINE void spi_write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
 {
     XC_NSCS_LO();
 
-    if(LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != 1)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);
@@ -118,6 +118,7 @@ __STATIC_INLINE void spi_write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) {};
         LL_SPI_TransmitData16(SPIx, p_buffer[i]);
     }
+
     while(LL_SPI_IsActiveFlag_BSY(SPIx)) {};
     user_delay(2);
 
@@ -129,7 +130,7 @@ __STATIC_INLINE void spi_read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
     XC_NSCS_LO();
 
 #if 1
-    if(LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != 1)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);
@@ -161,7 +162,7 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     _xc24_cmd_t cmd_format;
     uint16_t tx_buffer[2] = {0,};
 
-    if(g_hSPIx == NULL)
+    if (g_hSPIx == NULL)
     {
         g_hSPIx = SPI1;
     }
@@ -184,7 +185,7 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     _xc24_cmd_t cmd_format;
     uint16_t tx_buffer[4] = {0,};
 
-    if(g_hSPIx == NULL)
+    if (g_hSPIx == NULL)
     {
         g_hSPIx = SPI1;
     }
@@ -213,7 +214,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     uint16_t tx_buffer[2] = {0, };
 	uint16_t rx_buffer[2] = {0, };
 
-    if(g_hSPIx == NULL)
+    if (g_hSPIx == NULL)
     {
         g_hSPIx = SPI1;
     }
@@ -348,12 +349,12 @@ void XC24_Start_MCLK_Oscillation(bool en)
 
 bool IS_XC24(void)
 {
-    return gb_XC24_SUPPORT;
+    return gb_XC24_support;
 }
 
 void USE_XC24(bool b_support)
 {
-    gb_XC24_SUPPORT = b_support;
+    gb_XC24_support = b_support;
 }
 
 void XC24_IF_IdGen_Command(void)
@@ -425,7 +426,7 @@ uint16_t XC24_IF_Read_XD12(uint8_t in_XD12_addr)
 
         --count;
 
-        if(u16_XD12_r == 0)
+        if (u16_XD12_r == 0)
         {
             us_tdelay(1);
             break;
@@ -462,7 +463,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     _xc24_cmd_t cmd_format;
     uint16_t tx_buffer[1 + XD_DAISY_SIZE * XD_CH_SIZE] = {0,};
 
-    if(g_hSPIx == NULL)
+    if (g_hSPIx == NULL)
     {
         g_hSPIx = SPI1;
     }

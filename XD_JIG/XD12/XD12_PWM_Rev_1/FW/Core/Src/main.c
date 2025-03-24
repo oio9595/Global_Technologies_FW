@@ -131,11 +131,11 @@ static void TaskDebugUart(void);
 /* USER CODE BEGIN 0 */
 void sys_tick_handler(void)
 {
-    if(gn_timeout_trimming_procedure_run)
+    if (gn_timeout_trimming_procedure_run)
     {
         --gn_timeout_trimming_procedure_run;
     }
-    if(gn_timeout_screening_procedure_run)
+    if (gn_timeout_screening_procedure_run)
     {
         --gn_timeout_screening_procedure_run;
     }
@@ -150,18 +150,19 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     if (log_lv >= gt_log_lv)
     {
         int len = 0;
-        char buffer[PRINT_BUFF_SIZE] = {0, };
+        char msg_buffer[PRINT_BUFF_SIZE] = {0, };
         va_list ap;
 
         va_start(ap, fmt);
-        len = vsnprintf(buffer, (PRINT_BUFF_SIZE - 1), fmt, ap);
+        len = vsnprintf(msg_buffer, (PRINT_BUFF_SIZE - 1), fmt, ap);
         va_end(ap);
+
         for (int i = 0 ; i < len ; ++i)
         {
             /* Loop until the end of transmission */
             while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
             /* Echo received character on TX */
-            LL_USART_TransmitData8(USART2, (uint8_t)buffer[i]);
+            LL_USART_TransmitData8(USART2, (uint8_t)msg_buffer[i]);
         }
     }
 }
@@ -1291,13 +1292,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static void JigTestMainTask(void)
 {
-    if(gn_timeout_trimming_procedure_run == 0)
+    if (gn_timeout_trimming_procedure_run == 0)
     {
         Trimming_Procedure_Run();
         gn_timeout_trimming_procedure_run = 1;
     }
 
-    if(gn_timeout_screening_procedure_run == 0)
+    if (gn_timeout_screening_procedure_run == 0)
     {
         Screening_Procedure_Run();
         gn_timeout_screening_procedure_run = 1;
@@ -1308,7 +1309,7 @@ static uint8_t comm_get_rx_packet(rx_packet_t** pData)
 {
     uint8_t ret = 0;
 
-    if(gt_rx_uart.RxInCnt != gt_rx_uart.RxOutCnt)
+    if (gt_rx_uart.RxInCnt != gt_rx_uart.RxOutCnt)
     {
         *pData = gt_rx_uart.Rxbuff + gt_rx_uart.RxOutCnt;
 
@@ -1325,7 +1326,7 @@ static void TaskDebugUart(void)
 {
     rx_packet_t* p_data = NULL;
 
-    if(comm_get_rx_packet(&p_data))
+    if (comm_get_rx_packet(&p_data))
     {
         char str_in[RX_PACKET_SIZE + 1] = {0, };
         uint32_t u32_recv_param[6] = {0, };
@@ -1334,35 +1335,35 @@ static void TaskDebugUart(void)
         memcpy(str_in, p_data->buffer, p_data->length);
         p_data->length = 0;
 
-        if(Command_is_("help") || Command_is_("?"))
+        if (Command_is_("help") || Command_is_("?"))
         {
             comm_print_help();
         }
 #if 1
 /* ----------------- command list - jig ----------------- */
-        else if(Command_is_("jig_ic_start"))
+        else if (Command_is_("jig_ic_start"))
         {
             print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
             JigBD_IF_Input_Capture_Start();
         }
-        else if(Command_is_("jig_ic_stop"))
+        else if (Command_is_("jig_ic_stop"))
         {
             uint32_t u32_input_freq_Hz = JigBD_IF_Input_Capture_Get_Freq();
 
             JigBD_IF_Input_Capture_Stop();
-            print(LOG_INFO, "\r\n Stop timer for freq input capture : %u [Hz] => %1.6f [MHz]\r\n", u32_input_freq_Hz, ((u32_input_freq_Hz * TIM_CAPTURE_EXT_PRESCALER) / 1000000.0f));
+            print(LOG_INFO, "\r\n Stop timer for freq input capture : %u [Hz] => %1.6f [MHz]\r\n", u32_input_freq_Hz, ((u32_input_freq_Hz * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz));
         }
-        else if(Command_is_("jig_vref_start"))
+        else if (Command_is_("jig_vref_start"))
         {
             print(LOG_INFO, "\r\n ADC RUN\r\n");
             JigBD_IF_VREF_ADC_StartStop();
         }
-        else if(Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
             print(LOG_INFO, "\r\n Output CH sel - [%u]\r\n", u32_recv_param[0]);
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
         }
-        else if(Command_Param_is_("jig_xd_vcc", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_xd_vcc", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1375,7 +1376,7 @@ static void TaskDebugUart(void)
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
             }
         }
-        else if(Command_Param_is_("jig_xd_vcc_level", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_xd_vcc_level", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1388,7 +1389,7 @@ static void TaskDebugUart(void)
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
             }
         }
-        else if(Command_Param_is_("jig_xc_vcc", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_xc_vcc", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1401,7 +1402,7 @@ static void TaskDebugUart(void)
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
             }
         }
-        else if(Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1414,7 +1415,7 @@ static void TaskDebugUart(void)
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
             }
         }
-        else if(Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] > (CH_MAX + 1))
             {
@@ -1426,7 +1427,7 @@ static void TaskDebugUart(void)
                 JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             }
         }
-        else if(Command_Param_is_("jig_gain", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_gain", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < GAIN_MAX)
             {
@@ -1438,7 +1439,7 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of Jig Current Gain Level [%u] [0 - %u]\r\n", u32_recv_param[0], GAIN_MAX - 1);
             }
         }
-        else if(Command_Param_is_("jig_vsync", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("jig_vsync", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1452,12 +1453,12 @@ static void TaskDebugUart(void)
             }
             print(LOG_INFO, "supply external VLED\r\n");
         }
-        else if(Command_Param_is_("vsync", "%lf", &lf_recv_param[0]))
+        else if (Command_Param_is_("vsync", "%lf", &lf_recv_param[0]))
         {
             XD12_Update_Vsync_Frequency((float)lf_recv_param[0]);
             print(LOG_INFO, "set vsync freq to %.3lfHz\r\n", lf_recv_param[0]);
         }
-        else if(Command_Param_is_("pwm_freq", "%lf", &lf_recv_param[0]))
+        else if (Command_Param_is_("pwm_freq", "%lf", &lf_recv_param[0]))
         {
             uint32_t tim_arr = (uint32_t)(144000/lf_recv_param[0] + 0.5f - 1);
 
@@ -1474,34 +1475,34 @@ static void TaskDebugUart(void)
         }
 #endif
 /* ----------------- command list - xd ----------------- */
-        else if(Command_is_("xd_idgen"))
+        else if (Command_is_("xd_idgen"))
         {
             print(LOG_INFO, "\r\n XD IDGen\r\n");
             JigBD_IF_IdGen_Command();
         }
-        else if(Command_is_("xd_reset"))
+        else if (Command_is_("xd_reset"))
         {
             print(LOG_INFO, "\r\n XD Reset\r\n");
             JigBD_IF_Reset_Command();
             us_tdelay(5);
         }
-        else if(Command_is_("xd_syncgen"))
+        else if (Command_is_("xd_syncgen"))
         {
             print(LOG_INFO, "\r\n XD Syncgen\r\n");
             JigBD_IF_SyncGen_Command();
             us_tdelay(5);
         }
-        else if(Command_is_("xd_test_en"))
+        else if (Command_is_("xd_test_en"))
         {
             print(LOG_INFO, "\r\n XD TEST_EN\r\n");
             XD12_Trim_Init_VREF_CTL();
         }
-        else if(Command_is_("xd_r_all"))
+        else if (Command_is_("xd_r_all"))
         {
             print(LOG_INFO, "\r\n Read XD's register all\r\n");
             XD12_Read_All_Registers();
         }
-        else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if (Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             if (gb_jig_vsync_running_flag)
             {
@@ -1515,7 +1516,7 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd12_reg_type[XD12_REG_TYPE_NON_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             print(LOG_INFO, "\r\n OK\r\n");
         }
-        else if(Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
             if (gb_jig_vsync_running_flag)
             {
@@ -1527,17 +1528,17 @@ static void TaskDebugUart(void)
             }
             print(LOG_INFO, "\r\n OK\r\n");
         }
-        else if(Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if (Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             XD12_Write_Mirror_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd12_reg_type[XD12_REG_TYPE_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
-        else if(Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
         {
             uint16_t ret = XD12_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
-        else if(Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] <= 65535)
             {
@@ -1549,11 +1550,11 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of xd12_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
             }
         }
-        else if(Command_is_("xd_ldim"))
+        else if (Command_is_("xd_ldim"))
         {
             print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD12_get_LD_out());
         }
-        else if(Command_Param_is_("xd_fbi", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_fbi", "%x", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1565,16 +1566,16 @@ static void TaskDebugUart(void)
             }
             print(LOG_INFO, "\r\n XD FBI %s\r\n", (u32_recv_param[0] ? "HI" : "LO"));
         }
-        else if(Command_is_("xd_fbo"))
+        else if (Command_is_("xd_fbo"))
         {
             print(LOG_INFO, "\r\n XD FBO %s\r\n", (XD_FBO_READ() ? "HI" : "LO"));
         }
-        else if(Command_is_("xd_debug"))
+        else if (Command_is_("xd_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vcc_on\r\n");
 
-            if(IS_XC24())
+            if (IS_XC24())
             {
                 XC24_Init();
                 print(LOG_INFO, "\r\n xc_init\r\n");
@@ -1594,12 +1595,12 @@ static void TaskDebugUart(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
         }
-        else if(Command_is_("xd_trim_debug"))
+        else if (Command_is_("xd_trim_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vcc_on\r\n");
 
-            if(IS_XC24())
+            if (IS_XC24())
             {
                 XC24_Init();
                 print(LOG_INFO, "\r\n xc_init\r\n");
@@ -1619,22 +1620,22 @@ static void TaskDebugUart(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
         }
-        else if(Command_is_("xd_trim_vref"))
+        else if (Command_is_("xd_trim_vref"))
         {
             XD12_Trim_Init_VREF_CTL();
         }
-        else if(Command_is_("xd_trim_osc"))
+        else if (Command_is_("xd_trim_osc"))
         {
             XD12_Trim_Init_OSC();
         }
-        else if(Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
         {
             XD12_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
         }
-        else if(Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
         {
             XD12_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
@@ -1642,12 +1643,12 @@ static void TaskDebugUart(void)
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
         }
 
-        else if(Command_is_("xd_osc_debug"))
+        else if (Command_is_("xd_osc_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vcc_on\r\n");
 
-            if(IS_XC24())
+            if (IS_XC24())
             {
                 XC24_Init();
                 print(LOG_INFO, "\r\n xc_init\r\n");
@@ -1679,27 +1680,27 @@ static void TaskDebugUart(void)
         }
 
 /* ----------------- command list - xc ----------------- */
-        else if(Command_is_("xc_init"))
+        else if (Command_is_("xc_init"))
         {
             print(LOG_INFO, "\r\n INIT_XC24\r\n");
             XC24_Init();
         }
-        else if(Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if (Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             print(LOG_INFO, "\r\n XC Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
             XC24_Write_Register((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
-        else if(Command_is_("xc_r_all"))
+        else if (Command_is_("xc_r_all"))
         {
             XC24_Read_Register_All();
         }
-        else if(Command_Param_is_("xc_r", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xc_r", "%x", &u32_recv_param[0]))
         {
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
 /* ----------------- command list - ui ----------------- */
-        else if(Command_Param_is_("ui:use_xc", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("ui:use_xc", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < 2)
             {
@@ -1719,17 +1720,17 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of ui:use_xc [%u] [0 - %u]\r\n", u32_recv_param[0], 1);
             }
         }
-        else if(Command_is_("xd_trim_start") || Command_is_("1"))
+        else if (Command_is_("xd_trim_start") || Command_is_("1"))
         {
             print(LOG_INFO, "\r\n XD12 OTP Write EN & Activate \r\n");
             Trim_IF_Trimming_Start();
         }
-        else if(Command_is_("xd_screen_start") || Command_is_("2"))
+        else if (Command_is_("xd_screen_start") || Command_is_("2"))
         {
             print(LOG_INFO, "\r\n XD12 Screen Start \r\n");
             Trim_IF_Screening_Start();
         }
-        else if(Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < LOG_MAX)
             {
@@ -1741,7 +1742,7 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
             }
         }
-        else if(Command_is_("reset"))
+        else if (Command_is_("reset"))
         {
             print(LOG_INFO, "\r\n system reset \r\n");
             NVIC_SystemReset();
@@ -1766,9 +1767,9 @@ void comm_rx_handler(uint8_t rx)
 {
     UART_PutChar(rx);
 
-    if((rx == '\n') || (rx == '\r'))
+    if ((rx == '\n') || (rx == '\r'))
     {
-        if(gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
         {
             gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = 0;
         }
@@ -1780,9 +1781,9 @@ void comm_rx_handler(uint8_t rx)
         ++gt_rx_uart.RxInCnt;
         gt_rx_uart.RxInCnt &= (uint16_t)(RX_BUFF_SIZE - 1);
     }
-    else if(rx == UART_BACKSPACE)
+    else if (rx == UART_BACKSPACE)
     {
-        if(gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length)
+        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length)
         {
             uint8_t temp[2] = {' ', UART_BACKSPACE};
 
@@ -1793,7 +1794,7 @@ void comm_rx_handler(uint8_t rx)
     }
     else
     {
-        if(gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
         {
             gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = rx;
             ++gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;

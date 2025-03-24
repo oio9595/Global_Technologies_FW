@@ -804,6 +804,7 @@ extern uint16_t XD12_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, trim_mode_
 extern uint16_t XD12_Get_Mirror_Register_Limit_By_Trim_Mode(uint8_t ch_num, trim_mode_t in_trim_mode);
 
 extern void XD12_Read_All_Registers(void);
+extern void XD12_Dump_All_Registers(void);
 
 extern void XD12_Param_Init(void);
 extern void XD12_Init(void);

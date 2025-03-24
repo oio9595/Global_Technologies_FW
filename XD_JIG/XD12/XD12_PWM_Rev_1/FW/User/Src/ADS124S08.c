@@ -64,18 +64,18 @@ void ADC_DRDY_INT_Handler(void)
     {
         temp = 0;
     }
-    if(temp > 32767)
+    if (temp > 32767)
     {
         temp = 32767;
     }
 
-    if(gn_adc_read_count)
+    if (gn_adc_read_count)
     {
         gn_ads114s08_adc_temp += temp;
         --gn_adc_read_count;
     }
 
-    if(gn_adc_read_count == 0)
+    if (gn_adc_read_count == 0)
     {
         gb_ads114s08_drdy_done = 1;
         ADS114S08_Set_Start(0);    /* stop continuous conversion */
@@ -419,7 +419,7 @@ static void ads114s08_get_adc_offset();
 {
     uint8_t rx = 0;
 
-    if(LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != 1)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);
@@ -471,39 +471,39 @@ void ADS114S08_Init(void)
     {
         for (uint8_t reg = REG_ADDR_ID ; reg < REG_ADDR_MAX ; ++reg)
         {
-            if(reg == REG_ADDR_RESERVED1 || reg == REG_ADDR_RESERVED2)
+            if (reg == REG_ADDR_RESERVED1 || reg == REG_ADDR_RESERVED2)
             {
             }
             else
             {
                 registers[reg] = ads114s08_get_reg(reg);
 
-                if(reg == REG_ADDR_ID)
+                if (reg == REG_ADDR_ID)
                 {
-                    if(registers[reg] == ADS_114S08)
+                    if (registers[reg] == ADS_114S08)
                     {
                     }
                     else
                     {
                     }
                 }
-                else if(reg == REG_ADDR_STATUS)
+                else if (reg == REG_ADDR_STATUS)
                 {
                     ads114s08_staus_t status;
                     status.value = registers[reg];
 
-                    if(status.u.fl_por == 1)
+                    if (status.u.fl_por == 1)
                     {
                         status.u.fl_por = 0;
                         ads114s08_set_reg(reg, status.value);
                         registers[reg] = ads114s08_get_reg(reg);
                     }
                 }
-                else if(reg == REG_ADDR_INPMUX)
+                else if (reg == REG_ADDR_INPMUX)
                 {
 #if 0
                     ads114s08_inpmux_t t.value = registers[REG_ADDR_INPMUX];
-                    if(t.u.muxn != ADS_N_AINCOM)
+                    if (t.u.muxn != ADS_N_AINCOM)
                     {
                         t.u.muxn = ADS_N_AINCOM;
                         ads114s08_set_reg(reg, t.value);
@@ -512,13 +512,13 @@ void ADS114S08_Init(void)
                     }
 #endif
                 }
-                else if(reg == REG_ADDR_DATARATE)
+                else if (reg == REG_ADDR_DATARATE)
                 {
 #if 1
                     ads114s08_datarate_t datarate;
                     datarate.value = registers[reg];
 
-                    if(datarate.u.dr != 12)  /* DataRate : 400 SPS, Low-Latency filter : 1, ? conversion mode */
+                    if (datarate.u.dr != 12)  /* DataRate : 400 SPS, Low-Latency filter : 1, ? conversion mode */
                     {
                         datarate.u.dr = 12;
                         datarate.u.filter = 0;
@@ -563,7 +563,7 @@ static uint8_t ads114s08_get_reg(unsigned int regnum)
     {
         ulDataRx[i] = xferWord(gp_SPI, ulDataTx[i]);
     }
-    if(regnum < REG_ADDR_MAX)
+    if (regnum < REG_ADDR_MAX)
     {
         registers[regnum] = ulDataRx[2];
     }
@@ -594,7 +594,7 @@ static void ads114s08_get_regs(uint8_t regnum, uint8_t count, uint8_t *data)
     for (i = 0 ; i < count ; i++)
     {
         data[i] = xferWord(gp_SPI, 0);
-        if(regnum+i < REG_ADDR_MAX)
+        if (regnum+i < REG_ADDR_MAX)
         {
             registers[regnum+i] = data[i];
         }
@@ -644,7 +644,7 @@ static void  ads114s08_set_regs(uint8_t regnum, uint8_t howmuch, uint8_t *data)
     for (i = 0 ; i < howmuch ; i++)
     {
         xferWord(gp_SPI, data[i]);
-        if(regnum+i < REG_ADDR_MAX)
+        if (regnum+i < REG_ADDR_MAX)
         {
             registers[regnum+i] = data[i];
         }
@@ -767,7 +767,7 @@ static void ads114s08_set_reset(void)
 void ADS114S08_Set_Start(uint8_t b_set)
 {
 #ifdef USE_GPIO_START
-    if(b_set)
+    if (b_set)
     {
         LL_GPIO_SetOutputPin(ADC_START_GPIO_Port, ADC_START_Pin);
     }
@@ -776,7 +776,7 @@ void ADS114S08_Set_Start(uint8_t b_set)
         LL_GPIO_ResetOutputPin(ADC_START_GPIO_Port, ADC_START_Pin);
     }
 #else
-    if(b_set)
+    if (b_set)
     {
         ads114s08_set_command(CMD_START);
     }
@@ -797,9 +797,9 @@ int32_t ads114s08_get_data(uint8_t *dStatus, uint8_t *dCRC)
     int32_t iData = 0;
 
     ads114s08_cs_low();
-    if((registers[REG_ADDR_SYS] & 0x01) == DATA_MODE_STATUS)
+    if ((registers[REG_ADDR_SYS] & 0x01) == DATA_MODE_STATUS)
     {
-        if(dStatus != NULL)
+        if (dStatus != NULL)
         {
             dStatus[0] = xferWord(gp_SPI, 0x00);
         }
@@ -813,9 +813,9 @@ int32_t ads114s08_get_data(uint8_t *dStatus, uint8_t *dCRC)
     iData <<= 8;
     iData += xferWord(gp_SPI, 0x00);
 #endif
-    if((registers[REG_ADDR_SYS] & 0x02) == DATA_MODE_CRC)
+    if ((registers[REG_ADDR_SYS] & 0x02) == DATA_MODE_CRC)
     {
-        if(dCRC != NULL)
+        if (dCRC != NULL)
         {
             dCRC[0] = xferWord(gp_SPI, 0x00);
         }
@@ -831,9 +831,9 @@ int32_t ads114s08_get_rdata(uint8_t *dStatus, uint8_t *dCRC)
     ads114s08_cs_low();
     xferWord(gp_SPI, CMD_RDATA);
 
-    if((registers[REG_ADDR_SYS] & 0x01) == DATA_MODE_STATUS)
+    if ((registers[REG_ADDR_SYS] & 0x01) == DATA_MODE_STATUS)
     {
-        if(dStatus != NULL)
+        if (dStatus != NULL)
         {
             dStatus[0] = xferWord(gp_SPI, 0x00);
         }
@@ -847,9 +847,9 @@ int32_t ads114s08_get_rdata(uint8_t *dStatus, uint8_t *dCRC)
     iData <<= 8;
     iData += xferWord(gp_SPI, 0x00);
 #endif
-    if((registers[REG_ADDR_SYS] & 0x02) == DATA_MODE_CRC)
+    if ((registers[REG_ADDR_SYS] & 0x02) == DATA_MODE_CRC)
     {
-        if(dCRC != NULL)
+        if (dCRC != NULL)
         {
             dCRC[0] = xferWord(gp_SPI, 0x00);
         }
@@ -898,7 +898,7 @@ static void ads114s08_get_adc_offset()
     print(LOG_INFO, "\r\n ...Get ADC Offset Done...\r\n");
 }
 
-double convert_adc_to_current(uint16_t adc, current_gain_t gain)
+double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
 	double ret = 0;
 	switch (gain)
@@ -918,7 +918,7 @@ double convert_adc_to_current(uint16_t adc, current_gain_t gain)
 	return ret; //mA
 }
 
-uint16_t convert_current_to_adc(double current_A, current_gain_t gain)
+uint16_t JigBD_IF_Convert_Current_To_Adc(double current_A, current_gain_t gain)
 {
 	uint16_t ret = 0;
 	switch (gain)

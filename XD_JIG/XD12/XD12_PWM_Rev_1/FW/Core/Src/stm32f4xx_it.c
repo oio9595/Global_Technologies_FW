@@ -231,7 +231,7 @@ void EXTI4_IRQHandler(void)
 void DMA1_Stream2_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
-    if(LL_DMA_IsActiveFlag_TC2(DMA1) == 1)
+    if (LL_DMA_IsActiveFlag_TC2(DMA1) == 1)
     {
         LL_DMA_ClearFlag_TC2(DMA1);
         LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
@@ -240,7 +240,7 @@ void DMA1_Stream2_IRQHandler(void)
 
         gb_timer_input_capture_done = 1;
     }
-    else if(LL_DMA_IsActiveFlag_TE2(DMA1) == 1)
+    else if (LL_DMA_IsActiveFlag_TE2(DMA1) == 1)
     {
         LL_DMA_ClearFlag_TE2(DMA1);
     }
@@ -272,7 +272,7 @@ void DMA1_Stream6_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-    if(LL_USART_IsActiveFlag_RXNE(USART2))
+    if (LL_USART_IsActiveFlag_RXNE(USART2))
     {
         /* Read one byte from the receive data register */
         uint8_t rx_data = LL_USART_ReceiveData8(USART2);
@@ -305,14 +305,14 @@ void TIM8_UP_TIM13_IRQHandler(void)
 void DMA2_Stream1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
-    if(LL_DMA_IsActiveFlag_TC1(DMA2) == 1)
+    if (LL_DMA_IsActiveFlag_TC1(DMA2) == 1)
     {
         LL_DMA_ClearFlag_TC1(DMA2);
         LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
 
         gb_pwm_dma_tx_flag = false;
     }
-    else if(LL_DMA_IsActiveFlag_TE1(DMA2) == 1)
+    else if (LL_DMA_IsActiveFlag_TE1(DMA2) == 1)
     {
         LL_DMA_ClearFlag_TE1(DMA2);
     }

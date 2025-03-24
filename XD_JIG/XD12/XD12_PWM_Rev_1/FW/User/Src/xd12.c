@@ -44,8 +44,7 @@
 
 #ifdef __XD12_C__
 
-#if 0
-static const char* gs_xd12_addr_str[XD12_ADDR_MAX] =
+static const char* gs_xd12_general_regs_str[XD12_ADDR_MAX] =
 {
     "RESET_ID",
     "LD_CONTROL",
@@ -106,15 +105,14 @@ static const char* gs_xd12_addr_str[XD12_ADDR_MAX] =
     "DUMMY",
     "DUMMY",
     "OTP_ACCESS_1",
-    "OTP_ACCESS_2"
-    "OTP_WRITE"
-    "OTP_RD_PROG"
+    "OTP_ACCESS_2",
+    "OTP_WRITE",
+    "OTP_RD_PROG",
     "OTP_PROTECT",
-    "OP_MODE"
+    "OP_MODE",
 };
-#endif
 
-static const char* gs_xd12_addr_trim_str[XD12_ADDR_TRIM_MAX] =
+static const char* gs_xd12_mirror_regs_str[XD12_ADDR_TRIM_MAX] =
 {
     "OTP_CRC",
     "OSC",
@@ -204,6 +202,8 @@ uint16_t XD12_Read_General_Reg(uint8_t addr)
 
     *(&gt_xd12_general_regs._r00.val + addr) = JigBD_IF_Read_Command(addr);
 
+    print(LOG_INFO, "XD12 General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xd12_general_regs._r00.val + addr));
+
     return *(&gt_xd12_general_regs._r00.val + addr);
 }
 
@@ -234,6 +234,8 @@ uint16_t XD12_Read_Mirror_Reg(uint8_t addr)
 
     *(&gt_xd12_trim_regs._r00.val + addr) = JigBD_IF_Read_Command(addr);
 
+    print(LOG_INFO, "XD12 Mirror Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xd12_trim_regs._r00.val + addr));
+
     return *(&gt_xd12_trim_regs._r00.val + addr);
 }
 
@@ -247,7 +249,7 @@ void XD12_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, trim_mode_t in_trim
     switch(in_trim_mode)
     {
     case TRIM_OSC_FREQUENCY:
-        if(in_reg_val > REG_LIMIT_OSC)
+        if (in_reg_val > REG_LIMIT_OSC)
         {
             print(LOG_ERROR, "ERROR: XD12_Write_Mirror_Register_By_Trim_Mode TRIM_OSC_FREQUENCY- in_reg_val(%d) Over !!\r\n", in_reg_val);
         }
@@ -257,7 +259,7 @@ void XD12_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, trim_mode_t in_trim
         }
         break;
     case TRIM_VREF_CTL:
-        if(in_reg_val > REG_LIMIT_VREF)
+        if (in_reg_val > REG_LIMIT_VREF)
         {
             print(LOG_ERROR, "ERROR: XD12_Write_Mirror_Register_By_Trim_Mode TRIM_VREF_CTL- in_reg_val(%d) Over !!\r\n", in_reg_val);
         }
@@ -267,7 +269,7 @@ void XD12_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, trim_mode_t in_trim
         }
         break;
     case TRIM_ICTL_L_CHS:
-        if(in_reg_val > REG_LIMIT_ICTL_L)
+        if (in_reg_val > REG_LIMIT_ICTL_L)
         {
             print(LOG_ERROR, "ERROR: XD12_Write_Mirror_Register_By_Trim_Mode TRIM_ICTL_L_CHS- in_reg_val(%d) Over !!\r\n", in_reg_val);
         }
@@ -277,7 +279,7 @@ void XD12_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, trim_mode_t in_trim
         }
         break;
     case TRIM_ICTL_H_CHS:
-        if(in_reg_val > REG_LIMIT_ICTL_H)
+        if (in_reg_val > REG_LIMIT_ICTL_H)
         {
             print(LOG_ERROR, "ERROR: XD12_Write_Mirror_Register_By_Trim_Mode TRIM_ICTL_H_CHS- in_reg_val(%d) Over !!\r\n", in_reg_val);
         }
@@ -338,127 +340,271 @@ void XD12_Read_All_Registers(void)
     for (uint8_t addr_offset = 0 ; addr_offset < XD12_ADDR_MAX ; ++addr_offset)
     {
         XD12_Read_General_Reg(addr_offset);
+    }
+
+    for (uint8_t addr_offset = 0 ; addr_offset < XD12_ADDR_TRIM_MAX ; ++addr_offset)
+    {
+        XD12_Read_Mirror_Reg(addr_offset);
+    }
+
+    XD12_Dump_All_Registers();
+}
+
+void XD12_Dump_All_Registers(void)
+{
+    for (uint8_t addr_offset = 0 ; addr_offset < XD12_ADDR_MAX ; ++addr_offset)
+    {
         switch (addr_offset)
         {
-        case XD12_ADDR_RESET_ID :
-            print(LOG_INFO, "RST - [%u], ID - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r00.rst, gt_xd12_general_regs._r00.id, gt_xd12_general_regs._r00.val);
+            case XD12_ADDR_RESET_ID :
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t RST       : [%u]\r\n"
+                            "\t ID        : [%u]\r\n"
+                            "\t VALUE     : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r00.rst, gt_xd12_general_regs._r00.id, gt_xd12_general_regs._r00.val);
             break;
         case XD12_ADDR_LD_CONTROL :
-            print(LOG_INFO, "CH_SIZE - [%u], IO_MODE - [%u], SCAN_NO - [%u], OVER_TO_E - [%u], PWM_RES - [%u], LD_DIR - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r01.ch_size, gt_xd12_general_regs._r01.io_mode, gt_xd12_general_regs._r01.scan_no,\
-            gt_xd12_general_regs._r01.over_to_e, gt_xd12_general_regs._r01.pwm_res, gt_xd12_general_regs._r01.ld_dir, gt_xd12_general_regs._r01.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t CH_SIZE   : [%u]\r\n"
+                            "\t IO_MODE   : [%u]\r\n"
+                            "\t SCAN_NO   : [%u]\r\n"
+                            "\t OVER_TO_E : [%u]\r\n"
+                            "\t PWM_RES   : [%u]\r\n"
+                            "\t LD_DIR    : [%u]\r\n"
+                            "\t VALUE     : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r01.ch_size, gt_xd12_general_regs._r01.io_mode, gt_xd12_general_regs._r01.scan_no,
+                gt_xd12_general_regs._r01.over_to_e, gt_xd12_general_regs._r01.pwm_res, gt_xd12_general_regs._r01.ld_dir, gt_xd12_general_regs._r01.val);
             break;
         case XD12_ADDR_FPWM_DIVIDER :
-            print(LOG_INFO, "FPWM_DIV - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r02.fpwm_div, gt_xd12_general_regs._r02.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t FPWM_DIV  : [%u]\r\n"
+                            "\t VALUE     : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r02.fpwm_div, gt_xd12_general_regs._r02.val);
             break;
         case XD12_ADDR_CHANNEL_ENABLE :
-            print(LOG_INFO, "CHANNEL_ENABLE - [0x%03X]\r\n", gt_xd12_general_regs._r03.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t CHANNEL_ENABLE : [0x%03X]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r03.val);
             break;
         case XD12_ADDR_FAULT_STATUS :
-            print(LOG_INFO, "MISS_VS - [%u], THERMAL - [%u], SHORT - [%u], OPEN - [%u], FB - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r05.bit_miss_vs, gt_xd12_general_regs._r05.bit_thermal, gt_xd12_general_regs._r05.bit_short, gt_xd12_general_regs._r05.bit_open, gt_xd12_general_regs._r05.bit_fb, gt_xd12_general_regs._r05.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t MISS_VS   : [%u]\r\n"
+                            "\t THERMAL   : [%u]\r\n"
+                            "\t SHORT     : [%u]\r\n"
+                            "\t OPEN      : [%u]\r\n"
+                            "\t FB        : [%u]\r\n"
+                            "\t VALUE     : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r05.bit_miss_vs, gt_xd12_general_regs._r05.bit_thermal, gt_xd12_general_regs._r05.bit_short, gt_xd12_general_regs._r05.bit_open, gt_xd12_general_regs._r05.bit_fb, gt_xd12_general_regs._r05.val);
             break;
         case XD12_ADDR_FAULT_LEVEL :
-            print(LOG_INFO, "DEV_MAX_CURR_LEVEL - [%u], SHORT_LEVEL - [%u], FB_LEVEL - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r06.dev_max_curr_level, gt_xd12_general_regs._r06.short_level, gt_xd12_general_regs._r06.fb_level, gt_xd12_general_regs._r06.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DEV_MAX_CURR_LEVEL : [%u]\r\n"
+                            "\t SHORT_LEVEL        : [%u]\r\n"
+                            "\t FB_LEVEL           : [%u]\r\n"
+                            "\t VALUE              : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r06.dev_max_curr_level, gt_xd12_general_regs._r06.short_level, gt_xd12_general_regs._r06.fb_level, gt_xd12_general_regs._r06.val);
             break;
         case XD12_ADDR_FAULT_CONTROL :
-            print(LOG_INFO, "TIMEOUT - [%u], MS_VS_LOCK - [%u], MS_VS_DIMM - [%u], MS_VS_DET_E - [%u], O_FB_E - [%u] "
-            "O_DET_E - [%u], S_DET_E - [%u], T_OFF_E - [%u], S_OFF_E - [%u], O_OFF_E - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r07.timeout_e, gt_xd12_general_regs._r07.ms_vs_lock, gt_xd12_general_regs._r07.ms_vs_dimm, gt_xd12_general_regs._r07.ms_vs_det_e, gt_xd12_general_regs._r07.o_fb_e,\
-            gt_xd12_general_regs._r07.o_det_e, gt_xd12_general_regs._r07.s_det_e, gt_xd12_general_regs._r07.t_off_e, gt_xd12_general_regs._r07.s_off_e, gt_xd12_general_regs._r07.o_off_e, gt_xd12_general_regs._r07.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t TIMEOUT       : [%u]\r\n"
+                            "\t MS_VS_LOCK    : [%u]\r\n"
+                            "\t MS_VS_DIMM    : [%u]\r\n"
+                            "\t MS_VS_DET_E   : [%u]\r\n"
+                            "\t O_FB_E        : [%u]\r\n"
+                            "\t O_DET_E       : [%u]\r\n"
+                            "\t S_DET_E       : [%u]\r\n"
+                            "\t T_OFF_E       : [%u]\r\n"
+                            "\t S_OFF_E       : [%u]\r\n"
+                            "\t O_OFF_E       : [%u]\r\n"
+                            "\t VALUE         : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r07.timeout_e, gt_xd12_general_regs._r07.ms_vs_lock, gt_xd12_general_regs._r07.ms_vs_dimm, gt_xd12_general_regs._r07.ms_vs_det_e,
+                gt_xd12_general_regs._r07.o_fb_e, gt_xd12_general_regs._r07.o_det_e, gt_xd12_general_regs._r07.s_det_e, gt_xd12_general_regs._r07.t_off_e, gt_xd12_general_regs._r07.s_off_e, gt_xd12_general_regs._r07.o_off_e, gt_xd12_general_regs._r07.val);
             break;
         case XD12_ADDR_MAX_CURR_VREF :
-            print(LOG_INFO, "MAX_CURR_VREF - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r08.max_curr_vref, gt_xd12_general_regs._r08.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t MAX_CURR_VREF : [%u]\r\n"
+                            "\t VALUE         : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r08.max_curr_vref, gt_xd12_general_regs._r08.val);
             break;
         case XD12_ADDR_DELAY_CH_EXTEND_1 :
-            print(LOG_INFO, "DELAY_CH06 - [%u], DELAY_CH05 - [%u], DELAY_CH04 - [%u], DELAY_CH03 - [%u], DELAY_CH02 - [%u], DELAY_CH01 - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r09.delay_ch6, gt_xd12_general_regs._r09.delay_ch5, gt_xd12_general_regs._r09.delay_ch4, gt_xd12_general_regs._r09.delay_ch3, gt_xd12_general_regs._r09.delay_ch2, gt_xd12_general_regs._r09.delay_ch1, gt_xd12_general_regs._r09.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH06 : [%u]\r\n"
+                            "\t DELAY_CH05 : [%u]\r\n"
+                            "\t DELAY_CH04 : [%u]\r\n"
+                            "\t DELAY_CH03 : [%u]\r\n"
+                            "\t DELAY_CH02 : [%u]\r\n"
+                            "\t DELAY_CH01 : [%u]\r\n"
+                            "\t VALUE      : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r09.delay_ch6, gt_xd12_general_regs._r09.delay_ch5, gt_xd12_general_regs._r09.delay_ch4, gt_xd12_general_regs._r09.delay_ch3, gt_xd12_general_regs._r09.delay_ch2, gt_xd12_general_regs._r09.delay_ch1, gt_xd12_general_regs._r09.val);
             break;
         case XD12_ADDR_DELAY_CH_EXTEND_2 :
-            print(LOG_INFO, "DELAY_CH12 - [%u], DELAY_CH11 - [%u], DELAY_CH10 - [%u], DELAY_CH09 - [%u], DELAY_CH08 - [%u], DELAY_CH07 - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r0A.delay_ch12, gt_xd12_general_regs._r0A.delay_ch11, gt_xd12_general_regs._r0A.delay_ch10, gt_xd12_general_regs._r0A.delay_ch9, gt_xd12_general_regs._r0A.delay_ch8, gt_xd12_general_regs._r0A.delay_ch7, gt_xd12_general_regs._r0A.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH12 : [%u]\r\n"
+                            "\t DELAY_CH11 : [%u]\r\n"
+                            "\t DELAY_CH10 : [%u]\r\n"
+                            "\t DELAY_CH09 : [%u]\r\n"
+                            "\t DELAY_CH08 : [%u]\r\n"
+                            "\t DELAY_CH07 : [%u]\r\n"
+                            "\t VALUE      : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0A.delay_ch12, gt_xd12_general_regs._r0A.delay_ch11, gt_xd12_general_regs._r0A.delay_ch10, gt_xd12_general_regs._r0A.delay_ch9, gt_xd12_general_regs._r0A.delay_ch8, gt_xd12_general_regs._r0A.delay_ch7, gt_xd12_general_regs._r0A.val);
             break;
         case XD12_ADDR_DELAY_CH01 :
-            print(LOG_INFO, "DELAY_CH01 - [%u]\r\n", gt_xd12_general_regs._r0B.delay_ch1);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH01 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0B.delay_ch1);
             break;
         case XD12_ADDR_DELAY_CH02 :
-            print(LOG_INFO, "DELAY_CH02 - [%u]\r\n", gt_xd12_general_regs._r0C.delay_ch2);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH02 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0C.delay_ch2);
             break;
         case XD12_ADDR_DELAY_CH03 :
-            print(LOG_INFO, "DELAY_CH03 - [%u]\r\n", gt_xd12_general_regs._r0D.delay_ch3);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH03 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0D.delay_ch3);
             break;
         case XD12_ADDR_DELAY_CH04 :
-            print(LOG_INFO, "DELAY_CH04 - [%u]\r\n", gt_xd12_general_regs._r0E.delay_ch4);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH04 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0E.delay_ch4);
             break;
         case XD12_ADDR_DELAY_CH05 :
-            print(LOG_INFO, "DELAY_CH05 - [%u]\r\n", gt_xd12_general_regs._r0F.delay_ch5);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH05 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r0F.delay_ch5);
             break;
         case XD12_ADDR_DELAY_CH06 :
-            print(LOG_INFO, "DELAY_CH06 - [%u]\r\n", gt_xd12_general_regs._r10.delay_ch6);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH06 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r10.delay_ch6);
             break;
         case XD12_ADDR_DELAY_CH07 :
-            print(LOG_INFO, "DELAY_CH07 - [%u]\r\n", gt_xd12_general_regs._r11.delay_ch7);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH07 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r11.delay_ch7);
             break;
         case XD12_ADDR_DELAY_CH08 :
-            print(LOG_INFO, "DELAY_CH08 - [%u]\r\n", gt_xd12_general_regs._r12.delay_ch8);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH08 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r12.delay_ch8);
             break;
         case XD12_ADDR_DELAY_CH09 :
-            print(LOG_INFO, "DELAY_CH09 - [%u]\r\n", gt_xd12_general_regs._r13.delay_ch9);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH09 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r13.delay_ch9);
             break;
         case XD12_ADDR_DELAY_CH10 :
-            print(LOG_INFO, "DELAY_CH10 - [%u]\r\n", gt_xd12_general_regs._r14.delay_ch10);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH10 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r14.delay_ch10);
             break;
         case XD12_ADDR_DELAY_CH11 :
-            print(LOG_INFO, "DELAY_CH11 - [%u]\r\n", gt_xd12_general_regs._r15.delay_ch11);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH11 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r15.delay_ch11);
             break;
         case XD12_ADDR_DELAY_CH12 :
-            print(LOG_INFO, "DELAY_CH12 - [%u]\r\n", gt_xd12_general_regs._r16.delay_ch12);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t DELAY_CH12 : [%u]\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r16.delay_ch12);
             break;
         case XD12_ADDR_SERIAL_CLOCK_GEN :
-            print(LOG_INFO, "SERIAL_LOW - [%u], SERIAL_HIGH - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r25.serial_clk_low, gt_xd12_general_regs._r25.serial_clk_high, gt_xd12_general_regs._r25.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t SERIAL_LOW  : [%u]\r\n"
+                            "\t SERIAL_HIGH : [%u]\r\n"
+                            "\t VALUE       : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r25.serial_clk_low, gt_xd12_general_regs._r25.serial_clk_high, gt_xd12_general_regs._r25.val);
             break;
         case XD12_ADDR_SERIAL_LATENCY :
-            print(LOG_INFO, "SERIAL_LATENCY - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r26.val, gt_xd12_general_regs._r26.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t SERIAL_LATENCY : [%u]\r\n"
+                            "\t VALUE          : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r26.serial_latency, gt_xd12_general_regs._r26.val);
             break;
         case XD12_ADDR_MCLK_LOCK_1 :
-            print(LOG_INFO, "MCLK_LOCK_CNT - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r27.val, gt_xd12_general_regs._r27.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t MCLK_LOCK_CNT : [%u]\r\n"
+                            "\t VALUE         : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r27.mclk_lock_cnt, gt_xd12_general_regs._r27.val);
             break;
         case XD12_ADDR_MCLK_LOCK_2 :
-            print(LOG_INFO, "MCLK_LOCK_CNT_E - [%u], FLL_RANGE - [%u], MCLK_LOCK_CNT - [%u] (0x%03X)\r\n", \
-                gt_xd12_general_regs._r28.mclk_lock_cnt_e, gt_xd12_general_regs._r28.fll_range, gt_xd12_general_regs._r28.mclk_lock_cnt, gt_xd12_general_regs._r28.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t MCLK_LOCK_CNT_E : [%u]\r\n"
+                            "\t FLL_RANGE       : [%u]\r\n"
+                            "\t MCLK_LOCK_CNT   : [%u]\r\n"
+                            "\t VALUE           : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r28.mclk_lock_cnt_e, gt_xd12_general_regs._r28.fll_range, gt_xd12_general_regs._r28.mclk_lock_cnt, gt_xd12_general_regs._r28.val);
             break;
         case XD12_ADDR_TEMP :
-            print(LOG_INFO, "OFS_TEMP - [%u], DAC_RNG - [%u], FLT_CNT - [%u], FLT_GAIN - [%u] (0x%03X)\r\n", \
-                gt_xd12_general_regs._r29.ofs_temp, gt_xd12_general_regs._r29.dac_rng, gt_xd12_general_regs._r29.flt_ctl, gt_xd12_general_regs._r29.flt_gain, gt_xd12_general_regs._r29.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OFS_TEMP : [%u]\r\n"
+                            "\t DAC_RNG  : [%u]\r\n"
+                            "\t FLT_CNT  : [%u]\r\n"
+                            "\t FLT_GAIN : [%u]\r\n"
+                            "\t VALUE    : (0x%03X)\r\n\r\n",
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r29.ofs_temp, gt_xd12_general_regs._r29.dac_rng, gt_xd12_general_regs._r29.flt_ctl, gt_xd12_general_regs._r29.flt_gain, gt_xd12_general_regs._r29.val);
             break;
         case XD12_ADDR_OSC_FLL_MANUAL_1 :
-            print(LOG_INFO, "OSC_FLL_MAN - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r2A.osc_fll_man, gt_xd12_general_regs._r2A.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OSC_FLL_MAN : [%u]\r\n"
+                            "\t VALUE       : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2A.osc_fll_man, gt_xd12_general_regs._r2A.val);
             break;
         case XD12_ADDR_OSC_FLL_MANUAL_2 :
-            print(LOG_INFO, "OSC_MAN_E - [%u], OSC_FLL_MAN - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r2B.osc_man_e, gt_xd12_general_regs._r2B.osc_fll_man, gt_xd12_general_regs._r2B.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OSC_MAN_E   : [%u]\r\n"
+                            "\t OSC_FLL_MAN : [%u]\r\n"
+                            "\t VALUE       : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2B.osc_man_e, gt_xd12_general_regs._r2B.osc_fll_man, gt_xd12_general_regs._r2B.val);
             break;
         case XD12_ADDR_OSC_FLL_MONITOR :
-            print(LOG_INFO, "OSC_FLL_FLT - [%u](0x%03X)\r\n", gt_xd12_general_regs._r2C.osc_fll_flt, gt_xd12_general_regs._r2C.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OSC_FLL_FLT : [%u]\r\n"
+                            "\t VALUE       : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2C.osc_fll_flt, gt_xd12_general_regs._r2C.val);
             break;
         case XD12_ADDR_OTP_ACCESS_1 :
-            print(LOG_INFO, "OTP_PG_ACCESS_CYCLE - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r3A.otp_pg_access_cycle, gt_xd12_general_regs._r3A.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OTP_PG_ACCESS_CYCLE : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3A.otp_pg_access_cycle, gt_xd12_general_regs._r3A.val);
             break;
         case XD12_ADDR_OTP_ACCESS_2 :
-            print(LOG_INFO, "OTP_PG_ACCESS_CYCLE - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r3B.otp_pg_access_cycle, gt_xd12_general_regs._r3B.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OTP_PG_ACCESS_CYCLE : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3B.otp_pg_access_cycle, gt_xd12_general_regs._r3B.val);
             break;
         case XD12_ADDR_OTP_WRITE :
-            print(LOG_INFO, "OTP_WSEL - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r3C.otp_wsel, gt_xd12_general_regs._r3C.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OTP_WSEL            : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3C.otp_wsel, gt_xd12_general_regs._r3C.val);
             break;
         case XD12_ADDR_OTP_RD_PROG :
-            print(LOG_INFO, "OTP_RD_START - [%u], OTP_PG_START - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r3D.otp_rd_start, gt_xd12_general_regs._r3D.otp_pg_start, gt_xd12_general_regs._r3D.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OTP_RD_START        : [%u]\r\n"
+                            "\t OTP_PG_START        : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3D.otp_rd_start, gt_xd12_general_regs._r3D.otp_pg_start, gt_xd12_general_regs._r3D.val);
             break;
         case XD12_ADDR_OTP_PROTECT :
-            print(LOG_INFO, "PROTECT_EN/DIS - [%u] (0x%03X)\r\n", gt_xd12_general_regs._r3E.protect_en, gt_xd12_general_regs._r3E.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t PROTECT_EN/DIS      : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3E.protect_en, gt_xd12_general_regs._r3E.val);
             break;
         case XD12_ADDR_OTP_OP_MODE :
-            print(LOG_INFO, "TEST_EN - [%u], DDIO_DS - [%u], TEST_ANA_EN - [%u], PWM_FULL_O - [%u], MCLK32_O - [%u], VREF_O - [%u], ADDR_EXT - [%u] (0x%03X)\r\n",\
-            gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.ddio_ds, gt_xd12_general_regs._r3F.test_ana_en, gt_xd12_general_regs._r3F.pwm_full_o, \
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t TEST_EN             : [%u]\r\n"
+                            "\t DDIO_DS             : [%u]\r\n"
+                            "\t TEST_ANA_EN         : [%u]\r\n"
+                            "\t PWM_FULL_O          : [%u]\r\n"
+                            "\t MCLK32_O            : [%u]\r\n"
+                            "\t VREF_O              : [%u]\r\n"
+                            "\t ADDR_EXT            : [%u]\r\n"
+                            "\t VALUE               : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.ddio_ds, gt_xd12_general_regs._r3F.test_ana_en, gt_xd12_general_regs._r3F.pwm_full_o,
             gt_xd12_general_regs._r3F.mclk32_o, gt_xd12_general_regs._r3F.vref_o, gt_xd12_general_regs._r3F.addr_ext, gt_xd12_general_regs._r3F.val);
             break;
         default :
@@ -468,89 +614,169 @@ void XD12_Read_All_Registers(void)
 
     for (uint8_t addr_offset = 0 ; addr_offset < XD12_ADDR_TRIM_MAX ; ++addr_offset)
     {
-        XD12_Read_Mirror_Reg(addr_offset);
         switch (addr_offset)
         {
         case XD12_ADDR_TRIM_OTP_CRC :
-            print(LOG_INFO, "OTP_CRC_CHECKSUM - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r00.otp_crc_checksum, gt_xd12_trim_regs._r00.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OTP_CRC_CHECKSUM : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r00.otp_crc_checksum, gt_xd12_trim_regs._r00.val);
             break;
         case XD12_ADDR_TRIM_OSC :
-            print(LOG_INFO, "OSC - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r01.osc, gt_xd12_trim_regs._r01.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t OSC              : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r01.osc, gt_xd12_trim_regs._r01.val);
             break;
         case XD12_ADDR_TRIM_VREF_CTL :
-            print(LOG_INFO, "VREF_CTL - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r02.vref_ctl, gt_xd12_trim_regs._r02.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t VREF_CTL         : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r02.vref_ctl, gt_xd12_trim_regs._r02.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_1 :
-            print(LOG_INFO, "ICTL_L_CH01 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r03.ictl_l_ch_x, gt_xd12_trim_regs._r03.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_1      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r03.ictl_l_ch_x, gt_xd12_trim_regs._r03.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_2 :
-            print(LOG_INFO, "ICTL_L_CH02 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r04.ictl_l_ch_x, gt_xd12_trim_regs._r04.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_2      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r04.ictl_l_ch_x, gt_xd12_trim_regs._r04.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_3 :
-            print(LOG_INFO, "ICTL_L_CH03 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r05.ictl_l_ch_x, gt_xd12_trim_regs._r05.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_3      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r05.ictl_l_ch_x, gt_xd12_trim_regs._r05.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_4 :
-            print(LOG_INFO, "ICTL_L_CH04 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r06.ictl_l_ch_x, gt_xd12_trim_regs._r06.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_4      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r06.ictl_l_ch_x, gt_xd12_trim_regs._r06.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_5 :
-            print(LOG_INFO, "ICTL_L_CH05 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r07.ictl_l_ch_x, gt_xd12_trim_regs._r07.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_5      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r07.ictl_l_ch_x, gt_xd12_trim_regs._r07.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_6 :
-            print(LOG_INFO, "ICTL_L_CH06 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r08.ictl_l_ch_x, gt_xd12_trim_regs._r08.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_6      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r08.ictl_l_ch_x, gt_xd12_trim_regs._r08.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_7 :
-            print(LOG_INFO, "ICTL_L_CH07 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r09.ictl_l_ch_x, gt_xd12_trim_regs._r09.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_7      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r09.ictl_l_ch_x, gt_xd12_trim_regs._r09.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_8 :
-            print(LOG_INFO, "ICTL_L_CH08 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r0A.ictl_l_ch_x, gt_xd12_trim_regs._r0A.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_8      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r0A.ictl_l_ch_x, gt_xd12_trim_regs._r0A.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_9 :
-            print(LOG_INFO, "ICTL_L_CH09 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r0B.ictl_l_ch_x, gt_xd12_trim_regs._r0B.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_9      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r0B.ictl_l_ch_x, gt_xd12_trim_regs._r0B.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_10 :
-            print(LOG_INFO, "ICTL_L_CH10 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r0C.ictl_l_ch_x, gt_xd12_trim_regs._r0C.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_10     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r0C.ictl_l_ch_x, gt_xd12_trim_regs._r0C.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_11 :
-            print(LOG_INFO, "ICTL_L_CH11 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r0D.ictl_l_ch_x, gt_xd12_trim_regs._r0D.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_11     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r0D.ictl_l_ch_x, gt_xd12_trim_regs._r0D.val);
             break;
         case XD12_ADDR_TRIM_ICTL_L_CH_12 :
-            print(LOG_INFO, "ICTL_L_CH12 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r0E.ictl_l_ch_x, gt_xd12_trim_regs._r0E.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_L_CH_12     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r0E.ictl_l_ch_x, gt_xd12_trim_regs._r0E.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_1 :
-            print(LOG_INFO, "ICTL_H_CH01 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r1B.ictl_h_ch_x, gt_xd12_trim_regs._r1B.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_1      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r1B.ictl_h_ch_x, gt_xd12_trim_regs._r1B.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_2 :
-            print(LOG_INFO, "ICTL_H_CH02 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r1C.ictl_h_ch_x, gt_xd12_trim_regs._r1C.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_2      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r1C.ictl_h_ch_x, gt_xd12_trim_regs._r1C.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_3 :
-            print(LOG_INFO, "ICTL_H_CH03 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r1D.ictl_h_ch_x, gt_xd12_trim_regs._r1D.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_3      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r1D.ictl_h_ch_x, gt_xd12_trim_regs._r1D.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_4 :
-            print(LOG_INFO, "ICTL_H_CH04 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r1E.ictl_h_ch_x, gt_xd12_trim_regs._r1E.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_4      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r1E.ictl_h_ch_x, gt_xd12_trim_regs._r1E.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_5 :
-            print(LOG_INFO, "ICTL_H_CH05 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r1F.ictl_h_ch_x, gt_xd12_trim_regs._r1F.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_5      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r1F.ictl_h_ch_x, gt_xd12_trim_regs._r1F.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_6 :
-            print(LOG_INFO, "ICTL_H_CH06 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r20.ictl_h_ch_x, gt_xd12_trim_regs._r20.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_6      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r20.ictl_h_ch_x, gt_xd12_trim_regs._r20.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_7 :
-            print(LOG_INFO, "ICTL_H_CH07 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r21.ictl_h_ch_x, gt_xd12_trim_regs._r21.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_7      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r21.ictl_h_ch_x, gt_xd12_trim_regs._r21.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_8 :
-            print(LOG_INFO, "ICTL_H_CH08 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r22.ictl_h_ch_x, gt_xd12_trim_regs._r22.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_8      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r22.ictl_h_ch_x, gt_xd12_trim_regs._r22.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_9 :
-            print(LOG_INFO, "ICTL_H_CH09 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r23.ictl_h_ch_x, gt_xd12_trim_regs._r23.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_9      : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r23.ictl_h_ch_x, gt_xd12_trim_regs._r23.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_10 :
-            print(LOG_INFO, "ICTL_H_CH10 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r24.ictl_h_ch_x, gt_xd12_trim_regs._r24.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_10     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r24.ictl_h_ch_x, gt_xd12_trim_regs._r24.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_11 :
-            print(LOG_INFO, "ICTL_H_CH11 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r25.ictl_h_ch_x, gt_xd12_trim_regs._r25.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_11     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r25.ictl_h_ch_x, gt_xd12_trim_regs._r25.val);
             break;
         case XD12_ADDR_TRIM_ICTL_H_CH_12 :
-            print(LOG_INFO, "ICTL_H_CH12 - [%u] (0x%03X)\r\n", gt_xd12_trim_regs._r26.ictl_h_ch_x, gt_xd12_trim_regs._r26.val);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t ICTL_H_CH_12     : [%u]\r\n"
+                            "\t VALUE            : (0x%03X)\r\n\r\n",
+            gs_xd12_mirror_regs_str[addr_offset], addr_offset, gt_xd12_trim_regs._r26.ictl_h_ch_x, gt_xd12_trim_regs._r26.val);
             break;
         default :
             continue;
@@ -667,6 +893,7 @@ void XD12_Init(void)
         }
         XD12_Write_General_Reg(xd12_addr, *(p_xd_reg_base_addr + xd12_addr));
     }
+
     XD12_set_delay_ch();
 
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -895,11 +1122,11 @@ uint64_t XD12_Compare_Trim_Regs(void)
         if (gn_xd12_saved_trim_reg[trim_addr] != u16_reg_val)
         {
             ret |= ((uint64_t)1 << trim_addr);
-            print(LOG_INFO, "%s %s - NG", ANSI_FONT_RED, gs_xd12_addr_trim_str[trim_addr]);
+            print(LOG_INFO, "%s %17s - NG", ANSI_FONT_RED, gs_xd12_mirror_regs_str[trim_addr]);
         }
         else
         {
-            print(LOG_INFO, "%s %s - OK", ANSI_FONT_GREEN, gs_xd12_addr_trim_str[trim_addr]);
+            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gs_xd12_mirror_regs_str[trim_addr]);
         }
         print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xd12_saved_trim_reg[trim_addr], u16_reg_val, ANSI_FONT_NONE);
     }
@@ -922,7 +1149,7 @@ void XD12_Trim_Init_OSC(void)
     gt_xd12_general_regs._r3F.vref_o = 0;
     gt_xd12_general_regs._r3F.mclk32_o = 1;
     gt_xd12_general_regs._r3F.pwm_full_o = 0;
-    gt_xd12_general_regs._r3F.test_ana_en = 3;
+    gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
     XD12_Set_OSC_Manual_En(true);
@@ -934,7 +1161,7 @@ void XD12_Trim_Init_ICTL(void)
     gt_xd12_general_regs._r3F.vref_o = 0;
     gt_xd12_general_regs._r3F.mclk32_o = 0;
     gt_xd12_general_regs._r3F.pwm_full_o = 1;
-    gt_xd12_general_regs._r3F.test_ana_en = 3;
+    gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
     gt_xd12_general_regs._r08.max_curr_vref = 3276;

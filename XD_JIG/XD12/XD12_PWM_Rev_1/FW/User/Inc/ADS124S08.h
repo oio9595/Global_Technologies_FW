@@ -642,7 +642,8 @@ EXTERN int32_t ads114s08_get_rdata(uint8_t *dStatus, uint8_t *dCRC);
 
 EXTERN void ADC_DRDY_INT_Handler(void);
 EXTERN uint16_t ADS114S08_Get_Adc_Value(void);
-EXTERN double convert_adc_to_current(uint16_t adc, current_gain_t gain);
-EXTERN uint16_t convert_current_to_adc(double current_A, current_gain_t gain);
+
+EXTERN double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
+EXTERN uint16_t JigBD_IF_Convert_Current_To_Adc(double current_A, current_gain_t gain);
 
 #endif /* ADS124S08_H_ */
