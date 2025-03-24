@@ -22,6 +22,8 @@
  extern "C" {
 #endif
 
+#include "types.h"
+
 #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
 #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
 #define CURRENT_SENSE_R_HIGH        (28.0f)     /* ohm */
@@ -62,7 +64,8 @@ EXTERN uint16_t gu16_pwm_rx_fallingBuffer[36*12];
 
 EXTERN volatile uint16_t gn_xd_rx_timeout;
 
-EXTERN uint8_t gu8_freq_input_capture_activated;
+EXTERN bool gb_timer_input_capture_activated;
+EXTERN bool gb_timer_input_capture_done;
 
 /* BEGIN - INTERFACE FUNCTIONS */
 EXTERN void us_tdelay(uint16_t n_delay);
@@ -85,11 +88,13 @@ EXTERN uint16_t JigBD_IF_Read_Command(uint8_t in_addr);
 EXTERN uint16_t JigBD_IF_Fault_Read_Command(void);
 
 //Read Frequency Hz
-EXTERN void JigBD_IF_TIM_Capture_Start(void);
-EXTERN void JigBD_IF_TIM_Capture_Stop(void);
-EXTERN uint16_t JigBD_IF_Freq_Get(void);
-EXTERN double JigBD_IF_Freq_Count_to_MHZ(uint16_t count);
+EXTERN void JigBD_IF_Input_Capture_Start(void);
+EXTERN void JigBD_IF_Input_Capture_Stop(void);
+EXTERN uint16_t JigBD_IF_Input_Capture_Get_Freq(void);
+EXTERN void JigBD_IF_Input_Capture_Calculate_Freq(void);
+
 EXTERN uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq);
+EXTERN double JigBD_IF_Freq_Count_to_MHZ(uint16_t count);
 
 EXTERN uint16_t JigBD_IF_Convert_Volt_to_VREF_ADC(double in_volt);
 EXTERN double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc);

@@ -140,14 +140,6 @@ void Trim_IF_Screening_Start(void)
 void Trim_IF_Set_OTP_Enable(bool in_flag)
 {
     gb_xd_otp_write_flag = in_flag;
-    if(gb_xd_otp_write_flag)
-    {
-        print(LOG_INFO, "\r\nOTP_WRITE_ENABLE is ON.\r\n");
-    }
-    else
-    {
-        print(LOG_INFO, "\r\nOTP_WRITE_ENABLE is off.\r\n");
-    }
 }
 
 bool Trim_IF_Get_OTP_Enable(void)
@@ -740,13 +732,13 @@ void Trimming_Procedure_Run(void)
             {
             case TRIM_VREF_CTL:
                 XD12_Trim_Init_VREF_CTL();
-                gn_step_delay = 10;
+                gn_step_delay = 50;
                 gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_DONE;
                 break;
             case TRIM_OSC_FREQUENCY:
                 XD12_Trim_Init_OSC();
-                JigBD_IF_TIM_Capture_Start();
-                gn_step_delay = 60;
+                JigBD_IF_Input_Capture_Start();
+                gn_step_delay = 10;
                 gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_DONE;
                 break;
             case TRIM_ICTL_L_CHS:
@@ -782,8 +774,11 @@ void Trimming_Procedure_Run(void)
                 switch(gt_trim_search_mode)
                 {
                 case TRIM_OSC_FREQUENCY:
-                    JigBD_IF_TIM_Capture_Stop();
-                    gt_jig_trimming_step = TRIMMING_STEP_CHECK;
+                    if (gb_timer_input_capture_done)
+                    {
+                        JigBD_IF_Input_Capture_Stop();
+                        gt_jig_trimming_step = TRIMMING_STEP_CHECK;
+                    }
                     break;
 
                 case TRIM_VREF_CTL:
@@ -876,7 +871,7 @@ void Trimming_Procedure_Run(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OSC;
                     u8_tmp_channel_max = 1;
                     t_trim_search_mode_next = TRIM_ICTL_L_CHS;
-                    u16_tmp_adc_cur = JigBD_IF_Freq_Get();
+                    u16_tmp_adc_cur = JigBD_IF_Input_Capture_Get_Freq();
                     break;
                 case TRIM_ICTL_L_CHS:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_ICTL_L;
@@ -1058,7 +1053,7 @@ void Trimming_Procedure_Run(void)
         case TRIMMING_STEP_RESULT:
             if(gt_trim_error_code == TRIM_ERROR_OVER_COUNT)
             {
-                print(LOG_ERROR, "%s======== TRIM_ERROR_OVER_COUNT ========%s\r\n", FONT_RED, FONT_NONE);
+                print(LOG_ERROR, "%s======== TRIM_ERROR_OVER_COUNT ========%s\r\n", ANSI_FONT_RED, ANSI_FONT_NONE);
             }
             else
             {
@@ -1094,11 +1089,11 @@ void Trimming_Procedure_Run(void)
             {
                 if(XD12_Compare_Trim_Regs())
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR ========%s\r\n", FONT_RED, FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR ========%s\r\n", ANSI_FONT_RED, ANSI_FONT_NONE);
                 }
                 else
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK ========%s\r\n", FONT_GREEN, FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK ========%s\r\n", ANSI_FONT_GREEN, ANSI_FONT_NONE);
                 }
                 gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
             }

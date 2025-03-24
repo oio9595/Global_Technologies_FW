@@ -90,13 +90,9 @@ typedef enum
     LOG_MAX,
 }LOG_LV_T;
 
-EXTERN uint8_t gu8_freq_input_dma_flg;
 EXTERN void print(LOG_LV_T log_lv, const char *fmt, ...);
 EXTERN void comm_rx_handler(uint8_t rx);
 EXTERN void sys_tick_handler(void);
-EXTERN void set_input_freq_init(void);
-EXTERN uint32_t get_input_freq(void);
-EXTERN void calc_input_freq(void);
 
 /* USER CODE END EFP */
 

@@ -34,8 +34,6 @@
 #define MCLK                            (39319200.0f)
 #define VSYNC                           (120.0f)
 
-#define XD_DAISY_NUM                    (1)
-
 typedef enum
 {
     XD12_REG_TYPE_NON_TRIM = 0,

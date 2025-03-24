@@ -715,6 +715,9 @@ void XD12_Trim_Init(void)
             gt_xd12_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
             gt_xd12_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
             break;
+        case XD12_ADDR_SERIAL_LATENCY :
+            gt_xd12_general_regs._r26.serial_latency = 60;
+            break;
         case XD12_ADDR_OTP_OP_MODE :
             gt_xd12_general_regs._r3F.test_en = 1;
             gt_xd12_general_regs._r3F.ddio_ds = 1;
@@ -892,13 +895,13 @@ uint64_t XD12_Compare_Trim_Regs(void)
         if (gn_xd12_saved_trim_reg[trim_addr] != u16_reg_val)
         {
             ret |= ((uint64_t)1 << trim_addr);
-            print(LOG_INFO, "%s %s - NG", FONT_RED, gs_xd12_addr_trim_str[trim_addr]);
+            print(LOG_INFO, "%s %s - NG", ANSI_FONT_RED, gs_xd12_addr_trim_str[trim_addr]);
         }
         else
         {
-            print(LOG_INFO, "%s %s - OK", FONT_GREEN, gs_xd12_addr_trim_str[trim_addr]);
+            print(LOG_INFO, "%s %s - OK", ANSI_FONT_GREEN, gs_xd12_addr_trim_str[trim_addr]);
         }
-        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xd12_saved_trim_reg[trim_addr], u16_reg_val, FONT_NONE);
+        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xd12_saved_trim_reg[trim_addr], u16_reg_val, ANSI_FONT_NONE);
     }
 
     return ret;

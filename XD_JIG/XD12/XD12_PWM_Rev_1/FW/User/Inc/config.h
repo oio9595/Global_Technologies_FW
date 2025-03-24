@@ -79,9 +79,10 @@
 #define VERSION_MINOR       0x0001
 #define VERSION_REVISION    0x0001
 
-#define FONT_NONE    "\033[0m"
-#define FONT_GREEN   "\033[0;32m"
-#define FONT_RED     "\033[0;31m"
+#define ANSI_FONT_NONE      "\033[0m"
+#define ANSI_FONT_RED       "\033[0;31m"
+#define ANSI_FONT_GREEN     "\033[0;32m"
+#define ANSI_FONT_YELLOW    "\033[0;33m"
 
 #endif /* ~__CONFIG_H__ */
 

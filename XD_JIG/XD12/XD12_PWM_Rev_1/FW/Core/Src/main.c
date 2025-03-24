@@ -24,7 +24,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <float.h>
 #include "config.h"
 
 /* USER CODE END Includes */
@@ -105,14 +104,7 @@ static RX_UART_t gt_rx_uart;
 static uint32_t gn_timeout_trimming_procedure_run;
 static uint32_t gn_timeout_screening_procedure_run;
 
-static double gf_freq_avg;
-static double gf_freq_min;
-static double gf_freq_max;
-
 static LOG_LV_T gt_log_lv = LOG_DEBUG;
-
-uint8_t gu8_freq_input_dma_flg;
-static uint32_t gu32_input_freq_capture[FREQ_IN_IC_LENGTH];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -150,61 +142,6 @@ void sys_tick_handler(void)
     if (gn_xd_rx_timeout)
     {
         --gn_xd_rx_timeout;
-    }
-}
-
-void set_input_freq_init(void)
-{
-    gf_freq_avg = 0;
-    gf_freq_min = DBL_MAX;
-    gf_freq_max = 0;
-
-    gu8_freq_input_dma_flg = 0;
-}
-
-uint32_t get_input_freq(void)
-{
-    return (uint32_t)(gf_freq_avg + 0.5f);
-}
-
-void calc_input_freq(void)
-{
-    if(gu8_freq_input_capture_activated == 1)
-    {
-        double f_freq = 0;
-        double f_freq_avg = 0;
-        uint32_t delta = 0;
-        uint32_t n_count = 0;
-
-        for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
-        {
-            if(gu32_input_freq_capture[i + 1] > gu32_input_freq_capture[i + 0])
-            {
-                delta = (gu32_input_freq_capture[i + 1] - gu32_input_freq_capture[i + 0]);
-            }
-            else
-            {
-                delta = (0xFFFFFFFF - gu32_input_freq_capture[i + 0]) + gu32_input_freq_capture[i + 1] + 1;
-            }
-
-            f_freq = (TIM5_FREQ / delta);
-            f_freq_avg += f_freq;
-
-            ++n_count;
-        }
-
-        gf_freq_avg = (f_freq_avg / n_count);
-        if(gf_freq_min > gf_freq_avg)
-        {
-            gf_freq_min = gf_freq_avg;
-        }
-
-        if(gf_freq_max < gf_freq_avg)
-        {
-            gf_freq_max = gf_freq_avg;
-        }
-
-        gu8_freq_input_dma_flg = 0;
     }
 }
 
@@ -313,17 +250,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     print(LOG_INFO, "\r\nstart %s TRIMMING_JIG application....\r\n", TARGET_CHIP_NAME);
-    print(LOG_INFO, "Build time : %s / %s\r\n", __DATE__, __TIME__ );
+    print(LOG_INFO, " - Build time : %s / %s\r\n", __DATE__, __TIME__ );
 
     /* for GUI App */
-    print(LOG_INFO, "XD12 PWM IS SELECTED!\r\n");
-    print(LOG_INFO, "XC24 ES2 IS SELECTED!\r\n");
-
-    USE_XC24(TRUE);
-    print(LOG_INFO, "%s", (IS_XC24() ? "\r\n SUPPORT XC24\r\n" : "\r\n NOT SUPPORT XC24\r\n"));
+    print(LOG_INFO, "%s - XD12 PWM REV_01 IS SELECTED! %s\r\n", ANSI_FONT_YELLOW, ANSI_FONT_NONE);
 
     Trim_IF_Set_OTP_Enable(FALSE);
-    print(LOG_INFO, "%s", (Trim_IF_Get_OTP_Enable() ? "XD OTP WRITE ENABLE\r\n" : "XD OTP WRITE DISABLE\r\n"));
+    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD12 OTP WRITE ENABLE" : "- XD12 OTP WRITE DISABLE"), ANSI_FONT_NONE);
+
+    USE_XC24(FALSE);
+    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
 
     Trim_Calculate_Spec();
     ADS114S08_Init();
@@ -350,6 +286,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
     JigTestMainTask();
     TaskDebugUart();
+
+    XD12_Vsync_Task();
   }
   /* USER CODE END 3 */
 }
@@ -482,11 +420,8 @@ static void MX_ADC1_Init(void)
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_8);
   LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_8, LL_ADC_SAMPLINGTIME_480CYCLES);
   /* USER CODE BEGIN ADC1_Init 2 */
-
     LL_ADC_Enable(ADC1);
-
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -979,9 +914,10 @@ static void MX_TIM5_Init(void)
   LL_TIM_IC_SetFilter(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
   LL_TIM_IC_SetPolarity(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
   /* USER CODE BEGIN TIM5_Init 2 */
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gu32_input_freq_capture);
+    #if 0
+        LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
+        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gu32_input_freq_capture);
+    #endif
 
     LL_TIM_EnableDMAReq_CC1(TIM5);
     LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1);
@@ -1343,6 +1279,8 @@ static void MX_GPIO_Init(void)
   NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
+    PWM_SWITCH_LO();
+
 	GPIO_InitStruct.Pin = XD_FB_IN_Pin;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
@@ -1405,12 +1343,14 @@ static void TaskDebugUart(void)
         else if(Command_is_("jig_ic_start"))
         {
             print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
-            JigBD_IF_TIM_Capture_Start();
+            JigBD_IF_Input_Capture_Start();
         }
         else if(Command_is_("jig_ic_stop"))
         {
-            JigBD_IF_TIM_Capture_Stop();
-            print(LOG_INFO, "\r\n Stop timer for freq input capture : %1.6f(%u) [kHz] => %1.6f [MHz]\r\n", gf_freq_avg/1000, JigBD_IF_Freq_Get(), ((gf_freq_avg/1000000) * TIM_CAPTURE_EXT_PRESCALER));
+            uint32_t u32_input_freq_Hz = JigBD_IF_Input_Capture_Get_Freq();
+
+            JigBD_IF_Input_Capture_Stop();
+            print(LOG_INFO, "\r\n Stop timer for freq input capture : %u [Hz] => %1.6f [MHz]\r\n", u32_input_freq_Hz, ((u32_input_freq_Hz * TIM_CAPTURE_EXT_PRESCALER) / 1000000.0f));
         }
         else if(Command_is_("jig_vref_start"))
         {
@@ -1730,11 +1670,11 @@ static void TaskDebugUart(void)
             for (uint8_t i = 0 ; i <= REG_LIMIT_OSC ; ++i)
             {
                 XD12_Write_Mirror_Reg(0x01, i);
-                JigBD_IF_TIM_Capture_Start();
+                JigBD_IF_Input_Capture_Start();
                 LL_mDelay(150);
-                JigBD_IF_TIM_Capture_Stop();
+                JigBD_IF_Input_Capture_Stop();
 
-                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Freq_Count_to_MHZ(JigBD_IF_Freq_Get()));
+                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Freq_Count_to_MHZ(JigBD_IF_Input_Capture_Get_Freq()));
             }
         }
 
@@ -1808,7 +1748,7 @@ static void TaskDebugUart(void)
         }
         else
         {
-            print(LOG_INFO, "\r\nWhat?\n\r");
+            print(LOG_INFO, "\r\n What?\n\r");
         }
     }
 }

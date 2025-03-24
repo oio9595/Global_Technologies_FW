@@ -23,6 +23,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "JigBd_IF.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -235,8 +236,9 @@ void DMA1_Stream2_IRQHandler(void)
         LL_DMA_ClearFlag_TC2(DMA1);
         LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
 
-        gu8_freq_input_dma_flg = 1;
-        calc_input_freq();
+        JigBD_IF_Input_Capture_Calculate_Freq();
+
+        gb_timer_input_capture_done = 1;
     }
     else if(LL_DMA_IsActiveFlag_TE2(DMA1) == 1)
     {

@@ -32,7 +32,7 @@ extern bool gb_jig_vsync_running_flag;
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);
-extern void Vsync_Update_Function(void);
+extern void XD12_Vsync_Task(void);
 
 extern void XD12_Set_Write_Target_Reg(uint8_t addr, uint16_t data);
 extern void XD12_Set_Read_Target_Reg(uint8_t addr);

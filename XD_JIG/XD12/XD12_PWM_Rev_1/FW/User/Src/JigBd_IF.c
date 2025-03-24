@@ -7,6 +7,7 @@
  */
 #define __JIG_BD_IF_C__
 #include "config.h"
+#include <float.h>
 
 #define VREF_ADC_REF_VOLT       3.3f
 #define VREF_ADC_RESOLUTION     4095.0f
@@ -44,17 +45,23 @@
 
 static uint16_t gu16_InternalADC;
 
-uint16_t gu16_pwm_tx_risingBuffer[36*12];
+uint16_t gu16_pwm_tx_risingBuffer[36 * 12];
 
-uint16_t gu16_pwm_rx_risingBuffer[36*12];
-uint16_t gu16_pwm_rx_fallingBuffer[36*12];
-
-uint8_t gu8_freq_input_capture_activated;
+uint16_t gu16_pwm_rx_risingBuffer[36 * 12];
+uint16_t gu16_pwm_rx_fallingBuffer[36 * 12];
 
 volatile uint16_t gn_xd_rx_timeout;
 static volatile bool gb_xd_timeout;
 
 volatile bool gb_pwm_dma_tx_flag;
+
+static double gf_xd12_internal_freq_Hz;
+static double gf_freq_min;
+static double gf_freq_max;
+
+bool gb_timer_input_capture_activated;
+bool gb_timer_input_capture_done;
+static uint32_t gu32_input_freq_capture[FREQ_IN_IC_LENGTH];
 
 void us_tdelay(uint16_t us_delay)
 {
@@ -272,17 +279,14 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 }
 
 /* BEGIN - Internal ADC ******************************************/
-#define VREF_MEASURE_CNT_MAX 10
+#define VREF_MEASURE_CNT_MAX 20
 void JigBD_IF_VREF_ADC_StartStop(void)
 {
     uint32_t u32_InternalADC = 0;
     for (uint8_t cnt = 0 ; cnt < VREF_MEASURE_CNT_MAX ; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
-        while(!LL_ADC_IsActiveFlag_EOCS(ADC1))
-        {
-
-        }
+        while(!LL_ADC_IsActiveFlag_EOCS(ADC1)) {}
         LL_ADC_ClearFlag_EOCS(ADC1);
         u32_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
     }
@@ -309,23 +313,82 @@ double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc)
 /* END - Internal ADC ******************************************/
 
 /* BEGIN - PWM Read Frequency ******************************************/
-void JigBD_IF_TIM_Capture_Start(void)
+void JigBD_IF_Input_Capture_Start(void)
 {
-    gu8_freq_input_capture_activated = 1;
-    set_input_freq_init();
+    gf_xd12_internal_freq_Hz = 0;
+    gf_freq_min = DBL_MAX;
+    gf_freq_max = 0;
+
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gu32_input_freq_capture);
 
     LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_2, FREQ_IN_IC_LENGTH);
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_2);
 
     LL_GPIO_ResetOutputPin(CNT_MR_GPIO_Port, CNT_MR_Pin);
+
+    gb_timer_input_capture_activated = 1;
+    gb_timer_input_capture_done = 0;
 }
 
-void JigBD_IF_TIM_Capture_Stop(void)
+void JigBD_IF_Input_Capture_Stop(void)
 {
-    gu8_freq_input_capture_activated = 0;
-    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
+    gb_timer_input_capture_activated = 0;
+    gb_timer_input_capture_done = 0;
 
+    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
     LL_GPIO_SetOutputPin(CNT_MR_GPIO_Port, CNT_MR_Pin);
+}
+
+uint16_t JigBD_IF_Input_Capture_Get_Freq(void)
+{
+    uint32_t input_freq = (uint32_t)(gf_xd12_internal_freq_Hz + 0.5f);
+    if(input_freq > 65535) //2^16-1
+    {
+        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
+        return 0;
+    }
+    print(LOG_DEBUG, "\r\n JigBD_IF_Input_Capture_Get_Freq() : %d", input_freq);
+    return (uint16_t)input_freq;
+}
+
+void JigBD_IF_Input_Capture_Calculate_Freq(void)
+{
+    if(gb_timer_input_capture_activated == 1)
+    {
+        double f_freq = 0;
+        double f_freq_avg = 0;
+        uint32_t delta = 0;
+        uint32_t n_count = 0;
+
+        for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
+        {
+            if(gu32_input_freq_capture[i + 1] > gu32_input_freq_capture[i + 0])
+            {
+                delta = (gu32_input_freq_capture[i + 1] - gu32_input_freq_capture[i + 0]);
+            }
+            else
+            {
+                delta = (0xFFFFFFFF - gu32_input_freq_capture[i + 0]) + gu32_input_freq_capture[i + 1] + 1;
+            }
+
+            f_freq = (TIM5_FREQ / delta);
+            f_freq_avg += f_freq;
+
+            ++n_count;
+        }
+
+        gf_xd12_internal_freq_Hz = (f_freq_avg / n_count);
+        if(gf_freq_min > gf_xd12_internal_freq_Hz)
+        {
+            gf_freq_min = gf_xd12_internal_freq_Hz;
+        }
+
+        if(gf_freq_max < gf_xd12_internal_freq_Hz)
+        {
+            gf_freq_max = gf_xd12_internal_freq_Hz;
+        }
+    }
 }
 
 uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq) //input must be 'MHz'
@@ -348,30 +411,16 @@ uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq) //input must be 'MHz'
     return (uint16_t)u32_rtn_val;
 }
 
-uint16_t JigBD_IF_Freq_Get(void)
-{
-    uint32_t input_freq = get_input_freq();
-    if(input_freq > 65535) //2^16-1
-    {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_Get() Retrun[%d] is TOO BIG\r\n", input_freq);
-        return 0;
-    }
-    // print(LOG_DEBUG, "\r\n JigBD_IF_Freq_Get() : %d",get_input_freq());
-    return (uint16_t)input_freq;
-}
-
 double JigBD_IF_Freq_Count_to_MHZ(uint16_t count)
 {
     double rtn_freq = 0.0;
     if(count >= 65535) //2^16-1
     {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_Get() Retrun[%d] is TOO BIG\r\n", count);
+        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", count);
         return 0;
     }
 
     rtn_freq = ((double)count * TIM_CAPTURE_EXT_PRESCALER) / 1000000;
-
-    // print(LOG_INFO, "\r\n JigBD_IF_Freq_Get() : %d",get_input_freq());
     return rtn_freq;
 }
 /* END - PWM Read Frequency ******************************************/
@@ -507,7 +556,7 @@ void MCU_IF_Write_XD12(uint8_t in_addr, uint16_t in_data)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_NUM ; ++i)
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
     {
         //bit21 : start
         gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
@@ -574,7 +623,7 @@ static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_NUM ; ++i)
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
     {
         //bit9 : start
         gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
@@ -609,7 +658,7 @@ static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
     {
         if (gn_xd_rx_timeout == 0)
         {
-            print(LOG_ERROR, "%sTx Timeout!!!\r\n%s", FONT_RED, FONT_NONE);
+            print(LOG_ERROR, "%sTx Timeout!!!\r\n%s", ANSI_FONT_RED, ANSI_FONT_NONE);
             break;
         }
     }
@@ -628,7 +677,7 @@ static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
 
     if (gb_xd_timeout)
     {
-        print(LOG_ERROR, "%sRx Timeout!!!\r\n%s", FONT_RED, FONT_NONE);
+        print(LOG_ERROR, "%sRx Timeout!!!\r\n%s", ANSI_FONT_RED, ANSI_FONT_NONE);
         gb_xd_timeout = false;
     }
     else
@@ -655,7 +704,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_NUM ; ++i)
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
     {
         //bit25 : start
         gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
@@ -769,7 +818,7 @@ static void MCU_IF_IdGen_Command()
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_NUM ; ++i)
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
     {
         //bit21 : start
         gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;

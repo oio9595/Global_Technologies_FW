@@ -47,7 +47,7 @@ void Vsync_Update_Handler(void)
     gb_xd12_vsync_flag = true;
 }
 
-void Vsync_Update_Function(void)
+void XD12_Vsync_Task(void)
 {
     if (gb_xd12_vsync_flag)
     {
