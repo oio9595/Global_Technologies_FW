@@ -423,6 +423,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
     LL_ADC_Enable(ADC1);
   /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**

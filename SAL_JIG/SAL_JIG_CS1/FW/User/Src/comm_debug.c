@@ -237,9 +237,9 @@ void comm_print_startup(void)
     print(LOG_LV_INFO, "\n\r-Log_lv\t\t: %s", gs_uart_log_lv_str[gt_log_lv]);
 
 #if (OTP_WRITE_EN == OTP_WRITE_TRUE)
-    print(LOG_LV_INFO, "\n\r-SAL OTP Write Enable");
+    print(LOG_LV_INFO, "\n\r-SAL OTP Write\t: Enable");
 #else
-    print(LOG_LV_INFO, "\n\r-SAL OTP Write Disable");
+    print(LOG_LV_INFO, "\n\r-SAL OTP Write\t: Disable");
 #endif
     print(LOG_LV_INFO, "\n\r--------------------------------------");
     print(LOG_LV_INFO, gp_msg_prompt);
