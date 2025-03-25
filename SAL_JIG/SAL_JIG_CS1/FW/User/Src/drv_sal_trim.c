@@ -15,10 +15,6 @@
 
 #ifdef __DRV_SAL_TRIM_C__
 
-#define OTP_WRITE_TRUE          (1)
-#define OTP_WRITE_FALSE         (0)
-#define OTP_WRITE_EN            OTP_WRITE_TRUE
-
 #define TRIM_WAFER              (0)
 #define TRIM_FULL               (1)
 #define TRIM_TYPE               TRIM_FULL
@@ -37,12 +33,12 @@
 #define SAL_OTP_PROTECT_ON      (0x5A5)
 #define SAL_OTP_PROTECT_OFF     (0xA5A)
 
-#define CONV_V_to_mV            (1000.0f)
+#define CONST_V_to_mV           (1000.0f)
 #define V_TRIM_BGR_MUL          (1.0f)
 #define I_TRIM_BGR_MUL          (510.0f * 1.0)
 #define LDO_CTL_MUL             (1.0f)
 
-#define CONV_MHz_to_KHz         (1000.0f)
+#define CONST_MHz_to_KHz        (1000.0f)
 #define SAL_INTERNAL_DIVIDE     (16)
 #define SAL_JIG_DIVIDE          (64)
 
@@ -86,18 +82,8 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
     /*TEMP_TRIM_BGR*/ {     495.0,      547.0,      0.0}, // 521 reg value
 
                       // TARGET_R    TARGET_G   TARGET_B
-#if (SAL_TYPE == SAL_TYPE_A)
-    /*CURRENT_ITRIM*/ {      20.0,       20.0,     20.0}, // mA
-    /*CURRENT_GAIN*/  {       0.0,        0.0,      0.0}, // mA
-#else
-    /*CURRENT_ITRIM*/ {    0.6349,    0.6349,    0.6349}, // mA
-    /*CURRENT_GAIN*/  {    3.8095,    3.8095,    3.8095}, // mA
-#endif
+    /*CURRENT_ITRIM*/ {      22.3,       13.8,     6.24}, // mA
 };
-
-#define SAL_ITRIM_P1    ( 1 << 6)
-#define SAL_ITRIM_P2    ( 3 << 6)
-#define SAL_GAIN_P1     (12 << 6)
 
 static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =
 {
@@ -111,13 +97,7 @@ static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =
     0x1F, /*ADC_GAIN*/
     0x1FF, /*ADC_OFFSET*/
     0x3F, /*TEMP_TRIM_BGR*/
-#if (SAL_TYPE == SAL_TYPE_A)
     0xFF, /*CURRENT_ITRIM*/
-    0x00  /*CURRENT_GAIN, NULL*/
-#else
-    0xFF, /*CURRENT_ITRIM, TBD*/
-    0xFF, /*CURRENT_GAIN, TBD*/
-#endif
 };
 
 static uint16_t gn_sal_trim_range[TRIM_MODE_MAX][SAL_CH_MAX][TRIM_PARAM_MAX];
@@ -131,11 +111,6 @@ static uint16_t gn_sal_trim_v_trim_r1_r2_cnt;
 
 static uint16_t gn_sal_trim_ldo[8];
 static uint16_t gn_sal_trim_ldo_cnt;
-
-#if (SAL_TYPE == SAL_TYPE_B)
-static uint8_t gn_sal_trim_itrim_cnt;
-static uint16_t gn_sal_trim_itrim[2];
-#endif
 
 static uint8_t gn_sal_trim_ch;
 
@@ -163,7 +138,6 @@ static uint8_t gn_adc_ch_table[TRIM_MODE_MAX] =
     ADC_CH_NONE,        //TRIM_MODE_ADC_OFFSET
     ADC_CH_NONE,        //TRIM_MODE_TEMP_TRIM_BGR
     ADC_CH_SAL_IOUT,    //TRIM_MODE_CURRENT_ITRIM
-    ADC_CH_SAL_IOUT,    //TRIM_MODE_CURRENT_GAIN
 };
 
 static const char* gs_sal_trim_addr_str[SAL_TRIM_ADDR_MAX] =
@@ -244,7 +218,6 @@ static const char* gs_sal_trim_mode_str[TRIM_MODE_MAX] =
     "TRIM_MODE_ADC_OFFSET",
     "TRIM_MODE_TEMP_TRIM_BGR",
     "TRIM_MODE_CURRENT_ITRIM",
-    "TRIM_MODE_CURRENT_GAIN",
 };
 
 static const char* gs_sal_trim_adj_flag_str[TRIM_ADJ_FLAG_MAX] =
@@ -663,32 +636,6 @@ static void sal_trim_reg_write(uint8_t ch, trim_mode_t trim_mode, uint16_t n_val
             i2c_info.data = gt_sal_trim_regs._rEE.val;
         }
         break;
-    case TRIM_MODE_CURRENT_GAIN :
-#if (SAL_TYPE == SAL_TYPE_B)
-        if (ch == 0)
-        {
-            gt_sal_trim_regs._rE8.gain_r = n_value;
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP1_MIRROR5;
-            i2c_info.data = gt_sal_trim_regs._rE8.val;
-        }
-        else if (ch == 1)
-        {
-            gt_sal_trim_regs._rE8.gain_g = ((n_value & 0x0F) >> 0);
-            gt_sal_trim_regs._rE9.gain_g = ((n_value & 0xF0) >> 4);
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP1_MIRROR5;
-            i2c_info.data = gt_sal_trim_regs._rE8.val;
-            sal_write_reg_i2c(&i2c_info);
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP1_MIRROR6;
-            i2c_info.data = gt_sal_trim_regs._rE9.val;
-        }
-        else
-        {
-            gt_sal_trim_regs._rE9.gain_b = n_value;
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP1_MIRROR6;
-            i2c_info.data = gt_sal_trim_regs._rE9.val;
-        }
-#endif
-        break;
     default :
         break;
     }
@@ -713,13 +660,13 @@ void sal_calculate_trim_range(void)
             switch (trim_mode)
             {
             case TRIM_MODE_V_TRIM_BGR :
-                gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_BGR][TRIM_PARAM_TARGET_MIN] * CONV_V_to_mV * V_TRIM_BGR_MUL);
-                gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_BGR][TRIM_PARAM_TARGET_MAX] * CONV_V_to_mV * V_TRIM_BGR_MUL);
+                gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_BGR][TRIM_PARAM_TARGET_MIN] * CONST_V_to_mV * V_TRIM_BGR_MUL);
+                gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_BGR][TRIM_PARAM_TARGET_MAX] * CONST_V_to_mV * V_TRIM_BGR_MUL);
                 gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET] = (uint16_t)((gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MIN] + gn_sal_trim_range[TRIM_MODE_V_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MAX]) / 2 + 0.5f);
                 break;
             case TRIM_MODE_V_TRIM_R1_R2 :
-                gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_R1_R2][TRIM_PARAM_TARGET_MIN] * CONV_V_to_mV * V_TRIM_BGR_MUL);
-                gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_R1_R2][TRIM_PARAM_TARGET_MAX] * CONV_V_to_mV * V_TRIM_BGR_MUL);
+                gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_R1_R2][TRIM_PARAM_TARGET_MIN] * CONST_V_to_mV * V_TRIM_BGR_MUL);
+                gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_V_TRIM_R1_R2][TRIM_PARAM_TARGET_MAX] * CONST_V_to_mV * V_TRIM_BGR_MUL);
                 gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET] = (uint16_t)((gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MIN] + gn_sal_trim_range[TRIM_MODE_V_TRIM_R1_R2][sal_ch][TRIM_PARAM_TARGET_MAX]) / 2 + 0.5f);
                 break;
             case TRIM_MODE_I_TRIM_BGR :
@@ -728,8 +675,8 @@ void sal_calculate_trim_range(void)
                 gn_sal_trim_range[TRIM_MODE_I_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET] = (uint16_t)((gn_sal_trim_range[TRIM_MODE_I_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MIN] + gn_sal_trim_range[TRIM_MODE_I_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MAX]) / 2 + 0.5f);
                 break;
             case TRIM_MODE_LDO_CTL :
-                gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_LDO_CTL][TRIM_PARAM_TARGET_MIN] * CONV_V_to_mV * LDO_CTL_MUL);
-                gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_LDO_CTL][TRIM_PARAM_TARGET_MAX] * CONV_V_to_mV * LDO_CTL_MUL);
+                gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_LDO_CTL][TRIM_PARAM_TARGET_MIN] * CONST_V_to_mV * LDO_CTL_MUL);
+                gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_voltage_to_adc(gf_sal_trim_condition[TRIM_MODE_LDO_CTL][TRIM_PARAM_TARGET_MAX] * CONST_V_to_mV * LDO_CTL_MUL);
                 gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET] = (uint16_t)((gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MIN] + gn_sal_trim_range[TRIM_MODE_LDO_CTL][sal_ch][TRIM_PARAM_TARGET_MAX]) / 2 + 0.5f);
                 break;
             case TRIM_MODE_OSC_CTL :
@@ -753,7 +700,6 @@ void sal_calculate_trim_range(void)
                 gn_sal_trim_range[TRIM_MODE_TEMP_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET] = (uint16_t)((gn_sal_trim_range[TRIM_MODE_TEMP_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MIN] + gn_sal_trim_range[TRIM_MODE_TEMP_TRIM_BGR][sal_ch][TRIM_PARAM_TARGET_MAX]) / 2 + 0.5f);
                 break;
             case TRIM_MODE_CURRENT_ITRIM :
-#if (SAL_TYPE == SAL_TYPE_A)
                 if (sal_ch == 0)
                 {
                     gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_R] * (1 - IOUT_ERROR_RATE), GAIN_HIGH);
@@ -771,46 +717,6 @@ void sal_calculate_trim_range(void)
                     gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B] * (1 - IOUT_ERROR_RATE), GAIN_HIGH);
                     gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B] * (1 + IOUT_ERROR_RATE), GAIN_HIGH);
                     gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B], GAIN_HIGH);
-                }
-#else
-                if (sal_ch == 0)
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_R] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_R] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_R], GAIN_LOW);
-                }
-                else if (sal_ch == 1)
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_G] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_G] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_G], GAIN_LOW);
-                }
-                else
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_ITRIM][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_ITRIM][TRIM_PARAM_OUT_B], GAIN_LOW);
-                }
-#endif
-                break;
-            case TRIM_MODE_CURRENT_GAIN :
-                if (sal_ch == 0)
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_R] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_R] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_R], GAIN_LOW);
-                }
-                else if (sal_ch == 1)
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_G] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_G] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_G], GAIN_LOW);
-                }
-                else
-                {
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MIN] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_B] * (1 - IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET_MAX] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_B] * (1 + IOUT_ERROR_RATE), GAIN_LOW);
-                    gn_sal_trim_range[TRIM_MODE_CURRENT_GAIN][sal_ch][TRIM_PARAM_TARGET] = convert_current_to_adc(gf_sal_trim_condition[TRIM_MODE_CURRENT_GAIN][TRIM_PARAM_OUT_B], GAIN_LOW);
                 }
                 break;
             default:
@@ -970,9 +876,6 @@ void sal_trim_t_ana_sel(trim_mode_t n_trim_mode)
     case TRIM_MODE_CURRENT_ITRIM :
         gt_sal_trim_regs._rE0.t_ana_sel = 6;
         break;
-    case TRIM_MODE_CURRENT_GAIN :
-        gt_sal_trim_regs._rE0.t_ana_sel = 6;
-        break;
     }
     i2c_info.reg_addr = SAL_TRIM_ADDR_TRIM_CONTROL;
     i2c_info.data = gt_sal_trim_regs._rE0.val;
@@ -1055,77 +958,6 @@ void sal_current_test_init(void)
 
     sal_trim_set_max_curr();
     sal_trim_t_ana_sel(TRIM_MODE_CURRENT_ITRIM);
-}
-
-void sal_current_test_read_adc(void)
-{
-    _sal_i2c_info_t i2c_info = {0, };
-
-    for (uint8_t cnt = 0 ; cnt < 64 ; ++cnt)
-    {
-        uint16_t temp_LD = (cnt << 6);
-        uint16_t temp_adc_val[3] = {0, };
-        for (uint8_t ch = 0 ; ch < 3 ; ++ch)
-        {
-            gt_sal_trim_regs._rF1.pwm_max_r = 0;
-            gt_sal_trim_regs._rF2.pwm_max_g = 0;
-            gt_sal_trim_regs._rF3.pwm_max_b = 0;
-
-            if (ch == 0)
-            {
-                gt_sal_trim_regs._rF1.pwm_max_r = temp_LD;
-            }
-            else if (ch == 1)
-            {
-                gt_sal_trim_regs._rF2.pwm_max_g = temp_LD;
-            }
-            else
-            {
-                gt_sal_trim_regs._rF3.pwm_max_b = temp_LD;
-            }
-
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
-            i2c_info.data = gt_sal_trim_regs._rF1.val;
-            sal_write_reg_i2c(&i2c_info);
-
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR15;
-            i2c_info.data = gt_sal_trim_regs._rF2.val;
-            sal_write_reg_i2c(&i2c_info);
-
-            i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR16;
-            i2c_info.data = gt_sal_trim_regs._rF3.val;
-            sal_write_reg_i2c(&i2c_info);
-
-            adc_clear_buff();
-            gn_adc_read_count = ADS114S08_READ_COUNT;
-            ads114s08_select_single_ended_input(ADC_CH_SAL_IOUT);
-            ads114s08_set_start(1);
-
-            while (!gb_ads114s08_drdy_done) {}
-
-            gb_ads114s08_drdy_done = 0;
-            temp_adc_val[ch] = get_adc_value();
-        }
-        print(LOG_LV_DEBUG, "%u - %.3f - %.3f - %.3f\r\n", temp_LD, \
-        convert_value_to_parameter(TRIM_MODE_CURRENT_GAIN, temp_adc_val[0]), \
-        convert_value_to_parameter(TRIM_MODE_CURRENT_GAIN, temp_adc_val[1]), \
-        convert_value_to_parameter(TRIM_MODE_CURRENT_GAIN, temp_adc_val[2]));
-    }
-
-    gt_sal_trim_regs._rF1.pwm_max_r = 0;
-    i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
-    i2c_info.data = gt_sal_trim_regs._rF1.val;
-    sal_write_reg_i2c(&i2c_info);
-
-    gt_sal_trim_regs._rF2.pwm_max_g = 0;
-    i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR15;
-    i2c_info.data = gt_sal_trim_regs._rF2.val;
-    sal_write_reg_i2c(&i2c_info);
-
-    gt_sal_trim_regs._rF3.pwm_max_b = 0;
-    i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR16;
-    i2c_info.data = gt_sal_trim_regs._rF3.val;
-    sal_write_reg_i2c(&i2c_info);
 }
 
 void sal_osc_test_init(void)
@@ -1330,7 +1162,7 @@ static uint16_t convert_frequency_to_count(float n_MHz)
 
 float convert_count_to_freq(uint32_t cnt)
 {
-    return ((TIM2_APB1_FREQ * CONV_MHz_to_KHz) / (float)cnt);
+    return ((TIM2_APB1_FREQ * CONST_MHz_to_KHz) / (float)cnt);
 }
 
 static float convert_value_to_parameter(trim_mode_t trim_mode, uint16_t n_value)
@@ -1340,11 +1172,11 @@ static float convert_value_to_parameter(trim_mode_t trim_mode, uint16_t n_value)
     switch (trim_mode)
     {
     case TRIM_MODE_V_TRIM_BGR :
-        temp_value = convert_adc_to_mvoltage(n_value) / CONV_V_to_mV; // unit : V
+        temp_value = convert_adc_to_mvoltage(n_value) / CONST_V_to_mV; // unit : V
         f_ret = temp_value / V_TRIM_BGR_MUL;
         break;
     case TRIM_MODE_V_TRIM_R1_R2 :
-        temp_value = convert_adc_to_mvoltage(n_value) / CONV_V_to_mV; // unit : V
+        temp_value = convert_adc_to_mvoltage(n_value) / CONST_V_to_mV; // unit : V
         f_ret = temp_value / V_TRIM_BGR_MUL;
         break;
     case TRIM_MODE_I_TRIM_BGR :
@@ -1352,7 +1184,7 @@ static float convert_value_to_parameter(trim_mode_t trim_mode, uint16_t n_value)
         f_ret = temp_value / I_TRIM_BGR_MUL;
         break;
     case TRIM_MODE_LDO_CTL :
-        temp_value = convert_adc_to_mvoltage(n_value) / CONV_V_to_mV; // unit : V
+        temp_value = convert_adc_to_mvoltage(n_value) / CONST_V_to_mV; // unit : V
         f_ret = temp_value / LDO_CTL_MUL;
         break;
     case TRIM_MODE_OSC_CTL :
@@ -1369,9 +1201,6 @@ static float convert_value_to_parameter(trim_mode_t trim_mode, uint16_t n_value)
     case TRIM_MODE_TEMP_TRIM_BGR :
         break;
     case TRIM_MODE_CURRENT_ITRIM :
-        f_ret = convert_adc_to_current(n_value, GAIN_HIGH);
-        break;
-    case TRIM_MODE_CURRENT_GAIN :
         f_ret = convert_adc_to_current(n_value, GAIN_HIGH);
         break;
     }
@@ -1409,7 +1238,7 @@ static void sal_set_condition_current_trim(uint8_t itrm_cnt)
     gt_sal_trim_regs._rF1.pwm_max_r = 0;
     gt_sal_trim_regs._rF2.pwm_max_g = 0;
     gt_sal_trim_regs._rF3.pwm_max_b = 0;
-#if (SAL_TYPE == SAL_TYPE_A)
+
     if (gn_sal_trim_ch == 0) // ch-R
     {
         gt_sal_trim_regs._rE0.pwm_max_r_e = 1;
@@ -1425,56 +1254,7 @@ static void sal_set_condition_current_trim(uint8_t itrm_cnt)
         gt_sal_trim_regs._rE0.pwm_max_b_e = 1;
         gt_sal_trim_regs._rF3.pwm_max_b = 4095;
     }
-#else
-    if (gn_sal_trim_ch == 0) // ch-R
-    {
-        gt_sal_trim_regs._rE0.pwm_max_r_e = 1;
-        if (itrm_cnt == 0)
-        {
-            gt_sal_trim_regs._rF1.pwm_max_r = SAL_ITRIM_P1;
-        }
-        else if (itrm_cnt == 1)
-        {
-            gt_sal_trim_regs._rF1.pwm_max_r = SAL_ITRIM_P2;
-        }
-        else
-        {
-            gt_sal_trim_regs._rF1.pwm_max_r = SAL_GAIN_P1;
-        }
-    }
-    else if (gn_sal_trim_ch == 1) // ch-G
-    {
-        gt_sal_trim_regs._rE0.pwm_max_g_e = 1;
-        if (itrm_cnt == 0)
-        {
-            gt_sal_trim_regs._rF2.pwm_max_g = SAL_ITRIM_P1;
-        }
-        else if (itrm_cnt == 1)
-        {
-            gt_sal_trim_regs._rF2.pwm_max_g = SAL_ITRIM_P2;
-        }
-        else
-        {
-            gt_sal_trim_regs._rF2.pwm_max_g = SAL_GAIN_P1;
-        }
-    }
-    else // ch-B
-    {
-        gt_sal_trim_regs._rE0.pwm_max_b_e = 1;
-        if (itrm_cnt == 0)
-        {
-            gt_sal_trim_regs._rF3.pwm_max_b = SAL_ITRIM_P1;
-        }
-        else if (itrm_cnt == 1)
-        {
-            gt_sal_trim_regs._rF3.pwm_max_b = SAL_ITRIM_P2;
-        }
-        else
-        {
-            gt_sal_trim_regs._rF3.pwm_max_b = SAL_GAIN_P1;
-        }
-    }
-#endif
+
     i2c_info.reg_addr = SAL_TRIM_ADDR_TRIM_CONTROL;
     i2c_info.data = gt_sal_trim_regs._rE0.val;
     sal_write_reg_i2c(&i2c_info);
@@ -1619,26 +1399,12 @@ void sal_trimming_procedure(void)
             gt_sal_trim_param[TRIM_MODE_TEMP_TRIM_BGR].reg_now[0] = gt_sal_trim_regs._rE6.temp_trim_bgr;
             break;
         case TRIM_MODE_CURRENT_ITRIM :
-#if (SAL_TYPE == SAL_TYPE_A)
             decode_mode_set(DECODE_LTC_DRIVER_A);
-#else
-            decode_mode_set(DECODE_LTC_DRIVER_B);
-#endif
             sal_trim_set_max_curr();
             gt_sal_trim_param[TRIM_MODE_CURRENT_ITRIM].init_reg_step = 5;//INIT_STEP_CURRENT_ITRIM;
             gt_sal_trim_param[TRIM_MODE_CURRENT_ITRIM].reg_now[0] = gt_sal_trim_regs._rEC.itrim_r;
             gt_sal_trim_param[TRIM_MODE_CURRENT_ITRIM].reg_now[1] = gt_sal_trim_regs._rED.itrim_g;
             gt_sal_trim_param[TRIM_MODE_CURRENT_ITRIM].reg_now[2] = gt_sal_trim_regs._rEE.itrim_b;
-            break;
-        case TRIM_MODE_CURRENT_GAIN :
-#if (SAL_TYPE == SAL_TYPE_B)
-            decode_mode_set(DECODE_LTC_DRIVER_B);
-            sal_trim_set_max_curr();
-            gt_sal_trim_param[TRIM_MODE_CURRENT_GAIN].init_reg_step = INIT_STEP_CURRENT_GAIN;
-            gt_sal_trim_param[TRIM_MODE_CURRENT_GAIN].reg_now[0] = gt_sal_trim_regs._rE8.gain_r;
-            gt_sal_trim_param[TRIM_MODE_CURRENT_GAIN].reg_now[1] = (gt_sal_trim_regs._rE8.gain_g | (gt_sal_trim_regs._rE9.gain_g << 4));
-            gt_sal_trim_param[TRIM_MODE_CURRENT_GAIN].reg_now[2] = gt_sal_trim_regs._rE9.gain_b;
-#endif
             break;
         default :
             break;
@@ -1758,21 +1524,8 @@ void sal_trimming_procedure(void)
             break;
         case TRIM_MODE_CURRENT_ITRIM :
             adc_clear_buff();
-#if (SAL_TYPE == SAL_TYPE_A)
             sal_set_condition_current_trim(0);
-#else
-            sal_set_condition_current_trim(gn_sal_trim_itrim_cnt);
-#endif
             change_trim_step(TRIM_STEP_ADC_SET_CH);
-            break;
-        case TRIM_MODE_CURRENT_GAIN :
-#if (SAL_TYPE == SAL_TYPE_A)
-            change_trim_step(TRIM_STEP_OTP_WRITE_INIT);
-#else
-            adc_clear_buff();
-            sal_set_condition_current_trim(gn_sal_trim_itrim_cnt);
-            change_trim_step(TRIM_STEP_ADC_SET_CH);
-#endif
             break;
         default :
             break;
@@ -1802,7 +1555,6 @@ void sal_trimming_procedure(void)
         case TRIM_MODE_I_TRIM_BGR :
         case TRIM_MODE_LVDS_TX :
         case TRIM_MODE_LVDS_RX :
-        case TRIM_MODE_CURRENT_GAIN :
             if (gn_trim_delay)
             {
                 --gn_trim_delay;
@@ -1829,24 +1581,8 @@ void sal_trimming_procedure(void)
                 {
                     ads114s08_set_start(0);    /* stop continuous conversion */
                     gb_ads114s08_drdy_done = 0;
-#if (SAL_TYPE == SAL_TYPE_A)
                     gt_sal_trim_param[gt_trim_mode].value_now[gn_sal_trim_ch] = get_adc_value();
                     change_trim_step(TRIM_STEP_CHECK);
-#else
-                    gn_sal_trim_itrim[gn_sal_trim_itrim_cnt] = get_adc_value();
-                    if (gn_sal_trim_itrim_cnt == 0)
-                    {
-                        ++gn_sal_trim_itrim_cnt;
-                        change_trim_step(TRIM_STEP_MODE_SET_CONDITION);
-                    }
-                    else
-                    {
-                        print(LOG_LV_DEBUG, "ch - %u, 0 - %u, 1 - %u\r\n", gn_sal_trim_ch, gn_sal_trim_itrim[0], gn_sal_trim_itrim[1]);
-                        gn_sal_trim_itrim_cnt = 0;
-                        gt_sal_trim_param[gt_trim_mode].value_now[gn_sal_trim_ch] = (uint16_t)((float)(gn_sal_trim_itrim[1] + gn_sal_trim_itrim[0]) / 2 + 0.5f);
-                        change_trim_step(TRIM_STEP_CHECK);
-                    }
-#endif
                 }
             }
             break;
@@ -2149,20 +1885,7 @@ void sal_trimming_procedure(void)
                 {
                     print(LOG_LV_INFO, "===============%s DONE===============\r\n", gs_sal_trim_mode_str[gt_trim_mode]);
                     ++gt_trim_mode;
-#if (SAL_TYPE == SAL_TYPE_B)
-                    if (gt_trim_mode == TRIM_MODE_CURRENT_GAIN)
-                    {
-                        gn_sal_trim_itrim_cnt = 2;
-                    }
-#endif
-                    if (gt_trim_mode < TRIM_MODE_MAX)
-                    {
-                        change_trim_step(TRIM_STEP_MODE_INIT);
-                    }
-                    else
-                    {
-                        change_trim_step(TRIM_STEP_OTP_WRITE_INIT);
-                    }
+                    change_trim_step(TRIM_STEP_OTP_WRITE_INIT);
                 }
             }
         }
@@ -2216,17 +1939,20 @@ void sal_trimming_procedure(void)
         gt_sal_trim_regs._rF3.pwm_max_b = 0;
 #else
 
-    #if (LED_TYPE == LED_EP)
-            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3; //EP
-            gt_sal_trim_regs._rF2.pwm_max_g = 0x933; //EP
-            gt_sal_trim_regs._rF3.pwm_max_b = 0x429; //EP
-    #else
-            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3; //HC
-            gt_sal_trim_regs._rF2.pwm_max_g = 0x933; //HC
-            gt_sal_trim_regs._rF3.pwm_max_b = 0x466; //HC
-    #endif
+#if (LED_TYPE == LED_EP)
+        gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
+        gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
+        gt_sal_trim_regs._rF3.pwm_max_b = 0x429;
+#else
+        gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
+        gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
+        gt_sal_trim_regs._rF3.pwm_max_b = 0x466;
+#endif
 
 #endif
+        gt_sal_trim_regs._rF1.pwm_max_r = 2418;
+        gt_sal_trim_regs._rF2.pwm_max_g = 3413;
+        gt_sal_trim_regs._rF3.pwm_max_b = 3990;
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
         i2c_info.data = gt_sal_trim_regs._rF1.val;

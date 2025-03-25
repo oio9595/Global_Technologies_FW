@@ -738,7 +738,7 @@ void sal_write_reg_single_ended(_sal_single_ended_info_t *p_info)
     }
     else
     {
-        print(LOG_LV_INFO, "tx : preamble - 0x%02X, addr - %3u, cmd - 0x%02X, data - 0x%06X\r\n", gn_sal_preamble, p_info->dev_id, p_info->command, p_info->data);
+        //print(LOG_LV_INFO, "tx : preamble - 0x%02X, addr - %3u, cmd - 0x%02X, data - 0x%06X\r\n", gn_sal_preamble, p_info->dev_id, p_info->command, p_info->data);
         _bit_format_.val = _bit_format_.val >> 8;
         sal_manchester_encoding(_bit_format_.val, _bit_format_.buffer, spi_tx_byte_size);
     }

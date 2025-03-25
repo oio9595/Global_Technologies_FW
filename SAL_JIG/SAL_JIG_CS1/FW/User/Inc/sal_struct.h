@@ -95,7 +95,6 @@ typedef union
     };
 }_sal_setup1_t;
 
-#if (SAL_TYPE == SAL_TYPE_A)
 typedef union
 {
     uint16_t val;
@@ -109,22 +108,6 @@ typedef union
         uint16_t            : 9;
     };
 }_sal_setup2_t;
-#else
-typedef union
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t sh_lvl     : 2;    /* LED Short detection level. 2'b00 : VS_TH = 3.75V, 2'b01 : VS_TH = 4.00V, 2'b10 : VS_TH = 4.25V (default), 2'b11 : VS_TH = 4.50V */
-        uint16_t uv_lvl     : 2;    /* UVLO detection level. 2'b00 : VUV_TH = 3.6V, 2'b01 : VUV_TH = 3.8V, 2'b10 : VUV_TH = 4.0V, 2'b11 : VUV_TH = 4.2V (default) */
-        uint16_t event_cyc  : 1;    /* This bit determines a period to detect fault events or ADC clock. 0: 31.25khz (typical 32us), 1: 62.5khz (typical 16us) */
-        uint16_t vext_mon_e : 1;    /* 0: EXT_TM pin voltage monitoring disable. 1: EXT_TM pin voltage monitoring enable. */
-        uint16_t clk_inv_e  : 1;    /* CLK polarity for MCU mode 0: Inverted disabled. 1: Inverted enabled. */
-        uint16_t dclk       : 5;    /* DCLK diver ratio, divide ratio = dclk * 64 + 64 */
-        uint16_t            : 4;
-    };
-}_sal_setup2_t;
-#endif
 
 typedef union
 {
@@ -555,9 +538,9 @@ typedef enum
     SAL_MAX_CURR_22_mA_94,
 }sal_max_curr_t;
 
-#define SAL_R_MAX_CURR      SAL_MAX_CURR_20_mA_08
-#define SAL_G_MAX_CURR      SAL_MAX_CURR_20_mA_08
-#define SAL_B_MAX_CURR      SAL_MAX_CURR_20_mA_08
+#define SAL_R_MAX_CURR      SAL_MAX_CURR_21_mA_51
+#define SAL_G_MAX_CURR      SAL_MAX_CURR_14_mA_35
+#define SAL_B_MAX_CURR      SAL_MAX_CURR_5_mA_75
 
 /* BEGIN - INTERFACE FUNCTIONS */
 

@@ -16,6 +16,10 @@
 #include "sal_struct.h"
 #include "switch.h"
 
+#define OTP_WRITE_TRUE          (1)
+#define OTP_WRITE_FALSE         (0)
+#define OTP_WRITE_EN            OTP_WRITE_TRUE
+
 #define SAL_TRIM_SAVED_CNT_MAX  (10)
 #define SAL_TRIM_TRIAL_CNT_MAX  (50)
 #define SAL_CH_MAX              (3)
@@ -126,7 +130,6 @@ typedef union
     };
 }_sal_otp1_mirror4_t;
 
-#if (SAL_TYPE == SAL_TYPE_A)
 typedef union
 {
     uint16_t val;
@@ -144,29 +147,6 @@ typedef union
         uint16_t rsvd : 16;
     };
 }_sal_otp1_mirror6_t;
-#else
-typedef union
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t gain_r : 8;
-        uint16_t gain_g : 4;
-        uint16_t        : 4;
-    };
-}_sal_otp1_mirror5_t;
-
-typedef union
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t gain_b : 8;
-        uint16_t gain_g : 4;
-        uint16_t        : 4;
-    };
-}_sal_otp1_mirror6_t;
-#endif
 
 typedef union
 {
@@ -422,7 +402,6 @@ typedef enum tag_trim_mode
     TRIM_MODE_TEMP_TRIM_BGR,
 
     TRIM_MODE_CURRENT_ITRIM,
-    TRIM_MODE_CURRENT_GAIN,
     TRIM_MODE_MAX,
 }trim_mode_t;
 
@@ -536,7 +515,6 @@ EXTERN void sal_adc_test_init(void);
 EXTERN void sal_adc_test_read_adc(void);
 
 EXTERN void sal_current_test_init(void);
-EXTERN void sal_current_test_read_adc(void);
 
 EXTERN void sal_osc_test_init(void);
 EXTERN void sal_osc_test_start(uint8_t kkk);

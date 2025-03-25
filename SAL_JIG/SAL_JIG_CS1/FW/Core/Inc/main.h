@@ -60,10 +60,6 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
-#define SAL_TYPE_A          (0)
-#define SAL_TYPE_B          (1)
-#define SAL_TYPE            SAL_TYPE_A
-
 #define SPI_TX_BUFF_SIZE    150
 #define SPI_RX_BUFF_SIZE    720
 

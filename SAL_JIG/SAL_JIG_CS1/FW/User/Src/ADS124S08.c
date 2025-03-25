@@ -36,7 +36,7 @@
 
 #include "ADS124S08.h"
 
-#define USE_DISPLAY_DEVICE_REGS
+// #define USE_DISPLAY_DEVICE_REGS
 
 /* Global variables */
 static SPI_TypeDef* gp_SPI;

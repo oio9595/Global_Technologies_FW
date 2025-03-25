@@ -65,12 +65,6 @@ static const char* gs_uart_log_lv_str[LOG_LV_MAX] =
     "LOG_LV_ERROR",
 };
 
-static const char* gs_sal_type_str[2] =
-{
-    "SAL_TYPE_A",
-    "SAL_TYPE_B",
-};
-
 void print(LOG_LV_T log_lv, const char *fmt, ...)
 {
     if (log_lv >= gt_log_lv)
@@ -241,7 +235,12 @@ void comm_print_startup(void)
     print(LOG_LV_INFO, "\n\r-Author\t\t: xxx@glbltech.com");
     print(LOG_LV_INFO, "\n\r-Build\t\t: %s", __DATE__);
     print(LOG_LV_INFO, "\n\r-Log_lv\t\t: %s", gs_uart_log_lv_str[gt_log_lv]);
-    print(LOG_LV_INFO, "\n\r\033[0;33m-SAL Type\t: %s\033[0m", gs_sal_type_str[SAL_TYPE]);
+
+#if (OTP_WRITE_EN == OTP_WRITE_TRUE)
+    print(LOG_LV_INFO, "\n\r-SAL OTP Write Enable");
+#else
+    print(LOG_LV_INFO, "\n\r-SAL OTP Write Disable");
+#endif
     print(LOG_LV_INFO, "\n\r--------------------------------------");
     print(LOG_LV_INFO, gp_msg_prompt);
 }
@@ -822,12 +821,6 @@ void comm_debugging_process(void)
         else if(!(strcmp(str_in, "sal_trim_curr_init")))
         {
             sal_current_test_init();
-            print(LOG_LV_INFO, gp_msg_okay);
-            print(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "sal_trim_curr_start")))
-        {
-            sal_current_test_read_adc();
             print(LOG_LV_INFO, gp_msg_okay);
             print(LOG_LV_INFO, gp_msg_prompt);
         }
