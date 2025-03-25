@@ -630,8 +630,8 @@ void sal_init(void)
 {
     uint8_t mosi_temp = 0xFF;
 
-    decode_mode_set((decode_mode_t)DECODE_TEST_V_TRIM);
-    //decode_mode_set((decode_mode_t)DECODE_NONE);
+    //decode_mode_set((decode_mode_t)DECODE_TEST_V_TRIM);
+    decode_mode_set((decode_mode_t)DECODE_NONE);
 
     sal_communication_mode_selection(SAL_COM_MCU, SAL_COM_EOL);
 

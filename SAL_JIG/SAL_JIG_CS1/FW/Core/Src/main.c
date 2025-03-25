@@ -189,9 +189,6 @@ void btn_process(void)
 			gn_btn_cnt = 0;
 			gb_long_key_flag = false;
 		}
-		else
-		{
-		}
 	}
 	else
 	{
@@ -207,9 +204,6 @@ void btn_process(void)
 					gb_long_key_flag = true;
 				}
 			}
-		}
-		else
-		{
 		}
 	}
 	prev_pin_state = now_pin_state;
