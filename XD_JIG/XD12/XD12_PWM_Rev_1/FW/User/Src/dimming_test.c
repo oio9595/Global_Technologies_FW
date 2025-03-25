@@ -51,7 +51,10 @@ void XD12_Vsync_Task(void)
 {
     if (gb_xd12_vsync_flag)
     {
-        JigBD_IF_SyncGen_Command();
+        if (!XD12_Is_Vsync_Mode_External())
+        {
+            JigBD_IF_SyncGen_Command();
+        }
         JigBD_IF_Write_LD_Command(gn_xd12_LD_out);
         // fault read if need
 

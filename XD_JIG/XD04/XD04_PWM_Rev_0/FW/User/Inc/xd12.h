@@ -88,7 +88,8 @@ typedef union
         uint16_t pwm_res    : 1;
         uint16_t over_to_e  : 1;
         uint16_t scan_no    : 3;
-        uint16_t io_mode    : 2;
+        uint16_t ext_vs_pol : 1;
+        uint16_t ext_vs_e   : 1;
         uint16_t ch_size    : 4;
         uint16_t            : 4;
     };
@@ -371,8 +372,7 @@ typedef union
     struct
     {
         uint16_t mclk_lock_cnt   : 8;
-        uint16_t fll_range       : 2;
-        uint16_t                 : 1;
+        uint16_t                 : 3;
         uint16_t mclk_lock_cnt_e : 1;
         uint16_t                 : 4;
     };
@@ -384,10 +384,7 @@ typedef union
     struct
     {
         uint16_t flt_gain : 2;
-        uint16_t          : 2;
-        uint16_t flt_ctl  : 2;
-        uint16_t dac_rng  : 1;
-        uint16_t          : 1;
+        uint16_t          : 6;
         uint16_t ofs_temp : 4;
         uint16_t          : 4;
     };
@@ -414,16 +411,6 @@ typedef union
         uint16_t             : 4;
     };
 }_xd12_osc_fll_manual_2_t;
-
-typedef union
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t osc_fll_flt : 7;
-        uint16_t             : 9;
-    };
-}_xd12_osc_fll_monitor_t;
 
 /////////////////////////////////
 //       OTP REGISTERS         //
@@ -488,11 +475,9 @@ typedef union
         uint16_t addr_ext    : 1;
         uint16_t             : 3;
         uint16_t vref_o      : 1;
-        uint16_t mclk32_o    : 1;
+        uint16_t mclk_o      : 1;
         uint16_t pwm_full_o  : 1;
-        uint16_t             : 1;
-        uint16_t test_ana_en : 2;
-        uint16_t ddio_ds     : 1;
+        uint16_t             : 4;
         uint16_t test_en     : 1;
         uint16_t             : 4;
     };
@@ -623,7 +608,6 @@ typedef enum
     XD12_ADDR_TEMP,
     XD12_ADDR_OSC_FLL_MANUAL_1,
     XD12_ADDR_OSC_FLL_MANUAL_2,
-    XD12_ADDR_OSC_FLL_MONITOR,
     /* BLANK - 0x2C ~ 0x39 */
     XD12_ADDR_OTP_ACCESS_1 = 0x3A,
     XD12_ADDR_OTP_ACCESS_2,
@@ -716,7 +700,7 @@ typedef union _xd12_regs
         _xd12_temp_t                _r29;
         _xd12_osc_fll_manual_1_t    _r2A;
         _xd12_osc_fll_manual_2_t    _r2B;
-        _xd12_osc_fll_monitor_t     _r2C;
+        _xd12_dummy_t               _r2C;
         _xd12_dummy_t               _r2D;
         _xd12_dummy_t               _r2E;
         _xd12_dummy_t               _r2F;
@@ -814,6 +798,7 @@ extern void XD12_Trim_Init(void);
 
 extern void XD12_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XD12_Get_Max_Current_level(void);
+extern bool XD12_Is_Vsync_Mode_External(void);
 extern void XD12_Update_Vsync_Frequency(float n_freq);
 
 extern void XD12_Save_Trim_Regs(void);

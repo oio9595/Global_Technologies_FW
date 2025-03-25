@@ -1020,6 +1020,18 @@ float XD12_Get_Max_Current_level(void)
     return f_rtn;
 }
 
+bool XD12_Is_Vsync_Mode_External(void)
+{
+    if (gt_xd12_general_regs._r01.io_mode == XD_IO_MODE_EXT_VSYNC)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 static void XD12_Set_OSC_Manual_En(bool in_Enable)
 {
     if (in_Enable == TRUE)

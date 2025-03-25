@@ -32,10 +32,8 @@
 #define XD_PWM_RES_12BIT            (0)
 #define XD_PWM_RES_14BIT            (1)
 
-#define XD_IO_MODE_NOP              (0)
-#define XD_IO_MODE_EXT_VSYNC        (1)
-#define XD_IO_MODE_FBO              (2) // not support
-#define XD_IO_MODE_EXT_VYI_FBO      (3)
+#define XD_VSYNC_INTERNAL           (0)
+#define XD_VSYNC_EXTERNAL           (1)
 
 #define XD_MCLK_FLL_ENABLE          (0)
 #define XD_MCLK_FLL_DISABLE         (1)
@@ -366,14 +364,15 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_LD_CONTROL :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t CH_SIZE   : [%u]\r\n"
-                            "\t IO_MODE   : [%u]\r\n"
+                            "\t EXT_VS_E  : [%u]\r\n"
+                            "\t EXT_VS_POL: [%u]\r\n"
                             "\t SCAN_NO   : [%u]\r\n"
                             "\t OVER_TO_E : [%u]\r\n"
                             "\t PWM_RES   : [%u]\r\n"
                             "\t LD_DIR    : [%u]\r\n"
                             "\t VALUE     : (0x%03X)\r\n\r\n",
-                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r01.ch_size, gt_xd12_general_regs._r01.io_mode, gt_xd12_general_regs._r01.scan_no,
-                gt_xd12_general_regs._r01.over_to_e, gt_xd12_general_regs._r01.pwm_res, gt_xd12_general_regs._r01.ld_dir, gt_xd12_general_regs._r01.val);
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r01.ch_size, gt_xd12_general_regs._r01.ext_vs_e, gt_xd12_general_regs._r01.ext_vs_pol,
+                gt_xd12_general_regs._r01.scan_no, gt_xd12_general_regs._r01.over_to_e, gt_xd12_general_regs._r01.pwm_res, gt_xd12_general_regs._r01.ld_dir, gt_xd12_general_regs._r01.val);
             break;
         case XD12_ADDR_FPWM_DIVIDER :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
@@ -530,19 +529,16 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_MCLK_LOCK_2 :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t MCLK_LOCK_CNT_E : [%u]\r\n"
-                            "\t FLL_RANGE       : [%u]\r\n"
                             "\t MCLK_LOCK_CNT   : [%u]\r\n"
                             "\t VALUE           : (0x%03X)\r\n\r\n",
-                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r28.mclk_lock_cnt_e, gt_xd12_general_regs._r28.fll_range, gt_xd12_general_regs._r28.mclk_lock_cnt, gt_xd12_general_regs._r28.val);
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r28.mclk_lock_cnt_e, gt_xd12_general_regs._r28.mclk_lock_cnt, gt_xd12_general_regs._r28.val);
             break;
         case XD12_ADDR_TEMP :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t OFS_TEMP : [%u]\r\n"
-                            "\t DAC_RNG  : [%u]\r\n"
-                            "\t FLT_CNT  : [%u]\r\n"
                             "\t FLT_GAIN : [%u]\r\n"
                             "\t VALUE    : (0x%03X)\r\n\r\n",
-                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r29.ofs_temp, gt_xd12_general_regs._r29.dac_rng, gt_xd12_general_regs._r29.flt_ctl, gt_xd12_general_regs._r29.flt_gain, gt_xd12_general_regs._r29.val);
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r29.ofs_temp, gt_xd12_general_regs._r29.flt_gain, gt_xd12_general_regs._r29.val);
             break;
         case XD12_ADDR_OSC_FLL_MANUAL_1 :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
@@ -556,12 +552,6 @@ void XD12_Dump_All_Registers(void)
                             "\t OSC_FLL_MAN : [%u]\r\n"
                             "\t VALUE       : (0x%03X)\r\n\r\n",
             gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2B.osc_man_e, gt_xd12_general_regs._r2B.osc_fll_man, gt_xd12_general_regs._r2B.val);
-            break;
-        case XD12_ADDR_OSC_FLL_MONITOR :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t OSC_FLL_FLT : [%u]\r\n"
-                            "\t VALUE       : (0x%03X)\r\n\r\n",
-            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2C.osc_fll_flt, gt_xd12_general_regs._r2C.val);
             break;
         case XD12_ADDR_OTP_ACCESS_1 :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
@@ -597,15 +587,13 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_OTP_OP_MODE :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t TEST_EN             : [%u]\r\n"
-                            "\t DDIO_DS             : [%u]\r\n"
-                            "\t TEST_ANA_EN         : [%u]\r\n"
                             "\t PWM_FULL_O          : [%u]\r\n"
-                            "\t MCLK32_O            : [%u]\r\n"
+                            "\t MCLK_O              : [%u]\r\n"
                             "\t VREF_O              : [%u]\r\n"
                             "\t ADDR_EXT            : [%u]\r\n"
                             "\t VALUE               : (0x%03X)\r\n\r\n",
-            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.ddio_ds, gt_xd12_general_regs._r3F.test_ana_en, gt_xd12_general_regs._r3F.pwm_full_o,
-            gt_xd12_general_regs._r3F.mclk32_o, gt_xd12_general_regs._r3F.vref_o, gt_xd12_general_regs._r3F.addr_ext, gt_xd12_general_regs._r3F.val);
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.pwm_full_o,
+            gt_xd12_general_regs._r3F.mclk_o, gt_xd12_general_regs._r3F.vref_o, gt_xd12_general_regs._r3F.addr_ext, gt_xd12_general_regs._r3F.val);
             break;
         default :
             continue;
@@ -830,7 +818,8 @@ void XD12_Init(void)
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
             gt_xd12_general_regs._r01.over_to_e = 1;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
-            gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_NOP;
+            gt_xd12_general_regs._r01.ext_vs_pol = 0;
+            gt_xd12_general_regs._r01.ext_vs_e = XD_VSYNC_EXTERNAL;
             gt_xd12_general_regs._r01.ch_size = gn_xd_ch_size;
             break;
         case XD12_ADDR_FPWM_DIVIDER :
@@ -947,7 +936,6 @@ void XD12_Trim_Init(void)
             break;
         case XD12_ADDR_OTP_OP_MODE :
             gt_xd12_general_regs._r3F.test_en = 1;
-            gt_xd12_general_regs._r3F.ddio_ds = 1;
             break;
         default :
             continue;
@@ -1018,6 +1006,18 @@ float XD12_Get_Max_Current_level(void)
         break;
     }
     return f_rtn;
+}
+
+bool XD12_Is_Vsync_Mode_External(void)
+{
+    if (gt_xd12_general_regs._r01.ext_vs_e == XD_VSYNC_EXTERNAL)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 static void XD12_Set_OSC_Manual_En(bool in_Enable)
@@ -1138,18 +1138,16 @@ void XD12_Trim_Init_VREF_CTL(void)
 {
     gt_xd12_general_regs._r3F.test_en = 1;
     gt_xd12_general_regs._r3F.vref_o = 1;
-    gt_xd12_general_regs._r3F.mclk32_o = 0;
+    gt_xd12_general_regs._r3F.mclk_o = 0;
     gt_xd12_general_regs._r3F.pwm_full_o = 0;
-    gt_xd12_general_regs._r3F.test_ana_en = 2;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 }
 void XD12_Trim_Init_OSC(void)
 {
     gt_xd12_general_regs._r3F.test_en = 1;
     gt_xd12_general_regs._r3F.vref_o = 0;
-    gt_xd12_general_regs._r3F.mclk32_o = 1;
+    gt_xd12_general_regs._r3F.mclk_o = 1;
     gt_xd12_general_regs._r3F.pwm_full_o = 0;
-    gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
     XD12_Set_OSC_Manual_En(true);
@@ -1159,9 +1157,8 @@ void XD12_Trim_Init_ICTL(void)
 {
     gt_xd12_general_regs._r3F.test_en = 1;
     gt_xd12_general_regs._r3F.vref_o = 0;
-    gt_xd12_general_regs._r3F.mclk32_o = 0;
+    gt_xd12_general_regs._r3F.mclk_o = 0;
     gt_xd12_general_regs._r3F.pwm_full_o = 1;
-    gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
     gt_xd12_general_regs._r08.max_curr_vref = 3276;

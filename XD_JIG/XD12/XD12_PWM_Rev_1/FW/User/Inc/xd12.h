@@ -814,6 +814,7 @@ extern void XD12_Trim_Init(void);
 
 extern void XD12_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XD12_Get_Max_Current_level(void);
+extern bool XD12_Is_Vsync_Mode_External(void);
 extern void XD12_Update_Vsync_Frequency(float n_freq);
 
 extern void XD12_Save_Trim_Regs(void);
