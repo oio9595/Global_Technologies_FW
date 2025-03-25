@@ -55,19 +55,19 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-const char* gs_xd12_dev_max_curr_level[DEV_MAX_CURR_LEVEL_MAX] =
+const char* gs_xd04_dev_max_curr_level[DEV_MAX_CURR_LEVEL_MAX] =
 {
      "max_4mA",  "max_8mA", "max_12mA", "max_16mA",
     "max_24mA", "max_32mA", "max_46mA", "max_64mA",
 };
 
-const char* gs_xd12_short_level[SHORT_LEVEL_MAX] =
+const char* gs_xd04_short_level[SHORT_LEVEL_MAX] =
 {
      "short_3V",  "short_4V",  "short_6V",  "short_8V",
     "short_13V", "short_16V", "short_24V", "short_36V",
 };
 
-const char* gs_xd12_fb_level[FB_LEVEL_MAX] =
+const char* gs_xd04_fb_level[FB_LEVEL_MAX] =
 {
      "FB_0.4V", "FB_0.5V",  "FB_0.6V", "FB_0.7V",
     "FB_0.85V", "FB_1.0V", "FB_1.15V", "FB_1.3V",
@@ -80,10 +80,10 @@ const char* gs_jig_gain_level[GAIN_MAX] =
     "GAIN_HIGH",
 };
 
-const char* gs_xd12_reg_type[XD12_REG_TYPE_MAX] =
+const char* gs_xd04_reg_type[XD04_REG_TYPE_MAX] =
 {
-    "XD12_REG_TYPE_NON_TRIM",
-    "XD12_REG_TYPE_TRIM",
+    "XD04_REG_TYPE_NON_TRIM",
+    "XD04_REG_TYPE_TRIM",
 };
 
 typedef struct
@@ -172,14 +172,14 @@ void comm_print_help()
     print(LOG_INFO, "\n\r--Command------------------Description------------------------");
 
     print(LOG_INFO, "\n\r  ");
-    print(LOG_INFO, "\n\r  xd_idgen\t\t : Send idgen cmd to XD12");
-    print(LOG_INFO, "\n\r  xd_test_en\t\t : Set mode to Trim of XD12");
-    print(LOG_INFO, "\n\r  xd_r [x]\t\t : Read [x] address normal register of XD12 (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_rt [x]\t\t : Read [x] address trim register of XD12 (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_r_all\t\t : Read all register of XD12");
-    print(LOG_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to address normal [x] of XD12 (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to address trim [x] of XD12 (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_ldim [x]\t\t : Write [x] to Local Dimming Data of XD12 [0 ~ 65535]");
+    print(LOG_INFO, "\n\r  xd_idgen\t\t : Send idgen cmd to XD04");
+    print(LOG_INFO, "\n\r  xd_test_en\t\t : Set mode to Trim of XD04");
+    print(LOG_INFO, "\n\r  xd_r [x]\t\t : Read [x] address normal register of XD04 (Input Type : HEX)");
+    print(LOG_INFO, "\n\r  xd_rt [x]\t\t : Read [x] address trim register of XD04 (Input Type : HEX)");
+    print(LOG_INFO, "\n\r  xd_r_all\t\t : Read all register of XD04");
+    print(LOG_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to address normal [x] of XD04 (Input Type : HEX)");
+    print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to address trim [x] of XD04 (Input Type : HEX)");
+    print(LOG_INFO, "\n\r  xd_ldim [x]\t\t : Write [x] to Local Dimming Data of XD04 [0 ~ 65535]");
 
     print(LOG_INFO, "\n\r  ");
     print(LOG_INFO, "\n\r  xc_init\t\t : Initialize XC24");
@@ -260,7 +260,7 @@ int main(void)
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
 
     Trim_IF_Set_OTP_Enable(FALSE);
-    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD12 OTP WRITE ENABLE" : "- XD12 OTP WRITE DISABLE"), ANSI_FONT_NONE);
+    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD04 OTP WRITE ENABLE" : "- XD04 OTP WRITE DISABLE"), ANSI_FONT_NONE);
 
     Trim_Calculate_Spec();
     ADS114S08_Init();
@@ -288,7 +288,7 @@ int main(void)
     JigTestMainTask();
     TaskDebugUart();
 
-    XD12_Vsync_Task();
+    XD04_Vsync_Task();
   }
   /* USER CODE END 3 */
 }
@@ -1456,7 +1456,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("vsync", "%lf", &lf_recv_param[0]))
         {
-            XD12_Update_Vsync_Frequency((float)lf_recv_param[0]);
+            XD04_Update_Vsync_Frequency((float)lf_recv_param[0]);
             print(LOG_INFO, "set vsync freq to %.3lfHz\r\n", lf_recv_param[0]);
         }
         else if (Command_Param_is_("pwm_freq", "%lf", &lf_recv_param[0]))
@@ -1496,47 +1496,47 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_test_en"))
         {
             print(LOG_INFO, "\r\n XD TEST_EN\r\n");
-            XD12_Trim_Init_VREF_CTL();
+            XD04_Trim_Init_VREF_CTL();
         }
         else if (Command_is_("xd_r_all"))
         {
             print(LOG_INFO, "\r\n Read XD's register all\r\n");
-            XD12_Read_All_Registers();
+            XD04_Read_All_Registers();
         }
         else if (Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             if (gb_jig_vsync_running_flag)
             {
-                XD12_Set_Write_Target_Reg(u32_recv_param[0], u32_recv_param[1]);
+                XD04_Set_Write_Target_Reg(u32_recv_param[0], u32_recv_param[1]);
             }
             else
             {
-                XD12_Write_General_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+                XD04_Write_General_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             }
 
-            print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd12_reg_type[XD12_REG_TYPE_NON_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd04_reg_type[XD04_REG_TYPE_NON_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             print(LOG_INFO, "\r\n OK\r\n");
         }
         else if (Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
             if (gb_jig_vsync_running_flag)
             {
-                XD12_Set_Read_Target_Reg(u32_recv_param[0]);
+                XD04_Set_Read_Target_Reg(u32_recv_param[0]);
             }
             else
             {
-                uint16_t ret = XD12_Read_General_Reg((uint8_t)u32_recv_param[0]);
+                uint16_t ret = XD04_Read_General_Reg((uint8_t)u32_recv_param[0]);
             }
             print(LOG_INFO, "\r\n OK\r\n");
         }
         else if (Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            XD12_Write_Mirror_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-            print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd12_reg_type[XD12_REG_TYPE_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            XD04_Write_Mirror_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            print(LOG_INFO, "\r\n XD Write : [Reg Type : %s]0x%02X - 0x%02X\r\n", gs_xd04_reg_type[XD04_REG_TYPE_TRIM], (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
         else if (Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
         {
-            uint16_t ret = XD12_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
+            uint16_t ret = XD04_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
         else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
@@ -1544,16 +1544,16 @@ static void TaskDebugUart(void)
             if (u32_recv_param[0] <= 65535)
             {
                 print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
-                XD12_set_LD_out(u32_recv_param[0]);
+                XD04_set_LD_out(u32_recv_param[0]);
             }
             else
             {
-                print(LOG_ERROR, "\r\n Out of xd12_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
+                print(LOG_ERROR, "\r\n Out of xd04_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
             }
         }
         else if (Command_is_("xd_ldim"))
         {
-            print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD12_get_LD_out());
+            print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD04_get_LD_out());
         }
         else if (Command_Param_is_("xd_fbi", "%x", &u32_recv_param[0]))
         {
@@ -1591,7 +1591,7 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
-            XD12_Init();
+            XD04_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
@@ -1616,32 +1616,32 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
-            XD12_Trim_Init();
+            XD04_Trim_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
         }
         else if (Command_is_("xd_trim_vref"))
         {
-            XD12_Trim_Init_VREF_CTL();
+            XD04_Trim_Init_VREF_CTL();
         }
         else if (Command_is_("xd_trim_osc"))
         {
-            XD12_Trim_Init_OSC();
+            XD04_Trim_Init_OSC();
         }
         else if (Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
         {
-            XD12_Trim_Init_ICTL();
+            XD04_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
-            XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+            XD04_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
         }
         else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
         {
-            XD12_Trim_Init_ICTL();
+            XD04_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+            XD04_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
         }
 
         else if (Command_is_("xd_osc_debug"))
@@ -1663,15 +1663,15 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
-            XD12_Trim_Init();
+            XD04_Trim_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
-            XD12_Trim_Init_OSC();
+            XD04_Trim_Init_OSC();
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
 
             for (uint8_t i = 0 ; i <= REG_LIMIT_OSC ; ++i)
             {
-                XD12_Write_Mirror_Reg(0x01, i);
+                XD04_Write_Mirror_Reg(0x01, i);
                 JigBD_IF_Input_Capture_Start();
                 LL_mDelay(150);
                 JigBD_IF_Input_Capture_Stop();
@@ -1723,12 +1723,12 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_trim_start") || Command_is_("1"))
         {
-            print(LOG_INFO, "\r\n XD12 OTP Write EN & Activate \r\n");
+            print(LOG_INFO, "\r\n XD04 OTP Write EN & Activate \r\n");
             Trim_IF_Trimming_Start();
         }
         else if (Command_is_("xd_screen_start") || Command_is_("2"))
         {
-            print(LOG_INFO, "\r\n XD12 Screen Start \r\n");
+            print(LOG_INFO, "\r\n XD04 Screen Start \r\n");
             Trim_IF_Screening_Start();
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))

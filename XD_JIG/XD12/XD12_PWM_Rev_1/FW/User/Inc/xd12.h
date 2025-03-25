@@ -784,7 +784,7 @@ typedef union _xd12_trim_regs
         _xd12_ictl_h_ch_t   _r25;
         _xd12_ictl_h_ch_t   _r26;
     };
-}_xd12_trim_regs_t;
+}_xd12_mirror_regs_t;
 
 #ifdef __cplusplus
 }

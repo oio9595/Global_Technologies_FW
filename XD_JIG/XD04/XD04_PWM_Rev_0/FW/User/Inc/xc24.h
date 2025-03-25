@@ -923,7 +923,7 @@ typedef union tag_DAISY_SIZE1
     uint16_t ALL;
     struct
     {
-        uint16_t daisy_size_ch1     :  5;   /* DAISY_SIZE_CH1 : This register should be set with a valid number for correct operating. The number means how many XD12 drivers are daisied in the corresponding channel. The maximum 31 XD12 drivers per channel can be daisied. */
+        uint16_t daisy_size_ch1     :  5;   /* DAISY_SIZE_CH1 : This register should be set with a valid number for correct operating. The number means how many XD04 drivers are daisied in the corresponding channel. The maximum 31 XD04 drivers per channel can be daisied. */
         uint16_t daisy_size_ch2     :  5;   /* DAISY_SIZE_CH2 */
         uint16_t daisy_size_ch3     :  5;   /* DAISY_SIZE_CH3 */
         uint16_t                    :  1;   /* reserved */
@@ -1416,8 +1416,8 @@ EXTERN void USE_XC24(bool b_support);
 EXTERN void XC24_IF_IdGen_Command(void);
 EXTERN void XC24_IF_SyncGen_Command(void);
 
-EXTERN void XC24_IF_Write_XD12(uint8_t in_XD12_addr, uint16_t in_XD12_data);
-EXTERN uint16_t XC24_IF_Read_XD12(uint8_t in_XD12_addr);
+EXTERN void XC24_IF_Write_XD04(uint8_t in_XD04_addr, uint16_t in_XD04_data);
+EXTERN uint16_t XC24_IF_Read_XD04(uint8_t in_XD04_addr);
 EXTERN void XC24_IF_Write_LD(uint16_t in_LD_data);
 
 /* END   - INTERFACE FUNCTIONS */

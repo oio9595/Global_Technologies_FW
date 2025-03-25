@@ -21,7 +21,7 @@
 #include "MCP4251.h"
 
 /* TARGET CHIP CONFIG  **********************************/
-#define TARGET_CHIP_NAME            "XD12"
+#define TARGET_CHIP_NAME            "XD04"
 /********************************************************/
 
 /* TRIMMING CONFIG  **********************************/
@@ -43,22 +43,22 @@
 #define XD_SERIAL_CLK_CNT_LOW       (13)
 #define XD_SERIAL_CLK_CNT_HIGH      (26)
 
-#define XD12_FREQ_ERR_RATE          (2.0)
-#define XD12_FOSC_MIN               (39019200UL)
-#define XD12_FOSC_TYP               (39319200UL)
-#define XD12_FOSC_MAX               (39619200UL)
+#define XD04_FREQ_ERR_RATE          (2.0)
+#define XD04_FOSC_MIN               (39019200UL)
+#define XD04_FOSC_TYP               (39319200UL)
+#define XD04_FOSC_MAX               (39619200UL)
 
-#define XD12_DELAY                  (((CONST_MHz_TO_Hz / XD12_FOSC_MIN) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW)))
-#define XD12_WRITE_BITS             (22)
-#define XD12_READ_BITS              (10)
-#define XD12_READ_RECV_BITS         (21)
-#define XD12_IDGEN_BITS             (4)
+#define XD04_DELAY                  (((CONST_MHz_TO_Hz / XD04_FOSC_MIN) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW)))
+#define XD04_WRITE_BITS             (22)
+#define XD04_READ_BITS              (10)
+#define XD04_READ_RECV_BITS         (21)
+#define XD04_IDGEN_BITS             (4)
 
-#define XD12_WRITE_DELAY            ((uint32_t)((XD12_DELAY * XD12_WRITE_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
-#define XD12_IDGEN_DELAY            ((uint32_t)((XD12_DELAY * XD12_IDGEN_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
-#define XD12_DELAY_DELAY            ((uint32_t)((XD12_DELAY * XD12_WRITE_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
-#define XD12_READ_DELAY             ((uint32_t)((XD12_DELAY * XD12_READ_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
-#define XD12_READ_RECV_DELAY        ((uint32_t)((XD12_DELAY * XD12_READ_RECV_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
+#define XD04_WRITE_DELAY            ((uint32_t)((XD04_DELAY * XD04_WRITE_BITS * XD_DAISY_SIZE) * XD04_FREQ_ERR_RATE + 0.5f))
+#define XD04_IDGEN_DELAY            ((uint32_t)((XD04_DELAY * XD04_IDGEN_BITS * XD_DAISY_SIZE) * XD04_FREQ_ERR_RATE + 0.5f))
+#define XD04_DELAY_DELAY            ((uint32_t)((XD04_DELAY * XD04_WRITE_BITS * XD_DAISY_SIZE) * XD04_FREQ_ERR_RATE + 0.5f))
+#define XD04_READ_DELAY             ((uint32_t)((XD04_DELAY * XD04_READ_BITS * XD_DAISY_SIZE) * XD04_FREQ_ERR_RATE + 0.5f))
+#define XD04_READ_RECV_DELAY        ((uint32_t)((XD04_DELAY * XD04_READ_RECV_BITS * XD_DAISY_SIZE) * XD04_FREQ_ERR_RATE + 0.5f))
 /********************************************************/
 
 #define BUILD_YEAR ((((__DATE__ [7] - '0') * 10 + (__DATE__ [8] - '0')) * 10 \

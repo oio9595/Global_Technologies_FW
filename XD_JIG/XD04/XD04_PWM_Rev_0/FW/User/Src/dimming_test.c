@@ -11,7 +11,7 @@
 #define LD_WIDTH_MAX            (0xFFFF)
 
 bool gb_jig_vsync_running_flag;
-static bool gb_xd12_vsync_flag;
+static bool gb_xd04_vsync_flag;
 
 static bool gb_xd_write_flag;
 static uint8_t gn_xd_write_addr;
@@ -20,7 +20,7 @@ static uint16_t gn_xd_write_data;
 static bool gb_xd_read_flag;
 static uint8_t gn_xd_read_addr;
 
-static uint16_t gn_xd12_LD_out;
+static uint16_t gn_xd04_LD_out;
 
 void Vsync_Timer_Start(void)
 {
@@ -44,54 +44,54 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
-    gb_xd12_vsync_flag = true;
+    gb_xd04_vsync_flag = true;
 }
 
-void XD12_Vsync_Task(void)
+void XD04_Vsync_Task(void)
 {
-    if (gb_xd12_vsync_flag)
+    if (gb_xd04_vsync_flag)
     {
-        if (!XD12_Is_Vsync_Mode_External())
+        if (!XD04_Is_Vsync_Mode_External())
         {
             JigBD_IF_SyncGen_Command();
         }
 
-        JigBD_IF_Write_LD_Command(gn_xd12_LD_out);
+        JigBD_IF_Write_LD_Command(gn_xd04_LD_out);
         // fault read if need
 
         if (gb_xd_write_flag)
         {
-            XD12_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
+            XD04_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
             gb_xd_write_flag = false;
         }
         if (gb_xd_read_flag)
         {
-            XD12_Read_General_Reg(gn_xd_read_addr);
+            XD04_Read_General_Reg(gn_xd_read_addr);
             gb_xd_read_flag = false;
         }
 
-        gb_xd12_vsync_flag = false;
+        gb_xd04_vsync_flag = false;
     }
 }
 
-void XD12_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
+void XD04_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
 {
     gn_xd_write_addr = addr;
     gn_xd_write_data = data;
     gb_xd_write_flag = true;
 }
 
-void XD12_Set_Read_Target_Reg(uint8_t addr)
+void XD04_Set_Read_Target_Reg(uint8_t addr)
 {
     gn_xd_read_addr = addr;
     gb_xd_read_flag = true;
 }
 
-void XD12_set_LD_out(uint32_t in_ld_out)
+void XD04_set_LD_out(uint32_t in_ld_out)
 {
     if (in_ld_out <= LD_WIDTH_MAX)
     {
-        gn_xd12_LD_out = in_ld_out;
+        gn_xd04_LD_out = in_ld_out;
     }
     else
     {
@@ -99,45 +99,45 @@ void XD12_set_LD_out(uint32_t in_ld_out)
     }
 }
 
-uint16_t XD12_get_LD_out(void)
+uint16_t XD04_get_LD_out(void)
 {
-    return gn_xd12_LD_out;
+    return gn_xd04_LD_out;
 }
 
-void XD12_get_fault_status(void)
+void XD04_get_fault_status(void)
 {
     static uint16_t vsync_tick = 0;
 #if 0
     uint16_t now_fault_status_reg_read = 0;
-    static _xd12_fault_status_t prev_xd12_fault_status_ = {1, };
-    now_fault_status_reg_read = TargetIC_IF_Read_Register(XD12_ADDR_FAULT_STATUS, XD12_REG_TYPE_NON_TRIM);
+    static _xd04_fault_status_t prev_xd04_fault_status_ = {1, };
+    now_fault_status_reg_read = TargetIC_IF_Read_Register(XD04_ADDR_FAULT_STATUS, XD04_REG_TYPE_NON_TRIM);
 
-    if (now_fault_status_reg_read != prev_xd12_fault_status_.val)
+    if (now_fault_status_reg_read != prev_xd04_fault_status_.val)
     {
-        prev_xd12_fault_status_.val = now_fault_status_reg_read;
-        if (!(prev_xd12_fault_status_.val))
+        prev_xd04_fault_status_.val = now_fault_status_reg_read;
+        if (!(prev_xd04_fault_status_.val))
         {
             print(LOG_INFO, "\r\n [%u] XD FAULT Nothing [REG READ]\r\n", vsync_tick);
         }
         else
         {
-            if (prev_xd12_fault_status_.bit_fb)
+            if (prev_xd04_fault_status_.bit_fb)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB] [REG READ]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_open)
+            if (prev_xd04_fault_status_.bit_open)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [OPEN] [REG READ]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_short)
+            if (prev_xd04_fault_status_.bit_short)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [SHORT] [REG READ]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_thermal)
+            if (prev_xd04_fault_status_.bit_thermal)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL] [REG READ]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_miss_vs)
+            if (prev_xd04_fault_status_.bit_miss_vs)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [MISS_VS] [REG READ]\r\n", vsync_tick);
             }
@@ -176,7 +176,7 @@ void XD12_get_fault_status(void)
         prev_fault_status_command_read = now_fault_status_command_read;
     }
 
-    //XD12_Detect_FBO();
+    //XD04_Detect_FBO();
 #if 0
     static uint16_t prev_fbo = 0xFFFF;
     uint16_t now_fbo = XD_FBO_READ();

@@ -12,7 +12,7 @@
 #define VREF_ADC_REF_VOLT       3.3f
 #define VREF_ADC_RESOLUTION     4095.0f
 
-#define XD12_PWM_READ_TIMEOUT   (5)    /* ms */
+#define XD04_PWM_READ_TIMEOUT   (5)    /* ms */
 
 #define PWM_DMA_DONE            1
 #define IC_DMA_DONE             3
@@ -55,7 +55,7 @@ static volatile bool gb_xd_timeout;
 
 volatile bool gb_pwm_dma_tx_flag;
 
-static double gf_xd12_internal_freq_Hz;
+static double gf_xd04_internal_freq_Hz;
 static double gf_freq_min;
 static double gf_freq_max;
 
@@ -315,7 +315,7 @@ double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc)
 /* BEGIN - PWM Read Frequency ******************************************/
 void JigBD_IF_Input_Capture_Start(void)
 {
-    gf_xd12_internal_freq_Hz = 0;
+    gf_xd04_internal_freq_Hz = 0;
     gf_freq_min = DBL_MAX;
     gf_freq_max = 0;
 
@@ -342,7 +342,7 @@ void JigBD_IF_Input_Capture_Stop(void)
 
 uint16_t JigBD_IF_Input_Capture_Get_Freq(void)
 {
-    uint32_t input_freq = (uint32_t)(gf_xd12_internal_freq_Hz + 0.5f);
+    uint32_t input_freq = (uint32_t)(gf_xd04_internal_freq_Hz + 0.5f);
     if (input_freq > 65535) //2^16-1
     {
         print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
@@ -378,15 +378,15 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
             ++n_count;
         }
 
-        gf_xd12_internal_freq_Hz = (f_freq_avg / n_count);
-        if (gf_freq_min > gf_xd12_internal_freq_Hz)
+        gf_xd04_internal_freq_Hz = (f_freq_avg / n_count);
+        if (gf_freq_min > gf_xd04_internal_freq_Hz)
         {
-            gf_freq_min = gf_xd12_internal_freq_Hz;
+            gf_freq_min = gf_xd04_internal_freq_Hz;
         }
 
-        if (gf_freq_max < gf_xd12_internal_freq_Hz)
+        if (gf_freq_max < gf_xd04_internal_freq_Hz)
         {
-            gf_freq_max = gf_xd12_internal_freq_Hz;
+            gf_freq_max = gf_xd04_internal_freq_Hz;
         }
     }
 }
@@ -525,17 +525,17 @@ __STATIC_INLINE float getParseReadCommand(uint32_t* pdata, uint16_t len)
 
     if (pdata)
     {
-        uint32_t n_xd12_response = 0;
+        uint32_t n_xd04_response = 0;
 
         for (volatile uint16_t j = 0 ; j < len ; ++j)
         {
             if ((p_falling[j] > logic_1_duty_cnt_min) && (p_falling[j] < logic_1_duty_cnt_max))
             {
-                n_xd12_response |= (1U << ((len - 1) - j));
+                n_xd04_response |= (1U << ((len - 1) - j));
             }
         }
 
-        *pdata = n_xd12_response;
+        *pdata = n_xd04_response;
     }
 
     if (f_tim1_count_avg > 0)
@@ -546,7 +546,7 @@ __STATIC_INLINE float getParseReadCommand(uint32_t* pdata, uint16_t len)
     return f_input_frequency;
 }
 
-void MCU_IF_Write_XD12(uint8_t in_addr, uint16_t in_data)
+void MCU_IF_Write_XD04(uint8_t in_addr, uint16_t in_data)
 {
     uint16_t pwm_length = 0;
 
@@ -613,7 +613,7 @@ void MCU_IF_Write_XD12(uint8_t in_addr, uint16_t in_data)
     us_tdelay(10);
 }
 
-static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
+static uint16_t MCU_IF_Read_XD04(uint8_t in_addr)
 {
     uint32_t pwm_length = 0;
 
@@ -892,19 +892,19 @@ static void MCU_IF_SyncGen_Command()
 
 /* END - Make XDIC DATA SIGNAL through PWM DMA *******************************************/
 
-/* BEGIN - Make XDIC DATA SIGNAL through SPI XC24 To XD12*********************************/
+/* BEGIN - Make XDIC DATA SIGNAL through SPI XC24 To XD04*********************************/
 
-/* END - Make XDIC DATA SIGNAL through SPI XC24 To XD12 ***********************************/
+/* END - Make XDIC DATA SIGNAL through SPI XC24 To XD04 ***********************************/
 
 void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data)
 {
     if (IS_XC24())
     {
-        XC24_IF_Write_XD12(in_addr, in_data);
+        XC24_IF_Write_XD04(in_addr, in_data);
     }
     else
     {
-        MCU_IF_Write_XD12(in_addr, in_data);
+        MCU_IF_Write_XD04(in_addr, in_data);
     }
     us_tdelay(10);
 }
@@ -914,11 +914,11 @@ uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
     uint16_t ret = 0;
     if (IS_XC24())
     {
-        ret = XC24_IF_Read_XD12(in_addr);
+        ret = XC24_IF_Read_XD04(in_addr);
     }
     else
     {
-        ret = MCU_IF_Read_XD12(in_addr);
+        ret = MCU_IF_Read_XD04(in_addr);
     }
     us_tdelay(10);
     return ret;
@@ -942,7 +942,7 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
     uint16_t ret = 0;
     if (IS_XC24())
     {
-        ret = XC24_IF_Read_XD12(0xFF);
+        ret = XC24_IF_Read_XD04(0xFF);
     }
     else
     {
@@ -957,11 +957,11 @@ void JigBD_IF_Reset_Command(void)
     uint16_t data = (1 << 11);
     if (IS_XC24())
     {
-        XC24_IF_Write_XD12(XD12_ADDR_RESET_ID, data);
+        XC24_IF_Write_XD04(XD04_ADDR_RESET_ID, data);
     }
     else
     {
-        MCU_IF_Write_XD12(XD12_ADDR_RESET_ID, data);
+        MCU_IF_Write_XD04(XD04_ADDR_RESET_ID, data);
     }
     us_tdelay(10);
 }
