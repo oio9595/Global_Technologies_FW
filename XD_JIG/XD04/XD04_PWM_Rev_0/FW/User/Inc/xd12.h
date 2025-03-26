@@ -44,14 +44,6 @@ enum
     CH_02,
     CH_03,
     CH_04,
-    CH_05,
-    CH_06,
-    CH_07,
-    CH_08,
-    CH_09,
-    CH_10,
-    CH_11,
-    CH_12,
     CH_MAX
 };
 

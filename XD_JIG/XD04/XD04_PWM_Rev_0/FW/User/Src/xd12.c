@@ -826,7 +826,10 @@ void XD04_Init(void)
             gt_xd04_general_regs._r02.fpwm_div = gn_xd_fpwm_div;
             break;
         case XD04_ADDR_CHANNEL_ENABLE :
-            gt_xd04_general_regs._r03.val = 0xFFF;
+            gt_xd04_general_regs._r03.ch1_en = 1;
+            gt_xd04_general_regs._r03.ch2_en = 1;
+            gt_xd04_general_regs._r03.ch3_en = 1;
+            gt_xd04_general_regs._r03.ch4_en = 1;
             break;
         case XD04_ADDR_FAULT_LEVEL :
             gt_xd04_general_regs._r06.fb_level = gt_xd_fb_level;
@@ -873,10 +876,6 @@ void XD04_Init(void)
             gt_xd04_general_regs._r2B.osc_fll_man = 8;
             gt_xd04_general_regs._r2B.osc_man_e = 0;
             break;
-        /*case XD04_ADDR_OSC_FLL_MONITOR :
-            gt_xd04_general_regs._r2C.osc_fll_flt = 0;
-            break;
-        */
         default :
             continue;
         }
@@ -917,7 +916,10 @@ void XD04_Trim_Init(void)
         switch (xd04_addr)
         {
         case XD04_ADDR_CHANNEL_ENABLE :
-            gt_xd04_general_regs._r03.val = 0xFFF;
+            gt_xd04_general_regs._r03.ch1_en = 1;
+            gt_xd04_general_regs._r03.ch2_en = 1;
+            gt_xd04_general_regs._r03.ch3_en = 1;
+            gt_xd04_general_regs._r03.ch4_en = 1;
             break;
         case XD04_ADDR_FAULT_LEVEL :
             gt_xd04_general_regs._r06.fb_level = gt_xd_fb_level;

@@ -177,97 +177,78 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 {
     switch (in_output_ch)
     {
-    case 0 :
+    case CH_01 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 1 :
+    case CH_02 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 2 :
+    case CH_03 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 3 :
+    case CH_04 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 4 :
+    case CH_05 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 5 :
+    case CH_06 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 6 :
+    case CH_07 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 7 :
+    case CH_08 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 8 :
+    case CH_09 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 9 :
+    case CH_10 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 10 :
+    case CH_11 :
         LL_GPIO_ResetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 11 :
+    case CH_12 :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
         LL_GPIO_ResetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
         break;
-
-    case 12 :
-        LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
-        LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);
-        LL_GPIO_SetOutputPin(ENABLE_SELECT3_GPIO_Port, ENABLE_SELECT3_Pin);
-        LL_GPIO_SetOutputPin(ENABLE_SELECT4_GPIO_Port, ENABLE_SELECT4_Pin);
-        break;
-
     default :
         LL_GPIO_SetOutputPin(ENABLE_SELECT1_GPIO_Port, ENABLE_SELECT1_Pin);
         LL_GPIO_SetOutputPin(ENABLE_SELECT2_GPIO_Port, ENABLE_SELECT2_Pin);

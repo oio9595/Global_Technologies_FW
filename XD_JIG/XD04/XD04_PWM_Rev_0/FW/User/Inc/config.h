@@ -35,7 +35,7 @@
 #define CONST_MHz_TO_Hz             (1000000.0f)
 
 #define XD_DAISY_SIZE               (1)
-#define XD_CH_SIZE                  (12)
+#define XD_CH_SIZE                  (4)
 
 #define XC_SERIAL_CLK_CNT_LOW       (6)
 #define XC_SERIAL_CLK_CNT_HIGH      (10)
