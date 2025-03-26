@@ -10,6 +10,11 @@
 
 #define LD_WIDTH_MAX            (0xFFFF)
 
+#define FAULT_MASK_FB           (1 << 0)
+#define FAULT_MASK_OPEN         (1 << 1)
+#define FAULT_MASK_SHORT        (1 << 2)
+#define FAULT_MASK_THERMAL      (1 << 3)
+
 bool gb_jig_vsync_running_flag;
 static bool gb_xd12_vsync_flag;
 
@@ -58,7 +63,7 @@ void XD12_Vsync_Task(void)
         JigBD_IF_Write_LD_Command(gn_xd12_LD_out);
 
         // fault read if needed
-        JigBD_IF_Fault_Read_Command();
+        XD12_get_fault_status();
 
         if (gb_xd_write_flag)
         {
@@ -108,93 +113,38 @@ uint16_t XD12_get_LD_out(void)
 void XD12_get_fault_status(void)
 {
     static uint16_t vsync_tick = 0;
-#if 0
-    uint16_t now_fault_status_reg_read = 0;
-    static _xd12_fault_status_t prev_xd12_fault_status_ = {1, };
-    now_fault_status_reg_read = TargetIC_IF_Read_Register(XD12_ADDR_FAULT_STATUS, XD12_REG_TYPE_NON_TRIM);
+    uint8_t now_fault_status = 0;
+    static uint8_t prev_fault_status = 0xFF;
 
-    if (now_fault_status_reg_read != prev_xd12_fault_status_.val)
+    now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
+
+    if (now_fault_status != prev_fault_status)
     {
-        prev_xd12_fault_status_.val = now_fault_status_reg_read;
-        if (!(prev_xd12_fault_status_.val))
+        if (!now_fault_status)
         {
-            print(LOG_INFO, "\r\n [%u] XD FAULT Nothing [REG READ]\r\n", vsync_tick);
+            print(LOG_INFO, "\r\n [%u] XD FAULT None\r\n", vsync_tick);
         }
         else
         {
-            if (prev_xd12_fault_status_.bit_fb)
+            if (now_fault_status & FAULT_MASK_FB)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB] [REG READ]\r\n", vsync_tick);
+                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_open)
+            if (now_fault_status & FAULT_MASK_OPEN)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [OPEN] [REG READ]\r\n", vsync_tick);
+                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [OPEN]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_short)
+            if (now_fault_status & FAULT_MASK_SHORT)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [SHORT] [REG READ]\r\n", vsync_tick);
+                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [SHORT]\r\n", vsync_tick);
             }
-            if (prev_xd12_fault_status_.bit_thermal)
+            if (now_fault_status & FAULT_MASK_THERMAL)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL] [REG READ]\r\n", vsync_tick);
-            }
-            if (prev_xd12_fault_status_.bit_miss_vs)
-            {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [MISS_VS] [REG READ]\r\n", vsync_tick);
+                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL]\r\n", vsync_tick);
             }
         }
+        prev_fault_status = now_fault_status;
     }
-#endif
-    uint8_t now_fault_status_command_read = 0;
-    static uint8_t prev_fault_status_command_read = 0xFF;
-    now_fault_status_command_read = (JigBD_IF_Fault_Read_Command() & 0x0F);
-
-    if (now_fault_status_command_read != prev_fault_status_command_read)
-    {
-        if (!now_fault_status_command_read)
-        {
-            print(LOG_INFO, "\r\n [%u] XD FAULT Nothing [CMD READ]\r\n", vsync_tick);
-        }
-        else
-        {
-            if (now_fault_status_command_read & 0x1)
-            {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB] [CMD READ]\r\n", vsync_tick);
-            }
-            if (now_fault_status_command_read & 0x2)
-            {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [OPEN] [CMD READ]\r\n", vsync_tick);
-            }
-            if (now_fault_status_command_read & 0x4)
-            {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [SHORT] [CMD READ]\r\n", vsync_tick);
-            }
-            if (now_fault_status_command_read & 0x8)
-            {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL] [CMD READ]\r\n", vsync_tick);
-            }
-        }
-        prev_fault_status_command_read = now_fault_status_command_read;
-    }
-
-    //XD12_Detect_FBO();
-#if 0
-    static uint16_t prev_fbo = 0xFFFF;
-    uint16_t now_fbo = XD_FBO_READ();
-
-    if (prev_fbo != now_fbo)
-    {
-        if (now_fbo)
-        {
-            print(LOG_INFO, "\r\n [%u] FBO --> HI\r\n", vsync_tick);
-        }
-        else
-        {
-            print(LOG_INFO, "\r\n [%u] FBO --> LOW\r\n", vsync_tick);
-        }
-        prev_fbo = now_fbo;
-    }
-#endif
     ++vsync_tick;
 }
 

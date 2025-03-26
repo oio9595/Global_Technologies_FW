@@ -35,8 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RX_PACKET_SIZE      64
-#define RX_BUFF_SIZE        32
+#define RX_PACKET_SIZE  64
+#define RX_BUFF_SIZE    32
 
 typedef enum
 {

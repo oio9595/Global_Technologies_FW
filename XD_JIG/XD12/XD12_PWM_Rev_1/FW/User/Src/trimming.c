@@ -17,14 +17,14 @@
 #define XD12_CURRENT_TRIM_VREF  (4095)
 
 #define XD12_ICTL_L_ERR_RATE    (0.5/100) /* +/-% */
-#define XD12_ICTL_L_TARGET      (8.0000f)   /* mA */
+#define XD12_ICTL_L_TARGET      (6.4000f)   /* mA */
 #define XD12_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_8mA)
 #define XD12_ICTL_L_P2          (DEV_MAX_CURR_LEVEL_8mA)
 
 #define XD12_ICTL_H_ERR_RATE    (0.5/100) /* +/-% */
-#define XD12_ICTL_H_TARGET      (24.000f)  /* mA */
-#define XD12_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_24mA)
-#define XD12_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_24mA)
+#define XD12_ICTL_H_TARGET      (25.600f)  /* mA */
+#define XD12_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_32mA)
+#define XD12_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_32mA)
 
 #define ADJ_NONE    0
 #define ADJ_PLUS    1
@@ -256,12 +256,6 @@ static void Trim_Init_Algo_Param(double (*pSetting)[TRIM_PARA_MAX])
         g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_min = u16_tmp_trim_range_adc_min;
         g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_max = u16_tmp_trim_range_adc_max;
         g_trim_algo_param.sTrimRange[i_trim_mode].g8_trim_gain_level = g8_tmp_gain_level;
-
-    #ifdef _DBG_ALL
-        print(LOG_DEBUG, "g_trim_algo_param.sTrimRange[%d].g8_trim_gain_level=%d\r\n", i_trim_mode, g8_tmp_gain_level);
-        print(LOG_DEBUG, "g_trim_algo_param.sTrimRange[%d].u16_trim_rang_adc_min=%d\r\n", i_trim_mode, u16_tmp_trim_range_adc_min);
-        print(LOG_DEBUG, "g_trim_algo_param.sTrimRange[%d].u16_trim_rang_adc_max=%d\r\n", i_trim_mode, u16_tmp_trim_range_adc_max);
-    #endif
     }
 }
 
@@ -327,11 +321,6 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             u16_adc_per_register = ptr_Param->u16_init_adc_per_reg;
         }
 
-        #ifdef DBG_TRIM_ALGORITHM
-            print(LOG_DEBUG, "( adc_pre[channel]:%d - adc_cur[channel]:%d ) / trim_step[channel]:%d = %d\r\n ",
-                    u16_adc_pre, u16_adc_cur, ptr_Param->trim_step[channel], u16_adc_per_register);
-        #endif //#ifdef DBG_TRIM_ALGORITHM
-
         // Copy current ADC to previous ADC
         ptr_Param->adc_pre[channel] = u16_adc_cur;
 
@@ -372,10 +361,6 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
                 ++ptr_Param->u8_sTrimSaved_Cnt;
-
-                #ifdef DBG_TRIM_ALGORITHM
-                    print(LOG_DEBUG, "RANGE_MARGIN-ADJ_PLUS[%d]]\r\n",ptr_Param->u8_sTrimSaved_Cnt);
-                #endif //#ifdef DBG_TRIM_ALGORITHM
             }
         }
         // Check ADJ_MINUS
@@ -412,13 +397,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             {
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
-
-                // print(LOG_DEBUG, "RANGE_MARGIN-ADJ_MINUS[%d]-[%u, %u]\r\n",ptr_Param->u8_sTrimSaved_Cnt, u16_reg_value_cur, u16_adc_cur);
-
                 ++ptr_Param->u8_sTrimSaved_Cnt;
-                #ifdef DBG_TRIM_ALGORITHM
-                    print(LOG_DEBUG, "RANGE_MARGIN_OFS-ADJ_MINUS[%d]\r\n",ptr_Param->u8_sTrimSaved_Cnt);
-                #endif //#ifdef DBG_TRIM_ALGORITHM
             }
         }
         // Check ADJ_NONE
@@ -444,13 +423,9 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             {
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
                 ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
-                //print(LOG_DEBUG, "RANGE_MARGIN-ADJ_MATCHED[%d]-[%u, %u]\r\n",ptr_Param->u8_sTrimSaved_Cnt, u16_reg_value_cur, u16_adc_cur);
                 ++ptr_Param->u8_sTrimSaved_Cnt;
             }
         }
-        #ifdef DBG_TRIM_ALGORITHM
-            print(LOG_DEBUG, "u16_adc_per_register:%d / ptr_Param->trim_step[%d]:%d\r\n ",u16_adc_per_register, channel, ptr_Param->trim_step[channel]);
-        #endif //#ifdef DBG_TRIM_ALGORITHM
     }
     // Check Vibration
     if (ptr_Param->u8_sTrimSaved_Cnt >= TRIM_REGISTER_SAVED_CNT)
@@ -478,14 +453,14 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
 
         if (u8_closest_adc_index == TRIM_REGISTER_SAVED_CNT)
         {
-            print(LOG_ERROR, "********ADJUST_OVER_RANGE ERROR(%d,%d)********\r\n",channel+1, u8_closest_adc_index);
+            print(LOG_ERROR, "%s ********ADJUST_OVER_RANGE ERROR(%d,%d)******** %s\r\n", ANSI_FONT_RED, channel + 1, u8_closest_adc_index, ANSI_FONT_NONE);
             Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
             u8_rtn_val = TRIM_ALGORITHM_ERROR; // Done - Channel
         }
         else
         {
             // Write Register
-            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel+1, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
+            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
             XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg;
             ++ptr_Param->u8_channel_cur;
@@ -497,7 +472,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
     // Check Limit count of trying
     if (u8_loop_cnt > (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT))
     {
-        print(LOG_ERROR, "%s ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d %s\r\n",channel+1, ANSI_FONT_RED, (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT), ANSI_FONT_NONE);
+        print(LOG_ERROR, "%s ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d %s\r\n",channel + 1, ANSI_FONT_RED, (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT), ANSI_FONT_NONE);
 
         // Clear Buffers ALL
         Trim_Algorithm_Clear_Buffer_All(ptr_Param);
@@ -507,12 +482,8 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
     // Print Status
     if (u8_loop_cnt == 1)
     {
-        print(LOG_INFO, "%s_%02d\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode], channel+1);
+        print(LOG_INFO, "%s_%02d\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode], channel + 1);
 
-        #ifdef DBG_TRIM_ALGORITHM
-            print(LOG_INFO, "RANGE_MARGIN_ADJ_PLUS:%d\r\n",(u16_adc_range_min));
-            print(LOG_INFO, "RANGE_MARGIN_ADJ_MINUS:%d\r\n", (u16_adc_range_max));
-        #endif //#ifdef DBG_TRIM_ALGORITHM
         if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
         {
             print(LOG_INFO, "[Cnt]      [RANGE]      [ADC]    [MHz]    [REG]  [Check]\r\n");
@@ -580,12 +551,6 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         // Clear Buffers All
         Trim_Algorithm_Clear_Buffer_All(ptr_Param);
         u8_rtn_val = TRIM_ALGORITHM_DONE_MODE; // Done - Mode
-    }
-    else
-    {
-        #ifdef DBG_TRIM_ALGORITHM
-            print(LOG_DEBUG, "\t  REPEAT \r\n");
-        #endif //DBG_TRIM_ALGORITHM
     }
 
     return u8_rtn_val;
