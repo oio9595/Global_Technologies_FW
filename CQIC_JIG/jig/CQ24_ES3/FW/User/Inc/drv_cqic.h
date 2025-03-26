@@ -214,7 +214,6 @@ typedef struct
     cq24_cmd1_mode_control_t        _r01;
     cq24_cmd1_fix_control_t         _r02;
     cq24_cmd1_cs_hold_fix_channel_t _r03;
-    /* data */
 }cq24_cmd1_regs;
 
 typedef union

@@ -53,7 +53,7 @@ static void CQ24_Write_CMD4_LD_I(void);
 static void CQ24_Reset(void);
 static void CQ24_Register_Init(void);
 static void CQ24_OTP_Protection(bool en);
-static void CQ24_OTP_Read_Start(void);
+static void CQ24_OTP_Download_Start(void);
 
 static void Spi_Write(uint16_t* pData, uint16_t length)
 {
@@ -345,6 +345,7 @@ static void CQ24_Register_Init(void)
         default :
             continue;
         }
+
         cmd1.u.cmd_id = CMD_01;
         cmd1.u.rw = CQ24_WR;
         cmd1.u.addr = cmd1_addr;
@@ -479,7 +480,7 @@ static void CQ24_OTP_Protection(bool en)
     CQ24_Write(cmd2.value, 2);
 }
 
-static void CQ24_OTP_Read_Start(void)
+static void CQ24_OTP_Download_Start(void)
 {
     CQ24_OTP_Protection(false);
 
@@ -505,10 +506,11 @@ void CQ24_Init(void)
     CQ24_Reset();
 
     CQ24_Register_Init();
+
     CQ24_Read_All();
 
-    /* CQ24_OTP_Read_Start();
-       CQ24_Read_All(); */
+    /*CQ24_OTP_Download_Start();
+       CQ24_Read_All();*/
 
     CQ24_Set_Vsync(true);
 }

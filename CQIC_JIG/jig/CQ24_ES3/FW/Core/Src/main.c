@@ -33,6 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TASK_JIG_FUNCTION_TICK      (10) //ms
+
 #define TASK_KEY_HANDLER_TICK       (10) //ms
 #define TASK_UART_HANDLER_TICK      (5) //ms
 
@@ -491,6 +492,7 @@ int main(void)
     Key_Struct_Init();
     Uart_Debug_Init();
 
+    CQ24_NSCS_LO();
     CQ24_Set_MCLK(false);
     CQ24_Set_Vsync(false);
   /* USER CODE END 2 */
@@ -1068,7 +1070,6 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-    CQ24_NSCS_LO();
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
