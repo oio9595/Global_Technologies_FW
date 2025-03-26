@@ -57,7 +57,8 @@ EXTERN bool gb_sal_init_flag;
 EXTERN bool gb_sal_sync_flag;
 
 EXTERN void sal_init(void);
-EXTERN void sal_make_crc_enable(uint8_t crc_en);
+// EXTERN void sal_make_crc_enable(uint8_t crc_en);
+EXTERN void sal_make_mcu_crc(bool crc_en);
 EXTERN void sal_set_crc_manual(uint8_t manual_crc_en, uint8_t manual_crc);
 
 EXTERN void sal_set_preamble(uint8_t n_preamble);
@@ -75,7 +76,9 @@ EXTERN void sal_set_write_target(uint32_t dev_id, uint32_t cmd, uint32_t value);
 EXTERN void sal_set_write_SR_target(uint32_t dev_id, uint32_t cmd, uint32_t value);
 
 EXTERN void sal_set_pattern(demo_pat_t n_demo_pat);
-
+/*
+EXTERN void sal_crc_repeat_test(void);
+*/
 /* BEGIN - INTERFACE FUNCTIONS */
 
 #ifdef __cplusplus

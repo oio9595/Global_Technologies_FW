@@ -591,7 +591,7 @@ void comm_debugging_process(void)
         }
         else if(sscanf(str_in, "sal_crc %u", &u32_param[0]) == 1)
         {
-            sal_make_crc_enable(u32_param[0]);
+            sal_make_mcu_crc(u32_param[0]);
 
             print(LOG_LV_INFO, gp_msg_okay);
             print(LOG_LV_INFO, gp_msg_prompt);
@@ -923,7 +923,6 @@ void comm_debugging_process(void)
         {
             display_command_list();
         }
-
         else
         {
             print(LOG_LV_INFO, gp_msg_what);

@@ -390,6 +390,7 @@ static void sal_reset(void)
     sal_write_reg_single_ended(&_sal_info_);
 
     gb_sal_init_flag = false;
+
     sal_set_chain_length(0);
 }
 
@@ -441,7 +442,7 @@ static void sal_change_power_mode(uint8_t mode)
 
     sal_write_reg_single_ended(&_sal_info_);
 }
-
+#if 0
 void sal_make_crc_enable(uint8_t crc_en)
 {
     _sal_single_ended_info_t _sal_info_ = {0, };
@@ -455,15 +456,18 @@ void sal_make_crc_enable(uint8_t crc_en)
     print(LOG_LV_INFO, "%u : %s - 0x%03X\r\n", LIST_SET_SETUP1, gt_sal_cmd_item[LIST_SET_SETUP1].str, gt_sal_cmd_data.ALL[LIST_SET_SETUP1]);
 
     sal_write_reg_single_ended(&_sal_info_);
-
-    if (crc_en == 1)
+}
+#endif
+void sal_make_mcu_crc(bool crc_en)
+{
+    if (crc_en == true)
     {
-        print(LOG_LV_INFO, "SAL CRC Enable!!!\r\n");
+        print(LOG_LV_INFO, "MCU CRC Enable!!!\r\n");
         gb_sal_crc_en = true;
     }
     else
     {
-        print(LOG_LV_INFO, "SAL CRC Disable!!!\r\n");
+        print(LOG_LV_INFO, "MCU CRC Disable!!!\r\n");
         gb_sal_crc_en = false;
     }
 }
@@ -1458,7 +1462,32 @@ void sal_demo_process(void)
         gb_sal_rw_flag = false;
     }
 }
+/*
+static uint16_t gn_sal_crc_test_fail_count = 0;
+void sal_crc_repeat_test(void)
+{
+    for (uint16_t i = 0 ; i < 1000 ; ++i)
+    {
+        sal_reset();
+        LL_mDelay(10 - 1);
+        sal_make_crc_enable(1);
+        LL_mDelay(10 - 1);
+        sal_initiates();
+        LL_mDelay(10 - 1);
 
+        if (gb_sal_rx_timeout)
+        {
+            ++gn_sal_crc_test_fail_count;
+            //print(LOG_LV_ERROR, "CRC test failed!! \r\n");
+        }
+        else
+        {
+            //print(LOG_LV_ERROR, "CRC test success!! \r\n");
+        }
+    }
+    print(LOG_LV_INFO, "CRC test failed count : %u \r\n", gn_sal_crc_test_fail_count);
+}
+*/
 /* END - INTERFACE FUNCTIONS ************************************************************************/
 
 /*** end of file ***/
