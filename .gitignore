@@ -6,3 +6,4 @@
 **/EWARM/
 *.json
 *.tmp
+~$*
