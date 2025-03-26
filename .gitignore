@@ -4,3 +4,4 @@
 *.pbw
 *.pbi
 **/EWARM/
+*.json
