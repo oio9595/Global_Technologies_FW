@@ -282,20 +282,21 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 #define VREF_MEASURE_CNT_MAX 20
 void JigBD_IF_VREF_ADC_StartStop(void)
 {
-    uint32_t u32_InternalADC = 0;
+    uint64_t u64_InternalADC = 0;
     for (uint8_t cnt = 0 ; cnt < VREF_MEASURE_CNT_MAX ; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
         while(!LL_ADC_IsActiveFlag_EOCS(ADC1)) {}
         LL_ADC_ClearFlag_EOCS(ADC1);
-        u32_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
+        u64_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
     }
-    gu16_InternalADC = (uint16_t)(((float)u32_InternalADC / VREF_MEASURE_CNT_MAX) + 0.5f);
+    gu16_InternalADC = (uint16_t)(((float)u64_InternalADC / VREF_MEASURE_CNT_MAX) + 0.5f);
     print(LOG_DEBUG, "JigBD_IF_VREF_ADC_Get()-%d\r\n", gu16_InternalADC);
 }
 
 uint16_t JigBD_IF_VREF_ADC_Get(void)
 {
+    print(LOG_DEBUG, "JigBD_IF_VREF_ADC_Get()-%d\r\n", gu16_InternalADC);
     return gu16_InternalADC;
 }
 
@@ -942,7 +943,7 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
     uint16_t ret = 0;
     if (IS_XC24())
     {
-        ret = XC24_IF_Read_XD04(0xFF);
+        ret = XC24_IF_Fault_Read_Command();
     }
     else
     {

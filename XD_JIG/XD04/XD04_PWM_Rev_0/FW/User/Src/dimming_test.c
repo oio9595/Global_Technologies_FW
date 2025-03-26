@@ -57,7 +57,9 @@ void XD04_Vsync_Task(void)
         }
 
         JigBD_IF_Write_LD_Command(gn_xd04_LD_out);
-        // fault read if need
+
+        // fault read if needed
+        JigBD_IF_Fault_Read_Command();
 
         if (gb_xd_write_flag)
         {

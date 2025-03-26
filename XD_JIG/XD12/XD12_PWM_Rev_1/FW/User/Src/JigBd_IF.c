@@ -942,7 +942,7 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
     uint16_t ret = 0;
     if (IS_XC24())
     {
-        ret = XC24_IF_Read_XD12(0xFF);
+        ret = XC24_IF_Fault_Read_Command();
     }
     else
     {

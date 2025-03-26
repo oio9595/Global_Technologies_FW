@@ -13,6 +13,7 @@ static SPI_TypeDef *g_hSPIx;
 static bool gb_XC24_support;
 
 static _xc24_regs_t gt_xc24_regs;
+static _xc24_global_fault_t gt_xc24_fault;
 
 static const char* gs_xc24_addr_str[XC24_ADDR_MAX] =
 {
@@ -377,6 +378,21 @@ void XC24_IF_SyncGen_Command(void)
     p_v_sync_gen->start = 1;
     XC24_Write_Register(XC24_ADDR_SYNC_GEN, p_v_sync_gen->ALL);
     us_tdelay(XD04_IDGEN_DELAY);
+}
+
+uint16_t XC24_IF_Fault_Read_Command(void)
+{
+    _v_fault_read_t* p_v_fault_read = &gt_xc24_regs._r05;
+
+    /* XC24 -> XD04 Set Sync GEN */
+    p_v_fault_read->ALL = 0;
+    p_v_fault_read->start = 1;
+    XC24_Write_Register(XC24_ADDR_FAULT_READ, p_v_fault_read->ALL);
+    us_tdelay(XD04_IDGEN_DELAY);
+
+    gt_xc24_fault._d1.ALL = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA1);
+
+    return gt_xc24_fault._d1.ALL;
 }
 
 void XC24_IF_Write_XD04(uint8_t in_XD04_addr, uint16_t in_XD04_data)

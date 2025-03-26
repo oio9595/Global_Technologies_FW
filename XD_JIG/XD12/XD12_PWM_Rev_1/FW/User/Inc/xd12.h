@@ -20,9 +20,6 @@
  extern "C" {
 #endif
 
-
-#define _DBG_XD12       1
-
 #define REG_LIMIT_OSC                   ( 63) /* 6-bit */
 #define REG_LIMIT_VREF                  ( 63) /* 6-bit */
 #define REG_LIMIT_ICTL_L                (127) /* 7-bit */

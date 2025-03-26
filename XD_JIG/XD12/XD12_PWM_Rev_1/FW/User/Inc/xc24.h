@@ -1415,6 +1415,7 @@ EXTERN void USE_XC24(bool b_support);
 
 EXTERN void XC24_IF_IdGen_Command(void);
 EXTERN void XC24_IF_SyncGen_Command(void);
+EXTERN uint16_t XC24_IF_Fault_Read_Command(void);
 
 EXTERN void XC24_IF_Write_XD12(uint8_t in_XD12_addr, uint16_t in_XD12_data);
 EXTERN uint16_t XC24_IF_Read_XD12(uint8_t in_XD12_addr);
