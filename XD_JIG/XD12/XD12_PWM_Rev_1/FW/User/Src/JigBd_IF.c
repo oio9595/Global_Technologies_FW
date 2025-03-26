@@ -840,7 +840,7 @@ static void MCU_IF_SyncGen_Command()
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < 5 ; ++i)
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
     {
         //bit21 : start
         gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;

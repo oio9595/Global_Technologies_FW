@@ -1196,9 +1196,8 @@ void Screening_Procedure_Run(void)
                 }
 
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
-                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
-                    gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
+                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f\r\n", \
+                        gn_xd_screen_ana,gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
 
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                     if (gn_xd_screen_ana > 0xFFF)
@@ -1206,9 +1205,8 @@ void Screening_Procedure_Run(void)
                         gt_jig_screening_step = SCREEN_STEP_STOP;
                     }
                 #else
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gt_xd_screen_max_curr_level, \
-                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
-                    gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
+                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f\r\n", \
+                        gt_xd_screen_max_curr_level, gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
 
                     ++gt_xd_screen_max_curr_level;
                     if (gt_xd_screen_max_curr_level > DEV_MAX_CURR_LEVEL_64mA)
