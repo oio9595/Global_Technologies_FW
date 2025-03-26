@@ -5,3 +5,4 @@
 *.pbi
 **/EWARM/
 *.json
+*.tmp
