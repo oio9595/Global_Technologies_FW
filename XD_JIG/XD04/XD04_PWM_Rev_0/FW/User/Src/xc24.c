@@ -487,7 +487,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
-    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
+    cmd_format.size = XD_DAISY_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
     for (uint8_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
