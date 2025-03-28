@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "comm_debug.h": "c",
-        "tlc59581.h": "c"
-    },
-    "C_Cpp.errorSquiggles": "disabled"
-}
