@@ -53,11 +53,19 @@ Backup*
 # IAR .dep files
 *.dep
 
-# Compiled Binaries
+### IAR ###
+# Compiled binaries
+*.o
 *.bin
 *.elf
 *.hex
 *.map
+*.out
+*.obj
+*.ninja_deps
+*.ninja_log
 
 # Trash files
 *.bak
+thumbs.db
+*.~*
