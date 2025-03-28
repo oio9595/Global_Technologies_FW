@@ -1152,7 +1152,7 @@ void XD12_Trim_Init_VREF_CTL(void)
     gt_xd12_general_regs._r3F.vref_o = 1;
     gt_xd12_general_regs._r3F.mclk32_o = 0;
     gt_xd12_general_regs._r3F.pwm_full_o = 0;
-    gt_xd12_general_regs._r3F.test_ana_en = 2;
+    gt_xd12_general_regs._r3F.test_ana_en = 3;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 }
 void XD12_Trim_Init_OSC(void)
