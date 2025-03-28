@@ -597,14 +597,14 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_OTP_OP_MODE :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t TEST_EN             : [%u]\r\n"
-                            "\t DDIO_DS             : [%u]\r\n"
+                            "\t DDIO_DIS            : [%u]\r\n"
                             "\t TEST_ANA_EN         : [%u]\r\n"
                             "\t PWM_FULL_O          : [%u]\r\n"
                             "\t MCLK32_O            : [%u]\r\n"
                             "\t VREF_O              : [%u]\r\n"
                             "\t ADDR_EXT            : [%u]\r\n"
                             "\t VALUE               : (0x%03X)\r\n\r\n",
-            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.ddio_ds, gt_xd12_general_regs._r3F.test_ana_en, gt_xd12_general_regs._r3F.pwm_full_o,
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r3F.test_en, gt_xd12_general_regs._r3F.ddio_dis, gt_xd12_general_regs._r3F.test_ana_en, gt_xd12_general_regs._r3F.pwm_full_o,
             gt_xd12_general_regs._r3F.mclk32_o, gt_xd12_general_regs._r3F.vref_o, gt_xd12_general_regs._r3F.addr_ext, gt_xd12_general_regs._r3F.val);
             break;
         default :
@@ -936,7 +936,7 @@ void XD12_Trim_Init(void)
             gt_xd12_general_regs._r06.dev_max_curr_level = gt_xd_dev_max_curr_level;
             break;
         case XD12_ADDR_MAX_CURR_VREF :
-            gt_xd12_general_regs._r08.max_curr_vref = 0xFFF;
+            gt_xd12_general_regs._r08.max_curr_vref = XD12_CURRENT_TRIM_VREF;
             break;
         case XD12_ADDR_SERIAL_CLOCK_GEN :
             gt_xd12_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -947,7 +947,7 @@ void XD12_Trim_Init(void)
             break;
         case XD12_ADDR_OTP_OP_MODE :
             gt_xd12_general_regs._r3F.test_en = 1;
-            gt_xd12_general_regs._r3F.ddio_ds = 1;
+            gt_xd12_general_regs._r3F.ddio_dis = 1;
             break;
         default :
             continue;
@@ -1176,7 +1176,7 @@ void XD12_Trim_Init_ICTL(void)
     gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
-    gt_xd12_general_regs._r08.max_curr_vref = 3276;
+    gt_xd12_general_regs._r08.max_curr_vref = XD12_CURRENT_TRIM_VREF;
     XD12_Write_General_Reg(XD12_ADDR_MAX_CURR_VREF, gt_xd12_general_regs._r08.val);
 }
 

@@ -14,8 +14,6 @@
 #define XD12_OSC_TARGET         (39.3192) /* MHz */
 #define XD12_VREF_TARGET        (2.2)     /* V */
 
-#define XD12_CURRENT_TRIM_VREF  (4095)
-
 #define XD12_ICTL_L_ERR_RATE    (0.5/100) /* +/-% */
 #define XD12_ICTL_L_TARGET      (6.4000f)   /* mA */
 #define XD12_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_8mA)

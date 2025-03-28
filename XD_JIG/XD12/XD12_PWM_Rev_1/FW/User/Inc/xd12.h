@@ -489,7 +489,7 @@ typedef union
         uint16_t pwm_full_o  : 1;
         uint16_t             : 1;
         uint16_t test_ana_en : 2;
-        uint16_t ddio_ds     : 1;
+        uint16_t ddio_dis    : 1;
         uint16_t test_en     : 1;
         uint16_t             : 4;
     };

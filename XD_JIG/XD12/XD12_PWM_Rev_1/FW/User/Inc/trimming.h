@@ -23,6 +23,8 @@
  extern "C" {
 #endif
 
+#define XD12_CURRENT_TRIM_VREF  (4095)
+
 typedef enum
 {
     TRIMMING_STEP_NONE = 0,
