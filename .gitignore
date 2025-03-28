@@ -39,10 +39,12 @@
 **/Debug/List
 
 # IAR Debug Obj
-**/Obj/*.pbd
-**/Obj/*.pbd.*
-**/Obj/*.pbi
-**/Obj/*.pbi.*
+*.pbd
+*.pbd.*
+*.pbi
+*.pbi.*
+*.xcl
+*.pbw
 
 # Log files
 **.log
@@ -64,6 +66,7 @@ Backup*
 *.obj
 *.ninja_deps
 *.ninja_log
+*.ninja
 
 # Trash files
 *.bak
