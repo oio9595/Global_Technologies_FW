@@ -527,14 +527,14 @@ typedef union
 
 typedef enum
 {
-    DEV_MAX_CURR_LEVEL_4mA = 0, // 3b'000
-    DEV_MAX_CURR_LEVEL_8mA,     // 3b'001
-    DEV_MAX_CURR_LEVEL_12mA,    // 3b'010
-    DEV_MAX_CURR_LEVEL_16mA,    // 3b'011
-    DEV_MAX_CURR_LEVEL_24mA,    // 3b'100
-    DEV_MAX_CURR_LEVEL_32mA,    // 3b'101
-    DEV_MAX_CURR_LEVEL_46mA,    // 3b'110
-    DEV_MAX_CURR_LEVEL_64mA,    // 3b'111
+    DEV_MAX_CURR_LEVEL_8mA = 0, // 3b'000
+    DEV_MAX_CURR_LEVEL_16mA,     // 3b'001
+    DEV_MAX_CURR_LEVEL_24mA,    // 3b'010
+    DEV_MAX_CURR_LEVEL_32mA,    // 3b'011
+    DEV_MAX_CURR_LEVEL_48mA,    // 3b'100
+    DEV_MAX_CURR_LEVEL_64mA,    // 3b'101
+    DEV_MAX_CURR_LEVEL_92mA,    // 3b'110
+    DEV_MAX_CURR_LEVEL_128mA,    // 3b'111
     DEV_MAX_CURR_LEVEL_MAX,
 }dev_max_curr_level_t;
 

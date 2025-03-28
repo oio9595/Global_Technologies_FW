@@ -14,17 +14,15 @@
 #define XD04_OSC_TARGET         (39.3192) /* MHz */
 #define XD04_VREF_TARGET        (2.2)     /* V */
 
-#define XD04_CURRENT_TRIM_VREF  (4095)
-
 #define XD04_ICTL_L_ERR_RATE    (0.5/100) /* +/-% */
 #define XD04_ICTL_L_TARGET      (12.800f)   /* mA */
-#define XD04_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_8mA)
-#define XD04_ICTL_L_P2          (DEV_MAX_CURR_LEVEL_8mA)
+#define XD04_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_16mA)
+#define XD04_ICTL_L_P2          (DEV_MAX_CURR_LEVEL_16mA)
 
 #define XD04_ICTL_H_ERR_RATE    (0.5/100) /* +/-% */
 #define XD04_ICTL_H_TARGET      (51.200f)  /* mA */
-#define XD04_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_32mA)
-#define XD04_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_32mA)
+#define XD04_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_64mA)
+#define XD04_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_64mA)
 
 #define ADJ_NONE    0
 #define ADJ_PLUS    1
@@ -1174,7 +1172,7 @@ void Screening_Procedure_Run(void)
                         gt_xd_screen_max_curr_level, gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
 
                     ++gt_xd_screen_max_curr_level;
-                    if (gt_xd_screen_max_curr_level > DEV_MAX_CURR_LEVEL_64mA)
+                    if (gt_xd_screen_max_curr_level > DEV_MAX_CURR_LEVEL_128mA)
                     {
                         gt_jig_screening_step = SCREEN_STEP_STOP;
                     }

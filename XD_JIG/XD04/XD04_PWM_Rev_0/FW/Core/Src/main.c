@@ -57,8 +57,8 @@ typedef enum
 /* USER CODE BEGIN PV */
 const char* gs_xd04_dev_max_curr_level[DEV_MAX_CURR_LEVEL_MAX] =
 {
-     "max_4mA",  "max_8mA", "max_12mA", "max_16mA",
-    "max_24mA", "max_32mA", "max_46mA", "max_64mA",
+     "max_8mA", "max_16mA", "max_24mA",  "max_32mA",
+    "max_48mA", "max_64mA", "max_92mA", "max_128mA",
 };
 
 const char* gs_xd04_short_level[SHORT_LEVEL_MAX] =
@@ -1635,14 +1635,12 @@ static void TaskDebugUart(void)
             XD04_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
-            XD04_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
         }
         else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
         {
             XD04_Trim_Init_ICTL();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            XD04_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
         }
 
         else if (Command_is_("xd_osc_debug"))

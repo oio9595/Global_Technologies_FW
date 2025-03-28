@@ -795,7 +795,7 @@ void XD04_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_48mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
     gt_xd_fb_level = FB_LEVEL_0V7;
 }
@@ -899,7 +899,7 @@ void XD04_Trim_Param_Init(void)
 {
     gt_xd_fb_level = FB_LEVEL_0V7;
     gt_xd_short_level = SHORT_LEVEL_36V;
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
 }
 
 void XD04_Trim_Init(void)
@@ -927,7 +927,7 @@ void XD04_Trim_Init(void)
             gt_xd04_general_regs._r06.dev_max_curr_level = gt_xd_dev_max_curr_level;
             break;
         case XD04_ADDR_MAX_CURR_VREF :
-            gt_xd04_general_regs._r08.max_curr_vref = 0xFFF;
+            gt_xd04_general_regs._r08.max_curr_vref = XD04_CURRENT_TRIM_VREF;
             break;
         case XD04_ADDR_SERIAL_CLOCK_GEN :
             gt_xd04_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -982,14 +982,8 @@ float XD04_Get_Max_Current_level(void)
 
     switch (dev_max_curr_lvl)
     {
-    case DEV_MAX_CURR_LEVEL_4mA :
-        f_rtn = 4.0f;
-        break;
     case DEV_MAX_CURR_LEVEL_8mA :
         f_rtn = 8.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_12mA :
-        f_rtn = 12.0f;
         break;
     case DEV_MAX_CURR_LEVEL_16mA :
         f_rtn = 16.0f;
@@ -1000,11 +994,17 @@ float XD04_Get_Max_Current_level(void)
     case DEV_MAX_CURR_LEVEL_32mA :
         f_rtn = 32.0f;
         break;
-    case DEV_MAX_CURR_LEVEL_46mA :
-        f_rtn = 46.0f;
+    case DEV_MAX_CURR_LEVEL_48mA :
+        f_rtn = 48.0f;
         break;
     case DEV_MAX_CURR_LEVEL_64mA :
         f_rtn = 64.0f;
+        break;
+    case DEV_MAX_CURR_LEVEL_92mA :
+        f_rtn = 92.0f;
+        break;
+    case DEV_MAX_CURR_LEVEL_128mA :
+        f_rtn = 128.0f;
         break;
     }
     return f_rtn;
@@ -1163,7 +1163,7 @@ void XD04_Trim_Init_ICTL(void)
     gt_xd04_general_regs._r3F.pwm_full_o = 1;
     XD04_Write_General_Reg(XD04_ADDR_OTP_OP_MODE, gt_xd04_general_regs._r3F.val);
 
-    gt_xd04_general_regs._r08.max_curr_vref = 3276;
+    gt_xd04_general_regs._r08.max_curr_vref = XD04_CURRENT_TRIM_VREF;
     XD04_Write_General_Reg(XD04_ADDR_MAX_CURR_VREF, gt_xd04_general_regs._r08.val);
 }
 
