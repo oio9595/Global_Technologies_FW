@@ -18,7 +18,7 @@
 
 #define OTP_WRITE_TRUE          (1)
 #define OTP_WRITE_FALSE         (0)
-#define OTP_WRITE_EN            OTP_WRITE_FALSE
+#define OTP_WRITE_EN            OTP_WRITE_TRUE
 
 #define SAL_TRIM_SAVED_CNT_MAX  (10)
 #define SAL_TRIM_TRIAL_CNT_MAX  (50)

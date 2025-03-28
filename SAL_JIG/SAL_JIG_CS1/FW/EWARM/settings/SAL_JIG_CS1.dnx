@@ -19,15 +19,15 @@
         <EnableCache>0</EnableCache>
     </ArmDriver>
     <StLinkDriver>
-        <stlinkserialNo>0669FF485688494867164423</stlinkserialNo>
+        <stlinkserialNo>066EFF343047463043253849</stlinkserialNo>
         <stlinkfoundProbes />
-        <stlinkResetStyle>0</stlinkResetStyle>
-        <stlinkResetStrategy>2</stlinkResetStrategy>
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
         <CStepIntDis>_ 0</CStepIntDis>
+        <stlinkResetStyle>0</stlinkResetStyle>
+        <stlinkResetStrategy>2</stlinkResetStrategy>
     </StLinkDriver>
     <DebugChecksum>
-        <Checksum>757946185</Checksum>
+        <Checksum>1772555921</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>
@@ -113,6 +113,14 @@
         <ShowTimeSum>1</ShowTimeSum>
         <SumSortOrder>0</SumSortOrder>
     </EventLog>
+    <DisassembleMode>
+        <mode>0</mode>
+    </DisassembleMode>
+    <Breakpoints2>
+        <Bp0>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\User\Src\drv_sal_trim.c}.1863.18" 0 0 1 "" 0 "" 0</Bp0>
+        <Bp1>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\User\Src\comm_debug.c}.769.13" 0 0 1 "" 0 "" 0</Bp1>
+        <Count>2</Count>
+    </Breakpoints2>
     <TermIOLog>
         <LoggingEnabled>_ 0</LoggingEnabled>
         <LogFile>_ ""</LogFile>
@@ -122,6 +130,10 @@
         <LogFile>_ ""</LogFile>
         <Category>_ 0</Category>
     </LogFile>
+    <Aliases>
+        <Count>0</Count>
+        <SuppressDialog>0</SuppressDialog>
+    </Aliases>
     <DriverProfiling>
         <Enabled>0</Enabled>
         <Mode>3</Mode>
@@ -135,16 +147,4 @@
     <CallStackStripe>
         <ShowTiming>1</ShowTiming>
     </CallStackStripe>
-    <DisassembleMode>
-        <mode>0</mode>
-    </DisassembleMode>
-    <Breakpoints2>
-        <Bp0>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\User\Src\drv_sal_trim.c}.1863.18" 0 0 1 "" 0 "" 0</Bp0>
-        <Bp1>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\User\Src\comm_debug.c}.769.13" 0 0 1 "" 0 "" 0</Bp1>
-        <Count>2</Count>
-    </Breakpoints2>
-    <Aliases>
-        <Count>0</Count>
-        <SuppressDialog>0</SuppressDialog>
-    </Aliases>
 </settings>
