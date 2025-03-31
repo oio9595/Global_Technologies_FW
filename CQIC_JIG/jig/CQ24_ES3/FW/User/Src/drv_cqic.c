@@ -25,6 +25,7 @@ static CQ24_RW_Info gt_cq24_cmd2_rw_info;
 
 static cq24_cmd1_regs gt_cq24_cmd1_regs;
 static cq24_cmd2_regs gt_cq24_cmd2_regs;
+static cq24_cmd2_regs cq24_cmd2_regs_otp_after;
 
 static cq24_cmd3_duty_transfer gt_cq24_cmd3_duty;
 static cq24_cmd4_ld_i_transfer gt_cq24_cmd4_ld_i;
@@ -108,7 +109,6 @@ static void CQ24_Read_All(void)
         *(&gt_cq24_cmd1_regs._r00.value + cmd1_addr) = CQ24_Read(&cmd1.value, rx_data, 2);
 
         Print("[0x%02X] - [0x%03X]\r\n", cmd1_addr, *(&gt_cq24_cmd1_regs._r00.value + cmd1_addr));
-        //Print("0x%02X - %X\r\n", cmd1_addr, (&gt_cq24_cmd1_regs._r00.value + cmd1_addr));
     }
     Print("\r\n");
 
@@ -123,7 +123,6 @@ static void CQ24_Read_All(void)
         *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = CQ24_Read(cmd2.value, rx_data, 2);
 
         Print("[0x%02X] - [0x%04X]\r\n", cmd2_addr, *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr));
-        //Print("0x%02X - %X\r\n", cmd2_addr, (&gt_cq24_cmd2_regs._r00.value + cmd2_addr));
     }
     Print("\r\n");
 }
@@ -493,6 +492,31 @@ static void CQ24_OTP_Download_Start(void)
     cmd2.u.addr = CQ24_CMD2_OTP_RD_PG_CONTROL;
     cmd2.u.data = *(&gt_cq24_cmd2_regs._r00.value + CQ24_CMD2_OTP_RD_PG_CONTROL);
     CQ24_Write(cmd2.value, 2);
+
+#if 1
+    HAL_Delay(10 - 1);
+
+    for(uint8_t cmd2_addr = 0 ; cmd2_addr < CQ24_CMD2_REG_ADDR_MAX ; ++cmd2_addr)
+    {
+        cmd2.u.addr 	= cmd2_addr;
+        cmd2.u.rw		= CQ24_RD;
+        cmd2.u.cmd_id	= CMD_02;
+        cmd2.u.data 	= 0;
+
+        *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr) = CQ24_Read(cmd2.value, cmd2.value, 2);
+
+        if (*(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) != *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr))
+        {
+            Print("OTP Download Error   [0x%02X] - [0x%04X] - [0x%04X]\r\n", cmd2_addr, *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr), *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr));
+        }
+        else
+        {
+            Print("OTP Download Success [0x%02X] - [0x%04X]\r\n", cmd2_addr, *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr));
+        }
+        *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr);
+    }
+    Print("\r\n");
+#endif
 }
 
 void CQ24_Init(void)
@@ -506,11 +530,10 @@ void CQ24_Init(void)
     CQ24_Reset();
 
     CQ24_Register_Init();
-
     CQ24_Read_All();
 
-    /*CQ24_OTP_Download_Start();
-       CQ24_Read_All();*/
+    CQ24_OTP_Download_Start();
+    //CQ24_Read_All();
 
     CQ24_Set_Vsync(true);
 }

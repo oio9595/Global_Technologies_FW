@@ -43,8 +43,8 @@
 #define UART_DELETE                 (0x7F)
 #define UART_SPACE                  (0x20)
 
-#define TX_PACKET_SIZE              (50)
-#define TX_BUFF_SIZE                (256) // must be power of 2
+#define TX_PACKET_SIZE              (100)
+#define TX_BUFF_SIZE                (512) // must be power of 2
 
 #define RX_PACKET_SIZE              (20)
 #define RX_BUFF_SIZE                (32) // must be power of 2
