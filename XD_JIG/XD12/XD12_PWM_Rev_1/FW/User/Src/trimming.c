@@ -1052,11 +1052,11 @@ void Trimming_Procedure_Run(void)
                 u64_tmp_xd_otp_burn_result = XD12_Compare_Trim_Regs();
                 if (u64_tmp_xd_otp_burn_result)
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR[%u] ========%s\r\n", ANSI_FONT_RED, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR[%llu] ========%s\r\n", ANSI_FONT_RED, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
                 }
                 else
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK[%u] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK[%llu] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
                 }
                 gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
             }

@@ -809,7 +809,7 @@ void XD12_Param_Init(void)
 
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
-    gt_xd_fb_level = FB_LEVEL_0V7;
+    gt_xd_fb_level = FB_LEVEL_0V5;
 }
 
 void XD12_Init(void)
@@ -909,7 +909,7 @@ void XD12_Init(void)
 
 void XD12_Trim_Param_Init(void)
 {
-    gt_xd_fb_level = FB_LEVEL_0V7;
+    gt_xd_fb_level = FB_LEVEL_0V5;
     gt_xd_short_level = SHORT_LEVEL_36V;
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
 }
