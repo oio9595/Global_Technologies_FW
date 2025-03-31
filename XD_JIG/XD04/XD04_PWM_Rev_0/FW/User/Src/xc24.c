@@ -268,7 +268,7 @@ void XC24_Init(void)
             gt_xc24_regs._r00.rst3 = 1;
             break;
         case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
-            gt_xc24_regs._r0D.ld_trans_start_pointer = 4;
+            gt_xc24_regs._r0D.ld_trans_start_pointer = 1;
             gt_xc24_regs._r0D.ld_diff_threshold = 4;
             break;
         case XC24_ADDR_LOCAL_RW_POINTER_RESET :
@@ -307,7 +307,8 @@ void XC24_Init(void)
             break;
         case XC24_ADDR_AUTO_ENABLE :
             gt_xc24_regs._r08.timeout_en = 1;
-            gt_xc24_regs._r08.fault_auto_en = 1;
+            gt_xc24_regs._r08.sync_auto_en = 0;
+            gt_xc24_regs._r08.fault_auto_en = 0;
             break;
         case XC24_ADDR_INTERRUPT_ENABLE :
             gt_xc24_regs._r15.int_fb_en = 1;

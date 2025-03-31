@@ -787,6 +787,7 @@ extern void XD04_Trim_Init(void);
 
 extern void XD04_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XD04_Get_Max_Current_level(void);
+extern void XD04_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
 extern bool XD04_Is_Vsync_Mode_External(void);
 extern void XD04_Update_Vsync_Frequency(float n_freq);
 

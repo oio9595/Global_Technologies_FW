@@ -467,46 +467,6 @@ void XD04_Dump_All_Registers(void)
                             "\t DELAY_CH04 : [%u]\r\n\r\n",
                 gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r0E.delay_ch4);
             break;
-        case XD04_ADDR_DELAY_CH05 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH05 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r0F.delay_ch5);
-            break;
-        case XD04_ADDR_DELAY_CH06 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH06 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r10.delay_ch6);
-            break;
-        case XD04_ADDR_DELAY_CH07 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH07 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r11.delay_ch7);
-            break;
-        case XD04_ADDR_DELAY_CH08 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH08 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r12.delay_ch8);
-            break;
-        case XD04_ADDR_DELAY_CH09 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH09 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r13.delay_ch9);
-            break;
-        case XD04_ADDR_DELAY_CH10 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH10 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r14.delay_ch10);
-            break;
-        case XD04_ADDR_DELAY_CH11 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH11 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r15.delay_ch11);
-            break;
-        case XD04_ADDR_DELAY_CH12 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t DELAY_CH12 : [%u]\r\n\r\n",
-                gs_xd04_general_regs_str[addr_offset], addr_offset, gt_xd04_general_regs._r16.delay_ch12);
-            break;
         case XD04_ADDR_SERIAL_CLOCK_GEN :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t SERIAL_LOW  : [%u]\r\n"
@@ -646,54 +606,6 @@ void XD04_Dump_All_Registers(void)
                             "\t VALUE            : (0x%03X)\r\n\r\n",
             gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r06.ictl_l_ch_x, gt_xd04_mirror_regs._r06.val);
             break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_5 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_5      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r07.ictl_l_ch_x, gt_xd04_mirror_regs._r07.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_6 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_6      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r08.ictl_l_ch_x, gt_xd04_mirror_regs._r08.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_7 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_7      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r09.ictl_l_ch_x, gt_xd04_mirror_regs._r09.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_8 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_8      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r0A.ictl_l_ch_x, gt_xd04_mirror_regs._r0A.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_9 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_9      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r0B.ictl_l_ch_x, gt_xd04_mirror_regs._r0B.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_10 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_10     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r0C.ictl_l_ch_x, gt_xd04_mirror_regs._r0C.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_11 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_11     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r0D.ictl_l_ch_x, gt_xd04_mirror_regs._r0D.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_L_CH_12 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_L_CH_12     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r0E.ictl_l_ch_x, gt_xd04_mirror_regs._r0E.val);
-            break;
         case XD04_ADDR_TRIM_ICTL_H_CH_1 :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t ICTL_H_CH_1      : [%u]\r\n"
@@ -717,54 +629,6 @@ void XD04_Dump_All_Registers(void)
                             "\t ICTL_H_CH_4      : [%u]\r\n"
                             "\t VALUE            : (0x%03X)\r\n\r\n",
             gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r1E.ictl_h_ch_x, gt_xd04_mirror_regs._r1E.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_5 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_5      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r1F.ictl_h_ch_x, gt_xd04_mirror_regs._r1F.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_6 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_6      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r20.ictl_h_ch_x, gt_xd04_mirror_regs._r20.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_7 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_7      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r21.ictl_h_ch_x, gt_xd04_mirror_regs._r21.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_8 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_8      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r22.ictl_h_ch_x, gt_xd04_mirror_regs._r22.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_9 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_9      : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r23.ictl_h_ch_x, gt_xd04_mirror_regs._r23.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_10 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_10     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r24.ictl_h_ch_x, gt_xd04_mirror_regs._r24.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_11 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_11     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r25.ictl_h_ch_x, gt_xd04_mirror_regs._r25.val);
-            break;
-        case XD04_ADDR_TRIM_ICTL_H_CH_12 :
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t ICTL_H_CH_12     : [%u]\r\n"
-                            "\t VALUE            : (0x%03X)\r\n\r\n",
-            gs_xd04_mirror_regs_str[addr_offset], addr_offset, gt_xd04_mirror_regs._r26.ictl_h_ch_x, gt_xd04_mirror_regs._r26.val);
             break;
         default :
             continue;
@@ -797,7 +661,7 @@ void XD04_Param_Init(void)
 
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_48mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
-    gt_xd_fb_level = FB_LEVEL_0V7;
+    gt_xd_fb_level = FB_LEVEL_0V5;
 }
 
 void XD04_Init(void)
@@ -897,7 +761,7 @@ void XD04_Init(void)
 
 void XD04_Trim_Param_Init(void)
 {
-    gt_xd_fb_level = FB_LEVEL_0V7;
+    gt_xd_fb_level = FB_LEVEL_0V5;
     gt_xd_short_level = SHORT_LEVEL_36V;
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
 }
@@ -1046,6 +910,12 @@ static void XD04_Set_OSC_Manual(uint16_t n_osc_fll_man)
 
     gt_xd04_general_regs._r2B.osc_fll_man = osc_fll_man_msb;
     XD04_Write_General_Reg(XD04_ADDR_OSC_FLL_MANUAL_2, gt_xd04_general_regs._r2B.val);
+}
+
+void XD04_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
+{
+    gt_xd04_general_regs._r08.max_curr_vref = in_max_curr_vref;
+    XD04_Write_General_Reg(XD04_ADDR_MAX_CURR_VREF, gt_xd04_general_regs._r08.val);
 }
 
 void XD04_Update_Vsync_Frequency(float n_freq)

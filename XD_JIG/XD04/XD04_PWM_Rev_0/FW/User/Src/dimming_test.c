@@ -123,10 +123,12 @@ void XD04_get_fault_status(void)
     {
         if (!now_fault_status)
         {
+            DEBUG_LO();
             print(LOG_INFO, "\r\n [%u] XD FAULT None\r\n", vsync_tick);
         }
         else
         {
+            DEBUG_HI();
             if (now_fault_status & FAULT_MASK_FB)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB]\r\n", vsync_tick);
@@ -145,6 +147,11 @@ void XD04_get_fault_status(void)
             }
         }
         prev_fault_status = now_fault_status;
+    }
+
+    if (vsync_tick % 120 == 0)
+    {
+        print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
     }
     ++vsync_tick;
 }

@@ -36,7 +36,7 @@
 
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_MAX_CURRENT       (1)
-#define XD_SCREEN_TYPE              XD_SCREEN_MAX_CURRENT
+#define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
 static bool gb_xd_otp_write_flag;
 
@@ -1050,13 +1050,16 @@ void Trimming_Procedure_Run(void)
             {
                 uint64_t u64_tmp_xd_otp_burn_result = 0xFFFFFFFFFFFFFFFF;
                 u64_tmp_xd_otp_burn_result = XD04_Compare_Trim_Regs();
+
+                // print(LOG_DEBUG, "DEBUG: u64_tmp_xd_otp_burn_result = %llu\r\n", u64_tmp_xd_otp_burn_result);
+
                 if (u64_tmp_xd_otp_burn_result)
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR[%u] ========%s\r\n", ANSI_FONT_RED, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR[%llu] ========%s\r\n", ANSI_FONT_RED, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
                 }
                 else
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK[%u] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_OK[%llu] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
                 }
                 gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
             }
@@ -1082,11 +1085,7 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_PWR_ON :
         JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-        #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-            gt_screen_gain = GAIN_MID;
-        #else
-            gt_screen_gain = GAIN_HIGH;
-        #endif
+        gt_screen_gain = GAIN_HIGH;
         JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
         JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
@@ -1108,6 +1107,10 @@ void Screening_Procedure_Run(void)
             XD04_Trim_Init_ICTL();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
+
+            print(LOG_INFO, "max_curr, %.1f\r\n", XD04_Get_Max_Current_level());
+            print(LOG_INFO, "vref, %4u\r\n", XD04_CURRENT_TRIM_VREF);
+            print(LOG_INFO, "data, io_1, io_2, io_3, io_4, spec, dev_1, dev_2, dev_3, dev_4\r\n");
         }
         break;
     case SCREEN_STEP_CHANGE_OUTPUT :
