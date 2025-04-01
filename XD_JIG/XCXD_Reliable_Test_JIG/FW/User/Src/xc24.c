@@ -208,6 +208,8 @@ void XC24_Init(void)
 
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
+        gt_xc24_regs.ALL[xc_addr] = 0x00;
+
         switch (xc_addr)
         {
         case XC24_ADDR_SOFT_RESET:
@@ -438,7 +440,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
-    cmd_format.size = XD_DAISY_SIZE;
+    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
     for (uint16_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
