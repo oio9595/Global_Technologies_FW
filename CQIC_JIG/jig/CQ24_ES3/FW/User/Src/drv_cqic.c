@@ -25,7 +25,6 @@ static CQ24_RW_Info gt_cq24_cmd2_rw_info;
 
 static cq24_cmd1_regs gt_cq24_cmd1_regs;
 static cq24_cmd2_regs gt_cq24_cmd2_regs;
-static cq24_cmd2_regs cq24_cmd2_regs_otp_after;
 
 static cq24_cmd3_duty_transfer gt_cq24_cmd3_duty;
 static cq24_cmd4_ld_i_transfer gt_cq24_cmd4_ld_i;
@@ -71,6 +70,7 @@ static void CQ24_Write(uint16_t* pData, uint16_t length)
     CQ24_NSCS_LO();
     Spi_Write(pData, length);
     CQ24_NSCS_HI();
+    HAL_Delay(1 - 1);
 }
 
 static uint16_t CQ24_Read(uint16_t* cmd, uint16_t* pData, uint16_t length)
@@ -80,6 +80,7 @@ static uint16_t CQ24_Read(uint16_t* cmd, uint16_t* pData, uint16_t length)
     CQ24_NSCS_LO();
     Spi_Read(cmd, rx_buffer, length);
     CQ24_NSCS_HI();
+    HAL_Delay(1 - 1);
 
     if (length == 1)
     {
@@ -486,16 +487,24 @@ static void CQ24_OTP_Download_Start(void)
     cq24_cmd2_type cmd2 = {0, };
 
     gt_cq24_cmd2_regs._r32.u.otp_rd_start = 1;
-
     cmd2.u.cmd_id = CMD_02;
     cmd2.u.rw = CQ24_WR;
     cmd2.u.addr = CQ24_CMD2_OTP_RD_PG_CONTROL;
     cmd2.u.data = *(&gt_cq24_cmd2_regs._r00.value + CQ24_CMD2_OTP_RD_PG_CONTROL);
     CQ24_Write(cmd2.value, 2);
 
-#if 1
+    gt_cq24_cmd2_regs._r32.u.otp_rd_start = 0;
+    cmd2.u.cmd_id = CMD_02;
+    cmd2.u.rw = CQ24_WR;
+    cmd2.u.addr = CQ24_CMD2_OTP_RD_PG_CONTROL;
+    cmd2.u.data = *(&gt_cq24_cmd2_regs._r00.value + CQ24_CMD2_OTP_RD_PG_CONTROL);
+    CQ24_Write(cmd2.value, 2);
+
     HAL_Delay(10 - 1);
 
+    uint16_t otp_after_val = 0;
+
+    Print("OTP Download         - [addr] - [before] - [after]\r\n");
     for(uint8_t cmd2_addr = 0 ; cmd2_addr < CQ24_CMD2_REG_ADDR_MAX ; ++cmd2_addr)
     {
         cmd2.u.addr 	= cmd2_addr;
@@ -503,29 +512,29 @@ static void CQ24_OTP_Download_Start(void)
         cmd2.u.cmd_id	= CMD_02;
         cmd2.u.data 	= 0;
 
-        *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr) = CQ24_Read(cmd2.value, cmd2.value, 2);
+        otp_after_val = CQ24_Read(cmd2.value, cmd2.value, 2);
 
-        if (*(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) != *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr))
+        if (*(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) != otp_after_val)
         {
-            Print("OTP Download Error   [0x%02X] - [0x%04X] - [0x%04X]\r\n", cmd2_addr, *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr), *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr));
+            Print("Error   - [0x%02X] - [0x%04X] - [0x%04X]\r\n", cmd2_addr, *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr), otp_after_val);
         }
         else
         {
-            Print("OTP Download Success [0x%02X] - [0x%04X]\r\n", cmd2_addr, *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr));
+            Print("Success - [0x%02X] - [0x%04X] - [0x%04X]\r\n", cmd2_addr, *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr), otp_after_val);
         }
-        *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = *(&cq24_cmd2_regs_otp_after._r00.value + cmd2_addr);
+        *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = otp_after_val;
     }
     Print("\r\n");
-#endif
 }
 
 void CQ24_Init(void)
 {
     CQ24_VCC_5V_ON();
     CQ24_VCC_ON();
-    HAL_Delay(30);
+    HAL_Delay(30 - 1);
     CQ24_NSCS_HI();
     CQ24_Set_MCLK(true);
+    HAL_Delay(10 - 1);
 
     CQ24_Reset();
 
