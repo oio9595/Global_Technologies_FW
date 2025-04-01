@@ -237,11 +237,10 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
 
 void XC24_Read_Register_All(void)
 {
-    uint16_t t_xc_reg;
-    for (int i = 0 ; i < XC24_ADDR_MAX ; ++i)
+    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
-        t_xc_reg = XC24_Read_Register(i);
-        print(LOG_INFO, "%s(0x%02X): 0x%4X (%4u)\r\n", gs_xc24_addr_str[i], i, t_xc_reg, t_xc_reg);
+        uint16_t t_xc_reg = XC24_Read_Register(xc_addr);
+        print(LOG_INFO, "%s(0x%02X): 0x%04X (%4u)\r\n", gs_xc24_addr_str[xc_addr], xc_addr, t_xc_reg, t_xc_reg);
     }
 }
 
@@ -260,6 +259,8 @@ void XC24_Init(void)
 
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
+        gt_xc24_regs.ALL[xc_addr] = 0x00;
+
         switch (xc_addr)
         {
         case XC24_ADDR_SOFT_RESET:
@@ -268,7 +269,7 @@ void XC24_Init(void)
             gt_xc24_regs._r00.rst3 = 1;
             break;
         case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
-            gt_xc24_regs._r0D.ld_trans_start_pointer = 1;
+            gt_xc24_regs._r0D.ld_trans_start_pointer = 2;
             gt_xc24_regs._r0D.ld_diff_threshold = 4;
             break;
         case XC24_ADDR_LOCAL_RW_POINTER_RESET :
@@ -488,7 +489,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
-    cmd_format.size = XD_DAISY_SIZE;
+    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
     for (uint8_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
