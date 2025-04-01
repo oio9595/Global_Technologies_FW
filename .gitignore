@@ -45,6 +45,8 @@
 *.pbi.*
 *.xcl
 *.pbw
+*.dnx
+*.sim
 
 # Log files
 **.log
