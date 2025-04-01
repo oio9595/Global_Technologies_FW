@@ -258,7 +258,7 @@ int main(void)
 
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_RED, "- Check DIN Switch", ANSI_FONT_NONE);
 
-    USE_XC24(FALSE);
+    USE_XC24(TRUE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
 
     Trim_IF_Set_OTP_Enable(TRUE);
