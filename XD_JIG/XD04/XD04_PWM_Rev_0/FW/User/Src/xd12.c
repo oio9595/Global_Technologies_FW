@@ -180,6 +180,8 @@ static void XD04_Set_Delay_CH(void);
 
 void XD04_Write_General_Reg(uint8_t addr, uint16_t data)
 {
+    DEBUG_HI();
+
     if (gt_xd04_general_regs._r3F.addr_ext != XD04_REG_GENERAL)
     {
         gt_xd04_general_regs._r3F.addr_ext = XD04_REG_GENERAL;
@@ -188,10 +190,14 @@ void XD04_Write_General_Reg(uint8_t addr, uint16_t data)
 
     *(&gt_xd04_general_regs._r00.val + addr) = data;
     JigBD_IF_Write_Command(addr, data);
+
+    DEBUG_LO();
 }
 
 uint16_t XD04_Read_General_Reg(uint8_t addr)
 {
+    DEBUG_HI();
+
     if (gt_xd04_general_regs._r3F.addr_ext != XD04_REG_GENERAL)
     {
         gt_xd04_general_regs._r3F.addr_ext = XD04_REG_GENERAL;
@@ -201,6 +207,8 @@ uint16_t XD04_Read_General_Reg(uint8_t addr)
     *(&gt_xd04_general_regs._r00.val + addr) = JigBD_IF_Read_Command(addr);
 
     print(LOG_INFO, "XD04 General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xd04_general_regs._r00.val + addr));
+
+    DEBUG_LO();
 
     return *(&gt_xd04_general_regs._r00.val + addr);
 }
@@ -659,9 +667,9 @@ void XD04_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_48mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
-    gt_xd_fb_level = FB_LEVEL_0V5;
+    gt_xd_fb_level = FB_LEVEL_0V4;
 }
 
 void XD04_Init(void)
@@ -761,8 +769,8 @@ void XD04_Init(void)
 
 void XD04_Trim_Param_Init(void)
 {
-    gt_xd_fb_level = FB_LEVEL_0V5;
-    gt_xd_short_level = SHORT_LEVEL_36V;
+    gt_xd_fb_level = FB_LEVEL_0V4;
+    gt_xd_short_level = SHORT_LEVEL_70V;
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
 }
 
@@ -924,11 +932,8 @@ void XD04_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
 
 void XD04_Update_Vsync_Frequency(float n_freq)
 {
-    uint32_t period = 0;
-    uint32_t prescale = 0;
-
-    prescale = LL_TIM_GetPrescaler(TIM8);
-    period = (uint32_t)((TIM8_FREQ / (prescale + 1)) / n_freq - 1 + 0.5f);
+    uint32_t prescale = LL_TIM_GetPrescaler(TIM8);
+    uint32_t period = (uint32_t)((TIM8_FREQ / (prescale + 1)) / n_freq - 1 + 0.5f);
 
     LL_TIM_SetAutoReload(TIM8, period);
 
@@ -1018,6 +1023,7 @@ void XD04_Trim_Init_VREF_CTL(void)
     gt_xd04_general_regs._r3F.pwm_full_o = 0;
     XD04_Write_General_Reg(XD04_ADDR_OTP_OP_MODE, gt_xd04_general_regs._r3F.val);
 }
+
 void XD04_Trim_Init_OSC(void)
 {
     gt_xd04_general_regs._r3F.test_en = 1;
@@ -1029,6 +1035,7 @@ void XD04_Trim_Init_OSC(void)
     XD04_Set_OSC_Manual_En(true);
     XD04_Set_OSC_Manual(32768);
 }
+
 void XD04_Trim_Init_ICTL(void)
 {
     gt_xd04_general_regs._r3F.test_en = 1;

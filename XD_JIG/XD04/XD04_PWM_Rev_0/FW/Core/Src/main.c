@@ -256,9 +256,10 @@ int main(void)
     /* for GUI App */
     print(LOG_INFO, " - %s PWM REV_01 IS SELECTED!\r\n", TARGET_CHIP_NAME);
 
+    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_RED, "- Check DIN Switch", ANSI_FONT_NONE);
+
     USE_XC24(FALSE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
-    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_RED, "- Check DIN Switch", ANSI_FONT_NONE);
 
     Trim_IF_Set_OTP_Enable(TRUE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD04 OTP WRITE ENABLE" : "- XD04 OTP WRITE DISABLE"), ANSI_FONT_NONE);

@@ -540,27 +540,27 @@ typedef enum
 
 typedef enum
 {
-    SHORT_LEVEL_3V = 0, // 3b'000
-    SHORT_LEVEL_4V,     // 3b'001
-    SHORT_LEVEL_6V,     // 3b'010
-    SHORT_LEVEL_8V,     // 3b'011
-    SHORT_LEVEL_12V,    // 3b'100
-    SHORT_LEVEL_16V,    // 3b'101
-    SHORT_LEVEL_24V,    // 3b'110
-    SHORT_LEVEL_36V,    // 3b'111
+    SHORT_LEVEL_6V = 0, // 3b'000
+    SHORT_LEVEL_8V,     // 3b'001
+    SHORT_LEVEL_12V,     // 3b'010
+    SHORT_LEVEL_16V,     // 3b'011
+    SHORT_LEVEL_24V,    // 3b'100
+    SHORT_LEVEL_32V,    // 3b'101
+    SHORT_LEVEL_48V,    // 3b'110
+    SHORT_LEVEL_70V,    // 3b'111
     SHORT_LEVEL_MAX,
 }short_level_t;
 
 typedef enum
 {
     FB_LEVEL_0V4 = 0,   // 3b'000
-    FB_LEVEL_0V5,       // 3b'001
-    FB_LEVEL_0V6,       // 3b'010
-    FB_LEVEL_0V7,       // 3b'011
-    FB_LEVEL_0V85,      // 3b'100
-    FB_LEVEL_1V0,       // 3b'101
-    FB_LEVEL_1V15,      // 3b'110
-    FB_LEVEL_1V3,       // 3b'111
+    FB_LEVEL_0V6,       // 3b'001
+    FB_LEVEL_0V8,       // 3b'010
+    FB_LEVEL_1V0,       // 3b'011
+    FB_LEVEL_1V2,      // 3b'100
+    FB_LEVEL_1V4,       // 3b'101
+    FB_LEVEL_1V6,      // 3b'110
+    FB_LEVEL_1V8,       // 3b'111
     FB_LEVEL_MAX,
 }fb_level_t;
 

@@ -113,11 +113,9 @@ uint16_t XD04_get_LD_out(void)
 
 void XD04_get_fault_status(void)
 {
-    static uint16_t vsync_tick = 0;
-    uint8_t now_fault_status = 0;
+    uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
     static uint8_t prev_fault_status = 0xFF;
-
-    now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
+    static uint16_t vsync_tick = 0;
 
     if (now_fault_status != prev_fault_status)
     {
@@ -148,11 +146,12 @@ void XD04_get_fault_status(void)
         }
         prev_fault_status = now_fault_status;
     }
-
+#if 0
     if (vsync_tick % 120 == 0)
     {
         print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
     }
+#endif
     ++vsync_tick;
 }
 
