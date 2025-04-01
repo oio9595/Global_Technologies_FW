@@ -817,18 +817,22 @@ void XD04_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XD04_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = 0;
-    delay_per_ch = (uint16_t)(gn_xd_pwm_max_size / gn_xd_ch_size);
+    uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
+    uint16_t delay_msb_accumulator = 0;
+
     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
     {
         gn_xd_delay_ch[ch] = delay_per_ch * ch;
         uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
         uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
-        delay_msb <<= (2 * (ch % 6));
+
+        delay_msb_accumulator |= (delay_msb << (2 * (ch % 6)));
+
+        print(LOG_INFO, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
 
         XD04_Write_General_Reg(XD04_ADDR_DELAY_CH01 + ch, delay_lsb);
-        XD04_Write_General_Reg(XD04_ADDR_DELAY_CH_EXTEND_1 + (ch / 6), delay_msb);
     }
+    XD04_Write_General_Reg(XD04_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator);
 }
 
 void XD04_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
