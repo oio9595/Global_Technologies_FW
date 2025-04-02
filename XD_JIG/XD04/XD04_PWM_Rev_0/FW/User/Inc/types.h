@@ -75,7 +75,7 @@ typedef enum
     ON,
 }onoff_state_t;
 
-#define PRINT_BUFF_SIZE 400
+#define PRINT_BUFF_SIZE 700
 
 #endif /* ~__TYPES_H__ */
 

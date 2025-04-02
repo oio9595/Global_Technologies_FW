@@ -356,7 +356,7 @@ void XD12_Dump_All_Registers(void)
     {
         switch (addr_offset)
         {
-            case XD12_ADDR_RESET_ID :
+        case XD12_ADDR_RESET_ID :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t RST       : [%u]\r\n"
                             "\t ID        : [%u]\r\n"
