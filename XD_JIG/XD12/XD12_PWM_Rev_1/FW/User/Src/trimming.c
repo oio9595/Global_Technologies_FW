@@ -1108,6 +1108,14 @@ void Screening_Procedure_Run(void)
             XD12_Trim_Init_ICTL();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
+
+            #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                print(LOG_INFO, "max_curr, %.1f\r\n", XD04_Get_Max_Current_level());
+            #else
+                print(LOG_INFO, "vref, %4u\r\n", XD12_CURRENT_TRIM_VREF);
+            #endif
+
+            print(LOG_INFO, "data, io_1, io_2, io_3, io_4, io_5, io_6, io_7, io_8, io_9, io_10, io_11, io_12\r\n");
         }
         break;
     case SCREEN_STEP_CHANGE_OUTPUT :
