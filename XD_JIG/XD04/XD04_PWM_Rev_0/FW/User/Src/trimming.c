@@ -1108,9 +1108,13 @@ void Screening_Procedure_Run(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
 
-            print(LOG_INFO, "max_curr, %.1f\r\n", XD04_Get_Max_Current_level());
-            print(LOG_INFO, "vref, %4u\r\n", XD04_CURRENT_TRIM_VREF);
-            print(LOG_INFO, "data, io_1, io_2, io_3, io_4, spec, dev_1, dev_2, dev_3, dev_4\r\n");
+            #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                print(LOG_INFO, "max_curr, %.1f\r\n", XD04_Get_Max_Current_level());
+            #else
+                print(LOG_INFO, "vref, %4u\r\n", XD04_CURRENT_TRIM_VREF);
+            #endif
+
+            print(LOG_INFO, "data, io_1, io_2, io_3, io_4\r\n");
         }
         break;
     case SCREEN_STEP_CHANGE_OUTPUT :
@@ -1163,7 +1167,7 @@ void Screening_Procedure_Run(void)
 
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                     print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f\r\n", \
-                        gn_xd_screen_ana,gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
+                        gn_xd_screen_ana,gf_screen_current[0], gf_screen_current[1], gf_screen_current[2], gf_screen_current[3]);
 
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                     if (gn_xd_screen_ana > 0xFFF)
@@ -1172,7 +1176,7 @@ void Screening_Procedure_Run(void)
                     }
                 #else
                     print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f\r\n", \
-                        gt_xd_screen_max_curr_level, gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
+                        gt_xd_screen_max_curr_level, gf_screen_current[0], gf_screen_current[1], gf_screen_current[2], gf_screen_current[3]);
 
                     ++gt_xd_screen_max_curr_level;
                     if (gt_xd_screen_max_curr_level > DEV_MAX_CURR_LEVEL_128mA)
