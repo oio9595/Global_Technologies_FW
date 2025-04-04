@@ -246,7 +246,7 @@ bool gb_sal_init_flag;
 volatile uint8_t gn_sal_rx_timeout;
 static bool gb_sal_rx_timeout;
 
-demo_pat_t gt_demo_pat = DEMO_PAT_RED;
+demo_pat_t gt_demo_pat;
 
 static uint32_t gn_sal_rgb_buffer[100];
 static uint32_t gn_sal_rgb_saved_buffer[100];
@@ -595,6 +595,8 @@ void sal_init(void)
     decode_mode_set((decode_mode_t)DECODE_NONE);
 
     sal_communication_mode_selection(SAL_COM_MCU, SAL_COM_EOL);
+
+    //gt_demo_pat = DEMO_PAT_RED;
 
     sal_vcc_level_set(SAL_VCC_5V0);
     sal_vcc_en(PWR_ON);
