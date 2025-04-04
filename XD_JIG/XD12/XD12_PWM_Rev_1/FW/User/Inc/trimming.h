@@ -23,6 +23,7 @@
  extern "C" {
 #endif
 
+#define XD12_VREF_TRIM_VREF     (4095)
 #define XD12_CURRENT_TRIM_VREF  (3276)
 
 typedef enum
