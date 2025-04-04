@@ -904,7 +904,7 @@ double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 	switch (gain)
 	{
 		case GAIN_HIGH :
-			ret = ((double)adc * ADC_CONV_COEFF_HIGH);	/* max  70mA */
+			ret = ((double)adc * ADC_CONV_COEFF_HIGH);	/* max 140mA */
 			break;
 
 		case GAIN_MID :

@@ -26,21 +26,21 @@
 
 #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
 #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
-#define CURRENT_SENSE_R_HIGH        (28.0f)     /* ohm */
+#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
 #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
 #define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
-#define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max  70mA
+#define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max 140mA
 
 #define CURRENT_LIMIT_GAIN_LOW      (0.4f)  //Max 0.5mA
 #define CURRENT_LIMIT_GAIN_MID      (9.0f)  //Max  10mA
-#define CURRENT_LIMIT_GAIN_HIGH     (70.0f) //MAX  70mA
+#define CURRENT_LIMIT_GAIN_HIGH     (70.0f) //MAX 140mA
 
 #define XD12_INTERNAL_DIVIDER       (32)
 #define FREQUENCY_DIVIDER           (128)
-#define TIM_CAPTURE_EXT_PRESCALER    (XD12_INTERNAL_DIVIDER * FREQUENCY_DIVIDER)
+#define TIM_CAPTURE_EXT_PRESCALER   (XD12_INTERNAL_DIVIDER * FREQUENCY_DIVIDER)
 
 #define APB1_TIM_FREQ               (72.0) //MHz
 
@@ -48,7 +48,7 @@ typedef enum
 {
 	GAIN_LOW = 0,   /* Max 0.5mA */
 	GAIN_MID,       /* Max  10mA */
-	GAIN_HIGH,      /* Max  70mA */
+	GAIN_HIGH,      /* Max 140mA */
 	GAIN_MAX,
 }current_gain_t;
 

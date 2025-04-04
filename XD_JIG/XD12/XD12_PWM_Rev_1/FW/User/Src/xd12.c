@@ -93,7 +93,7 @@ static const char* gs_xd12_general_regs_str[XD12_ADDR_MAX] =
     "OSC_FLL_MONITOR",
     "DUMMY",
     "DUMMY",
-    "DUMMY",
+    "VREF_FIX",
     "DUMMY",
     "DUMMY",
     "DUMMY",
@@ -389,12 +389,14 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_FAULT_STATUS :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t MISS_VS   : [%u]\r\n"
+                            "\t OV15      : [%u]\r\n"
+                            "\t UV15      : [%u]\r\n"
                             "\t THERMAL   : [%u]\r\n"
                             "\t SHORT     : [%u]\r\n"
                             "\t OPEN      : [%u]\r\n"
                             "\t FB        : [%u]\r\n"
                             "\t VALUE     : (0x%03X)\r\n\r\n",
-                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r05.bit_miss_vs, gt_xd12_general_regs._r05.bit_thermal, gt_xd12_general_regs._r05.bit_short, gt_xd12_general_regs._r05.bit_open, gt_xd12_general_regs._r05.bit_fb, gt_xd12_general_regs._r05.val);
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r05.bit_miss_vs, gt_xd12_general_regs._r05.bit_ov15, gt_xd12_general_regs._r05.bit_uv15, gt_xd12_general_regs._r05.bit_thermal, gt_xd12_general_regs._r05.bit_short, gt_xd12_general_regs._r05.bit_open, gt_xd12_general_regs._r05.bit_fb, gt_xd12_general_regs._r05.val);
             break;
         case XD12_ADDR_FAULT_LEVEL :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
@@ -407,6 +409,7 @@ void XD12_Dump_All_Registers(void)
         case XD12_ADDR_FAULT_CONTROL :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t TIMEOUT       : [%u]\r\n"
+                            "\t OVU15_EN      : [%u]\r\n"
                             "\t MS_VS_LOCK    : [%u]\r\n"
                             "\t MS_VS_DIMM    : [%u]\r\n"
                             "\t MS_VS_DET_E   : [%u]\r\n"
@@ -417,7 +420,7 @@ void XD12_Dump_All_Registers(void)
                             "\t S_OFF_E       : [%u]\r\n"
                             "\t O_OFF_E       : [%u]\r\n"
                             "\t VALUE         : (0x%03X)\r\n\r\n",
-                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r07.timeout_e, gt_xd12_general_regs._r07.ms_vs_lock, gt_xd12_general_regs._r07.ms_vs_dimm, gt_xd12_general_regs._r07.ms_vs_det_e,
+                gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r07.timeout_e, gt_xd12_general_regs._r07.ovu15_en, gt_xd12_general_regs._r07.ms_vs_lock, gt_xd12_general_regs._r07.ms_vs_dimm, gt_xd12_general_regs._r07.ms_vs_det_e,
                 gt_xd12_general_regs._r07.o_fb_e, gt_xd12_general_regs._r07.o_det_e, gt_xd12_general_regs._r07.s_det_e, gt_xd12_general_regs._r07.t_off_e, gt_xd12_general_regs._r07.s_off_e, gt_xd12_general_regs._r07.o_off_e, gt_xd12_general_regs._r07.val);
             break;
         case XD12_ADDR_MAX_CURR_VREF :
@@ -562,6 +565,12 @@ void XD12_Dump_All_Registers(void)
                             "\t OSC_FLL_FLT : [%u]\r\n"
                             "\t VALUE       : (0x%03X)\r\n\r\n",
             gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2C.osc_fll_flt, gt_xd12_general_regs._r2C.val);
+            break;
+        case XD12_ADDR_VREF_FIX :
+            print(LOG_INFO, "[%s (0x%02X)]\r\n"
+                            "\t VREF_FIX : [%u]\r\n"
+                            "\t VALUE    : (0x%03X)\r\n\r\n",
+            gs_xd12_general_regs_str[addr_offset], addr_offset, gt_xd12_general_regs._r2F.vref_fix, gt_xd12_general_regs._r2F.val);
             break;
         case XD12_ADDR_OTP_ACCESS_1 :
             print(LOG_INFO, "[%s (0x%02X)]\r\n"

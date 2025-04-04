@@ -131,7 +131,10 @@ typedef union
         uint16_t bit_open    : 1;
         uint16_t bit_short   : 1;
         uint16_t bit_thermal : 1;
-        uint16_t             : 7;
+        uint16_t             : 4;
+        uint16_t bit_uv15    : 1;
+        uint16_t bit_ov15    : 1;
+        uint16_t             : 1;
         uint16_t bit_miss_vs : 1;
         uint16_t             : 4;
     };
@@ -165,7 +168,8 @@ typedef union
         uint16_t ms_vs_det_e : 1;
         uint16_t ms_vs_dimm  : 1;
         uint16_t ms_vs_lock  : 1;
-        uint16_t             : 2;
+        uint16_t             : 1;
+        uint16_t ovu15_en    : 1;
         uint16_t timeout_e   : 1;
         uint16_t             : 4;
     };
@@ -422,6 +426,16 @@ typedef union
     };
 }_xd12_osc_fll_monitor_t;
 
+typedef union
+{
+    uint16_t val;
+    struct
+    {
+        uint16_t vref_fix : 12;
+        uint16_t          :  4;
+    };
+}_xd12_vref_fix_t;
+
 /////////////////////////////////
 //       OTP REGISTERS         //
 /////////////////////////////////
@@ -621,7 +635,9 @@ typedef enum
     XD12_ADDR_OSC_FLL_MANUAL_1,
     XD12_ADDR_OSC_FLL_MANUAL_2,
     XD12_ADDR_OSC_FLL_MONITOR,
-    /* BLANK - 0x2C ~ 0x39 */
+    /* BLANK - 0x2D ~ 0x2E */
+    XD12_ADDR_VREF_FIX = 0x2F,
+    /* BLANK - 0x30 ~ 0x39 */
     XD12_ADDR_OTP_ACCESS_1 = 0x3A,
     XD12_ADDR_OTP_ACCESS_2,
     XD12_ADDR_OTP_WRITE,
@@ -716,7 +732,7 @@ typedef union _xd12_regs
         _xd12_osc_fll_monitor_t     _r2C;
         _xd12_dummy_t               _r2D;
         _xd12_dummy_t               _r2E;
-        _xd12_dummy_t               _r2F;
+        _xd12_vref_fix_t            _r2F;
         _xd12_dummy_t               _r30;
         _xd12_dummy_t               _r31;
         _xd12_dummy_t               _r32;
