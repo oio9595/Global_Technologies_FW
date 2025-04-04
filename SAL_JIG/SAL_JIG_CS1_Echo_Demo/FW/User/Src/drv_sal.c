@@ -284,7 +284,11 @@ static const uint16_t gn_sal_echo_demo_table[5][3] =
     {  0,255,  0},
     {  0,  0,255},
     {255,255,255},
-    { 51,  10,215} //{ 14,  2,188}, 예전 HMC61번 튜닝한 값
+#if 0
+    { 51, 10,215},
+#else
+    { 14,  2,188}, //예전 HMC61번 튜닝한 값
+#endif
 };
 
 const static uint8_t gn_sal_id_map[100] =
