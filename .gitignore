@@ -74,3 +74,4 @@ Backup*
 *.bak
 thumbs.db
 *.~*
+*.reggroups
