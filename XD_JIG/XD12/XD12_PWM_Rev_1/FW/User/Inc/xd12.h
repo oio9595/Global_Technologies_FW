@@ -827,6 +827,8 @@ extern void XD12_Trim_Init(void);
 
 extern void XD12_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XD12_Get_Max_Current_level(void);
+extern void XD12_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
+
 extern bool XD12_Is_Vsync_Mode_External(void);
 extern void XD12_Update_Vsync_Frequency(float n_freq);
 
@@ -839,6 +841,9 @@ extern void XD12_Trim_Init_ICTL(void);
 
 extern void XD12_Set_OTP_Protect(bool en);
 extern void XD12_Set_OTP_PG_Start(bool en);
+
+extern void XD12_Set_FLT_Gain(uint8_t flt_gain);
+extern void XD12_Set_FLT_CTL(uint8_t flt_ctl);
 
 #endif /* ~__XD12_H__ */
 

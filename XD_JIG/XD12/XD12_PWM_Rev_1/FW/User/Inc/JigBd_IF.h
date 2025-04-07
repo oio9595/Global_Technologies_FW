@@ -101,6 +101,8 @@ EXTERN double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc);
 EXTERN void JigBD_IF_VREF_ADC_StartStop(void);
 EXTERN uint16_t JigBD_IF_VREF_ADC_Get(void);
 
+EXTERN void MCU_IF_Set_XD12_Channel(uint8_t in_channel);
+
 /* END   - INTERFACE FUNCTIONS */
 
 #ifdef __cplusplus

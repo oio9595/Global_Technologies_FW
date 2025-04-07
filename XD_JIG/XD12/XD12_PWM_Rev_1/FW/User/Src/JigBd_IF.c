@@ -675,6 +675,20 @@ static uint16_t MCU_IF_Read_XD12(uint8_t in_addr)
     return (uint16_t)(n_response & 0x0FFF);
 }
 
+uint8_t gn_xd_channel = 0;
+
+void MCU_IF_Set_XD12_Channel(uint8_t in_channel)
+{
+    if (in_channel < (XD_CH_SIZE + 1))
+    {
+        gn_xd_channel = in_channel;
+    }
+    else
+    {
+        gn_xd_channel = 0;
+    }
+}
+
 void MCU_IF_Write_LD(uint16_t in_LD_data)
 {
     uint16_t pwm_length = 0;
@@ -698,11 +712,13 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         //LD[15:0]
         for (uint8_t j = 0 ; j < XD_CH_SIZE ; ++j)
         {
-            for (uint8_t i = 0 ; i < 16 ; ++i)
+            bool write_data = (gn_xd_channel == 0) || ((gn_xd_channel - 1) == j);
+
+            for (uint8_t i = 0; i < 16; ++i)
             {
-                if (getAbit((uint16_t)in_LD_data, 15-i) == 1)
+                if (write_data)
                 {
-                    gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
+                    gu16_pwm_tx_risingBuffer[pwm_length++] = ((getAbit((uint16_t)in_LD_data, 15 - i) == 1) ? bit_1 : bit_0);
                 }
                 else
                 {

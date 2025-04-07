@@ -653,14 +653,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             for (uint8_t i = 0 ; i < 16 ; ++i)
             {
-                if (getAbit((uint16_t)in_LD_data, 15-i) == 1)
-                {
-                    gu16_pwm_tx_risingBuffer[pwm_length++] = bit_1;
-                }
-                else
-                {
-                    gu16_pwm_tx_risingBuffer[pwm_length++] = bit_0;
-                }
+                gu16_pwm_tx_risingBuffer[pwm_length++] = ((getAbit((uint16_t)in_LD_data, 15 - i) == 1) ? bit_1 : bit_0);
             }
         }
     }

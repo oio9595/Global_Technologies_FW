@@ -812,7 +812,7 @@ void XD12_Param_Init(void)
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
-    gn_xd_mclk_lock_cnt = XD_MCLK_LOCK_CNT_120Hz;
+    gn_xd_mclk_lock_cnt = (XD_MCLK_LOCK_CNT_120Hz * (1 + 0.08f / 100));
 
     gn_xd_ch_size = XD_CH_SIZE;
 
@@ -839,7 +839,7 @@ void XD12_Init(void)
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
             gt_xd12_general_regs._r01.over_to_e = 1;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
-            gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_NOP;
+            gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
             gt_xd12_general_regs._r01.ch_size = gn_xd_ch_size;
             break;
         case XD12_ADDR_FPWM_DIVIDER :
@@ -884,6 +884,7 @@ void XD12_Init(void)
             break;
         case XD12_ADDR_TEMP :
             gt_xd12_general_regs._r29.flt_gain = 0;
+            gt_xd12_general_regs._r29.flt_ctl = 1;
             gt_xd12_general_regs._r29.ofs_temp = 8;
             break;
         case XD12_ADDR_OSC_FLL_MANUAL_1 :
@@ -972,18 +973,24 @@ void XD12_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XD12_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = 0;
-    delay_per_ch = (uint16_t)(gn_xd_pwm_max_size / gn_xd_ch_size);
+    uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
+    uint16_t delay_msb_accumulator[2] = {0, };
+
     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
     {
         gn_xd_delay_ch[ch] = delay_per_ch * ch;
         uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
         uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
-        delay_msb <<= (2 * (ch % 6));
+
+        delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+
+        print(LOG_INFO, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
 
         XD12_Write_General_Reg(XD12_ADDR_DELAY_CH01 + ch, delay_lsb);
-        XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_1 + (ch / 6), delay_msb);
     }
+
+    XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+    XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
 }
 
 void XD12_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
@@ -1065,6 +1072,12 @@ static void XD12_Set_OSC_Manual(uint16_t n_osc_fll_man)
 
     gt_xd12_general_regs._r2B.osc_fll_man = osc_fll_man_msb;
     XD12_Write_General_Reg(XD12_ADDR_OSC_FLL_MANUAL_2, gt_xd12_general_regs._r2B.val);
+}
+
+void XD12_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
+{
+    gt_xd12_general_regs._r08.max_curr_vref = in_max_curr_vref;
+    XD12_Write_General_Reg(XD12_ADDR_MAX_CURR_VREF, gt_xd12_general_regs._r08.val);
 }
 
 void XD12_Update_Vsync_Frequency(float n_freq)
@@ -1213,4 +1226,16 @@ void XD12_Set_OTP_PG_Start(bool en)
         gt_xd12_general_regs._r3D.otp_pg_start = 0;
     }
     XD12_Write_General_Reg(XD12_ADDR_OTP_RD_PROG, gt_xd12_general_regs._r3D.val);
+}
+
+void XD12_Set_FLT_Gain(uint8_t flt_gain)
+{
+    gt_xd12_general_regs._r29.flt_gain = flt_gain;
+    XD12_Write_General_Reg(XD12_ADDR_TEMP, gt_xd12_general_regs._r29.val);
+}
+
+void XD12_Set_FLT_CTL(uint8_t flt_ctl)
+{
+    gt_xd12_general_regs._r29.flt_ctl = flt_ctl;
+    XD12_Write_General_Reg(XD12_ADDR_TEMP, gt_xd12_general_regs._r29.val);
 }

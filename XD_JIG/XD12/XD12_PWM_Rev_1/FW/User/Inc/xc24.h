@@ -1407,6 +1407,7 @@ typedef union _xc24_global_fault
 EXTERN void XC24_Write_Register(uint16_t in_addr, uint16_t in_data);
 EXTERN uint16_t XC24_Read_Register(uint8_t in_addr);
 EXTERN void XC24_Read_Register_All(void);
+EXTERN void XC24_Dump_All_Register(void);
 EXTERN void XC24_Init(void);
 
 EXTERN void XC24_Start_MCLK_Oscillation(bool en);

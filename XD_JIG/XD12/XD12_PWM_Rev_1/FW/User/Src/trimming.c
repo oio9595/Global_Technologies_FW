@@ -36,7 +36,7 @@
 
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_MAX_CURRENT       (1)
-#define XD_SCREEN_TYPE              XD_SCREEN_MAX_CURRENT
+#define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
 static bool gb_xd_otp_write_flag;
 
@@ -1082,11 +1082,7 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_PWR_ON :
         JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-        #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-            gt_screen_gain = GAIN_MID;
-        #else
-            gt_screen_gain = GAIN_HIGH;
-        #endif
+        gt_screen_gain = GAIN_HIGH;
         JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
         JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
@@ -1110,7 +1106,7 @@ void Screening_Procedure_Run(void)
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
 
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                print(LOG_INFO, "max_curr, %.1f\r\n", XD04_Get_Max_Current_level());
+                print(LOG_INFO, "max_curr, %.1f\r\n", XD12_Get_Max_Current_level());
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XD12_CURRENT_TRIM_VREF);
             #endif

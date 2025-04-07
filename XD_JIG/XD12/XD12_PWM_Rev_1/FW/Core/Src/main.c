@@ -259,7 +259,7 @@ int main(void)
     USE_XC24(FALSE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
 
-    Trim_IF_Set_OTP_Enable(FALSE);
+    Trim_IF_Set_OTP_Enable(TRUE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD12 OTP WRITE ENABLE" : "- XD12 OTP WRITE DISABLE"), ANSI_FONT_NONE);
 
     Trim_Calculate_Spec();
@@ -1550,6 +1550,16 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of xd12_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
             }
         }
+        else if (Command_Param_is_("xd_flt_gain", "%d", &u32_recv_param[0]))
+        {
+            XD12_Set_FLT_Gain(u32_recv_param[0]);
+            print(LOG_INFO, "\r\n OK\r\n");
+        }
+        else if (Command_Param_is_("xd_flt_ctl", "%d", &u32_recv_param[0]))
+        {
+            XD12_Set_FLT_CTL(u32_recv_param[0]);
+            print(LOG_INFO, "\r\n OK\r\n");
+        }
         else if (Command_is_("xd_ldim"))
         {
             print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD12_get_LD_out());
@@ -1729,6 +1739,48 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n XD12 Screen Start \r\n");
             Trim_IF_Screening_Start();
+        }
+        else if (Command_is_("xd_dimming_start") || Command_is_("3"))
+        {
+            JigBD_IF_XD_VCC_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+
+            if (IS_XC24())
+            {
+                XC24_Init();
+                print(LOG_INFO, "\r\n xc_init\r\n");
+                LL_mDelay(10);
+            }
+
+            JigBD_IF_Select_Output_Ch(CH_MAX);
+            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            LL_mDelay(10);
+
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            LL_mDelay(10);
+
+            XD12_Init();
+
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+
+            Vsync_Timer_Start();
+            print(LOG_INFO, "vsync start\r\n");
+
+            XD12_set_LD_out(100);
+        }
+        else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] < (CH_MAX + 1))
+            {
+                print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
+                MCU_IF_Set_XD12_Channel(u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], CH_MAX - 1);
+            }
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {
