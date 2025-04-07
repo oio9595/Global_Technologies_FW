@@ -1082,7 +1082,8 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_PWR_ON :
         JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-        gt_screen_gain = GAIN_HIGH;
+        //gt_screen_gain = GAIN_HIGH;
+        gt_screen_gain = GAIN_MID;
         JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
         JigBD_IF_XD_VCC_Level(PWR_ON_5V0);

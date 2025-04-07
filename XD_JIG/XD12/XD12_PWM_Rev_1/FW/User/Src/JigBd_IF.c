@@ -140,7 +140,7 @@ void JigBD_IF_VLED_9V_EN(uint8_t on)
 
 /*
 CTL_UPPER_GAIN
- - HIGH : Sensing range   70mA
+ - HIGH : Sensing range  140mA
  - MID  : Sensing range   10mA
  - LOW  : Sensing range  0.5mA
 */

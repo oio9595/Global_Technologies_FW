@@ -812,7 +812,8 @@ void XD12_Param_Init(void)
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
-    gn_xd_mclk_lock_cnt = (XD_MCLK_LOCK_CNT_120Hz * (1 + 0.08f / 100));
+    //gn_xd_mclk_lock_cnt = (uint32_t)(XD_MCLK_LOCK_CNT_120Hz * (1 + 0.08f / 100));
+    gn_xd_mclk_lock_cnt = XD_MCLK_LOCK_CNT_120Hz;
 
     gn_xd_ch_size = XD_CH_SIZE;
 
@@ -837,7 +838,7 @@ void XD12_Init(void)
         case XD12_ADDR_LD_CONTROL :
             gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
-            gt_xd12_general_regs._r01.over_to_e = 1;
+            gt_xd12_general_regs._r01.over_to_e = 0;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
             gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
             gt_xd12_general_regs._r01.ch_size = gn_xd_ch_size;
@@ -882,11 +883,13 @@ void XD12_Init(void)
             gt_xd12_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
             gt_xd12_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
             break;
+            /*
         case XD12_ADDR_TEMP :
             gt_xd12_general_regs._r29.flt_gain = 0;
             gt_xd12_general_regs._r29.flt_ctl = 1;
             gt_xd12_general_regs._r29.ofs_temp = 8;
             break;
+            */
         case XD12_ADDR_OSC_FLL_MANUAL_1 :
             gt_xd12_general_regs._r2A.osc_fll_man = 0x000;
             break;
