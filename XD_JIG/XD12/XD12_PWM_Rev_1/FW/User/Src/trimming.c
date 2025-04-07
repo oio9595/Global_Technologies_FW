@@ -10,27 +10,27 @@
 #include "config.h"
 
 /* Trimming spec */
-#define XD12_ERR_RATE           (1.0/100) /* +/-% */
-#define XD12_OSC_TARGET         (39.3192) /* MHz */
-#define XD12_VREF_TARGET        (2.2)     /* V */
+#define XD12_ERR_RATE               (1.0/100) /* +/-% */
+#define XD12_OSC_TARGET             (39.3192) /* MHz */
+#define XD12_VREF_TARGET            (2.2)     /* V */
 
-#define XD12_ICTL_L_ERR_RATE    (0.5/100) /* +/-% */
-#define XD12_ICTL_L_TARGET      (6.4000f)   /* mA */
-#define XD12_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_8mA)
-#define XD12_ICTL_L_P2          (DEV_MAX_CURR_LEVEL_8mA)
+#define XD12_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
+#define XD12_ICTL_L_TARGET          (6.4000f)   /* mA */
+#define XD12_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_8mA)
+#define XD12_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_8mA)
 
-#define XD12_ICTL_H_ERR_RATE    (0.5/100) /* +/-% */
-#define XD12_ICTL_H_TARGET      (25.600f)  /* mA */
-#define XD12_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_32mA)
-#define XD12_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_32mA)
+#define XD12_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
+#define XD12_ICTL_H_TARGET          (25.600f)  /* mA */
+#define XD12_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_32mA)
+#define XD12_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_32mA)
 
-#define ADJ_NONE    0
-#define ADJ_PLUS    1
-#define ADJ_MINUS   2
-#define ADJ_DEFAULT 3
+#define ADJ_NONE                    (0)
+#define ADJ_PLUS                    (1)
+#define ADJ_MINUS                   (2)
+#define ADJ_DEFAULT                 (3)
 
-#define TRIM_REGISTER_SAVED_CNT     5
-#define TRIM_OUT_RANGE_CNT          25
+#define TRIM_REGISTER_SAVED_CNT     (5)
+#define TRIM_OUT_RANGE_CNT          (25)
 
 #define XD_SCREEN_ANA_GAP           ((0xFFF + 1) / 256 - 1)
 
@@ -119,8 +119,6 @@ p_gui_param Trim_Get_Param_GUI(void);
 
 void Trim_IF_Trimming_Start(void)
 {
-    print(LOG_INFO, "GUI ACTIVATED");
-
     if (gt_jig_trimming_step == TRIMMING_STEP_NONE)
     {
         gt_jig_trimming_step = TRIMMING_STEP_ACTIVATE_START;

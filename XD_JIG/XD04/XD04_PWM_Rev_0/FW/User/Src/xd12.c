@@ -11,8 +11,8 @@
 #define XD04_REG_GENERAL            (0)
 #define XD04_REG_MIRROR             (1)
 
-#define XD04_OTP_PROTECT_DISABLE     (0xA5A)
-#define XD04_OTP_PROTECT_ENABLE      (0x5A5)
+#define XD04_OTP_PROTECT_DISABLE    (0xA5A)
+#define XD04_OTP_PROTECT_ENABLE     (0x5A5)
 
 #define XD04_DEFAULT_OSC            (0x20)
 #define XD04_DEFAULT_VREF_CTL       (0x20)
@@ -23,8 +23,6 @@
 #define VSYNC                       (120.0f)
 
 #define TIM8_FREQ                   (144000000.0f)
-
-#define XD_SUB_FRAME_SIZE           (64)
 
 #define XD_LD_DIR_HEAD_SHIFT        (0)
 #define XD_LD_DIR_TAIL_SHIFT        (1)

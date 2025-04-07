@@ -11,8 +11,8 @@
 #define XD12_REG_GENERAL            (0)
 #define XD12_REG_MIRROR             (1)
 
-#define XD12_OTP_PROTECT_DISABLE     (0xA5A)
-#define XD12_OTP_PROTECT_ENABLE      (0x5A5)
+#define XD12_OTP_PROTECT_DISABLE    (0xA5A)
+#define XD12_OTP_PROTECT_ENABLE     (0x5A5)
 
 #define XD12_DEFAULT_OSC            (0x20)
 #define XD12_DEFAULT_VREF_CTL       (0x20)
@@ -23,8 +23,6 @@
 #define VSYNC                       (120.0f)
 
 #define TIM8_FREQ                   (144000000.0f)
-
-#define XD_SUB_FRAME_SIZE           (64)
 
 #define XD_LD_DIR_HEAD_SHIFT        (0)
 #define XD_LD_DIR_TAIL_SHIFT        (1)

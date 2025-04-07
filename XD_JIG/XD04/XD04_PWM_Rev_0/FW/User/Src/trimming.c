@@ -10,27 +10,27 @@
 #include "config.h"
 
 /* Trimming spec */
-#define XD04_ERR_RATE           (1.0/100) /* +/-% */
-#define XD04_OSC_TARGET         (39.3192) /* MHz */
-#define XD04_VREF_TARGET        (2.2)     /* V */
+#define XD04_ERR_RATE               (1.0/100) /* +/-% */
+#define XD04_OSC_TARGET             (39.3192) /* MHz */
+#define XD04_VREF_TARGET            (2.2)     /* V */
 
-#define XD04_ICTL_L_ERR_RATE    (0.5/100) /* +/-% */
-#define XD04_ICTL_L_TARGET      (12.800f)   /* mA */
-#define XD04_ICTL_L_P1          (DEV_MAX_CURR_LEVEL_16mA)
-#define XD04_ICTL_L_P2          (DEV_MAX_CURR_LEVEL_16mA)
+#define XD04_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
+#define XD04_ICTL_L_TARGET          (12.800f)   /* mA */
+#define XD04_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_16mA)
+#define XD04_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_16mA)
 
-#define XD04_ICTL_H_ERR_RATE    (0.5/100) /* +/-% */
-#define XD04_ICTL_H_TARGET      (51.200f)  /* mA */
-#define XD04_ICTL_H_P1          (DEV_MAX_CURR_LEVEL_64mA)
-#define XD04_ICTL_H_P2          (DEV_MAX_CURR_LEVEL_64mA)
+#define XD04_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
+#define XD04_ICTL_H_TARGET          (51.200f)  /* mA */
+#define XD04_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_64mA)
+#define XD04_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_64mA)
 
-#define ADJ_NONE    0
-#define ADJ_PLUS    1
-#define ADJ_MINUS   2
-#define ADJ_DEFAULT 3
+#define ADJ_NONE                    (0)
+#define ADJ_PLUS                    (1)
+#define ADJ_MINUS                   (2)
+#define ADJ_DEFAULT                 (3)
 
-#define TRIM_REGISTER_SAVED_CNT     5
-#define TRIM_OUT_RANGE_CNT          25
+#define TRIM_REGISTER_SAVED_CNT     (5)
+#define TRIM_OUT_RANGE_CNT          (25)
 
 #define XD_SCREEN_ANA_GAP           ((0xFFF + 1) / 256 - 1)
 
@@ -119,8 +119,6 @@ p_gui_param Trim_Get_Param_GUI(void);
 
 void Trim_IF_Trimming_Start(void)
 {
-    print(LOG_INFO, "GUI ACTIVATED");
-
     if (gt_jig_trimming_step == TRIMMING_STEP_NONE)
     {
         gt_jig_trimming_step = TRIMMING_STEP_ACTIVATE_START;
