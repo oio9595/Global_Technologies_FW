@@ -52,34 +52,6 @@ void Vsync_Update_Handler(void)
     gb_xd12_vsync_flag = true;
 }
 
-void XD12_Vsync_Task(void)
-{
-    if (gb_xd12_vsync_flag)
-    {
-        if (!XD12_Is_Vsync_Mode_External())
-        {
-            JigBD_IF_SyncGen_Command();
-        }
-        JigBD_IF_Write_LD_Command(gn_xd12_LD_out);
-
-        // fault read if needed
-        XD12_get_fault_status();
-
-        if (gb_xd_write_flag)
-        {
-            XD12_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
-            gb_xd_write_flag = false;
-        }
-        if (gb_xd_read_flag)
-        {
-            XD12_Read_General_Reg(gn_xd_read_addr);
-            gb_xd_read_flag = false;
-        }
-
-        gb_xd12_vsync_flag = false;
-    }
-}
-
 void XD12_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
 {
     gn_xd_write_addr = addr;
@@ -110,11 +82,13 @@ uint16_t XD12_get_LD_out(void)
     return gn_xd12_LD_out;
 }
 
-void XD12_get_fault_status(void)
+void XD12_Get_Fault_Status(void)
 {
     static uint16_t vsync_tick = 0;
     uint8_t now_fault_status = 0;
     static uint8_t prev_fault_status = 0xFF;
+
+    char msg[50] = {0, };
 
     now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
 
@@ -126,6 +100,25 @@ void XD12_get_fault_status(void)
         }
         else
         {
+            snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
+            if (now_fault_status & FAULT_MASK_FB)
+            {
+                strncat(msg, "FB ", sizeof(msg) - strlen(msg) - 1);
+            }
+            if (now_fault_status & FAULT_MASK_OPEN)
+            {
+                strncat(msg, "OPEN ", sizeof(msg) - strlen(msg) - 1);
+            }
+            if (now_fault_status & FAULT_MASK_SHORT)
+            {
+                strncat(msg, "SHORT ", sizeof(msg) - strlen(msg) - 1);
+            }
+            if (now_fault_status & FAULT_MASK_THERMAL)
+            {
+                strncat(msg, "THERMAL", sizeof(msg) - strlen(msg) - 1);
+            }
+            strncat(msg, "]\r\n", sizeof(msg) - strlen(msg) - 1);
+/*
             if (now_fault_status & FAULT_MASK_FB)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB]\r\n", vsync_tick);
@@ -141,11 +134,40 @@ void XD12_get_fault_status(void)
             if (now_fault_status & FAULT_MASK_THERMAL)
             {
                 print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL]\r\n", vsync_tick);
-            }
+            }*/
+           print(LOG_INFO, "%s", msg);
         }
         prev_fault_status = now_fault_status;
     }
     ++vsync_tick;
+}
+
+void XD12_Vsync_Task(void)
+{
+    if (gb_xd12_vsync_flag)
+    {
+        if (!XD12_Is_Vsync_Mode_External())
+        {
+            JigBD_IF_SyncGen_Command();
+        }
+        JigBD_IF_Write_LD_Command(gn_xd12_LD_out);
+
+        // fault read if needed
+        XD12_Get_Fault_Status();
+
+        if (gb_xd_write_flag)
+        {
+            XD12_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
+            gb_xd_write_flag = false;
+        }
+        if (gb_xd_read_flag)
+        {
+            XD12_Read_General_Reg(gn_xd_read_addr);
+            gb_xd_read_flag = false;
+        }
+
+        gb_xd12_vsync_flag = false;
+    }
 }
 
 /*** end of file ***/

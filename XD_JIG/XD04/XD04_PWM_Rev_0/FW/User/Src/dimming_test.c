@@ -52,35 +52,6 @@ void Vsync_Update_Handler(void)
     gb_xd04_vsync_flag = true;
 }
 
-void XD04_Vsync_Task(void)
-{
-    if (gb_xd04_vsync_flag)
-    {
-        if (!XD04_Is_Vsync_Mode_External())
-        {
-            JigBD_IF_SyncGen_Command();
-        }
-
-        JigBD_IF_Write_LD_Command(gn_xd04_LD_out);
-
-        // fault read if needed
-        XD04_get_fault_status();
-
-        if (gb_xd_write_flag)
-        {
-            XD04_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
-            gb_xd_write_flag = false;
-        }
-        if (gb_xd_read_flag)
-        {
-            XD04_Read_General_Reg(gn_xd_read_addr);
-            gb_xd_read_flag = false;
-        }
-
-        gb_xd04_vsync_flag = false;
-    }
-}
-
 void XD04_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
 {
     gn_xd_write_addr = addr;
@@ -111,7 +82,7 @@ uint16_t XD04_get_LD_out(void)
     return gn_xd04_LD_out;
 }
 
-void XD04_get_fault_status(void)
+void XD04_Get_Fault_Status(void)
 {
     uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
     static uint8_t prev_fault_status = 0xFF;
@@ -153,6 +124,35 @@ void XD04_get_fault_status(void)
     }
 #endif
     ++vsync_tick;
+}
+
+void XD04_Vsync_Task(void)
+{
+    if (gb_xd04_vsync_flag)
+    {
+        if (!XD04_Is_Vsync_Mode_External())
+        {
+            JigBD_IF_SyncGen_Command();
+        }
+
+        JigBD_IF_Write_LD_Command(gn_xd04_LD_out);
+
+        // fault read if needed
+        XD04_Get_Fault_Status();
+
+        if (gb_xd_write_flag)
+        {
+            XD04_Write_General_Reg(gn_xd_write_addr, gn_xd_write_data);
+            gb_xd_write_flag = false;
+        }
+        if (gb_xd_read_flag)
+        {
+            XD04_Read_General_Reg(gn_xd_read_addr);
+            gb_xd_read_flag = false;
+        }
+
+        gb_xd04_vsync_flag = false;
+    }
 }
 
 /*** end of file ***/
