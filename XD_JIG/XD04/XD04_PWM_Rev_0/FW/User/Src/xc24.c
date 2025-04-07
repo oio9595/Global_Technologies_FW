@@ -888,34 +888,28 @@ void USE_XC24(bool b_support)
 
 void XC24_IF_IdGen_Command(void)
 {
-    _v_id_gen_t* p_v_id_gen = &gt_xc24_regs._r04;
-
     /* XC24 -> XD04 Set ID GEN */
-    p_v_id_gen->ALL = 0;
-    p_v_id_gen->start = 1;
-    XC24_Write_Register(XC24_ADDR_ID_GEN, p_v_id_gen->ALL);
+    gt_xc24_regs._r04.ALL = 0;
+    gt_xc24_regs._r04.start = 1;
+    XC24_Write_Register(XC24_ADDR_ID_GEN, gt_xc24_regs._r04.ALL);
     us_tdelay(XD04_IDGEN_DELAY);
 }
 
 void XC24_IF_SyncGen_Command(void)
 {
-    _v_sync_gen_t* p_v_sync_gen = &gt_xc24_regs._r07;
-
     /* XC24 -> XD04 Set Sync GEN */
-    p_v_sync_gen->ALL = 0;
-    p_v_sync_gen->start = 1;
-    XC24_Write_Register(XC24_ADDR_SYNC_GEN, p_v_sync_gen->ALL);
+    gt_xc24_regs._r07.ALL = 0;
+    gt_xc24_regs._r07.start = 1;
+    XC24_Write_Register(XC24_ADDR_SYNC_GEN, gt_xc24_regs._r07.ALL);
     us_tdelay(XD04_IDGEN_DELAY);
 }
 
 uint16_t XC24_IF_Fault_Read_Command(void)
 {
-    _v_fault_read_t* p_v_fault_read = &gt_xc24_regs._r05;
-
-    /* XC24 -> XD04 Set Sync GEN */
-    p_v_fault_read->ALL = 0;
-    p_v_fault_read->start = 1;
-    XC24_Write_Register(XC24_ADDR_FAULT_READ, p_v_fault_read->ALL);
+    /* XC24 -> XD12 Set Fault GEN */
+    gt_xc24_regs._r05.ALL = 0;
+    gt_xc24_regs._r05.start = 1;
+    XC24_Write_Register(XC24_ADDR_FAULT_READ, gt_xc24_regs._r05.ALL);
     us_tdelay(XD04_IDGEN_DELAY);
 
     gt_xc24_fault._d1.ALL = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA1);
@@ -925,11 +919,9 @@ uint16_t XC24_IF_Fault_Read_Command(void)
 
 void XC24_IF_Write_XD04(uint8_t in_XD04_addr, uint16_t in_XD04_data)
 {
-    _v_global_write_t* p_v_global_write = &gt_xc24_regs._r01;
-
-    p_v_global_write->ALL = 0;
-    p_v_global_write->start = 1;
-    p_v_global_write->addr = in_XD04_addr;
+    gt_xc24_regs._r01.ALL = 0;
+    gt_xc24_regs._r01.start = 1;
+    gt_xc24_regs._r01.addr = in_XD04_addr;
 
     //print(LOG_DEBUG, "\r\n========== XC -> XD Write Start (0x%02X) - [%u] [0x%4X] ==========\r\n", in_XD04_addr, in_XD04_data, in_XD04_data);
 
@@ -938,7 +930,7 @@ void XC24_IF_Write_XD04(uint8_t in_XD04_addr, uint16_t in_XD04_data)
     us_tdelay(1);
 
     /* 2nd - Write the XD04_Addr on the GLOBAL_WRITE_COMMAND Register of XC24 */
-    XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE, p_v_global_write->ALL);
+    XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE, gt_xc24_regs._r01.ALL);
     /* To Do : delay must more than 65us */
     us_tdelay(XD04_WRITE_DELAY);
 
@@ -947,9 +939,7 @@ void XC24_IF_Write_XD04(uint8_t in_XD04_addr, uint16_t in_XD04_data)
 
 uint16_t XC24_IF_Read_XD04(uint8_t in_XD04_addr)
 {
-    _v_local_rw_pointer_reset_t* p_v_local_rw_pointer_reset = &gt_xc24_regs._r11;
-    _v_local_read_t* p_v_local_read = &gt_xc24_regs._r03;
-
+    /* XC24 -> XD04 Read Command */
     uint16_t u16_XD04_data = 0;
     uint16_t u16_XD04_r = 0;
     uint32_t count = 5;
@@ -957,10 +947,10 @@ uint16_t XC24_IF_Read_XD04(uint8_t in_XD04_addr)
     //print(LOG_DEBUG, "\r\n========== XC -> XD Read Start (0x%02X) ==========\r\n", in_XD04_addr);
 
     /* 1st - Send Local RW Pointer Reset */
-    p_v_local_rw_pointer_reset->ALL = 0;
-    p_v_local_rw_pointer_reset->local_wr_pointer_rst = 1;
-    p_v_local_rw_pointer_reset->local_rd_pointer_rst = 1;
-    XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, p_v_local_rw_pointer_reset->ALL);
+    gt_xc24_regs._r11.ALL = 0;
+    gt_xc24_regs._r11.local_wr_pointer_rst = 1;
+    gt_xc24_regs._r11.local_rd_pointer_rst = 1;
+    XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, gt_xc24_regs._r11.ALL);
 
     while(count)
     {
@@ -976,17 +966,17 @@ uint16_t XC24_IF_Read_XD04(uint8_t in_XD04_addr)
         else
         {
             //print(LOG_DEBUG, "==============> LOCAL POINTER(%u) : 0x%04X <==============\r\n", count, u16_XD04_r);
-            XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, p_v_local_rw_pointer_reset->ALL);
+            XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, gt_xc24_regs._r11.ALL);
             us_tdelay(1);
         }
     }
 
     /* 2nd - Write the XD04_Addr on the LOCAL_READ Register of XC24 */
-    p_v_local_read->ALL = 0;
-    p_v_local_read->start = 1;
-    p_v_local_read->ch_seg = 0;
-    p_v_local_read->addr = in_XD04_addr;
-    XC24_Write_Register(XC24_ADDR_LOCAL_READ, p_v_local_read->ALL);
+    gt_xc24_regs._r03.ALL = 0;
+    gt_xc24_regs._r03.start = 1;
+    gt_xc24_regs._r03.ch_seg = 0;
+    gt_xc24_regs._r03.addr = in_XD04_addr;
+    XC24_Write_Register(XC24_ADDR_LOCAL_READ, gt_xc24_regs._r03.ALL);
 
     // Wait Ack
     us_tdelay(XD04_READ_DELAY + XD04_READ_RECV_DELAY);
