@@ -117,13 +117,13 @@ void XD04_Get_Fault_Status(void)
         }
         prev_fault_status = now_fault_status;
     }
-#if 0
-    if (vsync_tick % 120 == 0)
-    {
-        print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
-    }
-#endif
     ++vsync_tick;
+    #if 0
+        if (vsync_tick % 120 == 0)
+        {
+            print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
+        }
+    #endif
 }
 
 void XD04_Vsync_Task(void)

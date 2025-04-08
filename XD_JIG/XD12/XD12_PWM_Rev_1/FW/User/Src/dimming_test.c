@@ -140,6 +140,14 @@ void XD12_Get_Fault_Status(void)
         prev_fault_status = now_fault_status;
     }
     ++vsync_tick;
+    if (vsync_tick % 120 == 0)
+    {
+        print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
+        if (vsync_tick / 120 == 10)
+        {
+            NVIC_SystemReset();
+        }
+    }
 }
 
 void XD12_Vsync_Task(void)
