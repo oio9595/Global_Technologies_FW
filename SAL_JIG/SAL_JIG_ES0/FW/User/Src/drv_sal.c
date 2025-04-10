@@ -489,9 +489,9 @@ static void sal_regs_init(void)
             break;
 #endif
         case LIST_SET_CURR_MAX_LVL:
-            gt_sal_cmd_data.curr_max_lvl.b_curr_max_lvl = SAL_R_MAX_CURR;
+            gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = SAL_R_MAX_CURR;
             gt_sal_cmd_data.curr_max_lvl.g_curr_max_lvl = SAL_G_MAX_CURR;
-            gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = SAL_B_MAX_CURR;
+            gt_sal_cmd_data.curr_max_lvl.b_curr_max_lvl = SAL_B_MAX_CURR;
             break;
 #if 0
         case LIST_SET_TEMP_LUT_TC1:

@@ -283,12 +283,8 @@ static const uint16_t gn_sal_echo_demo_table[5][3] =
     {255,  0,  0},
     {  0,255,  0},
     {  0,  0,255},
-    {255,100, 35},
-#if 0
-    { 51, 10,215},
-#else
-    {195,  0,255},
-#endif
+    {255,255,213},
+    { 15,  2,255},
 };
 
 const static uint8_t gn_sal_id_map[100] =
@@ -450,9 +446,9 @@ static void sal_regs_init(void)
             break;
 #endif
         case LIST_SET_CURR_MAX_LVL:
-            gt_sal_cmd_data.curr_max_lvl.b_curr_max_lvl = SAL_R_MAX_CURR;
+            gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = SAL_R_MAX_CURR;
             gt_sal_cmd_data.curr_max_lvl.g_curr_max_lvl = SAL_G_MAX_CURR;
-            gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = SAL_B_MAX_CURR;
+            gt_sal_cmd_data.curr_max_lvl.b_curr_max_lvl = SAL_B_MAX_CURR;
             break;
 #if 0
         case LIST_SET_TEMP_LUT_TC1:

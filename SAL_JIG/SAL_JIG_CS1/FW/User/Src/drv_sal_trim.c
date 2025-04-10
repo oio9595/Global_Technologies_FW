@@ -1860,7 +1860,7 @@ void sal_trimming_procedure(void)
                         found_closeset_gap = temp_gap;
                         found_closeset_index = index;
                     }
-                	print(LOG_LV_DEBUG, "index : %u, value : %u, reg : %u, gap : %u\r\n", index, gt_sal_trim_param[gt_trim_mode].value_saved[gn_sal_trim_ch][index], gt_sal_trim_param[gt_trim_mode].reg_saved[gn_sal_trim_ch][index], temp_gap);
+                    print(LOG_LV_DEBUG, "index : %u, value : %u, reg : %u, gap : %u\r\n", index, gt_sal_trim_param[gt_trim_mode].value_saved[gn_sal_trim_ch][index], gt_sal_trim_param[gt_trim_mode].reg_saved[gn_sal_trim_ch][index], temp_gap);
                 }
 				print(LOG_LV_DEBUG, "closeset index : %u, gap : %u, reg : %u\r\n", found_closeset_index, found_closeset_gap, gt_sal_trim_param[gt_trim_mode].reg_now[gn_sal_trim_ch]);
                 gt_sal_trim_param[gt_trim_mode].reg_now[gn_sal_trim_ch] = gt_sal_trim_param[gt_trim_mode].reg_saved[gn_sal_trim_ch][found_closeset_index];
