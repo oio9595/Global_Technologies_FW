@@ -88,6 +88,8 @@ void XD04_Get_Fault_Status(void)
     static uint8_t prev_fault_status = 0xFF;
     static uint16_t vsync_tick = 0;
 
+    char msg[50] = {0, };
+
     if (now_fault_status != prev_fault_status)
     {
         if (!now_fault_status)
@@ -97,33 +99,39 @@ void XD04_Get_Fault_Status(void)
         }
         else
         {
-            DEBUG_HI();
+            snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
             if (now_fault_status & FAULT_MASK_FB)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [FB]\r\n", vsync_tick);
+                strncat(msg, "FB ", sizeof(msg) - strlen(msg) - 1);
             }
             if (now_fault_status & FAULT_MASK_OPEN)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [OPEN]\r\n", vsync_tick);
+                strncat(msg, "OPEN ", sizeof(msg) - strlen(msg) - 1);
             }
             if (now_fault_status & FAULT_MASK_SHORT)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [SHORT]\r\n", vsync_tick);
+                strncat(msg, "SHORT ", sizeof(msg) - strlen(msg) - 1);
             }
             if (now_fault_status & FAULT_MASK_THERMAL)
             {
-                print(LOG_INFO, "\r\n [%u] XD FAULT Detected [THERMAL]\r\n", vsync_tick);
+                strncat(msg, "THERMAL", sizeof(msg) - strlen(msg) - 1);
             }
+            strncat(msg, "]\r\n", sizeof(msg) - strlen(msg) - 1);
+            print(LOG_INFO, "%s", msg);
         }
         prev_fault_status = now_fault_status;
     }
     ++vsync_tick;
-    #if 0
-        if (vsync_tick % 120 == 0)
+#if 0
+    if (vsync_tick % 120 == 0)
+    {
+        print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
+        if (vsync_tick / 120 == 10)
         {
-            print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
+            NVIC_SystemReset();
         }
-    #endif
+    }
+#endif
 }
 
 void XD04_Vsync_Task(void)
