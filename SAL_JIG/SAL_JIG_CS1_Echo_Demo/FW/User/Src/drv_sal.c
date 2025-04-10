@@ -283,11 +283,11 @@ static const uint16_t gn_sal_echo_demo_table[5][3] =
     {255,  0,  0},
     {  0,255,  0},
     {  0,  0,255},
-    {255,255,255},
+    {255,100, 35},
 #if 0
     { 51, 10,215},
 #else
-    { 14,  2,188}, //예전 HMC61번 튜닝한 값
+    {195,  0,255},
 #endif
 };
 
@@ -596,7 +596,7 @@ void sal_init(void)
 
     sal_communication_mode_selection(SAL_COM_MCU, SAL_COM_EOL);
 
-    //gt_demo_pat = DEMO_PAT_RED;
+    gt_demo_pat = DEMO_PAT_RED;
 
     sal_vcc_level_set(SAL_VCC_5V0);
     sal_vcc_en(PWR_ON);
