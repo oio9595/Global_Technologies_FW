@@ -36,7 +36,7 @@
 
 #define CURRENT_LIMIT_GAIN_LOW      (0.4f)  //Max 0.5mA
 #define CURRENT_LIMIT_GAIN_MID      (9.0f)  //Max  10mA
-#define CURRENT_LIMIT_GAIN_HIGH     (70.0f) //MAX 140mA
+#define CURRENT_LIMIT_GAIN_HIGH     (140.0f) //MAX 140mA
 
 #define XD04_INTERNAL_DIVIDER       (32)
 #define FREQUENCY_DIVIDER           (128)

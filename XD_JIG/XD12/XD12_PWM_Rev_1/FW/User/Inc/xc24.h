@@ -118,7 +118,6 @@ typedef enum _xc24_addr_
     XC24_ADDR_CHANNEL_ENABLE2,                     // 0x46
 
     XC24_ADDR_MAX,
-
 }xc24_addr_t;
 
 typedef enum _xc24_addr_global_

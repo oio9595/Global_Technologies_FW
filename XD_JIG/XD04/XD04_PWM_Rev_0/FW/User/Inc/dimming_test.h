@@ -43,6 +43,5 @@ extern current_gain_t XD04_get_dimming_gain(void);
 extern void XD04_set_LD_out(uint32_t in_ld_out);
 extern uint16_t XD04_get_LD_out(void);
 
-
 #endif /* ~__DIMMING_TEST_H__ */
 /*** end of file ***/
