@@ -388,7 +388,7 @@ int main(void)
     print(LOG_INFO, "XC24 ES2 IS SELECTED!\r\n");
 #endif
 
-    USE_XC24(TRUE);
+    USE_XC24(FALSE);
     print(LOG_INFO, "%s", (IS_XC24() ? "\r\n SUPPORT XC24\r\n" : "\r\n NOT SUPPORT XC24\r\n"));
 
     Trim_IF_Trim_Set_OTP_Enable(TRUE);
@@ -1077,9 +1077,10 @@ static void MX_TIM5_Init(void)
   LL_TIM_IC_SetFilter(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
   LL_TIM_IC_SetPolarity(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
   /* USER CODE BEGIN TIM5_Init 2 */
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gu32_input_freq_capture);
+    #if 0
+        LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
+        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gu32_input_freq_capture);
+    #endif
 
     LL_TIM_EnableDMAReq_CC1(TIM5);
     LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1);
@@ -1441,6 +1442,8 @@ static void MX_GPIO_Init(void)
   NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
+    PWM_SWITCH_LO();
+
 	GPIO_InitStruct.Pin = XD_FB_IN_Pin;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;

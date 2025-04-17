@@ -1115,7 +1115,7 @@ void screening_procedure_run(void)
         JigBd_IF_Detect_XC24();
 
         gn_read_adc_vout_channel = 0;
-        gn_step_delay = 10;
+        gn_step_delay = 30;
         gt_jig_screening_step = SCREEN_STEP_SETUP;
         break;
     case SCREEN_STEP_SETUP :
@@ -1129,7 +1129,7 @@ void screening_procedure_run(void)
             XD12_set_CHANNEL_ENABLE_All();
             TargetIC_IF_TRIM_Init_ICTL_L();
 
-            TargetIC_IF_Trim_Reg_Init();
+            //TargetIC_IF_Trim_Reg_Init();
 
             TargetIC_IF_XD_Regs_Read_Display();
 

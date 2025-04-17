@@ -229,7 +229,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     spi_read(g_hSPIx, tx_buffer, rx_buffer, 2);
     *(gt_xc24_regs.ALL + in_addr) = rx_buffer[1];
 
-    // print(LOG_INFO, "XC24_Read_Register(0x%2X)(%s) - [%u] [0x%4X]\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
+    print(LOG_INFO, "XC24_Read_Register, 0x%02X, %s, 0x%04X\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr));
     // print(LOG_DEBUG, "XC24_Read_Register(0x%2X) - [%u] [0x%4X]\r\n", in_addr, *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
 
     return rx_buffer[1];
