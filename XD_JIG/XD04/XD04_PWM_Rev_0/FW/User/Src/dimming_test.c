@@ -65,7 +65,7 @@ void XD04_Set_Read_Target_Reg(uint8_t addr)
     gb_xd_read_flag = true;
 }
 
-void XD04_set_LD_out(uint32_t in_ld_out)
+void XD04_Set_LD_Data(uint32_t in_ld_out)
 {
     if (in_ld_out <= LD_WIDTH_MAX)
     {
@@ -77,7 +77,7 @@ void XD04_set_LD_out(uint32_t in_ld_out)
     }
 }
 
-uint16_t XD04_get_LD_out(void)
+uint16_t XD04_Get_LD_Data(void)
 {
     return gn_xd04_LD_out;
 }
@@ -116,7 +116,7 @@ void XD04_Get_Fault_Status(void)
             {
                 strncat(msg, "THERMAL", sizeof(msg) - strlen(msg) - 1);
             }
-            strncat(msg, "]\r\n", sizeof(msg) - strlen(msg) - 1);
+            strncat(msg, " ]\r\n", sizeof(msg) - strlen(msg) - 1);
             print(LOG_INFO, "%s", msg);
         }
         prev_fault_status = now_fault_status;

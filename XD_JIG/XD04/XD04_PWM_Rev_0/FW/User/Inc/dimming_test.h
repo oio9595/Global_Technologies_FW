@@ -40,8 +40,8 @@ extern void XD04_Set_Read_Target_Reg(uint8_t addr);
 extern void XD04_set_dimming_gain(current_gain_t in_gain);
 extern current_gain_t XD04_get_dimming_gain(void);
 
-extern void XD04_set_LD_out(uint32_t in_ld_out);
-extern uint16_t XD04_get_LD_out(void);
+extern void XD04_Set_LD_Data(uint32_t in_ld_out);
+extern uint16_t XD04_Get_LD_Data(void);
 
 #endif /* ~__DIMMING_TEST_H__ */
 /*** end of file ***/

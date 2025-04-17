@@ -1546,7 +1546,7 @@ static void TaskDebugUart(void)
             if (u32_recv_param[0] <= 65535)
             {
                 print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
-                XD04_set_LD_out(u32_recv_param[0]);
+                XD04_Set_LD_Data(u32_recv_param[0]);
             }
             else
             {
@@ -1555,7 +1555,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_ldim"))
         {
-            print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD04_get_LD_out());
+            print(LOG_INFO, "\r\n ldim - [%u]\r\n", XD04_Get_LD_Data());
         }
         else if (Command_Param_is_("xd_fbi", "%x", &u32_recv_param[0]))
         {
@@ -1762,7 +1762,7 @@ static void TaskDebugUart(void)
 
 
             print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
-            XD04_set_LD_out(100);
+            XD04_Set_LD_Data(100);
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {

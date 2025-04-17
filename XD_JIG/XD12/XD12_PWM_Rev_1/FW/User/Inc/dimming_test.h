@@ -40,8 +40,8 @@ extern void XD12_Set_Read_Target_Reg(uint8_t addr);
 extern void XD12_set_dimming_gain(current_gain_t in_gain);
 extern current_gain_t XD12_get_dimming_gain(void);
 
-extern void XD12_set_LD_out(uint32_t in_ld_out);
-extern uint16_t XD12_get_LD_out(void);
+extern void XD12_Set_LD_Data(uint32_t in_ld_out);
+extern uint16_t XD12_Get_LD_Data(void);
 
 #if 1
 extern void XD12_get_fault_status(void);
