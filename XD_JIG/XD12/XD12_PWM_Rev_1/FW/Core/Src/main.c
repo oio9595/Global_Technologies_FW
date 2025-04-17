@@ -1504,7 +1504,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            if (gb_jig_vsync_running_flag)
+            if (gb_jig_vsync_active)
             {
                 XD12_Set_Write_Target_Reg(u32_recv_param[0], u32_recv_param[1]);
             }
@@ -1518,7 +1518,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
-            if (gb_jig_vsync_running_flag)
+            if (gb_jig_vsync_active)
             {
                 XD12_Set_Read_Target_Reg(u32_recv_param[0]);
             }

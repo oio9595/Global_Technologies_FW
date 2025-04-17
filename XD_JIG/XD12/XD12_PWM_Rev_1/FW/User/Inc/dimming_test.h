@@ -27,7 +27,7 @@
 #define FAULT_FB_VLED_MAX       (2.5f)
 #define FAULT_SHORT_VLED_MAX    (40.0f)
 
-extern bool gb_jig_vsync_running_flag;
+extern bool gb_jig_vsync_active;
 
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);

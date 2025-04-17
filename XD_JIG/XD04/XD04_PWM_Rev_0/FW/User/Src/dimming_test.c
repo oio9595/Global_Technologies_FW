@@ -15,7 +15,7 @@
 #define FAULT_MASK_SHORT        (1 << 2)
 #define FAULT_MASK_THERMAL      (1 << 3)
 
-bool gb_jig_vsync_running_flag;
+bool gb_jig_vsync_active;
 static bool gb_xd04_vsync_flag;
 
 static bool gb_xd_write_flag;
@@ -33,7 +33,7 @@ void Vsync_Timer_Start(void)
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
 
-    gb_jig_vsync_running_flag = true;
+    gb_jig_vsync_active = true;
 }
 
 void Vsync_Timer_Stop(void)
@@ -43,7 +43,7 @@ void Vsync_Timer_Stop(void)
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableIT_UPDATE(TIM8);
 
-    gb_jig_vsync_running_flag = false;
+    gb_jig_vsync_active = false;
 }
 
 void Vsync_Update_Handler(void)
