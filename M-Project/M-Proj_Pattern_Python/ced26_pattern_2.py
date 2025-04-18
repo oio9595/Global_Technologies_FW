@@ -38,6 +38,8 @@ led_matrix = np.zeros((size, size))
 # 나선 경로
 spiral_path = generate_spiral_path(size)
 
+print(spiral_path)
+
 # 플롯 설정
 fig, ax = plt.subplots()
 img = ax.imshow(led_matrix, cmap='Greys', vmin=0, vmax=1)
@@ -52,6 +54,6 @@ def update(frame):
     return [img]
 
 # 애니메이션
-ani = animation.FuncAnimation(fig, update, frames=len(spiral_path), interval=50, blit=True)
+ani = animation.FuncAnimation(fig, update, frames=len(spiral_path), interval=5, blit=True)
 
 plt.show()
