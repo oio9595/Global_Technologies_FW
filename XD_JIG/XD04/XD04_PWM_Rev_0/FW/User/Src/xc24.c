@@ -752,8 +752,8 @@ void XC24_Dump_All_Register(void)
         case XC24_ADDR_CHANNEL_ENABLE2:
             print(LOG_INFO, "[%s (0x%02X)]\r\n"
                             "\t CH_SIZE                     : [%u]\r\n"
-                            "\t CH24_EN                     : [%u]\r\n"
                             "\t LD_WIDTH                    : [%u]\r\n"
+                            "\t CH24_EN                     : [%u]\r\n"
                             "\t CH23_EN                     : [%u]\r\n"
                             "\t CH22_EN                     : [%u]\r\n"
                             "\t CH21_EN                     : [%u]\r\n"
