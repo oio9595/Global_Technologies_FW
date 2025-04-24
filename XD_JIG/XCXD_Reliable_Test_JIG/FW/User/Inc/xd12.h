@@ -33,13 +33,6 @@
 #define MCLK                            (39319200.0f)
 #define VSYNC                           (120.0f)
 
-typedef enum
-{
-    XD12_REG_TYPE_NON_TRIM = 0,
-    XD12_REG_TYPE_TRIM,
-    XD12_REG_TYPE_MAX,
-}XD12_REG_TYPE;
-
 enum
 {
     CH_01 = 0,

@@ -30,10 +30,14 @@
 #define FAULT_FB_VLED_MAX       (2.5f)
 #define FAULT_SHORT_VLED_MAX    (40.0f)
 
+extern bool gb_xd_id_read_error_flag;
+
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);
 extern void XD12_Vsync_Task(void);
+
+extern void Transmit_SPI_LD_Buffer(void);
 
 extern void XD12_Set_Write_Target_Reg(uint8_t addr, uint16_t data);
 extern void XD12_Set_Read_Target_Reg(uint8_t addr);

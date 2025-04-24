@@ -45,6 +45,9 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include <stdbool.h>
+
+#include <stdio.h>
+#include <time.h>
 #include "comm_debugging.h"
 /* USER CODE END Includes */
 
@@ -107,9 +110,27 @@ void Error_Handler(void);
 
 #define XD_DAISY_SIZE               (31)
 #define XD_CH_SIZE                  (8)
+#define XD_BLOCK_SIZE               (XD_DAISY_SIZE * XD_CH_SIZE)
 
-#define XC_SERIAL_CLK_CNT_LOW       (6)
-#define XC_SERIAL_CLK_CNT_HIGH      (10)
+#define XD_LOCAL_READ_HALF_SIZE     (16)
+
+#define SPI_LD_BURST_SIZE           (16)
+#define SPI_LD_REPEAT_NUM           ((XD_BLOCK_SIZE / SPI_LD_BURST_SIZE) + 1)
+
+/* XC Serialize 1MHz */
+// #define XC_SERIALIZE_FREQ           (1.0f) //MHz
+// #define XC_SERIAL_CLK_CNT_LOW       (6)
+// #define XC_SERIAL_CLK_CNT_HIGH      (10)
+
+/* XC Serialize 1.6MHz */
+// #define XC_SERIALIZE_FREQ           (1.6f) //MHz
+// #define XC_SERIAL_CLK_CNT_LOW       (3)
+// #define XC_SERIAL_CLK_CNT_HIGH      (7)
+
+/* XC Serialize 2.0MHz */
+#define XC_SERIALIZE_FREQ           (2.0f) //MHz
+#define XC_SERIAL_CLK_CNT_LOW       (2)
+#define XC_SERIAL_CLK_CNT_HIGH      (6)
 
 #define XD_SERIAL_CLK_CNT_LOW       (13)
 #define XD_SERIAL_CLK_CNT_HIGH      (26)
@@ -130,6 +151,9 @@ void Error_Handler(void);
 #define XD12_DELAY_DELAY            ((uint32_t)((XD12_DELAY * XD12_WRITE_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
 #define XD12_READ_DELAY             ((uint32_t)((XD12_DELAY * XD12_READ_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
 #define XD12_READ_RECV_DELAY        ((uint32_t)((XD12_DELAY * XD12_READ_RECV_BITS * XD_DAISY_SIZE) * XD12_FREQ_ERR_RATE + 0.5f))
+
+#define DELAY_READ_HALF             ((uint32_t)(((float)(10 * 31) / XC_SERIALIZE_FREQ) + (21 * 16)))
+#define DELAY_READ_FULL             (21 * 15)
 
 #define XC_NSCS_HI()                LL_GPIO_SetOutputPin(XC_NSCS_GPIO_Port, XC_NSCS_Pin)
 #define XC_NSCS_LO()                LL_GPIO_ResetOutputPin(XC_NSCS_GPIO_Port, XC_NSCS_Pin)

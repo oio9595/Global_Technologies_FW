@@ -28,19 +28,31 @@ static bool gb_xd_read_flag;
 static uint8_t gn_xd_read_addr;
 
 static uint16_t gn_xd12_LD_out;
+uint16_t gn_spi_ld_buffer[SPI_LD_BURST_SIZE * SPI_LD_REPEAT_NUM] = {0,};
+
+bool gb_xd_id_read_error_flag = false;
 
 void Vsync_Timer_Start(void)
 {
+    debugging_UART_Printf(LOG_LV_INFO, "Vsync Timer Start\r\n");
+
     LL_TIM_OC_SetCompareCH2(TIM3, VSYNC_CCR);
     LL_TIM_EnableIT_UPDATE(TIM3);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM3);
 
-    gn_xd12_LD_out = 4 + 16 + 64;
+    gn_xd12_LD_out = 4;
+    for (uint8_t i = 0 ; i < XD_BLOCK_SIZE ; ++i)
+    {
+        gn_spi_ld_buffer[i] = gn_xd12_LD_out * (i + 1);
+    }
+    gb_xd_id_read_error_flag = false;
 }
 
 void Vsync_Timer_Stop(void)
 {
+    debugging_UART_Printf(LOG_LV_INFO, "Vsync Timer Stop\r\n");
+
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetCounter(TIM3, 0);
     LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH2);
@@ -54,20 +66,41 @@ void Vsync_Update_Handler(void)
     LL_TIM_ClearFlag_UPDATE(TIM3);
     LL_TIM_OC_SetCompareCH2(TIM3, VSYNC_CCR);
 
+    if (!XD12_Is_Vsync_Mode_External())
+    {
+        XC24_IF_SyncGen_Command();
+        us_tdelay(100);
+    }
+
     gb_xd12_vsync_flag = true;
+}
+
+void Update_SPI_LD_Buffer(void)
+{
+    uint16_t temp_ld_data = gn_spi_ld_buffer[0];
+    for (uint8_t i = 0 ; i < XD_BLOCK_SIZE ; ++i)
+    {
+        gn_spi_ld_buffer[i] = gn_spi_ld_buffer[i + 1];
+    }
+    gn_spi_ld_buffer[XD_BLOCK_SIZE - 1] = temp_ld_data;
+}
+
+void Transmit_SPI_LD_Buffer(void)
+{
+    for (uint8_t i = 0 ; i < SPI_LD_REPEAT_NUM ; ++i)
+    {
+        XC24_IF_Write_LD(gn_spi_ld_buffer + (i * SPI_LD_BURST_SIZE));
+        us_tdelay(110);
+    }
 }
 
 void XD12_Vsync_Task(void)
 {
+    static xd12_addr_t xd12_addr = XD12_ADDR_RESET_ID;
     if (gb_xd12_vsync_flag)
     {
-        if (!XD12_Is_Vsync_Mode_External())
-        {
-            XC24_IF_SyncGen_Command();
-            us_tdelay(124);
-        }
-
-        XC24_IF_Write_LD(gn_xd12_LD_out);
+        Update_SPI_LD_Buffer();
+        Transmit_SPI_LD_Buffer();
 
         // fault read if needed
         // XD12_get_fault_status();
@@ -81,6 +114,19 @@ void XD12_Vsync_Task(void)
         {
             XD12_Read_General_Reg(gn_xd_read_addr);
             gb_xd_read_flag = false;
+        }
+
+        XC24_IF_Local_Read(xd12_addr);
+
+        ++xd12_addr;
+        if (xd12_addr >= XD12_ADDR_MAX)
+        {
+            xd12_addr = XD12_ADDR_RESET_ID;
+        }
+
+        if (gb_xd_id_read_error_flag)
+        {
+            Vsync_Timer_Stop();
         }
 
         gb_xd12_vsync_flag = false;

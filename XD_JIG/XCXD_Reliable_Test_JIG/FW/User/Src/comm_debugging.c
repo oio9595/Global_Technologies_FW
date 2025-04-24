@@ -33,18 +33,18 @@
 #define TX_BUFF_SIZE        128
 
 #define RX_PACKET_SIZE      32
-#define TX_PACKET_SIZE      240
+#define TX_PACKET_SIZE      300
 
 typedef struct
 {
-    uint8_t length;
+    uint16_t length;
     char buffer[RX_PACKET_SIZE];
 }
 rx_packet_t;
 
 typedef struct
 {
-    uint8_t length;
+    uint16_t length;
     char buffer[TX_PACKET_SIZE];
 }
 tx_packet_t;
@@ -139,7 +139,7 @@ void debugging_process(void)
         char str_in[RX_PACKET_SIZE + 1] = {0, };
         //char str_model[256] = {0, };
         uint32_t param1 = 0;
-        //uint32_t param2 = 0;
+        uint32_t param2 = 0;
         //uint32_t param3 = 0;
         //int32_t i_param1 = 0;
         //float f_param1 = 0;
@@ -172,14 +172,28 @@ void debugging_process(void)
             }
             debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(sscanf(str_in, "xc_w %x %x", &param1, &param2) == 2)
+        {
+            XC24_Write_Register(param1, param2);
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(sscanf(str_in, "xc_r %x", &param1) == 1)
+        {
+            uint16_t xc_reg = XC24_Read_Register(param1);
+            debugging_UART_Printf(LOG_LV_DEBUG, " xc24 (0x%02X) - [%5u] [0x%4X] \r\n", param1, xc_reg, xc_reg);
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
 		else if(!(strcmp(str_in, "xc_r_all")))
         {
             XC24_Read_Register_All();
             debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xd_r_all")))
+        else if(!(strcmp(str_in, "ld_trans")))
         {
-            XD12_Read_All_Registers();
+            Transmit_SPI_LD_Buffer();
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(sscanf(str_in, "ldim %u", &param1) == 1)
@@ -192,6 +206,40 @@ void debugging_process(void)
             uint16_t u16_ld_data = 0;
             u16_ld_data = XD12_get_LD_out();
             debugging_UART_Printf(LOG_LV_INFO, "LDIM : %u", u16_ld_data);
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(sscanf(str_in, "vsync %u", &param1) == 1)
+        {
+            if (param1)
+            {
+                Vsync_Timer_Start();
+                debugging_UART_Printf(LOG_LV_INFO, "Vsync Timer Start\r\n");
+            }
+            else
+            {
+                Vsync_Timer_Stop();
+                debugging_UART_Printf(LOG_LV_INFO, "Vsync Timer Stop\r\n");
+            }
+            debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(sscanf(str_in, "port %u", &param1) == 1)
+        {
+            char msg[210] = {0, };
+            uint16_t msg_offset = 0;
+
+            uint16_t* p_xc_local_rw_pointer = XC24_IF_Get_Local_RW_Data_Pointer();
+
+            msg_offset += snprintf(msg + msg_offset, sizeof(msg) - msg_offset, "XD Addr[0x%02X]", param1);
+            for (uint8_t data_index = 0 ; data_index < (32 - 1) ; ++data_index)
+            {
+                uint16_t* p_xd_id0 = p_xc_local_rw_pointer + param1 * 32;
+                msg_offset += snprintf(msg + msg_offset, sizeof(msg) - msg_offset, "\t0x%03X", *(p_xd_id0 + data_index));
+            }
+            msg_offset += snprintf(msg + msg_offset, sizeof(msg) - msg_offset, "\r\n");
+            debugging_UART_Printf(LOG_LV_INFO, msg);
+
+            memset(msg, 0, sizeof(msg));
+            msg_offset = 0;
             debugging_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else

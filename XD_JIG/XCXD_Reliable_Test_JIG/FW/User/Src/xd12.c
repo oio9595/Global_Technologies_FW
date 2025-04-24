@@ -113,6 +113,7 @@ static float gf_vsync_out;
 static uint16_t gn_xd_pwm_res;
 static uint16_t gn_xd_scan_no;
 static uint16_t gn_xd_ch_size;
+static uint16_t gn_xd_ch_enable_value;
 
 static uint16_t gn_xd_pwm_max_size;
 static uint16_t gn_xd_fpwm_div;
@@ -136,7 +137,7 @@ uint16_t XD12_Read_General_Reg(uint8_t addr)
 {
     *(&gt_xd12_general_regs._r00.val + addr) = XC24_IF_Read_XD12(addr);
 
-    debugging_UART_Printf(LOG_LV_INFO, "XD12 General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xd12_general_regs._r00.val + addr));
+    // debugging_UART_Printf(LOG_LV_INFO, "XD12 General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xd12_general_regs._r00.val + addr));
 
     return *(&gt_xd12_general_regs._r00.val + addr);
 }
@@ -148,7 +149,7 @@ void XD12_Read_All_Registers(void)
         XD12_Read_General_Reg(addr_offset);
     }
 
-    XD12_Dump_All_Registers();
+    // XD12_Dump_All_Registers();
 }
 
 void XD12_Dump_All_Registers(void)
@@ -157,7 +158,7 @@ void XD12_Dump_All_Registers(void)
     {
         switch (addr_offset)
         {
-            case XD12_ADDR_RESET_ID :
+        case XD12_ADDR_RESET_ID :
             debugging_UART_Printf(LOG_LV_INFO, "[%s (0x%02X)]\r\n"
                             "\t RST       : [%u]\r\n"
                             "\t ID        : [%u]\r\n"
@@ -433,11 +434,17 @@ void XD12_Param_Init(void)
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
-    gn_xd_mclk_lock_cnt = XD_MCLK_LOCK_CNT_120Hz;
+    // gn_xd_mclk_lock_cnt = XD_MCLK_LOCK_CNT_120Hz;
+    gn_xd_mclk_lock_cnt = (uint32_t)(XD_MCLK_LOCK_CNT_120Hz * (1 + 0.08f / 100));
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+    {
+        gn_xd_ch_enable_value |= (1 << ch);
+    }
+
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_4mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
     gt_xd_fb_level = FB_LEVEL_0V7;
 }
@@ -458,7 +465,7 @@ void XD12_Init(void)
         switch (xd12_addr)
         {
         case XD12_ADDR_LD_CONTROL :
-            gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
+            gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
             gt_xd12_general_regs._r01.over_to_e = 1;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
@@ -469,7 +476,7 @@ void XD12_Init(void)
             gt_xd12_general_regs._r02.fpwm_div = gn_xd_fpwm_div;
             break;
         case XD12_ADDR_CHANNEL_ENABLE :
-            gt_xd12_general_regs._r03.val = 0xFFF;
+            gt_xd12_general_regs._r03.val = gn_xd_ch_enable_value;
             break;
         case XD12_ADDR_FAULT_LEVEL :
             gt_xd12_general_regs._r06.fb_level = gt_xd_fb_level;
@@ -503,7 +510,7 @@ void XD12_Init(void)
             break;
         case XD12_ADDR_MCLK_LOCK_2 :
             gt_xd12_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
-            gt_xd12_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
+            gt_xd12_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_DISABLE;
             break;
         case XD12_ADDR_TEMP :
             gt_xd12_general_regs._r29.flt_gain = 0;
@@ -526,25 +533,31 @@ void XD12_Init(void)
         XD12_Write_General_Reg(xd12_addr, *(p_xd_reg_base_addr + xd12_addr));
     }
 
-    XD12_Set_Delay_CH();
+    // XD12_Set_Delay_CH();
 
-    //XD12_Read_All_Registers();
+    XD12_Read_All_Registers();
 }
 
 static void XD12_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = 0;
-    delay_per_ch = (uint16_t)(gn_xd_pwm_max_size / gn_xd_ch_size);
+    uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
+    uint16_t delay_msb_accumulator[2] = {0, };
+
     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
     {
         gn_xd_delay_ch[ch] = delay_per_ch * ch;
         uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
         uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
-        delay_msb <<= (2 * (ch % 6));
+
+        delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+
+        debugging_UART_Printf(LOG_LV_INFO, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
 
         XD12_Write_General_Reg(XD12_ADDR_DELAY_CH01 + ch, delay_lsb);
-        XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_1 + (ch / 6), delay_msb);
     }
+
+    XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+    XD12_Write_General_Reg(XD12_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
 }
 
 void XD12_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
