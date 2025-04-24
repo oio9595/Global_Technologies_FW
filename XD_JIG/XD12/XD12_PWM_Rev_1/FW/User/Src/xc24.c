@@ -159,7 +159,6 @@ __STATIC_INLINE void spi_read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
 
 void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
 {
-#if 1
     _xc24_cmd_t cmd_format;
     uint16_t tx_buffer[2] = {0,};
 
@@ -182,31 +181,6 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     //print(LOG_DEBUG, " tx_buffer[0] - 0x%04X // tx_buffer[1] - 0x%04X\r\n", tx_buffer[0], tx_buffer[1]);
 
     spi_write(g_hSPIx, tx_buffer, 2);
-#else // xc daisy test
-    _xc24_cmd_t cmd_format;
-    uint16_t tx_buffer[4] = {0,};
-
-    if (g_hSPIx == NULL)
-    {
-        g_hSPIx = SPI1;
-    }
-
-    cmd_format.ALL = 0;
-    cmd_format.code = CMD_CODE_REG_WRITE;
-    cmd_format.addr = in_addr;
-    cmd_format.size = 1;
-
-    tx_buffer[0] = cmd_format.ALL;
-    tx_buffer[1] = in_data;
-    tx_buffer[2] = cmd_format.ALL;
-    tx_buffer[3] = in_data;
-
-    *(gt_xc24_regs.ALL + in_addr) = in_data;
-
-    //print(LOG_DEBUG, " XC24_SPI_Write(0x%02X)(%s) - [%5u] [0x%4X] \r\n", in_addr, gs_xc24_addr_str[in_addr], in_data, in_data);
-
-    spi_write(g_hSPIx, tx_buffer, 4);
-#endif
 }
 
 uint16_t XC24_Read_Register(uint8_t in_addr)
@@ -220,6 +194,39 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
         g_hSPIx = SPI1;
     }
 
+    if (in_addr < XC24_ADDR_MAX)
+    {
+        cmd_format.ALL = 0;
+        cmd_format.code = CMD_CODE_REG_READ;
+        cmd_format.addr = in_addr;
+        cmd_format.size = 1;
+        tx_buffer[0] = cmd_format.ALL;
+
+        spi_read(g_hSPIx, tx_buffer, rx_buffer, 2);
+        *(gt_xc24_regs.ALL + in_addr) = rx_buffer[1];
+
+        // debugging_UART_Printf(LOG_LV_INFO, "XC24_Read_Register(0x%2X)(%s) - [%u] [0x%4X]\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
+        // debugging_UART_Printf(LOG_LV_DEBUG, "XC24_Read_Register(0x%2X) - [%u] [0x%4X]\r\n", in_addr, *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
+
+        return rx_buffer[1];
+    }
+    else
+    {
+        debugging_UART_Printf(LOG_LV_ERROR, "XC24_Read_Register(0x%2X) - out of range\r\n", in_addr);
+        return 0;
+    }
+}
+
+uint16_t XC24_Read_Local_RW_Register(uint8_t in_addr)
+{
+    _xc24_cmd_t cmd_format;
+    uint16_t tx_buffer[2] = {0, };
+	uint16_t rx_buffer[2] = {0, };
+
+    if (g_hSPIx == NULL)
+    {
+        g_hSPIx = SPI1;
+    }
     cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_REG_READ;
     cmd_format.addr = in_addr;
@@ -227,10 +234,6 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     tx_buffer[0] = cmd_format.ALL;
 
     spi_read(g_hSPIx, tx_buffer, rx_buffer, 2);
-    *(gt_xc24_regs.ALL + in_addr) = rx_buffer[1];
-
-    print(LOG_INFO, "XC24_Read_Register, 0x%02X, %s, 0x%04X\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr));
-    // print(LOG_DEBUG, "XC24_Read_Register(0x%2X) - [%u] [0x%4X]\r\n", in_addr, *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
 
     return rx_buffer[1];
 }
@@ -984,7 +987,7 @@ uint16_t XC24_IF_Read_XD12(uint8_t in_XD12_addr)
     us_tdelay(XD12_READ_DELAY + XD12_READ_RECV_DELAY);
 
     /* 3rd - Receive Data XD12_Data through XC24 */
-    u16_XD12_data = XC24_Read_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
+    u16_XD12_data = XC24_Read_Local_RW_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
     //print(LOG_DEBUG, "XC24_IF_Read_XD12(0x%02X) - [%u] [0x%04X] \r\n",in_XD12_addr, u16_XD12_data, u16_XD12_data);
 
     //print(LOG_DEBUG, "\r\n========== XC -> XD Read  Done (0x%02X) ==========\r\n", in_XD12_addr);

@@ -220,6 +220,39 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
         g_hSPIx = SPI1;
     }
 
+    if (in_addr < XC24_ADDR_MAX)
+    {
+        cmd_format.ALL = 0;
+        cmd_format.code = CMD_CODE_REG_READ;
+        cmd_format.addr = in_addr;
+        cmd_format.size = 1;
+        tx_buffer[0] = cmd_format.ALL;
+
+        spi_read(g_hSPIx, tx_buffer, rx_buffer, 2);
+        *(gt_xc24_regs.ALL + in_addr) = rx_buffer[1];
+
+        // debugging_UART_Printf(LOG_LV_INFO, "XC24_Read_Register(0x%2X)(%s) - [%u] [0x%4X]\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
+        // debugging_UART_Printf(LOG_LV_DEBUG, "XC24_Read_Register(0x%2X) - [%u] [0x%4X]\r\n", in_addr, *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
+
+        return rx_buffer[1];
+    }
+    else
+    {
+        debugging_UART_Printf(LOG_LV_ERROR, "XC24_Read_Register(0x%2X) - out of range\r\n", in_addr);
+        return 0;
+    }
+}
+
+uint16_t XC24_Read_Local_RW_Register(uint8_t in_addr)
+{
+    _xc24_cmd_t cmd_format;
+    uint16_t tx_buffer[2] = {0, };
+	uint16_t rx_buffer[2] = {0, };
+
+    if (g_hSPIx == NULL)
+    {
+        g_hSPIx = SPI1;
+    }
     cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_REG_READ;
     cmd_format.addr = in_addr;
@@ -227,10 +260,6 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     tx_buffer[0] = cmd_format.ALL;
 
     spi_read(g_hSPIx, tx_buffer, rx_buffer, 2);
-    *(gt_xc24_regs.ALL + in_addr) = rx_buffer[1];
-
-    // print(LOG_INFO, "XC24_Read_Register(0x%2X)(%s) - [%u] [0x%4X]\r\n", in_addr, gs_xc24_addr_str[in_addr], *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
-    // print(LOG_DEBUG, "XC24_Read_Register(0x%2X) - [%u] [0x%4X]\r\n", in_addr, *(gt_xc24_regs.ALL + in_addr), *(gt_xc24_regs.ALL + in_addr));
 
     return rx_buffer[1];
 }
@@ -982,7 +1011,7 @@ uint16_t XC24_IF_Read_XD04(uint8_t in_XD04_addr)
     us_tdelay(XD04_READ_DELAY + XD04_READ_RECV_DELAY);
 
     /* 3rd - Receive Data XD04_Data through XC24 */
-    u16_XD04_data = XC24_Read_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
+    u16_XD04_data = XC24_Read_Local_RW_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
     //print(LOG_DEBUG, "XC24_IF_Read_XD04(0x%02X) - [%u] [0x%04X] \r\n",in_XD04_addr, u16_XD04_data, u16_XD04_data);
 
     //print(LOG_DEBUG, "\r\n========== XC -> XD Read  Done (0x%02X) ==========\r\n", in_XD04_addr);
