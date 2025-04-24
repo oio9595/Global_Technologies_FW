@@ -270,7 +270,7 @@ int main(void)
 
     XC24_Start_MCLK_Oscillation(FALSE);
 
-    //LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
+    LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
     LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
     LL_TIM_EnableCounter(TIM5); /* for Freq Input */
 
