@@ -410,9 +410,6 @@ static uint8_t gn_trim_current_gain = GAIN_HIGH;
 #define I2C_SUB_TRIM17  0xE7
 #define I2C_SUB_TRIM18  0xE8
 
-
-#define APIC_OUTPUT_NUM (6)
-
 #define PWM_OFS_RANGE 0.07
 #define PWM_OFS_MIN   (1.0 - PWM_OFS_RANGE)
 #define PWM_OFS_MAX   (1.0 + PWM_OFS_RANGE)
@@ -421,36 +418,22 @@ static uint8_t gn_trim_current_gain = GAIN_HIGH;
 #define PWM_OFS_SECOND_MIN   (100 - PWM_OFS_GT_PERSENT) / 100
 #define PWM_OFS_SECOND_MAX   (100 + PWM_OFS_GT_PERSENT) / 100
 
-
 // #define TRIM_ENABLE  0
 static volatile uint8_t gub_TRIM_ENABLE;
-
 static volatile uint8_t gub_DIN_MODE_ENABLE;
-
-#define WRITE_PWM_OFS
-
-#define LSB_TEST
 
 #define ADJ_NONE    0
 #define ADJ_PLUS    1
 #define ADJ_MINUS   2
 #define ADJ_DEFAULT 3
-int amp_gain_test = 0;
-/* select test case (range) */
-#define TEST_CASE_1
-//#define TEST_CASE_2
-//#define TEST_CASE_3
-
 
 typedef enum
 {
     TRIM_OFS_LIN_CHS = 0,
     TRIM_ICTL_CHS,
     TRIM_SCREENING,
-
     TRIM_OUTPUT_TEST,
     TRIM_APIC_OUTPUT_TEST,
-
     TRIM_MAX
 }trim_mode_t;
 
@@ -502,58 +485,58 @@ static uint16_t gt_aqic_reg_trim_ictl_ch4_8bit;
 static uint16_t gt_aqic_reg_trim_ictl_ch5_8bit;
 static uint16_t gt_aqic_reg_trim_ictl_ch6_8bit;
 
-
 static trim_mode_t gt_trim_search_mode = TRIM_ICTL_CHS;
 static uint8_t gn_trim_out_of_spec_stop_trimming;
 
 static uint8_t gn_e2p_program[5]= { 0x20, 0x03, 0x00, 0xA5, 0x10 }; /* E2P program byte sequence for OTP write */
 
 static uint8_t gn_read_adc_vout_channel = 5;
-static uint16_t gn_trim_adc_result[TRIM_MAX][APIC_OUTPUT_NUM];
-static uint16_t gn_trim_adjust_flag[TRIM_MAX][APIC_OUTPUT_NUM];
+static uint16_t gn_trim_adc_result[TRIM_MAX][AQIC_O_MAX];
+static uint16_t gn_trim_adjust_flag[TRIM_MAX][AQIC_O_MAX];
 
 #define TRIM_REGISTER_SAVED_CNT  10
 #define TRIM_OUT_RANGE_CNT  20
 // #define RANGE_MARGIN_ICTL   0.05 // 5%
 // #define RANGE_MARGIN_OFF   0.05 // 5%
-typedef struct {
+typedef struct
+{
     uint8_t u8_saved_regi;
     uint16_t u16_saved_adc;
-} sTrimSaved_ictl;
-typedef struct {
+}sTrimSaved_ictl;
+
+typedef struct
+{
     uint16_t u16_saved_regi;
     uint16_t u16_saved_adc;
 } sTrimSaved_off;
 
-static sTrimSaved_ictl gn_trim_ictl_regi_saved[TRIM_REGISTER_SAVED_CNT]={0,} ;
-static sTrimSaved_off gn_trim_ofs_regi_saved[TRIM_REGISTER_SAVED_CNT]={0,} ;
+static sTrimSaved_ictl gn_trim_ictl_regi_saved[TRIM_REGISTER_SAVED_CNT] = {0, };
+static sTrimSaved_off gn_trim_ofs_regi_saved[TRIM_REGISTER_SAVED_CNT] = {0, };
 
 static uint8_t gn_aqic_trim_ofs_match_cnt = 0;
 static uint8_t gn_aqic_trim_ictl_match_cnt = 0;
 static uint8_t gn_trim_gain_level_ch_a = 0;
 
-static uint8_t gn_trim_ofs_step[APIC_OUTPUT_NUM];
-static uint8_t gn_trim_ictl_step[APIC_OUTPUT_NUM];
+static uint8_t gn_trim_ofs_step[AQIC_O_MAX];
+static uint8_t gn_trim_ictl_step[AQIC_O_MAX];
 
 static uint16_t gn_step_delay;
-
-
 
 static uint16_t gn_apic_output_test_index;
 static uint16_t gn_apic_output_test_max;
 static uint16_t gn_apic_output_mode;    /* 0 : current/pwm fix, 1 : current fix/pwm*/
 
 static uint8_t gn_aqic_slope_cnt;
-static uint16_t gn_aqic_slope_adc[2][APIC_OUTPUT_NUM];
-static double gn_aqic_slope[APIC_OUTPUT_NUM];
-static uint16_t gn_aqic_slope_adc_temp[APIC_OUTPUT_NUM];
-static uint16_t gn_aqic_slope_adc_ofs_pre[APIC_OUTPUT_NUM]={6,} ;
-static uint16_t gn_aqic_slope_adc_ictl_pre[APIC_OUTPUT_NUM]={6,} ;
+static uint16_t gn_aqic_slope_adc[2][AQIC_O_MAX];
+static double gn_aqic_slope[AQIC_O_MAX];
+static uint16_t gn_aqic_slope_adc_temp[AQIC_O_MAX];
+static uint16_t gn_aqic_slope_adc_ofs_pre[AQIC_O_MAX]={6,} ;
+static uint16_t gn_aqic_slope_adc_ictl_pre[AQIC_O_MAX]={6,} ;
 
 static uint8_t gn_aqic_trim_ofs_cnt = 0;
 static uint8_t gn_aqic_trim_ictl_cnt = 0;
 
-static uint16_t gn_aqic_screen_adc[APIC_OUTPUT_NUM];
+static uint16_t gn_aqic_screen_adc[AQIC_O_MAX];
 
 static float gf_apic_output_test_table[] = {
 0.0
@@ -581,8 +564,8 @@ static volatile float gf_din_mode_end = 0;
 static volatile float gf_voltage_for_slope_table[3] = { 0.250, 0.150, 0.150 };    /* X2, X1, X1 */
 
 static double screen_avg = 0;
-static double screen_dev[APIC_OUTPUT_NUM] = {0, };
-static double screen_cur[APIC_OUTPUT_NUM] = {0, };
+static double screen_dev[AQIC_O_MAX] = {0, };
+static double screen_cur[AQIC_O_MAX] = {0, };
 
 uint16_t gn_screen_cnt;
 
@@ -593,11 +576,9 @@ uint16_t gn_adc_compensate[3][6] =
     {  2,   1,   2,   1,   1,   2},
 };
 
-
 static uint8_t apic_get_test_regs(void);
 static void dump_apic_regs(uint8_t flag);
 static void apic_set_e2p_program(void);
-
 
 extern inline double convert_adc_to_voltage(uint8_t channel, uint16_t adc)
 {
@@ -609,17 +590,15 @@ inline double convert_adc_to_current(uint8_t channel, uint16_t adc, uint8_t gain
 	double ret = 0;
 	switch (gain)
 	{
-		case GAIN_HIGH :
-			ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_HIGH * CURRENT_SENSE_R));	/* mA */
-			break;
-
-		case GAIN_MID :
-			ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_MID * CURRENT_SENSE_R));	/* mA */
-			break;
-
-		case GAIN_LOW :
-			ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_LOW * CURRENT_SENSE_R));	/* mA */
-			break;
+    case GAIN_HIGH :
+        ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_HIGH * CURRENT_SENSE_R));	/* mA */
+        break;
+    case GAIN_MID :
+        ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_MID * CURRENT_SENSE_R));	/* mA */
+        break;
+    case GAIN_LOW :
+        ret = ((adc * ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO_LOW * CURRENT_SENSE_R));	/* mA */
+        break;
 	}
 	return ret; //mA
 }
@@ -699,7 +678,6 @@ uint8_t aqic_set_reg_otp2_writeen(uint16_t writeen)
     return ret;
 }
 
-#if 1
 static void dump_apic_regs(uint8_t flag)
 {
 	print("======== APIC TEST REGS VALUE ========\r\n");
@@ -787,8 +765,6 @@ static void dump_apic_regs(uint8_t flag)
 	snprintf(msg_buffer, sizeof msg_buffer, "\t\tICTL_CH6 : %u\r\n", (gt_aqic_reg_trim_e7.u.ictl_ch6 << 1) | gt_aqic_reg_trim_e8.u.ictl_ch6);
 	print(msg_buffer);
 	print("======================================\r\n");
-
-#endif
 }
 
 static uint8_t apic_get_test_regs(void)
@@ -1356,7 +1332,7 @@ void trimming_procedure_run(void)
 
         for(uint8_t item = 0 ; item < TRIM_MAX ; ++item)
         {
-            for(uint8_t ch = 0 ; ch < APIC_OUTPUT_NUM ; ++ch)
+            for(uint8_t ch = 0 ; ch < AQIC_O_MAX ; ++ch)
             {
                 gn_trim_adc_result[item][ch] = 0;
             }
@@ -2280,7 +2256,7 @@ void trimming_procedure_run(void)
                 {
                     gn_aqic_screen_adc[gn_read_adc_vout_channel] = (uint16_t)(gn_ads114s08_adc_temp/ADS114S08_READ_COUNT);
                     ++gn_read_adc_vout_channel;
-                    if(gn_read_adc_vout_channel >= APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel >= AQIC_O_MAX)
                     {
                         gn_read_adc_vout_channel = 0;
                         gt_jig_trimming_step = TRIMMING_STEP_CHECK;
@@ -2295,7 +2271,7 @@ void trimming_procedure_run(void)
                 {
                     gn_trim_adc_result[gt_trim_search_mode][gn_read_adc_vout_channel] = (uint16_t)(gn_ads114s08_adc_temp/ADS114S08_READ_COUNT);
                     ++gn_read_adc_vout_channel;
-                    if(gn_read_adc_vout_channel >= APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel >= AQIC_O_MAX)
                     {
                         gn_read_adc_vout_channel = 0;
                         gt_jig_trimming_step = TRIMMING_STEP_CHECK;
@@ -2324,7 +2300,7 @@ void trimming_procedure_run(void)
                     temp_adjust_trim_range_max = gt_adjust_trim_range[gt_trim_search_mode].max;
                     temp_adjust_trim_range_half = (uint16_t)((temp_adjust_trim_range_max - temp_adjust_trim_range_min)/2);
 
-                    if(gn_read_adc_vout_channel < APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel < AQIC_O_MAX)
                     {
                         channel = gn_read_adc_vout_channel;
                         ofs_regi_value = Get_ofs_regi_value(channel);
@@ -2552,7 +2528,7 @@ void trimming_procedure_run(void)
                         (gn_trim_adjust_flag[gt_trim_search_mode][channel] == ADJ_PLUS ? "PLUS" : (gn_trim_adjust_flag[gt_trim_search_mode][channel] == ADJ_MINUS ? "MINUS" : "NONE")));
                     print(msg_buffer);
 
-                    if(gn_read_adc_vout_channel >= APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel >= AQIC_O_MAX)
                     {
                         snprintf(msg_buffer, sizeof msg_buffer, "[RANGE]   %7u   %7u\r\n",
                             temp_adjust_trim_range_min, temp_adjust_trim_range_max);
@@ -2617,7 +2593,7 @@ void trimming_procedure_run(void)
 
                     temp_adjust_trim_range_half = (uint16_t)((temp_adjust_trim_range_max - temp_adjust_trim_range_min)/2);
 
-                    if(gn_read_adc_vout_channel < APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel < AQIC_O_MAX)
                     {
                         channel = gn_read_adc_vout_channel;
                         ictl_regi_value = Get_ictl_regi_value(channel);
@@ -2837,7 +2813,7 @@ void trimming_procedure_run(void)
                         (gn_trim_adjust_flag[gt_trim_search_mode][channel] == ADJ_PLUS ? "PLUS" : (gn_trim_adjust_flag[gt_trim_search_mode][channel] == ADJ_MINUS ? "MINUS" : "NONE")));
                     print(msg_buffer);
 
-                    if(gn_read_adc_vout_channel >= APIC_OUTPUT_NUM)
+                    if(gn_read_adc_vout_channel >= AQIC_O_MAX)
                     {
                         snprintf(msg_buffer, sizeof msg_buffer, "[RANGE]   %7u   %7u\r\n",
                             temp_adjust_trim_range_min, temp_adjust_trim_range_max);
@@ -2914,13 +2890,13 @@ void trimming_procedure_run(void)
                             break;
                         }
                     }
-                    for (uint8_t ch = 0 ; ch < APIC_OUTPUT_NUM ; ch++)
+                    for (uint8_t ch = 0 ; ch < AQIC_O_MAX ; ch++)
                     {
                         screen_cur[ch] = convert_adc_to_current(0, gn_aqic_screen_adc[ch], gn_trim_current_gain);
-                        screen_avg += (screen_cur[ch]/APIC_OUTPUT_NUM);
+                        screen_avg += (screen_cur[ch]/AQIC_O_MAX);
                     }
 
-                    for (uint8_t ch = 0 ; ch < APIC_OUTPUT_NUM ; ch++)
+                    for (uint8_t ch = 0 ; ch < AQIC_O_MAX ; ch++)
                     {
                         screen_dev[ch] = 100 * (screen_cur[ch] - screen_avg) / screen_avg;
                     }
