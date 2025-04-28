@@ -75,7 +75,7 @@ EXTERN void us_delay(uint32_t us_delay);
 EXTERN void print(const char* str);
 
 extern void AQIC_Apply_Voltage(float f_voltage, uint8_t ch);
-extern void change_i2c_setting(uint8_t i2c_type);
+extern void AQIC_I2C_Setting(uint8_t i2c_type);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

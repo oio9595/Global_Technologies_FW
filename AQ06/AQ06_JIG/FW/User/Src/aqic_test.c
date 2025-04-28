@@ -97,13 +97,13 @@ void test_procedure_run(void)
             AQIC_VLED_EN(ON);
             HAL_Delay(10);
 
-            current_discharge(CHARGE);
+            JigBD_Set_Current_Discharge(CHARGE);
 #ifndef MANUAL_TEST
             gn_current_gain = GAIN_HIGH;
 #else
             gn_current_gain = gn_manual_gain;
 #endif
-            change_current_gain(gn_current_gain);
+            JigBD_Set_Current_Gain(gn_current_gain);
 
             gt_test_mode_step = TEST_STEP_INIT_DELAY;
             break;
@@ -126,7 +126,7 @@ void test_procedure_run(void)
             gf_measure_cz_volt = gf_screen_cz_table[gn_screen_table_index];
             gf_measure_volt = gf_screen_dac_table[gn_screen_table_index];
             gn_current_gain = gn_screen_gain_table[gn_screen_table_index];
-            change_current_gain(gn_current_gain);
+            JigBD_Set_Current_Gain(gn_current_gain);
             gt_test_mode_step = TEST_STEP_VIN_CURRENT_SET;
             break;
 

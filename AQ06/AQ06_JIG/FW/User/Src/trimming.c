@@ -15,8 +15,12 @@
 
 #define SCREEN_STEP 0.1
 
-const uint8_t REGISTER_READONLY_MAP_AQ06[]={0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xd0};
-const uint8_t REGISTER_USED_MAP_AQ06[]={
+const static uint8_t REGISTER_READONLY_MAP_AQ06[] =
+{
+    0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xD0
+};
+const static uint8_t REGISTER_USED_MAP_AQ06[] =
+{
 /*          0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F */
 /*0xB0*/    _Y__, _Y__, _Y__, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, _Y__, _Y__, _Y__, _Y__, 0x00, 0x00,
 /*0xC0*/    _Y__, _Y__, _Y__, _Y__, _Y__, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -24,17 +28,15 @@ const uint8_t REGISTER_USED_MAP_AQ06[]={
 /*0xE0*/    _Y__, _Y__, _Y__, _Y__, _Y__, _Y__, _Y__, _Y__, _Y__, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 /*0xF0*/    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
-uint8_t *REGISTER_VALUE_MAP_AQIC[I2C_SUB_END - I2C_SUB_START +1]={0,};
+uint8_t *REGISTER_VALUE_MAP_AQIC[I2C_SUB_END - I2C_SUB_START + 1] = {0, };
 
 static volatile uint8_t gb_GUI_ACTIVATED;
 static volatile uint8_t gb_GUI_REG_APPLY_FOR_TRIM = 0;
-static uint8_t gn_e2p_read[5]= {0x0,};
+static uint8_t gn_e2p_read[5]= {0x0, };
 static uint8_t gb_gui_czmax1 = 0;
 static uint8_t gb_gui_czmax2 = 1;
 static uint8_t gb_gui_czn = 1;
 static uint8_t gb_gui_Screenczn = 1;
-
-double b[6] = {0.0, };
 
 /* B1h OTP1 */
 typedef union
@@ -368,7 +370,7 @@ typedef union
     }u;
 }aqic_trim_e8_t;
 
-static uint8_t gn_trim_current_gain = GAIN_HIGH;
+static uint8_t gn_trim_current_gain;
 
 /* i2c address */
 #define I2C_APIC_ID     0x90
@@ -490,7 +492,7 @@ static uint8_t gn_trim_out_of_spec_stop_trimming;
 
 static uint8_t gn_e2p_program[5]= { 0x20, 0x03, 0x00, 0xA5, 0x10 }; /* E2P program byte sequence for OTP write */
 
-static uint8_t gn_read_adc_vout_channel = 5;
+static uint8_t gn_read_adc_vout_channel;
 static uint16_t gn_trim_adc_result[TRIM_MAX][AQIC_O_MAX];
 static uint16_t gn_trim_adjust_flag[TRIM_MAX][AQIC_O_MAX];
 
@@ -1288,13 +1290,6 @@ static void apic_set_e2p_program(void)
     HAL_I2C_Mem_Write(&hi2c1, I2C_APIC_ID, I2C_SUB_OTPCTL5, 1, gn_e2p_program + 4, 1, 10);
 }
 
-#define USE_Z_SLOPE 0
-//#define USE_Z_SLOPE 1
-
-static volatile uint8_t gn_channel_offset_flag;
-
-volatile float my_din = 0.0f;
-
 void trimming_procedure_start(void)
 {
     gt_jig_trimming_step = TRIMMING_STEP_INIT;
@@ -1326,9 +1321,9 @@ void trimming_procedure_run(void)
         gn_apic_output_mode = 0;
         gn_apic_output_test_max = sizeof(gf_apic_output_test_table)/sizeof(float);
 
-        set_ok_led(OFF);
-        set_ng_led(OFF);
-        current_discharge(DISCHARGE);
+        JigBD_Set_OK_LED(OFF);
+        JigBD_Set_NG_LED(OFF);
+        JigBD_Set_Current_Discharge(DISCHARGE);
 
         for(uint8_t item = 0 ; item < TRIM_MAX ; ++item)
         {
@@ -1342,7 +1337,7 @@ void trimming_procedure_run(void)
         AQIC_Apply_Voltage(0.0f, AQIC_MODE);
 
         gn_trim_current_gain = GAIN_HIGH;
-        change_current_gain(gn_trim_current_gain);
+        JigBD_Set_Current_Gain(gn_trim_current_gain);
         AQIC_Mode_Duty(DUTY_ZERO);
 
         gt_jig_trimming_step = TRIMMING_STEP_APIC_PWR;
@@ -1359,7 +1354,7 @@ void trimming_procedure_run(void)
 
         AQIC_Mode_Setting(MODE_PWM);
         AQIC_Mode_Duty(DUTY_HALF); /* pwm duty ~50%, freq 1MHz */
-        change_i2c_setting(I2C_USED_I2C);  /* change gpio to i2c */
+        AQIC_I2C_Setting(I2C_USED_I2C);  /* change gpio to i2c */
 
         gn_step_delay = 10;
         gt_jig_trimming_step = TRIMMING_STEP_OSCEN;
@@ -1625,18 +1620,18 @@ void trimming_procedure_run(void)
         {
         case TRIM_OFS_LIN_CHS:
             gn_trim_current_gain = GAIN_LOW;
-            change_current_gain(gn_trim_current_gain);
-            current_discharge(CHARGE);
+            JigBD_Set_Current_Gain(gn_trim_current_gain);
+            JigBD_Set_Current_Discharge(CHARGE);
             break;
         case TRIM_ICTL_CHS:
             gn_trim_current_gain = gn_trim_gain_level_ch_a;
-            change_current_gain(gn_trim_current_gain);
-            current_discharge(CHARGE);
+            JigBD_Set_Current_Gain(gn_trim_current_gain);
+            JigBD_Set_Current_Discharge(CHARGE);
             break;
         case TRIM_SCREENING:
             gn_trim_current_gain = GAIN_HIGH;
-            change_current_gain(gn_trim_current_gain);
-            current_discharge(CHARGE);
+            JigBD_Set_Current_Gain(gn_trim_current_gain);
+            JigBD_Set_Current_Discharge(CHARGE);
             break;
         }
         gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT;
@@ -2237,7 +2232,7 @@ void trimming_procedure_run(void)
         case TRIMMING_STEP_GET_ADC_CH:
             if(gb_ads114s08_drdy_done == 1)
             {
-            	if (gt_trim_search_mode == TRIM_ICTL_CHS || gt_trim_search_mode == TRIM_OFS_LIN_CHS)
+                if (gt_trim_search_mode == TRIM_ICTL_CHS || gt_trim_search_mode == TRIM_OFS_LIN_CHS)
                 {
                     gn_aqic_slope_adc[gn_aqic_slope_cnt][gn_read_adc_vout_channel] = (uint16_t)(gn_ads114s08_adc_temp/ADS114S08_READ_COUNT);
                     ++gn_aqic_slope_cnt;
@@ -2281,7 +2276,7 @@ void trimming_procedure_run(void)
                         gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_INIT;
                     }
                 }
-                current_discharge(DISCHARGE);
+                JigBD_Set_Current_Discharge(DISCHARGE);
                 HAL_Delay(1);
                 gb_ads114s08_drdy_done = 0;
             }
@@ -3031,7 +3026,7 @@ void trimming_procedure_run(void)
                 AQIC_Apply_Voltage(0.0f, AQIC_MODE);
 
                 AQIC_Mode_Duty(DUTY_ZERO);     /* clock off */
-                change_i2c_setting(I2C_USED_GPIO);  /* change i2c to gpio */
+                AQIC_I2C_Setting(I2C_USED_GPIO);  /* change i2c to gpio */
                 AQIC_Select_Output_Ch(AQIC_O_MAX);
 
                 AQIC_VCC_EN(PWR_OFF); /* APIC power off */
@@ -3049,28 +3044,28 @@ void trimming_procedure_run(void)
                 AQIC_Apply_Voltage(0.0f, AQIC_D_ALL);
                 dump_apic_regs(1);
 
-                set_ok_led(OFF);
-                set_ng_led(ON);
+                JigBD_Set_OK_LED(OFF);
+                JigBD_Set_NG_LED(ON);
             }
             else if(gn_trim_out_of_spec_stop_trimming == 2)
             {
                 print("======== APIC I2C read error ========\r\n");
 
-                set_ok_led(OFF);
-                set_ng_led(ON);
+                JigBD_Set_OK_LED(OFF);
+                JigBD_Set_NG_LED(ON);
             }
             else if(gn_trim_out_of_spec_stop_trimming == 3)
             {
                 print("======== AQIC Already trimmed ========\r\n");
 
-                set_ok_led(OFF);
-                set_ng_led(ON);
+                JigBD_Set_OK_LED(OFF);
+                JigBD_Set_NG_LED(ON);
             }
             else
             {
                 print("======== TRIM END ========\r\n");
-                set_ok_led(ON);
-                set_ng_led(OFF);
+                JigBD_Set_OK_LED(ON);
+                JigBD_Set_NG_LED(OFF);
             }
             gt_jig_trimming_step = TRIMMING_STEP_NONE;
             break;

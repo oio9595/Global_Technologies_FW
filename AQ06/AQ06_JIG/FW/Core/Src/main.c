@@ -178,7 +178,7 @@ void AQIC_Apply_Voltage(float f_voltage, uint8_t ch)
     }
 }
 
-void change_i2c_setting(uint8_t i2c_type)
+void AQIC_I2C_Setting(uint8_t i2c_type)
 {
     if(gn_i2c_setting_type != i2c_type)
     {
@@ -290,7 +290,7 @@ int main(void)
     ads114s08_init();
 
     LATCH__WritePin(LTC_HIGH_CURRENT_LS_CP, LTC_HIGH_CURRENT_LS_PORT, LATCH_PIN_RESET);
-    change_i2c_setting(I2C_USED_GPIO);
+    AQIC_I2C_Setting(I2C_USED_GPIO);
 
     /* PWM for using APIC MODE & TRIMMING */
     AQIC_Mode_Setting(MODE_DAC);

@@ -208,7 +208,7 @@ CTL_UPPER_GAIN
  - LOW  : Sensing range  1mA
 */
 
-void change_current_gain(uint8_t gain)
+void JigBD_Set_Current_Gain(uint8_t gain)
 {
     if(gain == GAIN_HIGH)
     {
@@ -230,7 +230,7 @@ void change_current_gain(uint8_t gain)
     }
 }
 
-void current_discharge(uint8_t mode)
+void JigBD_Set_Current_Discharge(uint8_t mode)
 {
     static uint8_t setting = 0;
 
@@ -248,7 +248,7 @@ void current_discharge(uint8_t mode)
     }
 }
 
-void set_ok_led(uint8_t en)
+void JigBD_Set_OK_LED(uint8_t en)
 {
     if(en == ON)
     {
@@ -260,7 +260,7 @@ void set_ok_led(uint8_t en)
     }
 }
 
-void set_ng_led(uint8_t en)
+void JigBD_Set_NG_LED(uint8_t en)
 {
     if(en == ON)
     {
@@ -272,7 +272,7 @@ void set_ng_led(uint8_t en)
     }
 }
 
-void set_trimming_led(uint8_t en)
+void JigBD_Set_Trim_LED(uint8_t en)
 {
     if(en == ON)
     {

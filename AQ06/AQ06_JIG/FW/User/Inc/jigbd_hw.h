@@ -19,12 +19,12 @@ extern void AQIC_VLED_EN(uint8_t on);
 extern void AQIC_Mode_Duty(uint8_t duty);
 extern void AQIC_Mode_Setting(uint8_t op_mode);
 
-extern void change_current_gain(uint8_t gain);
-extern void current_discharge(uint8_t mode);
+extern void JigBD_Set_Current_Gain(uint8_t gain);
+extern void JigBD_Set_Current_Discharge(uint8_t mode);
 
-extern void set_ok_led(uint8_t en);
-extern void set_ng_led(uint8_t en);
-extern void set_trimming_led(uint8_t en);
+extern void JigBD_Set_OK_LED(uint8_t en);
+extern void JigBD_Set_NG_LED(uint8_t en);
+extern void JigBD_Set_Trim_LED(uint8_t en);
 
 #ifdef __cplusplus
 }
