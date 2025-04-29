@@ -482,7 +482,7 @@ static void sal_regs_init(void)
             gt_sal_cmd_data.temp_lut_tc10.temp_lut_tc10 = 0x2BB;
             break;
 #endif
-         default:
+        default:
             continue;
         }
 
