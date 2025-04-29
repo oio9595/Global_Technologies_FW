@@ -104,7 +104,6 @@ void adc_clear_buff(void)
     gn_ads114s08_adc_temp = 0;
 }
 
-
 #ifdef USE_DISPLAY_DEVICE_REGS
 static char* gs_delay_string[] =
 {

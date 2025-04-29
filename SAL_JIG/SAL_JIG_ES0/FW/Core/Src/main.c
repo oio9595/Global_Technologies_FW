@@ -203,7 +203,7 @@ void btn_process(void)
 				if (!(gn_btn_cnt % 50))
 				{
 					//print(LOG_LV_DEBUG, "long_key\r\n");
-          			sal_init();
+                    sal_init();
 					gb_long_key_flag = true;
 				}
 			}

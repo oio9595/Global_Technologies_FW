@@ -18,7 +18,7 @@
 
 #define OTP_WRITE_TRUE          (1)
 #define OTP_WRITE_FALSE         (0)
-#define OTP_WRITE_EN            OTP_WRITE_FALSE
+#define OTP_WRITE_EN            OTP_WRITE_TRUE
 
 #define TRIM_WAFER              (0)
 #define TRIM_FULL               (1)
@@ -88,7 +88,7 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
 
                       // TARGET_R   TARGET_G    TARGET_B
 #if (SAL_TYPE == SAL_TYPE_A)
-    /*CURRENT_ITRIM*/ {      20.0,       20.0,     20.0}, // mA
+    /*CURRENT_ITRIM*/ {      20.0,       17.5,      7.7}, // mA
     /*CURRENT_GAIN*/  {       0.0,        0.0,      0.0}, // mA
 #else
     /*CURRENT_ITRIM*/ {    0.6349,    0.6349,    0.6349}, // mA
@@ -2130,7 +2130,6 @@ void sal_trimming_procedure(void)
         gt_sal_trim_regs._rF2.pwm_max_g = 0;
         gt_sal_trim_regs._rF3.pwm_max_b = 0;
 #else
-
     #if (LED_TYPE == LED_EP)
             gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3; //EP
             gt_sal_trim_regs._rF2.pwm_max_g = 0x933; //EP
@@ -2140,7 +2139,9 @@ void sal_trimming_procedure(void)
             gt_sal_trim_regs._rF2.pwm_max_g = 0x933; //HC
             gt_sal_trim_regs._rF3.pwm_max_b = 0x466; //HC
     #endif
-
+            gt_sal_trim_regs._rF1.pwm_max_r = 0xFFF; //EP
+            gt_sal_trim_regs._rF2.pwm_max_g = 0xFFF; //EP
+            gt_sal_trim_regs._rF3.pwm_max_b = 0xFFF; //EP
 #endif
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
