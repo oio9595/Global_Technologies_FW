@@ -212,7 +212,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     }
     else
     {
-        debugging_UART_Printf(LOG_LV_ERROR, "XC24_Read_Register(0x%2X) - out of range\r\n", in_addr);
+        print(LOG_ERROR, "XC24_Read_Register(0x%2X) - out of range\r\n", in_addr);
         return 0;
     }
 }
