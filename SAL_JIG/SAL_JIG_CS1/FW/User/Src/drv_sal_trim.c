@@ -82,7 +82,7 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
     /*TEMP_TRIM_BGR*/ {     495.0,      547.0,      0.0}, // 521 reg value
 
                       // TARGET_R    TARGET_G   TARGET_B
-    /*CURRENT_ITRIM*/ {      22.3,       13.8,     6.24}, // mA
+    /*CURRENT_ITRIM*/ {      22.3,       13.8,     6.24}, // mA , check RGB Max current
 };
 
 static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =

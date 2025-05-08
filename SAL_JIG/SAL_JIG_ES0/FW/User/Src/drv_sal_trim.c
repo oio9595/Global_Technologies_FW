@@ -88,7 +88,7 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
 
                       // TARGET_R   TARGET_G    TARGET_B
 #if (SAL_TYPE == SAL_TYPE_A)
-    /*CURRENT_ITRIM*/ {      20.0,       20.0,     20.0}, // mA
+    /*CURRENT_ITRIM*/ {      20.0,       20.0,     20.0}, // mA , check RGB Max current
     /*CURRENT_GAIN*/  {       0.0,        0.0,      0.0}, // mA
 #else
     /*CURRENT_ITRIM*/ {    0.6349,    0.6349,    0.6349}, // mA
