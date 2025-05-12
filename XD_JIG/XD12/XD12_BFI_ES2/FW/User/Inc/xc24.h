@@ -45,7 +45,6 @@ typedef enum _xc24_addr_
     XC24_ADDR_LD_TRANSFER = 0x06,                  // 0x06
     XC24_ADDR_SYNC_GEN = 0x07,                     // 0x07
     XC24_ADDR_AUTO_ENABLE = 0x08,                  // 0x08
-
     XC24_ADDR_LD_WRITE_POINTER = 0x0A,             // 0x0A
     XC24_ADDR_LD_READ_POINTER = 0x0B,              // 0x0B
     XC24_ADDR_DIFFERENCE_POINTER = 0x0C,           // 0x0C
@@ -63,13 +62,11 @@ typedef enum _xc24_addr_
     XC24_ADDR_COMMAND_STATUS2 = 0x17,              // 0x17
     XC24_ADDR_RECEIVE_STATUS = 0x18,               // 0x18
     XC24_ADDR_INTERRUPT_STATUS = 0x19,             // 0x19
-
-    /* ========== ES1 ========= */
-    XC24_ADDR_FB_PWM_PERIOD = 0x1A,                // 0x1A
-    XC24_ADDR_FB_PWM_DUTY_1 = 0x1B,                // 0x1B
-    XC24_ADDR_FB_PWM_DUTY_2 = 0x1C,                // 0x1C
-    XC24_ADDR_FB_PWM_DUTY_3 = 0x1D,                // 0x1D
-
+    XC24_ADDR_SPI_FAULT_STATUS_CONTROL = 0x1A,     // 0x1A
+    XC24_ADDR_CLK_CONTROL_1 = 0x1B,                // 0x1B
+    XC24_ADDR_CLK_CONTROL_2 = 0x1C,                // 0x1C
+    XC24_ADDR_VDD_LDO_STATUS = 0x1D,               // 0x1D
+    XC24_ADDR_VDD_LDO_FAULT_LEVEL = 0x1E,          // 0x1E
     XC24_ADDR_COMMAND_LATENCY = 0x1F,              // 0x1F
 
     XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 = 0x20, // 0x20
@@ -81,8 +78,6 @@ typedef enum _xc24_addr_
     XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE7,        // 0x26
     XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE8,        // 0x27
 
-    XC24_ADDR_LDO = 0x2A,                          // 0x2A
-
     XC24_ADDR_DAISY_SIZE1 = 0x30,                  // 0x30
     XC24_ADDR_DAISY_SIZE2,                         // 0x31
     XC24_ADDR_DAISY_SIZE3,                         // 0x32
@@ -91,7 +86,6 @@ typedef enum _xc24_addr_
     XC24_ADDR_DAISY_SIZE6,                         // 0x35
     XC24_ADDR_DAISY_SIZE7,                         // 0x36
     XC24_ADDR_DAISY_SIZE8,                         // 0x37
-
     XC24_ADDR_BLOCK_SIZE1 = 0x38,                  // 0x38
     XC24_ADDR_BLOCK_SIZE2,                         // 0x39
     XC24_ADDR_BLOCK_SIZE3,                         // 0x3A
@@ -100,28 +94,60 @@ typedef enum _xc24_addr_
     XC24_ADDR_BLOCK_SIZE6,                         // 0x3D
     XC24_ADDR_BLOCK_SIZE7,                         // 0x3E
     XC24_ADDR_BLOCK_SIZE8,                         // 0x3F
+
     XC24_ADDR_BLOCK_SIZE9,                         // 0x40
     XC24_ADDR_BLOCK_SIZE10,                        // 0x41
     XC24_ADDR_BLOCK_SIZE11,                        // 0x42
     XC24_ADDR_BLOCK_SIZE12,                        // 0x43
-
     XC24_ADDR_CHANNEL_ENABLE1 = 0x45,              // 0x45
     XC24_ADDR_CHANNEL_ENABLE2,                     // 0x46
+    XC24_ADDR_DAC_CONTROL = 0x4D,			       // 0x4D
+    XC24_ADDR_CURRENT_TARGET_DAC = 0x4F,		   // 0x4F
 
-    XC24_ADDR_MAX,                                 // 0x47
-}xc24_addr_t;
+    XC24_ADDR_PREVIOUS_TARGET_DAC = 0x50,		   // 0x50
+    XC24_ADDR_DAC_OUT = 0x51, 			           // 0x51
+    XC24_ADDR_DAC_INCREMENT1 = 0x52,		       // 0x52
+    XC24_ADDR_DAC_INCREMENT2_HOLD_LIMIT = 0x53,	   // 0x53
+    XC24_ADDR_DAC_DECREMENT_INC_WAIT = 0x54,	   // 0x54
+    XC24_ADDR_DAC_INCREMENT_HOLD_TH = 0x55,	       // 0x55
+    XC24_ADDR_SOA_N11_N1 = 0x56,			       // 0x56
+    XC24_ADDR_SOA_P2_P1 = 0x57,			           // 0x57
+    XC24_ADDR_SOA_P3_P2 = 0x58,			       	   // 0x58
+    XC24_ADDR_DAC_FB_VALID_TIMER = 0x59,		   // 0x59
+    XC24_ADDR_DAC_MIN_LIMIT = 0x5A,			       // 0x5A
+    XC24_ADDR_DAC_MAX_LIMIT = 0x5B,			       // 0x5B
+    XC24_ADDR_DAC_STATE = 0x5C,			           // 0x5C
+    XC24_ADDR_VALID_CNT = 0x5D,			           // 0x5D
+    XC24_ADDR_DAC_INC_HOLD_WAIT_CNT = 0x5E,	       // 0x5E
+    XC24_ADDR_R2 = 0x5F,			       		   // 0x5F
 
-typedef enum _xc24_addr_global_
-{
     XC24_ADDR_GLOBAL_WRITE_DATA = 0x60,
     XC24_ADDR_GLOBAL_FAULT_READ_DATA1,
     XC24_ADDR_GLOBAL_FAULT_READ_DATA2,
     XC24_ADDR_GLOBAL_FAULT_READ_DATA3,
     XC24_ADDR_GLOBAL_FAULT_READ_DATA4,
     XC24_ADDR_GLOBAL_FAULT_READ_DATA5,
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA6,
-}xc24_addr_global_t;
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA6,			   // 0x66
 
+    XC24_ADDR_PORT1_LOCAL_RW_DATA1 = 0x70,         // 0x70
+    XC24_ADDR_MAX,                                 // 0x71
+}xc24_addr_t;
+
+typedef enum tag_XC24_TRIM_ADDR
+{
+    XC24_ADDR_TRIM_START = 0xF0,                    // 0xF0
+    XC24_ADDR_TRIM_TEST_CONTROL = 0xF0,             // 0xF0
+    XC24_ADDR_TRIM_OTP_PG_ACCESS = 0xF1,            // 0xF1
+    XC24_ADDR_TRIM_OTP_WRITE = 0xF2,                // 0xF2
+    XC24_ADDR_TRIM_OTP_RD_PROG = 0xF3,              // 0xF3
+    XC24_ADDR_TRIM_OTP_PROTECT = 0xF4,              // 0xF4
+    XC24_ADDR_TRIM_MIRROR1 = 0xF5,                  // 0xF5
+    XC24_ADDR_TRIM_MIRROR2 = 0xF6,                  // 0xF6
+    XC24_ADDR_TRIM_MIRROR3 = 0xF7,                  // 0xF7
+    XC24_ADDR_TRIM_MAX,                             // 0xF8
+}xc24_addr_trim_t;
+
+/*
 typedef enum _xc24_data_addr_
 {
     XC24_ADDR_PORT1_LOCAL_RW_DATA1 = 0x70,
@@ -257,6 +283,7 @@ typedef enum _xc24_data_addr_
     XC24_ADDR_PORT7_LOCAL_RW_DATA16,
     XC24_ADDR_PORT8_LOCAL_RW_DATA16,
 }xc24_addr_port_local_t;
+*/
 
 /* SOFT RESET : default 0x00 */
 typedef union tag_DUMMY
@@ -293,10 +320,10 @@ typedef union tag_GLOBAL_WRITE
     {
         uint16_t addr   :  6;   /* ADDRESS : The same target address of all XD-12 daisied devices to write. */
         uint16_t        :  9;   /* reserved */
-        uint16_t start  :  1;   /* START : ‘0’   No operation.
-                                           ‘1’   Start executing the global-write command with the GLOBAL WRITE DATA register, together, and this bit is auto-cleared after completing this execution.
-                                                 For correct operation, It needs to set the GLOBAL WRITE DATA register with desired value before setting this bit.
-                                                 The global-writing can be used in case that the target registers’ values of all XD-12 daisied devices are all the same. If the values are different from each other, then the local-write command should be used instead of the global-write command.
+        uint16_t start  :  1;   /*  START : ‘0’   No operation.
+                                            ‘1’   Start executing the global-write command with the GLOBAL WRITE DATA register, together, and this bit is auto-cleared after completing this execution.
+                                            For correct operation, It needs to set the GLOBAL WRITE DATA register with desired value before setting this bit.
+                                            The global-writing can be used in case that the target registers’ values of all XD-12 daisied devices are all the same. If the values are different from each other, then the local-write command should be used instead of the global-write command.
                                 */
     };
 }_v_global_write_t;
@@ -310,11 +337,11 @@ typedef union tag_LOCAL_WRITE
         uint16_t addr   :  6;   /* ADDRESS : The same target address of all XD-12 daisied devices to write. */
         uint16_t        :  2;   /* reserved */
         uint16_t ch_seg :  2;   /* CH_SEG : These bits are used to designate which channels are activated for this command.
-                                              2’b00 : The channel 1 from 8 are activated.
-                                              2’b01 : The channel 9 from 16 are activated.
-                                              2’b10 : The channel 17 from 24 are activated.
-                                              2’b11 : No allocated.
-                                              Refer to previous chapter. how to allocate the LOCAL RW DATA registers according to CH_SEG
+                                            2’b00 : The channel 1 from 8 are activated.
+                                            2’b01 : The channel 9 from 16 are activated.
+                                            2’b10 : The channel 17 from 24 are activated.
+                                            2’b11 : No allocated.
+                                            Refer to previous chapter. how to allocate the LOCAL RW DATA registers according to CH_SEG
                                 */
         uint16_t        :  5;   /* reserved */
         uint16_t start  :  1;   /* START : ‘0’   No operation.
@@ -356,11 +383,11 @@ typedef union tag_ID_GEN
     struct
     {
         uint16_t        : 15;   /* reserved */
-        uint16_t start  :  1;   /* START : ‘0’   No operation.
-                                           ‘1’   Start executing the id-generating command to all XD-12 daisied devices and this bit is auto-cleared after completing this execution.
-                                                  All XD-12 daisied devices connected in each channel will have their own ID number after completing the id-generating command.
-                                                  This command is needed to read-out the XD-12 drivers’ registers data correctly in sequential, so, this command should be executed before executing the local-reading or the fault-reading command.
-                                                  It is recommended that the id-generating command should be executed firstly on system initialization.
+        uint16_t start  :  1;   /* START :  ‘0’   No operation.
+                                            ‘1’   Start executing the id-generating command to all XD-12 daisied devices and this bit is auto-cleared after completing this execution.
+                                            All XD-12 daisied devices connected in each channel will have their own ID number after completing the id-generating command.
+                                            This command is needed to read-out the XD-12 drivers’ registers data correctly in sequential, so, this command should be executed before executing the local-reading or the fault-reading command.
+                                            It is recommended that the id-generating command should be executed firstly on system initialization.
                                 */
     };
 }_v_id_gen_t;
@@ -608,16 +635,16 @@ typedef union tag_SERIALIZER_CLOCK_GEN
     uint16_t ALL;
     struct
     {
-        uint16_t sck_high   :  5;   /* SCK_HIGH
+        uint16_t sck_high   :  7;   /* SCK_HIGH
                                         This register determines the high pulse duration in case the serial data-out drives the high
                                         state.  Counted in MCLK units.
                                     */
-        uint16_t            :  3;   /* reserved */
-        uint16_t sck_low    :  4;   /* SCK_LOW
+        uint16_t            :  1;   /* reserved */
+        uint16_t sck_low    :  7;   /* SCK_LOW
                                         This register determines the high pulse duration in case the serial data-out drives the low
                                         state.  Counted in MCLK units.
                                     */
-        uint16_t            :  4;   /* reserved */
+        uint16_t            :  1;   /* reserved */
     };
 }_v_serializer_clock_gen_t;
 
@@ -659,11 +686,35 @@ typedef union tag_INTERRUPT_ENABLE
                                                         ‘0’ No operation
                                                         ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that any violation happens during the execution for the fault read-back from the XD-12.
                                                     */
-        uint16_t int_timeout_err_en        :  1;   /* INT_TIMEOUT_ERR_EN
+        uint16_t int_timeout_err_en         :  1;   /* INT_TIMEOUT_ERR_EN
                                                         ‘0’ No operation
                                                         ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the timer will be expired during the execution for read-backcommands. The expired time is mclk*8,192.
                                                     */
-        uint16_t                            :  7;   /* reserved */
+        uint16_t int_parity_err_en		    :  1;   /* INT_PARITY_ERR_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the parity error happens during the execution for read-back commands.
+                                                    */
+        uint16_t int_acc_cnt_err_en		    :  1;   /* INT_ACC_CNT_ERR_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the access count error happens during the execution for read-back commands.
+                                                    */
+        uint16_t                            :  1;   /* reserved */
+        uint16_t int_uv15_en			    :  1;   /* INT_UV15_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the UV condition happens among the XD-12 drivers during dimming operation.
+                                                    */
+        uint16_t int_ov15_en			    :  1;   /* INT_OV15_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the OV condition happens among the XD-12 drivers during dimming operation.
+                                                    */
+        uint16_t int_uv50_en			    :  1;   /* INT_UV50_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the UV condition happens among the XD-12 drivers during dimming operation.
+                                                    */
+        uint16_t int_ov50_en			    :  1;   /* INT_OV50_EN
+                                                        ‘0’ No operation
+                                                        ‘1’ This bit enables to issue the interrupt through the nINT_FAULT pin in case that the OV condition happens among the XD-12 drivers during dimming operation.
+                                                    */
     };
 }_v_interrupt_enable_t;
 
@@ -740,65 +791,102 @@ typedef union tag_INTERRUPT_STATUS
         uint16_t int_short_src                  :  1;   /* INT_SHORT_SRC */
         uint16_t int_tml_src                    :  1;   /* INT_TML_SRC */
         uint16_t int_ld_trans_src               :  1;   /* INT_LD_TRANS_SRC */
-        uint16_t int_local_rec_fail_src         :  1;   /* INT_LOCAL_REC_FAIL_SRC */
+        uint16_t int_rd_rec_fail_src            :  1;   /* INT_RD_REC_FAIL_SRC */
         uint16_t int_fault_auto_rec_fail_src    :  1;   /* INT_FAULT_AUTO_REC_FAIL_SRC */
         uint16_t int_fault_rec_fail_src         :  1;   /* INT_FAULT_REC_FAIL_SRC */
         uint16_t int_timeout_err_src            :  1;   /* INT_TIMEOUT_ERR_SRC */
-        uint16_t                                :  3;   /* reserved */
+        uint16_t int_parity_err_src             :  1;   /* INT_PARITY_ERR_SRC */
+        uint16_t int_acc_cnt_err_src            :  1;   /* INT_ACC_CNT_ERR_SRC */
+        uint16_t int_ovuv_src                   :  1;   /* INT_OVUV_SRC */
     };
 }_v_interrupt_status_t;
 
-typedef union tag_FB_PWM_PERIOD
+typedef union tag_SPI_FAULT_STATUS_CONTROL
 {
     uint16_t ALL;
     struct
     {
-        uint16_t fb_pwm_period : 11;
-        uint16_t               :  2;
-        uint16_t t_fb_en       :  1;
-        uint16_t fb_pwm_pol    :  1;
-        uint16_t fb_pwm_en     :  1;
+        uint16_t parity_err_det_en   : 1;
+        uint16_t acc_cnt_err_det_en  : 1;
+        uint16_t parity_err_mode	 : 1;   /* 0: parity error mode is disabled. 1: parity error mode is enabled. */
+        uint16_t                     : 1;   /* reserved */
+        uint16_t parity_err    		 : 1;   /* 0: no parity error. 1: parity error. */
+        uint16_t acc_cnt_err		 : 1;   /* 0: no access count error. 1: access count error. */
+        uint16_t                     : 2;   /* reserved */
+        uint16_t acc_counter		 : 8;   /* Access counter. This register is used to check the access count error. */
     };
-}_v_fb_pwm_period_t;
+}_v_spi_fault_status_control_t;
 
-typedef union tag_FB_PWM_DUTY_1
+typedef union tag_CLK_CONTROL_1
 {
     uint16_t ALL;
     struct
     {
-        uint16_t fb_pwm_duty_inc : 9;
-        uint16_t                 : 7;
+        uint16_t mclk_mode              : 1;
+        uint16_t serializer_skew_en     : 1;
+        uint16_t osc_spread_en          : 1;   /* 0: spread spectrum disabled. 1: spread spectrum enabled. */
+        uint16_t serializer_clk_sel	    : 1;   /* 0: serializer clock is generated by XC-24. 1: serializer clock is generated by XD-12. */
+        uint16_t spread_dir		        : 2;   /* 0: down spread. 1: up spread. */
+        uint16_t spread_speed	        : 2;   /* 0: 0.5%. 1: 1.0%. 2: 1.5%. 3: 2.0%. */
+        uint16_t spread_range	        : 2;   /* 0: 0.5%. 1: 1.0%. 2: 1.5%. 3: 2.0%. */
+        uint16_t                        : 1;   /* reserved */
+        uint16_t b_rd_clk_sel	        : 1;   /* 0: b_rd_clk is generated by XC-24. 1: b_rd_clk is generated by XD-12. */
+        uint16_t spread_range_a         : 3;   /* 0: 0.5%. 1: 1.0%. 2: 1.5%. 3: 2.0%. */
+        uint16_t                        : 1;   /* reserved */
     };
-}_v_fb_pwm_duty_1_t;
+}_v_clk_control_1_t;
 
-typedef union tag_FB_PWM_DUTY_2
+typedef union tag_CLK_CONTROL_2
 {
     uint16_t ALL;
     struct
     {
-        uint16_t fb_pwm_duty_dec  : 8;
-        uint16_t                  : 4;
-        uint16_t fb_pwm_duty_wait : 4;
+        uint16_t                      : 8; /* reserved */
+        uint16_t osc_force_static     : 7;
+        uint16_t                      : 1; /* reserved */
     };
-}_v_fb_pwm_duty_2_t;
+}_v_clk_control_2_t;
 
-typedef union tag_FB_PWM_DUTY_3
+typedef union tag_VDD_LDO_STATUS
 {
     uint16_t ALL;
     struct
     {
-        uint16_t fb_pwm_duty  : 11;
-        uint16_t              :  5;
+        uint16_t uv15_det     :  1;
+        uint16_t              :  3;
+        uint16_t ov15_det     :  1;
+        uint16_t              :  3;
+        uint16_t uv50_det     :  1;
+        uint16_t              :  3;
+        uint16_t ov50_det     :  1;
+        uint16_t              :  3;
     };
-}_v_fb_pwm_duty_3_t;
+}_v_vdd_ldo_status_t;
+
+
+typedef union tag_VDD_LDO_FAULT_LEVEL
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t uv15_level   :  3;
+        uint16_t              :  1;
+        uint16_t ov15_level   :  3;
+        uint16_t              :  1;
+        uint16_t uv50_level   :  3;
+        uint16_t              :  1;
+        uint16_t ov50_level   :  3;
+        uint16_t              :  1;
+    };
+}_v_vdd_ldo_fault_level_t;
 
 typedef union tag_COMMAND_LATENCY
 {
     uint16_t ALL;
     struct
     {
-        uint16_t cmd_latency : 8;
-        uint16_t             : 8;
+        uint16_t cmd_latency     : 8;
+        uint16_t serial_latency  : 8;
     };
 }_v_command_latency_t;
 
@@ -897,16 +985,6 @@ typedef union tag_DAISIED_DEVICE_CHANNEL_SIZE8
         uint16_t                        :  1;
     };
 }_v_daisied_device_channel_size8_t;
-
-typedef union tag_LDO
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t ldo :  4;
-        uint16_t     : 12;
-    };
-}_v_ldo_t;
 
 /* DAISY SIZE 1 : default 0x00 */
 typedef union tag_DAISY_SIZE1
@@ -1183,7 +1261,7 @@ typedef union tag_CHANNEL_ENABLE2
         uint16_t ch22_en    :  1;   /* CH22_EN */
         uint16_t ch23_en    :  1;   /* CH23_EN */
         uint16_t ch24_en    :  1;   /* CH24_EN */
-        uint16_t ch_size    :  5;   /* CH_SIZE : These bits represent how many channels are activated. */
+        uint16_t ld_size    :  5;   /* LD_SIZE : These bits represent how many channels are activated. */
         uint16_t            :  1;   /* reserved */
         uint16_t ld_width   :  2;   /* LD_WIDTH : These bits represent the number of bits contained in one LD data in one block zone.
                                                     2’b00 : 24 bits/block even if the 24 bits/block are transferred in SPI interface, the valid bits are PAM 10 bits and PWM 10 bits.
@@ -1193,6 +1271,200 @@ typedef union tag_CHANNEL_ENABLE2
                                     */
     };
 }_v_channel_enable2_t;
+
+typedef union tag_DAC_CONTROL
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_auto         : 1;   /* GLOBAL_WR_DATA : This register represents the data to be written to the XD-12 drivers daisied. This register should be written with desired value before the global-writing command is executed. */
+        uint16_t                  : 3;   /* reserved */
+        uint16_t dac_sync_mode    : 1;
+        uint16_t dac_fb_mode      : 1;
+        uint16_t                  : 2;   /* reserved */
+        uint16_t dac_dec1_mode    : 1;
+        uint16_t dac_hold_en      : 1;
+        uint16_t                  : 2;   /* reserved */
+        uint16_t dac_thermal_off  : 1;
+        uint16_t                  : 3;   /* reserved */
+    };
+}_v_dac_control_t;
+
+typedef union tag_CURRENT_TARGET_DAC
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t curr_tgt_dac       : 12;
+        uint16_t                    :  4;   /* reserved */
+    };
+}_v_current_target_dac_t;
+
+typedef union tag_PREVIOUS_TARGET_DAC
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t prev_tgt_dac       : 12;
+        uint16_t                    :  4;   /* reserved */
+    };
+}_v_previous_target_dac_t;
+
+typedef union tag_DAC_OUT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_out           : 12;
+        uint16_t                   :  4;   /* reserved */
+    };
+}_v_dac_out_t;
+
+typedef union tag_DAC_INCREMENT1
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_inc1            :  5;
+        uint16_t dac_inc2            :  5;
+        uint16_t dac_inc3            :  6;
+    };
+}_v_dac_increment1_t;
+
+typedef union tag_DAC_INCREMENT2_HOLD_LIMIT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_inc4              : 7;
+        uint16_t dac_inc_hold_limit    : 9;
+    };
+}_v_dac_increment2_hold_limit_t;
+
+typedef union tag_DAC_DECREMENT_INC_WAIT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_inc1_wait       : 7;
+        uint16_t                     : 1;   /* reserved */
+        uint16_t dac_dec1            : 7;
+        uint16_t                     : 1;   /* reserved */
+    };
+}_v_dac_decrement_inc_wait_t;
+
+typedef union tag_DAC_INCREMENT_HOLD_TH
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_inc_hold_threshold                : 9;
+        uint16_t dac_increment_hold_th_signed          : 1;
+        uint16_t                                       : 6;   /* reserved */
+    };
+}_v_dac_increment_hold_th_t;
+
+typedef union tag_SOA_N11_N1
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t soa_n1      : 7;
+        uint16_t soa_n11     : 9;
+    };
+}_v_soa_n11_n1_t;
+
+typedef union tag_SOA_P2_P1
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t soa_p1 				  : 9;
+        uint16_t                          : 3;   /* reserved */
+        uint16_t soa_p2                   : 4;
+    };
+}_v_soa_p2_p1_t;
+
+typedef union tag_SOA_P3_P2
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t soa_p2          :  6;
+        uint16_t soa_p3          : 10;
+    };
+}_v_soa_p3_p2_t;
+
+typedef union tag_DAC_FB_VALID_TIMER
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_fb_valid_timer   : 16;
+    };
+}_v_dac_fb_valid_timer_t;
+
+typedef union tag_DAC_MIN_LIMIT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_min_limit     : 12;
+        uint16_t                   :  4;   /* reserved */
+    };
+}_v_dac_min_limit_t;
+
+typedef union tag_DAC_MAX_LIMIT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_max_limit     : 12;
+        uint16_t                   :  4;   /* reserved */
+    };
+}_v_dac_max_limit_t;
+
+typedef union tag_DAC_STATE
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_st_en            : 4;
+        uint16_t dac_state            : 4;
+        uint16_t                      : 8;   /* reserved */
+    };
+}_v_dac_state_t;
+
+typedef union tag_VALID_CNT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t valid_cnt   : 16;
+    };
+}_v_valid_cnt_t;
+
+typedef union tag_DAC_INC_HOLD_WAIT_CNT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_inc1_wait_cnt        : 7;
+        uint16_t                          : 1;   /* reserved */
+        uint16_t dac_inc_hold_limit_cnt   : 8;
+    };
+}_v_dac_inc_hold_wait_cnt_t;
+
+typedef union tag_R2
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t r2                     : 12;
+        uint16_t r2_signed              :  1;
+        uint16_t                        :  3;   /* reserved */
+    };
+}_v_r2_t;
 
 /* GLOBAL-WRITE DATA : default 0x00 */
 typedef union tag_GLOBAL_WRITE_DATA
@@ -1294,14 +1566,102 @@ typedef union tag_PORT_LOCAL_RW_DATA
     };
 }_v_port_local_rw_data_t;
 
+typedef union tag_TEST_CONTROL
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t mclk32_o           :  1;
+        uint16_t                    :  3;
+        uint16_t mclk1_o            :  1;
+        uint16_t                    :  3;
+        uint16_t daco_direct        :  1;
+        uint16_t                    :  6;
+        uint16_t test_en            :  1;
+    };
+}_v_test_control_t;
+
+typedef union tag_OTP_PG_ACCESS
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_pg_acc_cycle       :  16;
+    };
+}_v_otp_pg_access_t;
+
+typedef union tag_OTP_WRITE
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_wsel       :  4;
+        uint16_t                : 12;
+    };
+}_v_otp_write_t;
+
+typedef union tag_OTP_RD_PROG
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_pg_s       :  1;
+        uint16_t otp_rd_s       :  1;
+        uint16_t                : 14;
+    };
+}_v_otp_rd_prog_t;
+
+typedef union tag_OTP_PROTECT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t protect       : 12;
+        uint16_t               :  4;
+    };
+}_v_otp_protect_t;
+
+typedef union tag_MIRROR1
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t vctl_ldo       :  4;
+        uint16_t                :  4;
+        uint16_t osc_fctl       :  7;
+        uint16_t                :  1;
+    };
+}_v_mirror1_t;
+
+typedef union tag_MIRROR2
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_ofs        :  8;
+        uint16_t dac_gain       :  6;
+        uint16_t                :  2;
+    };
+}_v_mirror2_t;
+
+typedef union tag_MIRROR3
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_checksum   :  6;
+        uint16_t                : 10;
+    };
+}_v_mirror3_t;
+
 typedef union _xc24_regs
 {
     uint16_t ALL[XC24_ADDR_MAX];
     struct
     {
         _v_soft_reset_t                     _r00;
-        _v_global_write_t                   _r01;
-        _v_local_write_t                    _r02;
+        _v_global_write_t			        _r01;
+        _v_local_write_t		            _r02;
         _v_local_read_t                     _r03;
         _v_id_gen_t                         _r04;
         _v_fault_read_t                     _r05;
@@ -1309,7 +1669,7 @@ typedef union _xc24_regs
         _v_sync_gen_t                       _r07;
         _v_cmd_auto_enable_t                _r08;
         _v_dummy_t                          _r09;
-        _v_ld_write_pointer_t               _r0A;
+        _v_ld_write_pointer_t				_r0A;
         _v_ld_read_pointer_t                _r0B;
         _v_ld_difference_pointer_t          _r0C;
         _v_ld_transfer_start_pointer_t      _r0D;
@@ -1326,73 +1686,117 @@ typedef union _xc24_regs
         _v_command_status2_t                _r17;
         _v_receive_status_t                 _r18;
         _v_interrupt_status_t               _r19;
-        _v_fb_pwm_period_t                  _r1A;
-
-        _v_fb_pwm_duty_1_t                  _r1B;
-        _v_fb_pwm_duty_2_t                  _r1C;
-        _v_fb_pwm_duty_3_t                  _r1D;
-
-        _v_dummy_t                          _r1E;
+        _v_spi_fault_status_control_t       _r1A;
+        _v_clk_control_1_t                  _r1B;
+        _v_clk_control_2_t                  _r1C;
+        _v_vdd_ldo_status_t                 _r1D;
+        _v_vdd_ldo_fault_level_t            _r1E;
         _v_command_latency_t                _r1F;
 
-        _v_daisied_device_channel_size1_t   _r20;
-        _v_daisied_device_channel_size2_t   _r21;
-        _v_daisied_device_channel_size3_t   _r22;
-        _v_daisied_device_channel_size4_t   _r23;
-        _v_daisied_device_channel_size5_t   _r24;
-        _v_daisied_device_channel_size6_t   _r25;
-        _v_daisied_device_channel_size7_t   _r26;
-        _v_daisied_device_channel_size8_t   _r27;
+        _v_daisied_device_channel_size1_t 	_r20;
+        _v_daisied_device_channel_size2_t  	_r21;
+        _v_daisied_device_channel_size3_t 	_r22;
+        _v_daisied_device_channel_size4_t 	_r23;
+        _v_daisied_device_channel_size5_t 	_r24;
+        _v_daisied_device_channel_size6_t 	_r25;
+        _v_daisied_device_channel_size7_t 	_r26;
+        _v_daisied_device_channel_size8_t 	_r27;
         _v_dummy_t                          _r28;
         _v_dummy_t                          _r29;
-        _v_ldo_t                            _r2A;
+        _v_dummy_t						    _r2A;
         _v_dummy_t                          _r2B;
         _v_dummy_t                          _r2C;
         _v_dummy_t                          _r2D;
         _v_dummy_t                          _r2E;
         _v_dummy_t                          _r2F;
 
-        _v_daisy_size1_t                    _r30;
-        _v_daisy_size2_t                    _r31;
-        _v_daisy_size3_t                    _r32;
-        _v_daisy_size4_t                    _r33;
-        _v_daisy_size5_t                    _r34;
-        _v_daisy_size6_t                    _r35;
-        _v_daisy_size7_t                    _r36;
-        _v_daisy_size8_t                    _r37;
+        _v_daisy_size1_t 					_r30;
+        _v_daisy_size2_t 					_r31;
+        _v_daisy_size3_t 					_r32;
+        _v_daisy_size4_t 					_r33;
+        _v_daisy_size5_t 					_r34;
+        _v_daisy_size6_t 					_r35;
+        _v_daisy_size7_t 					_r36;
+        _v_daisy_size8_t 					_r37;
+        _v_block_size1_t 					_r38;
+        _v_block_size2_t 					_r39;
+        _v_block_size3_t 					_r3A;
+        _v_block_size4_t 					_r3B;
+        _v_block_size5_t 					_r3C;
+        _v_block_size6_t 					_r3D;
+        _v_block_size7_t 					_r3E;
+        _v_block_size8_t 					_r3F;
 
-        _v_block_size1_t                    _r38;
-        _v_block_size2_t                    _r39;
-        _v_block_size3_t                    _r3A;
-        _v_block_size4_t                    _r3B;
-        _v_block_size5_t                    _r3C;
-        _v_block_size6_t                    _r3D;
-        _v_block_size7_t                    _r3E;
-        _v_block_size8_t                    _r3F;
+        _v_block_size9_t 					_r40;
+        _v_block_size10_t 					_r41;
+        _v_block_size11_t 					_r42;
+        _v_block_size12_t 					_r43;
+        _v_dummy_t						    _r44;
+        _v_channel_enable1_t 				_r45;
+        _v_channel_enable2_t 				_r46;
+        _v_dummy_t						    _r47;
+        _v_dummy_t						    _r48;
+        _v_dummy_t						    _r49;
+        _v_dummy_t						    _r4A;
+        _v_dummy_t						    _r4B;
+        _v_dummy_t						    _r4C;
+        _v_dac_control_t 					_r4D;
+        _v_dummy_t						    _r4E;
+        _v_current_target_dac_t 			_r4F;
 
-        _v_block_size9_t                    _r40;
-        _v_block_size10_t                   _r41;
-        _v_block_size11_t                   _r42;
-        _v_block_size12_t                   _r43;
-        _v_dummy_t                          _r44;
-        _v_channel_enable1_t                 _r45;
-        _v_channel_enable2_t                 _r46;
+        _v_previous_target_dac_t      		_r50;
+        _v_dac_out_t 						_r51;
+        _v_dac_increment1_t 				_r52;
+        _v_dac_increment2_hold_limit_t 		_r53;
+        _v_dac_decrement_inc_wait_t 		_r54;
+        _v_dac_increment_hold_th_t 			_r55;
+        _v_soa_n11_n1_t 					_r56;
+        _v_soa_p2_p1_t 						_r57;
+        _v_soa_p3_p2_t 						_r58;
+        _v_dac_fb_valid_timer_t 			_r59;
+        _v_dac_min_limit_t 					_r5A;
+        _v_dac_max_limit_t 					_r5B;
+        _v_dac_state_t 						_r5C;
+        _v_valid_cnt_t 						_r5D;
+        _v_dac_inc_hold_wait_cnt_t 			_r5E;
+        _v_r2_t 							_r5F;
+
+        _v_global_write_v_t 				_r60;
+        _v_global_fault_read_data1_t 		_r61;
+        _v_global_fault_read_data2_t 		_r62;
+        _v_global_fault_read_data3_t 		_r63;
+        _v_global_fault_read_data4_t 		_r64;
+        _v_global_fault_read_data5_t 		_r65;
+        _v_global_fault_read_data6_t 		_r66;
+        _v_dummy_t     						_r67;
+        _v_dummy_t     						_r68;
+        _v_dummy_t     						_r69;
+        _v_dummy_t     						_r6A;
+        _v_dummy_t     						_r6B;
+        _v_dummy_t     						_r6C;
+        _v_dummy_t     						_r6D;
+        _v_dummy_t     						_r6E;
+        _v_dummy_t     						_r6F;
+
+        _v_port_local_rw_data_t 			_r70;
     };
-}_xc24_regs_t;
+}_xc24_general_regs_t;
 
-typedef union _xc24_global_fault
+typedef union _xc24_mirror_regs
 {
-    uint16_t ALL[6];
+    uint16_t ALL[XC24_ADDR_TRIM_MAX - XC24_ADDR_TRIM_START];
     struct
     {
-        _v_global_fault_read_data1_t _d1;
-        _v_global_fault_read_data2_t _d2;
-        _v_global_fault_read_data3_t _d3;
-        _v_global_fault_read_data4_t _d4;
-        _v_global_fault_read_data5_t _d5;
-        _v_global_fault_read_data6_t _d6;
+        _v_test_control_t               _rF0;
+        _v_otp_pg_access_t 		   		_rF1;
+        _v_otp_write_t 		   			_rF2;
+        _v_otp_rd_prog_t 		   		_rF3;
+        _v_otp_protect_t 		   		_rF4;
+        _v_mirror1_t 		   			_rF5;
+        _v_mirror2_t 		   			_rF6;
+        _v_mirror3_t 		   			_rF7;
     };
-}_xc24_global_fault_t;
+}_xc24_mirror_regs_t;
 
 /* BEGIN - INTERFACE FUNCTIONS */
 extern void XC24_Write_Register(uint16_t in_addr, uint16_t in_data);
@@ -1400,6 +1804,9 @@ extern uint16_t XC24_Read_Register(uint8_t in_addr);
 extern void XC24_Read_Register_All(void);
 extern void XC24_Dump_All_Register(void);
 extern void XC24_Init(void);
+extern void XC24_Trim_Init(void);
+
+extern void XC24_Set_OTP_Protect(bool en);
 
 extern void XC24_Start_MCLK_Oscillation(bool en);
 extern bool IS_XC24_Support(void);

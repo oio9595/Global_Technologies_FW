@@ -74,14 +74,14 @@ typedef enum tag_XD_TRIM_MODE_T
     XD_TRIM_MAX
 } xd_trim_mode_t;
 
-typedef enum tag_TRIM_ALGORITHM_T
+typedef enum tag_TRIM_ALGORITHM_RESULT_T
 {
     TRIM_ALGORITHM_CONTINUE   = 0,
     TRIM_ALGORITHM_DONE_CHANNEL,
     TRIM_ALGORITHM_DONE_MODE,
     TRIM_ALGORITHM_ERROR,
     TRIM_ALGORITHM_MAX
-} trim_algorithm_status_t;
+} trim_algorithm_result_t;
 
 /* END -  Input parameter from GUI */
 

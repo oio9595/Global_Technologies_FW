@@ -460,7 +460,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         for (uint8_t i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
         {
             u16_adc_gap_temp = abs(ptr_Param->trim_saved_data[i].u16_saved_adc - u16_adc_range_target);
-            if (u16_adc_gap_temp < u16_adc_gap_closest )
+            if (u16_adc_gap_temp < u16_adc_gap_closest)
             {
                 u16_adc_gap_closest = u16_adc_gap_temp;
                 u8_closest_adc_index = i;
@@ -607,7 +607,7 @@ void XD_Trim_Task(void)
         uint16_t u16_tmp_init_adc_per_reg = 0;
         uint16_t u16_tmp_adc_cur = 0;
         xd_trim_mode_t t_trim_search_mode_next = XD_TRIM_MAX;
-        uint8_t u8_rtn_trim_algo = 0;
+        uint8_t trim_algorithm_result = 0;
         uint8_t u8_tmp_channel_max = 0;
         uint16_t u16_tmp_regVal = 0;
         uint64_t u64_tmp_xd_otp_burn_result = 0xFFFFFFFFFFFFFFFF;
@@ -795,25 +795,25 @@ void XD_Trim_Task(void)
                 gt_trim_algorithm.adc_cur[gn_xd_adc_channel] = u16_tmp_adc_cur;
 
                 //Run Trim Algorithm
-                u8_rtn_trim_algo = XD_Trim_Algorithm_Body(&gt_trim_algorithm);
+                trim_algorithm_result = XD_Trim_Algorithm_Body(&gt_trim_algorithm);
 
-                if (u8_rtn_trim_algo == TRIM_ALGORITHM_ERROR)
+                if (trim_algorithm_result == TRIM_ALGORITHM_ERROR)
                 {
                     print(LOG_ERROR, "\t  %s ERROR STOP\r\n %s", ANSI_FONT_RED, ANSI_FONT_NONE);
                     gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 }
-                else if (u8_rtn_trim_algo == TRIM_ALGORITHM_CONTINUE)
+                else if (trim_algorithm_result == TRIM_ALGORITHM_CONTINUE)
                 {
                     //print(LOG_DEBUG, "\t  REPEAT \r\n");
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_REGISTER;
                 }
-                else if (u8_rtn_trim_algo == TRIM_ALGORITHM_DONE_CHANNEL)
+                else if (trim_algorithm_result == TRIM_ALGORITHM_DONE_CHANNEL)
                 {
                     print(LOG_INFO, "\t  Next Channel \r\n");
                     ++gn_xd_adc_channel;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 }
-                else if (u8_rtn_trim_algo == TRIM_ALGORITHM_DONE_MODE)
+                else if (trim_algorithm_result == TRIM_ALGORITHM_DONE_MODE)
                 {
                     print(LOG_INFO, "\t  Next trim_search_mode \r\n");
                     if (gb_xd_otp_write_flag && (t_trim_search_mode_next == XD_TRIM_MAX))
@@ -968,7 +968,6 @@ void XD_Trim_Task(void)
 /* END - TRIM_PROCEDURE_RUN   *****************************************/
 void XD_Screen_Task(void)
 {
-    double max_current = 0.0f;
     if (gn_task_delay)
     {
         --gn_task_delay;
@@ -998,8 +997,7 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
     #if 1
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                max_current = (double)XDIC_Get_Max_Current_level();
-                print(LOG_INFO, "max_curr, %.3f\r\n", max_current);
+                print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
