@@ -40,6 +40,8 @@
 extern "C" {
 #endif
 
+#include "JigBd_IF.h"
+
 #define ADS114S08_READ_COUNT    (16) /* must be power of 2 */
 
 #define ADS114S_VREF            (5000)  /* 5V */
@@ -74,7 +76,7 @@ extern "C" {
 #define CMD_RREG                (0x20) /* Read nnnnn registers starting at address rrrrr */
 #define CMD_WREG                (0x40) /* Write nnnnn registers starting at address rrrrr */
 
-typedef enum _REG_ADDR_
+typedef enum tag_REG_ADDR_T
 {
     REG_ADDR_ID       = 0x00,
     REG_ADDR_STATUS,
@@ -340,7 +342,7 @@ extern void ADC_DRDY_INT_Handler(void);
 extern uint16_t ADS114S08_Get_ADC_Value(void);
 
 extern double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
-extern uint16_t JigBD_IF_Convert_Current_To_Adc(double current_A, current_gain_t gain);
+extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain);
 
 #ifdef __cplusplus
 }

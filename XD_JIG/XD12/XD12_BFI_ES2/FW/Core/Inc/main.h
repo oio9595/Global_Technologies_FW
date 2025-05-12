@@ -77,13 +77,13 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-typedef enum
+typedef enum tag_LOG_LV_T
 {
     LOG_DEBUG = 0,
     LOG_INFO,
     LOG_ERROR,
     LOG_MAX,
-}LOG_LV_T;
+} LOG_LV_T;
 
 extern void print(LOG_LV_T log_lv, const char *fmt, ...);
 extern void comm_rx_handler(uint8_t rx);
@@ -127,6 +127,8 @@ extern void sys_tick_handler(void);
 #define XDIC_ADO_GPIO_Port GPIOB
 #define ENABLE_SELECT4_Pin LL_GPIO_PIN_1
 #define ENABLE_SELECT4_GPIO_Port GPIOB
+#define XC24_5V5_Pin LL_GPIO_PIN_2
+#define XC24_5V5_GPIO_Port GPIOB
 #define ADC_SPI_CLK_Pin LL_GPIO_PIN_10
 #define ADC_SPI_CLK_GPIO_Port GPIOB
 #define ENABLE_SELECT3_Pin LL_GPIO_PIN_12

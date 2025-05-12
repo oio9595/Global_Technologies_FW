@@ -13,101 +13,87 @@ extern "C" {
 #endif
 
 #define XDIC_VREF_TRIM_VREF     (4095)
-#define XDIC_CURRENT_TRIM_VREF  (3276)
+#define XDIC_CURRENT_TRIM_VREF  (2047)
 
-typedef enum
+typedef enum tag_XD_TRIM_STEP_T
 {
-    TRIMMING_STEP_NONE = 0,
-    TRIMMING_STEP_STANDBY,
+    XD_TRIM_STEP_NONE = 0,
 
-    TRIMMING_STEP_ACTIVATE_START,
-    TRIMMING_STEP_IC_PWR,
-    TRIMMING_STEP_ACTIVATE_END,
+    XD_TRIM_STEP_ACTIVATE_START,
+    XD_TRIM_STEP_IC_PWR,
+    XD_TRIM_STEP_ACTIVATE_END,
 
-    TRIMMING_STEP_TRIM_REGISTER_VERIFY,
-    TRIMMING_STEP_CHANGE_OUTPUT_INIT,
-    TRIMMING_STEP_CHANGE_OUTPUT,
-    TRIMMING_STEP_CHANGE_OUTPUT_DONE,
-    TRIMMING_STEP_CHANGE_REGISTER,
-    TRIMMING_STEP_SET_ADC_CH,
-    TRIMMING_STEP_START_ADC_CONVERSION,
-    TRIMMING_STEP_GET_ADC_CH,
-    TRIMMING_STEP_CHECK,
-    TRIMMING_STEP_SCREENING,
-    TRIMMING_STEP_E2P_PROGRAM,
-    TRIMMING_STEP_E2P_PROGRAM_START,
-    TRIMMING_STEP_E2P_PROGRAM_END,
-    TRIMMING_STEP_STOP,
-    TRIMMING_STEP_RESULT,
-    TRIMMING_STEP_REBOOT,
-    TRIMMING_STEP_COMPARE,
-    TRIMMING_STEP_PWR_OFF,
-    TRIMMING_STEP_MAX,
-}trimming_step_t;
+    XD_TRIM_STEP_TRIM_REGISTER_VERIFY,
+    XD_TRIM_STEP_CHANGE_OUTPUT_INIT,
+    XD_TRIM_STEP_CHANGE_OUTPUT,
+    XD_TRIM_STEP_CHANGE_OUTPUT_DONE,
+    XD_TRIM_STEP_CHANGE_REGISTER,
+    XD_TRIM_STEP_SET_ADC_CH,
+    XD_TRIM_STEP_START_ADC_CONVERSION,
+    XD_TRIM_STEP_GET_ADC_CH,
+    XD_TRIM_STEP_CHECK,
+    XD_TRIM_STEP_E2P_PROGRAM,
+    XD_TRIM_STEP_E2P_PROGRAM_START,
+    XD_TRIM_STEP_E2P_PROGRAM_END,
+    XD_TRIM_STEP_STOP,
+    XD_TRIM_STEP_RESULT,
+    XD_TRIM_STEP_REBOOT,
+    XD_TRIM_STEP_COMPARE,
+    XD_TRIM_STEP_PWR_OFF,
+    XD_TRIM_STEP_MAX,
+} xd_trim_step_t;
 
-typedef enum
+typedef enum tag_XD_SCREEN_STEP_T
 {
-    SCREEN_STEP_NONE,
-    SCREEN_STEP_PWR_ON,
-    SCREEN_STEP_SETUP,
-    SCREEN_STEP_CHANGE_OUTPUT,
-    SCREEN_STEP_SET_ADC_CH,
-    SCREEN_STEP_START_ADC_CONVERSION,
-    SCREEN_STEP_GET_ADC_CH,
-    SCREEN_STEP_STOP,
-    SCREEN_STEP_MAX,
-}screening_step_t;
+    XD_SCREEN_STEP_NONE,
+    XD_SCREEN_STEP_PWR_ON,
+    XD_SCREEN_STEP_SETUP,
+    XD_SCREEN_STEP_CHANGE_OUTPUT,
+    XD_SCREEN_STEP_SET_ADC_CH,
+    XD_SCREEN_STEP_START_ADC_CONVERSION,
+    XD_SCREEN_STEP_GET_ADC_CH,
+    XD_SCREEN_STEP_STOP,
+    XD_SCREEN_STEP_MAX,
+} xd_screen_step_t;
 
-typedef enum
+typedef enum tag_TRIM_ERROR_CODE_T
 {
     TRIM_ERROR_NONE = 0,
     TRIM_ERROR_OVER_COUNT,
     TRIM_ERROR_UNDER_COUNT,
     TRIM_ERROR_MAX,
-}trim_error_code_t;
+} trim_error_code_t;
 
-/* BEGIN - Input parameter from GUI */
-
-enum
+typedef enum tag_XD_TRIM_MODE_T
 {
-    TRIM_PARA_TARGET_MIN = 0,
-    TRIM_PARA_TARGET_MAX,
-    TRIM_PARA_P1,
-    TRIM_PARA_P2,
-    TRIM_PARA_MAX,
-};
+    XD_TRIM_START = 0,
+    XD_TRIM_VREF_CTL = 0,
+    XD_TRIM_OSC_FREQUENCY,
+    XD_TRIM_GAIN_CHS,
+    XD_TRIM_OFS_CHS,
+    XD_TRIM_MAX
+} xd_trim_mode_t;
 
-typedef enum
-{
-    TRIM_VREF_CTL = 0,
-    TRIM_OSC_FREQUENCY,
-    TRIM_ICTL_L_CHS,
-    TRIM_ICTL_H_CHS,
-    TRIM_MAX
-}trim_mode_t;
-
-typedef double (*p_gui_param)[TRIM_PARA_MAX];
-
-enum
+typedef enum tag_TRIM_ALGORITHM_T
 {
     TRIM_ALGORITHM_CONTINUE   = 0,
     TRIM_ALGORITHM_DONE_CHANNEL,
     TRIM_ALGORITHM_DONE_MODE,
     TRIM_ALGORITHM_ERROR,
     TRIM_ALGORITHM_MAX
-};
+} trim_algorithm_status_t;
 
 /* END -  Input parameter from GUI */
 
-extern void Trimming_Procedure_Run(void);
-extern void Screening_Procedure_Run(void);
+extern void XD_Trim_Task(void);
+extern void XD_Screen_Task(void);
 
 /* BEGIN - INTERFACE FUNCTIONS */
-extern void Trim_Calculate_Spec(void);
-extern void Trim_IF_Trimming_Start(void);
-extern void Trim_IF_Screening_Start(void);
-extern void Trim_IF_Set_OTP_Enable(bool in_flag);
-extern bool Trim_IF_Get_OTP_Enable(void);
+extern void XD_Trim_Calculate_Spec(void);
+extern void XD_Trim_IF_Trim_Start(void);
+extern void XD_Trim_IF_Screen_Start(void);
+extern void XD_Trim_IF_Set_OTP_Enable(bool in_flag);
+extern bool XD_Trim_IF_Get_OTP_Enable(void);
 
 /* END   - INTERFACE FUNCTIONS */
 

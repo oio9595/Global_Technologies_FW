@@ -51,29 +51,20 @@ typedef union
 #define NULL	((void*)0)
 #endif
 
-typedef enum
-{
-    KEY_NONE = 0,
-    KEY_POWER_UP,
-    KEY_TRIMMING_UP,
-    KEY_B1_UP,
-    KEY_MAX,
-}key_event_t;
-
-typedef enum
+typedef enum tag_POWER_STATE_T
 {
     PWR_OFF = 0,
     PWR_ON,
 }power_state_t;
 
-typedef enum
+typedef enum tag_POWER_VOLT_T
 {
     PWR_ON_5V0 = 0,
-    PWR_ON_5V7,
+    PWR_ON_5V5,
     PWR_OFF_ALL,
 }power_volt_t;
 
-typedef enum
+typedef enum tag_ONOFF_STATE_T
 {
     OFF = 0,
     ON,

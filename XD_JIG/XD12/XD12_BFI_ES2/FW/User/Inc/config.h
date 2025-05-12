@@ -14,28 +14,21 @@
 extern "C" {
 #endif
 
-#include "main.h"
-#include "types.h"
-#include "xd_trim.h"
-#include "JigBd_IF.h"
-#include "ads124s08.h"
-#include "xdic.h"
-#include "xc24.h"
-#include "vsync_task.h"
-
-/* TARGET CHIP CONFIG  **********************************/
-#define TARGET_CHIP_NAME            "XD12 BFI ES2"
-/********************************************************/
-
-/* TRIMMING CONFIG  **********************************/
-#define INIT_ADC_PER_REG_OSC        (1)
-#define INIT_ADC_PER_REG_VREF       (1)
-#define INIT_ADC_PER_REG_ICTL_L     (6)
-#define INIT_ADC_PER_REG_ICTL_H     (18)
+/* TRIM CONFIG  **********************************/
+#define INIT_ADC_PER_REG_OSC        ( 1)
+#define INIT_ADC_PER_REG_VREF       ( 1)
+#define INIT_ADC_PER_REG_OFS        (10)
+#define INIT_ADC_PER_REG_GAIN       (18)
 /********************************************************/
 
 /********************************************************/
+#define APB1_TIM_FREQ               (72.0) //MHz
+#define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2) //MHz
+
 #define CONST_MHz_TO_Hz             (1000000.0f)
+
+#define VSYNC                       (120.0f)
+#define XD_MCLK                     (14745600.0f)
 
 #define XD_DAISY_SIZE               (1)
 #define XD_CH_SIZE                  (12)
@@ -43,12 +36,8 @@ extern "C" {
 #define XC_SERIAL_CLK_CNT_LOW       (6)
 #define XC_SERIAL_CLK_CNT_HIGH      (10)
 
-#define XD_SERIAL_CLK_CNT_LOW       (13)
-#define XD_SERIAL_CLK_CNT_HIGH      (26)
-
-#define XDIC_FOSC_MIN               (39019200UL)
-#define XDIC_FOSC_TYP               (39319200UL)
-#define XDIC_FOSC_MAX               (39619200UL)
+#define XD_SERIAL_CLK_CNT_LOW       (5)
+#define XD_SERIAL_CLK_CNT_HIGH      (9)
 
 #define SERIAL_CMD_SIZE             (4)
 #define SERIAL_ID_SIZE              (5)
@@ -66,7 +55,7 @@ extern "C" {
 #define XDIC_SYNCGEN_BITS           (SERIAL_CMD_SIZE)
 #define XDIC_IDGEN_BITS             (SERIAL_CMD_SIZE)
 
-#define XDIC_SERIALIZER_TIME        (((CONST_MHz_TO_Hz / XDIC_FOSC_MIN) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW)))
+#define XDIC_SERIALIZER_TIME        (((CONST_MHz_TO_Hz / XD_MCLK) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW)))
 #define XDIC_RESET_DELAY            (100)
 #define XDIC_WRITE_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_WRITE_BITS * XD_DAISY_SIZE) + 0.5f))
 #define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS * XD_DAISY_SIZE) + 0.5f))

@@ -6,7 +6,13 @@
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
 #define __JIG_BD_IF_C__
+
+#include "main.h"
 #include "config.h"
+#include "xdic.h"
+#include "xc24.h"
+#include "types.h"
+#include "JigBd_IF.h"
 
 #define MCU_ADC_MEASURE_COUNT       (20)
 #define MCU_ADC_VREF                (3.3f)
@@ -37,22 +43,22 @@
 
 static uint16_t gn_mcu_adc_value;
 
-uint16_t gn_serialize_tx_buffer[400];
-uint16_t gn_serialize_rx_risingBuffer[400];
-uint16_t gn_serialize_rx_fallingBuffer[400];
+uint16_t gn_serialize_tx_buffer[400] = {0, };
+uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
+uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 
 volatile uint16_t gn_xd_rx_timeout;
 static volatile bool gb_xd_timeout_event;
 
 volatile bool gb_pwm_dma_tx_flag;
 
-static double gf_xdic_internal_freq_Hz;
+static double gf_internal_freq_Hz;
 static double gf_freq_min;
 static double gf_freq_max;
 
 bool gb_timer_input_capture_activated;
 bool gb_timer_input_capture_done;
-static uint32_t gn_xdic_input_capture_cnt[FREQ_IN_IC_LENGTH];
+static uint32_t gn_input_capture_cnt[FREQ_IN_IC_LENGTH];
 
 static uint8_t gn_xdic_dimming_channel = 0;
 
@@ -109,7 +115,7 @@ void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
     {
         pin_mask |= (XDIC_5_7V_Pin << 16);   /* reset */
     }
-    else if (pwr == PWR_ON_5V7) /*5.0V off, 5.7V On */
+    else if (pwr == PWR_ON_5V5) /*5.0V off, 5.7V On */
     {
         pin_mask |= (XDIC_5_7V_Pin <<  0);   /* set */
     }
@@ -170,79 +176,79 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 {
     switch (in_output_ch)
     {
-    case CH_01 :
+    case XD_CH_01 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
-    case CH_02 :
+    case XD_CH_02 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
-    case CH_03 :
+    case XD_CH_03 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
-    case CH_04 :
+    case XD_CH_04 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
-    case CH_05 :
+    case XD_CH_05 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
-    case CH_06 :
+    case XD_CH_06 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
-    case CH_07 :
+    case XD_CH_07 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
-    case CH_08 :
+    case XD_CH_08 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
-    case CH_09 :
+    case XD_CH_09 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
-    case CH_10 :
+    case XD_CH_10 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
-    case CH_11 :
+    case XD_CH_11 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
-    case CH_12 :
+    case XD_CH_12 :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
-    case CH_MAX :
+    case XD_CH_MAX :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();
         ENABLE_SELECT3_HI();
@@ -259,7 +265,7 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 }
 
 /* BEGIN - Internal ADC ******************************************/
-void JigBD_IF_VREF_ADC_StartStop(void)
+void JigBD_IF_Start_MCU_ADC(void)
 {
     uint32_t u32_InternalADC = 0;
     for (uint8_t cnt = 0 ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
@@ -270,21 +276,21 @@ void JigBD_IF_VREF_ADC_StartStop(void)
         u32_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
     }
     gn_mcu_adc_value = (uint16_t)(((float)u32_InternalADC / MCU_ADC_MEASURE_COUNT) + 0.5f);
-    print(LOG_DEBUG, "JigBD_IF_VREF_ADC_Get()-%d\r\n", gn_mcu_adc_value);
+    print(LOG_DEBUG, "JigBD_IF_Get_MCU_ADC()-%d\r\n", gn_mcu_adc_value);
 }
 
-uint16_t JigBD_IF_VREF_ADC_Get(void)
+uint16_t JigBD_IF_Get_MCU_ADC(void)
 {
     return gn_mcu_adc_value;
 }
 
-uint16_t JigBD_IF_Convert_Volt_to_VREF_ADC(double in_volt)
+uint16_t JigBD_IF_Convert_Volt_To_MCU_ADC(double in_volt)
 {
     uint16_t ret = (uint16_t)(((MCU_ADC_RESOLUTION * in_volt) / MCU_ADC_VREF) + 0.5f);
     return ret;
 }
 
-double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc)
+double JigBD_IF_Convert_MCU_ADC_To_Volt(uint16_t in_adc)
 {
     double ret = (double)(((double)in_adc * MCU_ADC_VREF) / MCU_ADC_RESOLUTION);
     return ret;
@@ -292,14 +298,14 @@ double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc)
 /* END - Internal ADC ******************************************/
 
 /* BEGIN - PWM Read Frequency ******************************************/
-void JigBD_IF_Input_Capture_Start(void)
+void JigBD_IF_Start_Input_Capture(void)
 {
-    gf_xdic_internal_freq_Hz = 0;
+    gf_internal_freq_Hz = 0;
     gf_freq_min = DBL_MAX;
     gf_freq_max = 0;
 
     LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gn_xdic_input_capture_cnt);
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gn_input_capture_cnt);
 
     LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_2, FREQ_IN_IC_LENGTH);
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_2);
@@ -310,7 +316,7 @@ void JigBD_IF_Input_Capture_Start(void)
     gb_timer_input_capture_done = 0;
 }
 
-void JigBD_IF_Input_Capture_Stop(void)
+void JigBD_IF_Stop_Input_Capture(void)
 {
     gb_timer_input_capture_activated = 0;
     gb_timer_input_capture_done = 0;
@@ -319,19 +325,19 @@ void JigBD_IF_Input_Capture_Stop(void)
     LL_GPIO_SetOutputPin(CNT_MR_GPIO_Port, CNT_MR_Pin);
 }
 
-uint16_t JigBD_IF_Input_Capture_Get_Freq(void)
+uint16_t JigBD_IF_Get_Input_Capture_Freq(void)
 {
-    uint32_t input_freq = (uint32_t)(gf_xdic_internal_freq_Hz + 0.5f);
+    uint32_t input_freq = (uint32_t)(gf_internal_freq_Hz + 0.5f);
     if (input_freq > 65535) //2^16-1
     {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
+        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Get_Input_Capture_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
         return 0;
     }
-    //print(LOG_DEBUG, "\r\n JigBD_IF_Input_Capture_Get_Freq() : %d", input_freq);
+    //print(LOG_DEBUG, "\r\n JigBD_IF_Get_Input_Capture_Freq() : %d", input_freq);
     return (uint16_t)input_freq;
 }
 
-void JigBD_IF_Input_Capture_Calculate_Freq(void)
+void JigBD_IF_Calculate_Input_Capture_Freq(void)
 {
     if (gb_timer_input_capture_activated == 1)
     {
@@ -342,13 +348,13 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
 
         for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
         {
-            if (gn_xdic_input_capture_cnt[i + 1] > gn_xdic_input_capture_cnt[i + 0])
+            if (gn_input_capture_cnt[i + 1] > gn_input_capture_cnt[i + 0])
             {
-                delta = (gn_xdic_input_capture_cnt[i + 1] - gn_xdic_input_capture_cnt[i + 0]);
+                delta = (gn_input_capture_cnt[i + 1] - gn_input_capture_cnt[i + 0]);
             }
             else
             {
-                delta = (0xFFFFFFFF - gn_xdic_input_capture_cnt[i + 0]) + gn_xdic_input_capture_cnt[i + 1] + 1;
+                delta = (0xFFFFFFFF - gn_input_capture_cnt[i + 0]) + gn_input_capture_cnt[i + 1] + 1;
             }
 
             f_freq = (TIM5_FREQ / delta);
@@ -357,45 +363,45 @@ void JigBD_IF_Input_Capture_Calculate_Freq(void)
             ++n_count;
         }
 
-        gf_xdic_internal_freq_Hz = (f_freq_avg / n_count);
-        if (gf_freq_min > gf_xdic_internal_freq_Hz)
+        gf_internal_freq_Hz = (f_freq_avg / n_count);
+        if (gf_freq_min > gf_internal_freq_Hz)
         {
-            gf_freq_min = gf_xdic_internal_freq_Hz;
+            gf_freq_min = gf_internal_freq_Hz;
         }
 
-        if (gf_freq_max < gf_xdic_internal_freq_Hz)
+        if (gf_freq_max < gf_internal_freq_Hz)
         {
-            gf_freq_max = gf_xdic_internal_freq_Hz;
+            gf_freq_max = gf_internal_freq_Hz;
         }
     }
 }
 
-uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq) //input must be 'MHz'
+uint16_t JigBD_IF_Convert_Freq_To_Counter(double in_freq) //input must be 'MHz'
 {
     // Convert to 'Hz' and Divide by TIM_CAPTURE_EXT_PRESCALER
     uint32_t u32_rtn_val = (uint32_t)(((in_freq * CONST_MHz_TO_Hz) / TIM_CAPTURE_EXT_PRESCALER) + 0.5f);
 
     if (u32_rtn_val > 65535) //2^16-1
     {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_ConvertByPrescaler(%lf) INPUT TOO BIG\r\n", in_freq);
+        print(LOG_ERROR, "\r\nERROR: %s (%lf) INPUT TOO BIG\r\n", __func__, in_freq);
         return 0;
     }
 
     if (u32_rtn_val < 1374) // 1374 = ( 90Mhz / 2^16 ) + 1;
     {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Freq_ConvertByPrescaler(%lf) INPUT TOO SMALL\r\n", in_freq);
+        print(LOG_ERROR, "\r\nERROR: s (%lf) INPUT TOO SMALL\r\n", __func__, in_freq);
         return 0;
     }
 
     return (uint16_t)u32_rtn_val;
 }
 
-double JigBD_IF_Freq_Count_to_MHZ(uint16_t count)
+double JigBD_IF_Freq_Counter_To_MHZ(uint16_t count)
 {
     double rtn_freq = 0.0;
     if (count >= 65535) //2^16-1
     {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Input_Capture_Get_Freq() Retrun[%d] is TOO BIG\r\n", count);
+        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Get_Input_Capture_Freq() Retrun[%d] is TOO BIG\r\n", count);
         return 0;
     }
 

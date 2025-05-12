@@ -7,103 +7,86 @@
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
 #define __XD_TRIM_C__
+
+#include "main.h"
 #include "config.h"
+#include "xdic.h"
+#include "xd_trim.h"
+#include "JigBd_IF.h"
+#include "ads124s08.h"
 
 /* Trimming spec */
 #define XDIC_ERR_RATE               (1.0/100)   /* % */
-#define XDIC_OSC_TARGET             (39.3192)   /* MHz */
+#define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 #define XDIC_VREF_TARGET            (2.2)       /* V */
 
-#define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_TARGET          (6.4000f)   /* mA */
-#define XDIC_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_8mA)
-#define XDIC_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_8mA)
+#define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
+#define XDIC_OFS_TARGET             (6.4000f)   /* mA */
+#define XDIC_OFS_P1                 (1 << 12)
+#define XDIC_OFS_P2                 (3 << 12)
 
-#define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_TARGET          (25.600f)   /* mA */
-#define XDIC_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_32mA)
-#define XDIC_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_32mA)
-
-#define ADJ_NONE                    (0)
-#define ADJ_PLUS                    (1)
-#define ADJ_MINUS                   (2)
-#define ADJ_DEFAULT                 (3)
+#define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
+#define XDIC_GAIN_TARGET            (25.600f)   /* mA */
+#define XDIC_GAIN_P1                (6 << 12)
+#define XDIC_GAIN_P2                (6 << 12)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
 
-#define XD_SCREEN_ANA_GAP           ((0xFFF + 1) / 256 - 1)
+#define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
+#define XD_SCREEN_LD_FIX_GAP        ((0xFFFF + 1) / 256 - 1)
 
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_MAX_CURRENT       (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
-static bool gb_xd_otp_write_flag;
-
-static trimming_step_t gt_jig_trimming_step;
-static trim_mode_t gt_trim_search_mode;
-static trim_error_code_t gt_trim_error_code;
-
-static screening_step_t gt_jig_screening_step;
-static uint16_t gn_screen_adc[CH_MAX];
-static float gf_screen_current[CH_MAX];
-static current_gain_t gt_screen_gain;
-
-#if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-    static uint32_t gn_xd_screen_ana;
-#else
-    static dev_max_curr_level_t gt_xd_screen_max_curr_level;
-#endif
-
-static uint8_t gn_read_adc_vout_channel;
-
-static uint16_t gn_step_delay;
-
-static uint8_t gn_slope_cnt;
-static uint16_t gn_slope_adc[CH_MAX][2];
-
-#ifdef __XD_TRIM_C__
-static const char* gstr_TRIM_MODE[TRIM_MAX] =
+static const char* gstr_TRIM_MODE[XD_TRIM_MAX] =
 {
-    "TRIM_VREF_CTL",
-    "TRIM_OSC_FREQUENCY",
-    "TRIM_ICTL_L_CHS",
-    "TRIM_ICTL_H_CHS",
+    "XD_TRIM_VREF_CTL",
+    "XD_TRIM_OSC_FREQUENCY",
+    "XD_TRIM_GAIN_CHS",
+    "XD_TRIM_OFS_CHS",
 };
-#endif
+
+typedef enum tag_TRIM_ADJUST_TYPE_T
+{
+    ADJ_NONE = 0,
+    ADJ_PLUS,
+    ADJ_MINUS,
+    ADJ_DEFAULT,
+    ADJ_MAX,
+} trim_adjust_type_t;
 
 typedef struct
 {
     uint16_t u16_saved_reg;
     uint16_t u16_saved_adc;
-} _sTrimSaved;
+} trim_saved_data;
 
 typedef struct
 {
-    current_gain_t g8_trim_gain_level;
+    current_gain_t current_gain;
     uint16_t u16_trim_range_adc_min;
     uint16_t u16_trim_range_adc_target;
     uint16_t u16_trim_range_adc_max;
-} _sTrimRange;
+} trim_adc_range_t;
 
 typedef struct
 {
-    _sTrimRange sTrimRange[TRIM_MAX]; //Input value - TRIMMING_STEP_TRIM_START
-    trim_mode_t trim_mode; //Input value - TRIMMING_STEP_CHECK
-    uint16_t u16_init_adc_per_reg; //Input value - TRIMMING_STEP_CHECK
-    uint8_t u8_channel_cur; //Input value - TRIMMING_STEP_CHECK
-    uint8_t u8_channel_max; //Input value - TRIMMING_STEP_CHECK
+    trim_adc_range_t trim_adc_trange[XD_TRIM_MAX];
+    xd_trim_mode_t trim_mode;
+    uint16_t u16_init_adc_per_reg;
+    uint8_t u8_channel_cur;
+    uint8_t u8_channel_max;
     uint8_t u8_loop_cnt;
-    uint8_t u8_sTrimSaved_Cnt;
-    uint16_t adc_cur[CH_MAX];
-    uint16_t adc_pre[CH_MAX];
-    double current[CH_MAX];
-    _sTrimSaved sTrimSaved[TRIM_REGISTER_SAVED_CNT];
-    uint16_t trim_step[CH_MAX]; // Result
-    uint16_t trim_adjust_flag[CH_MAX]; // Result
-}_trim_algo_param;
-
-static _trim_algo_param g_trim_algo_param;
+    uint8_t trim_saved_cnt;
+    uint16_t adc_cur[XD_CH_MAX];
+    uint16_t adc_pre[XD_CH_MAX];
+    double value[XD_CH_MAX];
+    trim_saved_data trim_saved_data[TRIM_REGISTER_SAVED_CNT];
+    uint16_t adjust_amount[XD_CH_MAX]; // Result
+    trim_adjust_type_t trim_adjust_flag[XD_CH_MAX]; // Result
+} trim_algo_param_t;
 
 const static char* str_ALGO_BODY_STATE[4] =
 {
@@ -113,38 +96,70 @@ const static char* str_ALGO_BODY_STATE[4] =
     "TARGET",
 };
 
-static double glf_TrimPara_GUI[TRIM_MAX][TRIM_PARA_MAX];
-
-p_gui_param Trim_Get_Param_GUI(void);
-
-void Trim_IF_Trimming_Start(void)
+typedef struct
 {
-    if (gt_jig_trimming_step == TRIMMING_STEP_NONE)
+    float f_target_min;
+    float f_target_max;
+    uint16_t u16_p1;
+    uint16_t u16_p2;
+} xdic_trim_condition_t;
+
+static bool gb_xd_otp_write_flag;
+
+static xd_trim_step_t gt_xd_trim_step;
+static xd_trim_mode_t gt_xd_trim_search_mode;
+static trim_error_code_t gt_trim_error_code;
+
+static xd_screen_step_t gt_xd_screen_step;
+static uint16_t gn_screen_adc[XD_CH_MAX];
+static float gf_screen_current[XD_CH_MAX];
+static current_gain_t gt_screen_gain;
+
+#if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+    static uint32_t gn_xd_screen_ana;
+#else
+    static uint16_t gn_xd_screen_ld_fix;
+#endif
+
+static uint8_t gn_xd_adc_channel;
+
+static uint16_t gn_task_delay;
+
+static uint8_t gn_slope_cnt;
+static uint16_t gn_slope_adc[XD_CH_MAX][2];
+
+static trim_algo_param_t gt_trim_algorithm;
+
+static xdic_trim_condition_t gt_xdic_trim_condition[XD_TRIM_MAX];
+
+void XD_Trim_IF_Trim_Start(void)
+{
+    if (gt_xd_trim_step == XD_TRIM_STEP_NONE)
     {
-        gt_jig_trimming_step = TRIMMING_STEP_ACTIVATE_START;
+        gt_xd_trim_step = XD_TRIM_STEP_ACTIVATE_START;
     }
 }
 
-void Trim_IF_Screening_Start(void)
+void XD_Trim_IF_Screen_Start(void)
 {
-    if (gt_jig_screening_step == SCREEN_STEP_NONE)
+    if (gt_xd_screen_step == XD_SCREEN_STEP_NONE)
     {
-        gt_jig_screening_step = SCREEN_STEP_PWR_ON;
+        gt_xd_screen_step = XD_SCREEN_STEP_PWR_ON;
     }
 }
 
-void Trim_IF_Set_OTP_Enable(bool in_flag)
+void XD_Trim_IF_Set_OTP_Enable(bool in_flag)
 {
     gb_xd_otp_write_flag = in_flag;
 }
 
-bool Trim_IF_Get_OTP_Enable(void)
+bool XD_Trim_IF_Get_OTP_Enable(void)
 {
     return gb_xd_otp_write_flag;
 }
 
-/* BEGIN - TRIMMING ALGORITHM   ***************************************/
-static uint8_t Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, uint8_t in_adj_type, trim_mode_t in_trim_mode)
+/* BEGIN - TRIM ALGORITHM   ***************************************/
+static uint8_t XD_Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, uint8_t in_adj_type, xd_trim_mode_t in_trim_mode)
 {
     uint8_t ret = TRUE;
 
@@ -172,110 +187,123 @@ static uint8_t Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, uint8
     return ret;
 }
 
-static void Trim_Algorithm_Clear_Buffer_Channel(_trim_algo_param *ptr_Param)
+static void XD_Trim_Algorithm_Clear_Buffer_Channel(trim_algo_param_t *ptr_Param)
 {
     ptr_Param->u8_loop_cnt = 0;
-    ptr_Param->u8_sTrimSaved_Cnt = 0;
+    ptr_Param->trim_saved_cnt = 0;
     for (int i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
     {
-        ptr_Param->sTrimSaved[i].u16_saved_adc = 0;
-        ptr_Param->sTrimSaved[i].u16_saved_reg = 0;
+        ptr_Param->trim_saved_data[i].u16_saved_adc = 0;
+        ptr_Param->trim_saved_data[i].u16_saved_reg = 0;
     }
 }
 
-static void Trim_Algorithm_Clear_Buffer_All(_trim_algo_param *ptr_Param)
+static void XD_Trim_Algorithm_Clear_Buffer_All(trim_algo_param_t *ptr_Param)
 {
-    Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+    XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
 
-    for (int i = 0 ; i < CH_MAX ; ++i)
+    for (int i = 0 ; i < XD_CH_MAX ; ++i)
     {
         ptr_Param->adc_cur[i] = 0;
         ptr_Param->adc_pre[i] = 0;
-        ptr_Param->trim_step[i] = 0;
-        ptr_Param->current[i] = 0;
+        ptr_Param->adjust_amount[i] = 0;
+        ptr_Param->value[i] = 0;
         ptr_Param->trim_adjust_flag[i] = ADJ_DEFAULT;
     }
 }
 
-static void Trim_Init_Algo_Param(double (*pSetting)[TRIM_PARA_MAX])
+static void XD_Trim_Param_Algorithm_Init(void)
 {
-    for (trim_mode_t i_trim_mode = TRIM_VREF_CTL ; i_trim_mode < TRIM_MAX ; ++i_trim_mode)
+    for (xd_trim_mode_t i_trim_mode = XD_TRIM_START ; i_trim_mode < XD_TRIM_MAX ; ++i_trim_mode)
     {
-        current_gain_t g8_tmp_gain_level = GAIN_LOW;
+        current_gain_t temp_gain_level = GAIN_LOW;
         uint16_t u16_tmp_trim_range_adc_min = 0;
         uint16_t u16_tmp_trim_range_adc_max = 0;
 
-        double d_tmp_min = pSetting[i_trim_mode][TRIM_PARA_TARGET_MIN];
-        double d_tmp_max = pSetting[i_trim_mode][TRIM_PARA_TARGET_MAX];
+        double d_tmp_min = gt_xdic_trim_condition[i_trim_mode].f_target_min;
+        double d_tmp_max = gt_xdic_trim_condition[i_trim_mode].f_target_max;
 
         switch(i_trim_mode)
         {
-        case TRIM_VREF_CTL:
-            g8_tmp_gain_level = GAIN_LOW; //Don't Care
+        case XD_TRIM_VREF_CTL:
+            temp_gain_level = GAIN_LOW; //Don't Care
             break;
-        case TRIM_OSC_FREQUENCY:
-            g8_tmp_gain_level = GAIN_LOW; //Don't Care
+        case XD_TRIM_OSC_FREQUENCY:
+            temp_gain_level = GAIN_LOW; //Don't Care
             break;
-        case TRIM_ICTL_L_CHS:
-            g8_tmp_gain_level = GAIN_MID;
+        case XD_TRIM_OFS_CHS:
+            temp_gain_level = GAIN_MID;
             break;
-        case TRIM_ICTL_H_CHS:
-            g8_tmp_gain_level = GAIN_HIGH;
+        case XD_TRIM_GAIN_CHS:
+            temp_gain_level = GAIN_HIGH;
             break;
         }
 
-        if (i_trim_mode == TRIM_OSC_FREQUENCY) // Freq
+        if (i_trim_mode == XD_TRIM_OSC_FREQUENCY) // Freq
         {
-            u16_tmp_trim_range_adc_min = JigBD_IF_Freq_ConvertByPrescaler(d_tmp_min);
-            u16_tmp_trim_range_adc_max = JigBD_IF_Freq_ConvertByPrescaler(d_tmp_max);
+            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Freq_To_Counter(d_tmp_min);
+            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Freq_To_Counter(d_tmp_max);
         }
-        else if (i_trim_mode == TRIM_VREF_CTL) // Internal ADC
+        else if (i_trim_mode == XD_TRIM_VREF_CTL) // Internal ADC
         {
-            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Volt_to_VREF_ADC(d_tmp_min);
-            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Volt_to_VREF_ADC(d_tmp_max);
+            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Volt_To_MCU_ADC(d_tmp_min);
+            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Volt_To_MCU_ADC(d_tmp_max);
         }
         else //External ADC
         {
-            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Current_To_Adc(d_tmp_min, g8_tmp_gain_level);
-            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Current_To_Adc(d_tmp_max, g8_tmp_gain_level);
+            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Current_To_ADC(d_tmp_min, temp_gain_level);
+            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Current_To_ADC(d_tmp_max, temp_gain_level);
         }
 
-        if (i_trim_mode == TRIM_OSC_FREQUENCY) // Freq
+        if (i_trim_mode == XD_TRIM_OSC_FREQUENCY) // Freq
         {
-            g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_target = u16_tmp_trim_range_adc_min;
+            gt_trim_algorithm.trim_adc_trange[i_trim_mode].u16_trim_range_adc_target = u16_tmp_trim_range_adc_min;
         }
         else
         {
-            g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_target = (uint16_t)(((float)(u16_tmp_trim_range_adc_min + u16_tmp_trim_range_adc_max) / 2) + 0.5f);
+            gt_trim_algorithm.trim_adc_trange[i_trim_mode].u16_trim_range_adc_target = (uint16_t)(((float)(u16_tmp_trim_range_adc_min + u16_tmp_trim_range_adc_max) / 2) + 0.5f);
         }
 
-        g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_min = u16_tmp_trim_range_adc_min;
-        g_trim_algo_param.sTrimRange[i_trim_mode].u16_trim_range_adc_max = u16_tmp_trim_range_adc_max;
-        g_trim_algo_param.sTrimRange[i_trim_mode].g8_trim_gain_level = g8_tmp_gain_level;
+        gt_trim_algorithm.trim_adc_trange[i_trim_mode].u16_trim_range_adc_min = u16_tmp_trim_range_adc_min;
+        gt_trim_algorithm.trim_adc_trange[i_trim_mode].u16_trim_range_adc_max = u16_tmp_trim_range_adc_max;
+        gt_trim_algorithm.trim_adc_trange[i_trim_mode].current_gain = temp_gain_level;
+    }
+
+    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ch++)
+    {
+        gt_trim_algorithm.trim_adjust_flag[ch] = ADJ_DEFAULT;
+    }
+
+
+    print(LOG_INFO, "\r\n\t[trim_type] - [min/max] [p1/p2]");
+    for (xd_trim_mode_t trim_mode = XD_TRIM_START ; trim_mode < XD_TRIM_MAX ; ++trim_mode)
+    {
+        print(LOG_INFO, "\r\n\t[%s] - [%.3f/%.3f] [%u/%u]", gstr_TRIM_MODE[trim_mode],
+            1000 * gt_xdic_trim_condition[trim_mode].f_target_min, 1000 * gt_xdic_trim_condition[trim_mode].f_target_max,
+            gt_xdic_trim_condition[trim_mode].u16_p1, gt_xdic_trim_condition[trim_mode].u16_p2);
     }
 }
 
-static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
+static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 {
     uint16_t u16_adc_range_min = 0;
-    uint16_t u16_adc_range_target = 0;
     uint16_t u16_adc_range_max = 0;
+    uint16_t u16_adc_range_target = 0;
     uint16_t u16_reg_value_cur = 0;
     uint8_t channel = 0;
     uint8_t u8_loop_cnt = 0;
     uint8_t u8_CH_MAX = 0;
     uint16_t u16_adc_cur = 0;
     uint16_t u16_adc_pre = 0;
-    uint16_t trim_step = 0;
     uint8_t u8_rtn_val = TRIM_ALGORITHM_CONTINUE;
-    double d_current = 0;
+    double temp_value = 0;
     const char *str_ADJ_result = str_ALGO_BODY_STATE[0];
 
     static uint16_t u16_reg_saved[12] = {0, };
 
-    u16_adc_range_min = ptr_Param->sTrimRange[ptr_Param->trim_mode].u16_trim_range_adc_min;
-    u16_adc_range_max = ptr_Param->sTrimRange[ptr_Param->trim_mode].u16_trim_range_adc_max;
-    u16_adc_range_target = ptr_Param->sTrimRange[ptr_Param->trim_mode].u16_trim_range_adc_target;
+    u16_adc_range_min = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_min;
+    u16_adc_range_max = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_max;
+    u16_adc_range_target = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_target;
     u8_CH_MAX = ptr_Param->u8_channel_max;
 
     ++ptr_Param->u8_loop_cnt;
@@ -288,29 +316,29 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
 
     if (channel < u8_CH_MAX)
     {
-        uint8_t u8_tmp_sTrimSaved_Cnt = 0;
+        uint8_t temp_saved_cnt = 0;
         uint16_t u16_adc_per_register = 0;
-        current_gain_t u8_current_gain = ptr_Param->sTrimRange[ptr_Param->trim_mode].g8_trim_gain_level;
+        current_gain_t temp_current_gain = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].current_gain;
 
         u16_reg_value_cur = XDIC_Get_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode);
 
-        if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
+        if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
-            ptr_Param->current[channel] = JigBD_IF_Freq_Count_to_MHZ(u16_adc_cur);
+            ptr_Param->value[channel] = JigBD_IF_Freq_Counter_To_MHZ(u16_adc_cur);
         }
-        else if (ptr_Param->trim_mode == TRIM_VREF_CTL)
+        else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {
-            ptr_Param->current[channel] = JigBD_IF_Convert_VREF_ADC_to_Volt(u16_adc_cur);
+            ptr_Param->value[channel] = JigBD_IF_Convert_MCU_ADC_To_Volt(u16_adc_cur);
         }
         else
         {
-            ptr_Param->current[channel] = JigBD_IF_Convert_Adc_To_Current(u16_adc_cur, u8_current_gain);
+            ptr_Param->value[channel] = JigBD_IF_Convert_Adc_To_Current(u16_adc_cur, temp_current_gain);
         }
-        d_current = ptr_Param->current[channel];
+        temp_value = ptr_Param->value[channel];
 
         if (u8_loop_cnt != 1) // Initial adc per register
         {
-            u16_adc_per_register = (uint16_t)(((float)(abs(u16_adc_pre - u16_adc_cur)) / ptr_Param->trim_step[channel]) + 0.5f);
+            u16_adc_per_register = (uint16_t)(((float)(abs(u16_adc_pre - u16_adc_cur)) / ptr_Param->adjust_amount[channel]) + 0.5f);
         }
         else
         {
@@ -320,7 +348,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         // Copy current ADC to previous ADC
         ptr_Param->adc_pre[channel] = u16_adc_cur;
 
-        u8_tmp_sTrimSaved_Cnt = (ptr_Param->u8_sTrimSaved_Cnt % TRIM_REGISTER_SAVED_CNT);
+        temp_saved_cnt = (ptr_Param->trim_saved_cnt % TRIM_REGISTER_SAVED_CNT);
 
         // Check ADJ_PLUS
         if (u16_adc_cur < u16_adc_range_target)
@@ -329,34 +357,34 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             str_ADJ_result = str_ALGO_BODY_STATE[2];
             if (u16_adc_per_register == 0)
             {
-                ptr_Param->trim_step[channel] = 1;
+                ptr_Param->adjust_amount[channel] = 1;
             }
             else
             {
-                if (u16_adc_range_target - u16_adc_cur >= u16_adc_per_register*2)
+                if (u16_adc_range_target - u16_adc_cur >= u16_adc_per_register * 2)
                 {
-                    trim_step = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
-                    if (Trim_Check_Valid_Step( trim_step, channel, ADJ_PLUS, ptr_Param->trim_mode) )
+                    uint16_t adjust_mount = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
+                    if (XD_Trim_Check_Valid_Step( adjust_mount, channel, ADJ_PLUS, ptr_Param->trim_mode) )
                     {
-                        ptr_Param->trim_step[channel] = (trim_step ? trim_step : 1);
+                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1);
                     }
                     else
                     {
-                        ptr_Param->trim_step[channel] = 1;
+                        ptr_Param->adjust_amount[channel] = 1;
                     }
                 }
                 else
                 {
-                    ptr_Param->trim_step[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1;
                 }
             }
 
             // Check Additional Margin is matched.
             if (u16_adc_cur > u16_adc_range_min)
             {
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
-                ++ptr_Param->u8_sTrimSaved_Cnt;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_reg = u16_reg_value_cur;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_adc = u16_adc_cur;
+                ++ptr_Param->trim_saved_cnt;
             }
         }
         // Check ADJ_MINUS
@@ -366,34 +394,34 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             str_ADJ_result = str_ALGO_BODY_STATE[1];
             if (u16_adc_per_register == 0)
             {
-                ptr_Param->trim_step[channel] = 1;
+                ptr_Param->adjust_amount[channel] = 1;
             }
             else
             {
-                if (u16_adc_cur - u16_adc_range_target >= u16_adc_per_register*2)
+                if (u16_adc_cur - u16_adc_range_target >= u16_adc_per_register * 2)
                 {
-                    trim_step = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
-                    if (Trim_Check_Valid_Step( trim_step, channel, ADJ_MINUS, ptr_Param->trim_mode ) )
+                    uint16_t adjust_mount = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
+                    if (XD_Trim_Check_Valid_Step(adjust_mount, channel, ADJ_MINUS, ptr_Param->trim_mode ) )
                     {
-                        ptr_Param->trim_step[channel] = (trim_step ? trim_step : 1);
+                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1);
                     }
                     else
                     {
-                        ptr_Param->trim_step[channel] = 1;
+                        ptr_Param->adjust_amount[channel] = 1;
                     }
                 }
                 else
                 {
-                    ptr_Param->trim_step[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1;
                 }
             }
 
             // Check Additional Margin is matched.
             if (u16_adc_cur < u16_adc_range_max)
             {
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
-                ++ptr_Param->u8_sTrimSaved_Cnt;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_reg = u16_reg_value_cur;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_adc = u16_adc_cur;
+                ++ptr_Param->trim_saved_cnt;
             }
         }
         // Check ADJ_NONE
@@ -401,14 +429,14 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_NONE;
             str_ADJ_result = str_ALGO_BODY_STATE[0];
-            ptr_Param->trim_step[channel] = 0;
+            ptr_Param->adjust_amount[channel] = 0;
 
             for (int i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
             {
-                if (ptr_Param->sTrimSaved[i].u16_saved_reg == u16_reg_value_cur) //If there is an 2 times matched
+                if (ptr_Param->trim_saved_data[i].u16_saved_reg == u16_reg_value_cur) //If there is an 2 times matched
                 {
                     ++ptr_Param->u8_channel_cur;
-                    Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+                    XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
                     break;
                 }
@@ -417,29 +445,21 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             // If there is not an 2 times matched,
             if (ptr_Param->u8_channel_cur == channel)
             {
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_reg = u16_reg_value_cur;
-                ptr_Param->sTrimSaved[u8_tmp_sTrimSaved_Cnt].u16_saved_adc = u16_adc_cur;
-                ++ptr_Param->u8_sTrimSaved_Cnt;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_reg = u16_reg_value_cur;
+                ptr_Param->trim_saved_data[temp_saved_cnt].u16_saved_adc = u16_adc_cur;
+                ++ptr_Param->trim_saved_cnt;
             }
         }
     }
     // Check Vibration
-    if (ptr_Param->u8_sTrimSaved_Cnt >= TRIM_REGISTER_SAVED_CNT)
+    if (ptr_Param->trim_saved_cnt >= TRIM_REGISTER_SAVED_CNT)
     {
         uint16_t u16_adc_gap_closest = 0xFFFF;
         uint16_t u16_adc_gap_temp = 0;
         uint8_t u8_closest_adc_index = TRIM_REGISTER_SAVED_CNT;
         for (uint8_t i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
         {
-            if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
-            {
-                u16_adc_gap_temp = abs(ptr_Param->sTrimSaved[i].u16_saved_adc - u16_adc_range_min);
-            }
-            else
-            {
-                u16_adc_gap_temp = abs(ptr_Param->sTrimSaved[i].u16_saved_adc - u16_adc_range_target);
-            }
-
+            u16_adc_gap_temp = abs(ptr_Param->trim_saved_data[i].u16_saved_adc - u16_adc_range_target);
             if (u16_adc_gap_temp < u16_adc_gap_closest )
             {
                 u16_adc_gap_closest = u16_adc_gap_temp;
@@ -450,53 +470,51 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         if (u8_closest_adc_index == TRIM_REGISTER_SAVED_CNT)
         {
             print(LOG_ERROR, "%s ********ADJUST_OVER_RANGE ERROR(%d,%d)******** %s\r\n", ANSI_FONT_RED, channel + 1, u8_closest_adc_index, ANSI_FONT_NONE);
-            Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
-            u8_rtn_val = TRIM_ALGORITHM_ERROR; // Done - Channel
+            XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+            u8_rtn_val = TRIM_ALGORITHM_ERROR;
         }
         else
         {
             // Write Register
-            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
-            XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
-            u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg;
+            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
+            XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
+            u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg;
             ++ptr_Param->u8_channel_cur;
-            Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
-            u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
+            XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+            u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL;
         }
     }
 
     // Check Limit count of trying
     if (u8_loop_cnt > (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT))
     {
-        print(LOG_ERROR, "%s ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d %s\r\n",channel + 1, ANSI_FONT_RED, (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT), ANSI_FONT_NONE);
-
-        // Clear Buffers ALL
-        Trim_Algorithm_Clear_Buffer_All(ptr_Param);
-        return TRIM_ALGORITHM_ERROR;
+        print(LOG_ERROR, "%s ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d %s\r\n", ANSI_FONT_RED, channel + 1, u8_loop_cnt, ANSI_FONT_NONE);
+        XD_Trim_Algorithm_Clear_Buffer_All(ptr_Param);
+        u8_rtn_val = TRIM_ALGORITHM_ERROR;
+        return u8_rtn_val;
     }
 
     // Print Status
     if (u8_loop_cnt == 1)
     {
-        print(LOG_INFO, "%s_%02d\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode], channel + 1);
-
-        if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
+        print(LOG_INFO, "Mode : %s / CH : %02d\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode], channel + 1);
+        if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
-            print(LOG_INFO, "[Cnt]      [RANGE]      [ADC]    [MHz]    [REG]  [Check]\r\n");
+            print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[MHz]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
         }
-        else if (ptr_Param->trim_mode == TRIM_VREF_CTL)
+        else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {
-            print(LOG_INFO, "[Cnt]      [RANGE]      [ADC]     [V]      [REG]  [Check]\r\n");
+            print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[V]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
         }
         else
         {
-            print(LOG_INFO, "[Cnt]      [RANGE]      [ADC]    [mA]      [REG]  [Check]\r\n");
+            print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[mA]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
         }
     }
-    print(LOG_INFO, "  %02d    %7u/%5u %7u   %7.3f   %4u  %7s [ %u, %u, %u ]\r\n",
-        u8_loop_cnt, u16_adc_range_min, u16_adc_range_max,
-        u16_adc_cur, d_current, u16_reg_value_cur, str_ADJ_result,
-        u16_adc_range_target, ptr_Param->trim_step[channel], ptr_Param->u8_sTrimSaved_Cnt);
+    print(LOG_INFO, "%02d\t\t%5u/%5u\t\t%5u\t\t%.3f\t\t%4u\t\t%7s\t\t[ %5u, %u ]\r\n", u8_loop_cnt,
+        u16_adc_range_min, u16_adc_range_max, u16_adc_cur, temp_value,
+        u16_reg_value_cur, str_ADJ_result,
+        u16_adc_range_target, ptr_Param->trim_saved_cnt);
 
     // Check Last Channel
     if (ptr_Param->u8_channel_cur >= u8_CH_MAX)
@@ -512,11 +530,11 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         }
         print(LOG_INFO, "\r\n");
 
-        if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
+        if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
             print(LOG_INFO, "[Freq] ");
         }
-        else if (ptr_Param->trim_mode == TRIM_VREF_CTL)
+        else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {
             print(LOG_INFO, "[V]    ");
         }
@@ -526,7 +544,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         }
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
         {
-            print(LOG_INFO, "   %7.3f",ptr_Param->current[i]);
+            print(LOG_INFO, "   %7.3f",ptr_Param->value[i]);
         }
         print(LOG_INFO, "\r\n[Reg]");
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
@@ -538,490 +556,380 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         print(LOG_INFO, "\t CHANNEL[%d] DONE:EXIT\r\n\r\n", ptr_Param->u8_channel_cur);
 
         // Clear Buffers All
-        Trim_Algorithm_Clear_Buffer_All(ptr_Param);
+        XD_Trim_Algorithm_Clear_Buffer_All(ptr_Param);
         u8_rtn_val = TRIM_ALGORITHM_DONE_MODE; // Done - Mode
     }
 
     return u8_rtn_val;
 }
 
-void Trim_Calculate_Spec(void)
+void XD_Trim_Calculate_Spec(void)
 {
-    for (trim_mode_t mode = TRIM_VREF_CTL ; mode < TRIM_MAX ; ++mode)
+    for (xd_trim_mode_t mode = XD_TRIM_START ; mode < XD_TRIM_MAX ; ++mode)
     {
-        p_gui_param p = Trim_Get_Param_GUI();
-
         switch(mode)
         {
-        case TRIM_VREF_CTL:
-            p[mode][TRIM_PARA_TARGET_MIN] = (XDIC_VREF_TARGET * (1 - XDIC_ERR_RATE));
-            p[mode][TRIM_PARA_TARGET_MAX] = (XDIC_VREF_TARGET * (1 + XDIC_ERR_RATE));
-            p[mode][TRIM_PARA_P1] = 0;
-            p[mode][TRIM_PARA_P2] = 0;
+        case XD_TRIM_VREF_CTL:
+            gt_xdic_trim_condition[mode].f_target_min = (XDIC_VREF_TARGET * (1 - XDIC_ERR_RATE));
+            gt_xdic_trim_condition[mode].f_target_max = (XDIC_VREF_TARGET * (1 + XDIC_ERR_RATE));
+            gt_xdic_trim_condition[mode].u16_p1 = 0;
+            gt_xdic_trim_condition[mode].u16_p2 = 0;
             break;
-        case TRIM_OSC_FREQUENCY:
-            p[mode][TRIM_PARA_TARGET_MIN] = (XDIC_OSC_TARGET);
-            p[mode][TRIM_PARA_TARGET_MAX] = (XDIC_OSC_TARGET + 1.5f);
-            p[mode][TRIM_PARA_P1] = 0;
-            p[mode][TRIM_PARA_P2] = 0;
+        case XD_TRIM_OSC_FREQUENCY:
+            gt_xdic_trim_condition[mode].f_target_min = (XDIC_OSC_TARGET);
+            gt_xdic_trim_condition[mode].f_target_max = (XDIC_OSC_TARGET + 1.5f);
+            gt_xdic_trim_condition[mode].u16_p1 = 0;
+            gt_xdic_trim_condition[mode].u16_p2 = 0;
             break;
-        case TRIM_ICTL_L_CHS:
-            p[mode][TRIM_PARA_TARGET_MIN] = (XDIC_ICTL_L_TARGET * (1 - XDIC_ICTL_L_ERR_RATE)) / 1000;
-            p[mode][TRIM_PARA_TARGET_MAX] = (XDIC_ICTL_L_TARGET * (1 + XDIC_ICTL_L_ERR_RATE)) / 1000;
-            p[mode][TRIM_PARA_P1] = XDIC_ICTL_L_P1;
-            p[mode][TRIM_PARA_P2] = XDIC_ICTL_L_P2;
+        case XD_TRIM_OFS_CHS:
+            gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_P1;
+            gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_P2;
             break;
-        case TRIM_ICTL_H_CHS:
-            p[mode][TRIM_PARA_TARGET_MIN] = (XDIC_ICTL_H_TARGET * (1 - XDIC_ICTL_H_ERR_RATE)) / 1000;
-            p[mode][TRIM_PARA_TARGET_MAX] = (XDIC_ICTL_H_TARGET * (1 + XDIC_ICTL_H_ERR_RATE)) / 1000;
-            p[mode][TRIM_PARA_P1] = XDIC_ICTL_H_P1;
-            p[mode][TRIM_PARA_P2] = XDIC_ICTL_H_P2;
+        case XD_TRIM_GAIN_CHS:
+            gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].u16_p1 = XDIC_GAIN_P1;
+            gt_xdic_trim_condition[mode].u16_p2 = XDIC_GAIN_P2;
             break;
         }
     }
 }
-/* END - TRIMMING ALGORITHM   *****************************************/
+/* END - TRIM ALGORITHM   *****************************************/
 
-/* BEGIN - TRIMMING_PROCEDURE_RUN   *****************************************/
-void Trimming_Procedure_Run(void)
+/* BEGIN - TRIM_PROCEDURE_RUN   *****************************************/
+void XD_Trim_Task(void)
 {
-    if (gt_jig_trimming_step != TRIMMING_STEP_NONE)
+    if (gt_xd_trim_step != XD_TRIM_STEP_NONE)
     {
         uint8_t channel = 0;
         uint16_t u16_tmp_init_adc_per_reg = 0;
         uint16_t u16_tmp_adc_cur = 0;
-        trim_mode_t t_trim_search_mode_next = TRIM_MAX;
+        xd_trim_mode_t t_trim_search_mode_next = XD_TRIM_MAX;
         uint8_t u8_rtn_trim_algo = 0;
         uint8_t u8_tmp_channel_max = 0;
         uint16_t u16_tmp_regVal = 0;
-
-        switch(gt_jig_trimming_step)
+        uint64_t u64_tmp_xd_otp_burn_result = 0xFFFFFFFFFFFFFFFF;
+        if (gn_task_delay)
         {
-        case TRIMMING_STEP_STANDBY:
-            print(LOG_INFO, "\r\n======== STANDBY PWR-OFF ========\r\n");
-
-            JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-            gt_jig_trimming_step = TRIMMING_STEP_NONE;
-            break;
-/* TRIMMING_STEP_ACTIVATE_START  ***************************************/
-        case TRIMMING_STEP_ACTIVATE_START:
-            print(LOG_INFO, "\r\n======== TRIMMING_STEP_ACTIVATE_START ========\r\n");
-
-            gt_trim_error_code = TRIM_ERROR_NONE;
-            gn_read_adc_vout_channel = CH_01;
-
-            JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            Trim_Init_Algo_Param(glf_TrimPara_GUI);
-
-            print(LOG_INFO, "\r\n\t[trim_type] - [min/max] [p1/p2]");
-
-            for (trim_mode_t trim_mode = TRIM_VREF_CTL ; trim_mode < TRIM_MAX ; ++trim_mode)
+            --gn_task_delay;
+        }
+        else
+        {
+            switch(gt_xd_trim_step)
             {
-                print(LOG_INFO, "\r\n\t[%s] - [%.3f/%.3f] [%.0f/%.0f]", gstr_TRIM_MODE[trim_mode],
-                    1000 * glf_TrimPara_GUI[trim_mode][TRIM_PARA_TARGET_MIN], 1000 * glf_TrimPara_GUI[trim_mode][TRIM_PARA_TARGET_MAX],
-                    glf_TrimPara_GUI[trim_mode][TRIM_PARA_P1], glf_TrimPara_GUI[trim_mode][TRIM_PARA_P2]);
-            }
+            case XD_TRIM_STEP_ACTIVATE_START:
+                gt_trim_error_code = TRIM_ERROR_NONE;
+                gn_xd_adc_channel = XD_CH_01;
 
-            gt_jig_trimming_step = TRIMMING_STEP_IC_PWR;
-            break;
+                JigBD_IF_Select_Output_Ch(XD_CH_MAX);  /* Output OFF */
+                JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+                XD_Trim_Param_Algorithm_Init();
 
-/* TRIMMING_STEP_IC_PWR  ***************************************/
-        case TRIMMING_STEP_IC_PWR:
-            JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-            JigBD_IF_XD_VCC_EN(PWR_ON);
+                print(LOG_INFO, "\r\n======== XD TRIM START ========\r\n");
+                gt_xd_trim_step = XD_TRIM_STEP_IC_PWR;
+                break;
+            case XD_TRIM_STEP_IC_PWR:
+                JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
+                JigBD_IF_XD_VCC_EN(PWR_ON);
+                JigBD_IF_Detect_XC24();
+                JigBD_IF_Select_Output_Ch(XD_CH_MAX);
 
-            // XC : If use XC, turn on VCC and initialize
-            JigBD_IF_Detect_XC24();
-
-            JigBD_IF_Select_Output_Ch(CH_MAX);
-
-            gn_step_delay = 10;
-            gt_jig_trimming_step = TRIMMING_STEP_ACTIVATE_END;
-            break;
-
-/* TRIMMING_STEP_ACTIVATE_END  ***************************************/
-        case TRIMMING_STEP_ACTIVATE_END:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
-                // XDIC initialize Registers
+                gn_task_delay = 10;
+                gt_xd_trim_step = XD_TRIM_STEP_ACTIVATE_END;
+                break;
+            case XD_TRIM_STEP_ACTIVATE_END:
                 XDIC_Trim_Init();
                 JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_step_delay = 10;
-
-                for (uint8_t ch = 0 ; ch < CH_MAX ; ch++)
-                {
-                    g_trim_algo_param.trim_adjust_flag[ch] = ADJ_DEFAULT;
-                }
-
-                print(LOG_INFO, "\r\n======== TRIMMING_STEP_ACTIVATE_END ========\r\n");
-                gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_INIT;
-            }
-            break;
-
-/* TRIMMING_STEP_CHANGE_OUTPUT_INIT  ***************************************/
-        case TRIMMING_STEP_CHANGE_OUTPUT_INIT:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
-                if (gt_trim_search_mode > TRIM_OSC_FREQUENCY)
-                {
-                    JigBD_IF_Select_Output_Ch(gn_read_adc_vout_channel);
-                    JigBD_IF_Change_Current_Gain(g_trim_algo_param.sTrimRange[gt_trim_search_mode].g8_trim_gain_level);
-                }
-                gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT;
-
-            }
-            break;
-
-/* TRIMMING_STEP_CHANGE_OUTPUT  ***************************************/
-        case TRIMMING_STEP_CHANGE_OUTPUT:
-            switch(gt_trim_search_mode)
-            {
-            case TRIM_VREF_CTL:
-                XDIC_Trim_Init_VREF_CTL();
-                gn_step_delay = 50;
-                gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_DONE;
+                gn_task_delay = 10;
+                gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 break;
-            case TRIM_OSC_FREQUENCY:
-                XDIC_Trim_Init_OSC();
-                JigBD_IF_Input_Capture_Start();
-                gn_step_delay = 10;
-                gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_DONE;
-                break;
-            case TRIM_ICTL_L_CHS:
-            case TRIM_ICTL_H_CHS:
-                XDIC_Trim_Init_ICTL();
-                if (gn_slope_cnt == 0)
+            case XD_TRIM_STEP_CHANGE_OUTPUT_INIT:
+                if (gt_xd_trim_search_mode > XD_TRIM_OSC_FREQUENCY)
                 {
-                    XDIC_Set_Max_Current_Level((dev_max_curr_level_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P1]);
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
+                    JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                 }
-                else
+                gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                break;
+            case XD_TRIM_STEP_CHANGE_OUTPUT:
+                switch(gt_xd_trim_search_mode)
                 {
-                    XDIC_Set_Max_Current_Level((dev_max_curr_level_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P2]);
+                case XD_TRIM_VREF_CTL:
+                    XDIC_Trim_Init_VREF_CTL();
+                    gn_task_delay = 50;
+                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
+                    break;
+                case XD_TRIM_OSC_FREQUENCY:
+                    XDIC_Trim_Init_OSC();
+                    JigBD_IF_Start_Input_Capture();
+                    gn_task_delay = 10;
+                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
+                    break;
+                case XD_TRIM_GAIN_CHS:
+                    XDIC_Trim_Init_GAIN();
+                    if (gn_slope_cnt == 0)
+                    {
+                        XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
+                    }
+                    else
+                    {
+                        XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
+                    }
+                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
+                    gn_task_delay = 0;
+                    break;
+                case XD_TRIM_OFS_CHS:
+                    XDIC_Trim_Init_OFS();
+                    if (gn_slope_cnt == 0)
+                    {
+                        XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
+                    }
+                    else
+                    {
+                        XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
+                    }
+                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
+                    gn_task_delay = 0;
+                    break;
+                default:
+                    XDIC_Read_All_Registers();
+                    XDIC_Save_Trim_Regs();
+                    gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
+                    break;
                 }
-
-                gt_jig_trimming_step = TRIMMING_STEP_SET_ADC_CH;
-                gn_step_delay = 0;
                 break;
-            default:
-                XDIC_Read_All_Registers();
-                XDIC_Save_Trim_Regs();
-                gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
-                break;
-            }
-            break;
 
-        case TRIMMING_STEP_CHANGE_OUTPUT_DONE:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
-                switch(gt_trim_search_mode)
+            case XD_TRIM_STEP_CHANGE_OUTPUT_DONE:
+                switch(gt_xd_trim_search_mode)
                 {
-                case TRIM_OSC_FREQUENCY:
+                case XD_TRIM_OSC_FREQUENCY:
                     if (gb_timer_input_capture_done)
                     {
-                        JigBD_IF_Input_Capture_Stop();
-                        gt_jig_trimming_step = TRIMMING_STEP_CHECK;
+                        JigBD_IF_Stop_Input_Capture();
+                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     }
                     break;
 
-                case TRIM_VREF_CTL:
-                    JigBD_IF_VREF_ADC_StartStop();
-                    gt_jig_trimming_step = TRIMMING_STEP_CHECK;
+                case XD_TRIM_VREF_CTL:
+                    JigBD_IF_Start_MCU_ADC();
+                    gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 }
-            }
-            break;
-
-/* TRIMMING_STEP_SET_ADC_CH  ***************************************/
-        case TRIMMING_STEP_SET_ADC_CH:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                break;
+            case XD_TRIM_STEP_SET_ADC_CH:
                 ADS114S08_Select_Input_CH(0);
-                gn_step_delay = 1;
-                gt_jig_trimming_step = TRIMMING_STEP_START_ADC_CONVERSION;
-            }
-            break;
-
-/* TRIMMING_STEP_START_ADC_CONVERSION  ***************************************/
-        case TRIMMING_STEP_START_ADC_CONVERSION:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                gn_task_delay = 1;
+                gt_xd_trim_step = XD_TRIM_STEP_START_ADC_CONVERSION;
+                break;
+            case XD_TRIM_STEP_START_ADC_CONVERSION:
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
 
                 gn_adc_read_count = ADS114S08_READ_COUNT;
-                gt_jig_trimming_step = TRIMMING_STEP_GET_ADC_CH;
+                gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
 
                 ADS114S08_Set_Start(1);
-            }
-            break;
-
-/* TRIMMING_STEP_GET_ADC_CH  ***************************************/
-        case TRIMMING_STEP_GET_ADC_CH:
-            if (gb_ads114s08_drdy_done == 1)
-            {
-                switch(gt_trim_search_mode)
+                break;
+            case XD_TRIM_STEP_GET_ADC_CH:
+                if (gb_ads114s08_drdy_done == 1)
                 {
-                case TRIM_ICTL_L_CHS:
-                case TRIM_ICTL_H_CHS:
-                    gn_slope_adc[gn_read_adc_vout_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
-                    #if 0 //if 2-point
-                    ++gn_slope_cnt;
-                        if (gn_slope_cnt >= 2)
-                        {
-                            gn_slope_cnt = 0;
-                            gt_jig_trimming_step = TRIMMING_STEP_CHECK;
-                        }
-                        else
-                        {
-                            gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT;
-                        }
-                    #else //else 1-point
-                        gt_jig_trimming_step = TRIMMING_STEP_CHECK;
-                    #endif
-                    break;
+                    switch(gt_xd_trim_search_mode)
+                    {
+                    case XD_TRIM_GAIN_CHS:
+                        gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
+                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                        break;
+                    case XD_TRIM_OFS_CHS:
+                        gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
+                        ++gn_slope_cnt;
+                            if (gn_slope_cnt >= 2)
+                            {
+                                gn_slope_cnt = 0;
+                                gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                            }
+                            else
+                            {
+                                gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                            }
+                        break;
+                    }
+                    gn_task_delay = 0;
+                    gb_ads114s08_drdy_done = 0;
                 }
-                gn_step_delay = 0;
-                gb_ads114s08_drdy_done = 0;
-            }
-            break;
-
-/* TRIMMING_STEP_CHECK  ***************************************/
-        case TRIMMING_STEP_CHECK:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
-                switch(gt_trim_search_mode)
+                break;
+            case XD_TRIM_STEP_CHECK:
+                switch(gt_xd_trim_search_mode)
                 {
-                case TRIM_VREF_CTL:
+                case XD_TRIM_VREF_CTL:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_VREF;
                     u8_tmp_channel_max = 1;
-                    t_trim_search_mode_next = TRIM_OSC_FREQUENCY;
-                    u16_tmp_adc_cur =  JigBD_IF_VREF_ADC_Get();
+                    t_trim_search_mode_next = XD_TRIM_OSC_FREQUENCY;
+                    u16_tmp_adc_cur =  JigBD_IF_Get_MCU_ADC();
                     break;
-                case TRIM_OSC_FREQUENCY:
+                case XD_TRIM_OSC_FREQUENCY:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OSC;
                     u8_tmp_channel_max = 1;
-                    t_trim_search_mode_next = TRIM_ICTL_L_CHS;
-                    u16_tmp_adc_cur = JigBD_IF_Input_Capture_Get_Freq();
+                    t_trim_search_mode_next = XD_TRIM_GAIN_CHS;
+                    u16_tmp_adc_cur = JigBD_IF_Get_Input_Capture_Freq();
                     break;
-                case TRIM_ICTL_L_CHS:
-                    u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_ICTL_L;
-                    u8_tmp_channel_max = CH_MAX;
-                    t_trim_search_mode_next = TRIM_ICTL_H_CHS;
-                    #if 0 //if 2-point
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_read_adc_vout_channel][1] + gn_slope_adc[gn_read_adc_vout_channel][0]) / 2) + 0.5f);
-                    #else //else 1-point
-                        u16_tmp_adc_cur = gn_slope_adc[gn_read_adc_vout_channel][0];
-                    #endif
+                case XD_TRIM_GAIN_CHS:
+                    u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_GAIN;
+                    u8_tmp_channel_max = XD_CH_MAX;
+                    t_trim_search_mode_next = XD_TRIM_OFS_CHS;
+                    u16_tmp_adc_cur = gn_slope_adc[gn_xd_adc_channel][0];
                     break;
-                case TRIM_ICTL_H_CHS:
-                    u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_ICTL_H;
-                    u8_tmp_channel_max = CH_MAX;
-                    t_trim_search_mode_next = TRIM_MAX;
-                    u16_tmp_adc_cur = gn_slope_adc[gn_read_adc_vout_channel][0];
+                case XD_TRIM_OFS_CHS:
+                    u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OFS;
+                    u8_tmp_channel_max = XD_CH_MAX;
+                    t_trim_search_mode_next = XD_TRIM_MAX;
+                    u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2) + 0.5f);
                     break;
                 }
 
-                g_trim_algo_param.u16_init_adc_per_reg = u16_tmp_init_adc_per_reg;
-                g_trim_algo_param.u8_channel_max = u8_tmp_channel_max;
-                g_trim_algo_param.trim_mode = gt_trim_search_mode;
-                g_trim_algo_param.u8_channel_cur = gn_read_adc_vout_channel;
-                g_trim_algo_param.adc_cur[gn_read_adc_vout_channel] = u16_tmp_adc_cur;
+                gt_trim_algorithm.u16_init_adc_per_reg = u16_tmp_init_adc_per_reg;
+                gt_trim_algorithm.u8_channel_max = u8_tmp_channel_max;
+                gt_trim_algorithm.trim_mode = gt_xd_trim_search_mode;
+                gt_trim_algorithm.u8_channel_cur = gn_xd_adc_channel;
+                gt_trim_algorithm.adc_cur[gn_xd_adc_channel] = u16_tmp_adc_cur;
 
                 //Run Trim Algorithm
-                u8_rtn_trim_algo = Trim_Algorithm_Body(&g_trim_algo_param);
+                u8_rtn_trim_algo = XD_Trim_Algorithm_Body(&gt_trim_algorithm);
 
                 if (u8_rtn_trim_algo == TRIM_ALGORITHM_ERROR)
                 {
-                    print(LOG_ERROR, "\t  ERROR STOP\r\n");
-                    gt_jig_trimming_step = TRIMMING_STEP_STANDBY;
+                    print(LOG_ERROR, "\t  %s ERROR STOP\r\n %s", ANSI_FONT_RED, ANSI_FONT_NONE);
+                    gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 }
                 else if (u8_rtn_trim_algo == TRIM_ALGORITHM_CONTINUE)
                 {
                     //print(LOG_DEBUG, "\t  REPEAT \r\n");
-                    gt_jig_trimming_step = TRIMMING_STEP_CHANGE_REGISTER;
+                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_REGISTER;
                 }
                 else if (u8_rtn_trim_algo == TRIM_ALGORITHM_DONE_CHANNEL)
                 {
-                    print(LOG_DEBUG, "\t  Next Channel \r\n");
-                    ++gn_read_adc_vout_channel;
-                    gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_INIT;
+                    print(LOG_INFO, "\t  Next Channel \r\n");
+                    ++gn_xd_adc_channel;
+                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 }
                 else if (u8_rtn_trim_algo == TRIM_ALGORITHM_DONE_MODE)
                 {
-                    print(LOG_DEBUG, "\t  Next trim_search_mode \r\n");
-                    if (gb_xd_otp_write_flag && (t_trim_search_mode_next == TRIM_MAX))
+                    print(LOG_INFO, "\t  Next trim_search_mode \r\n");
+                    if (gb_xd_otp_write_flag && (t_trim_search_mode_next == XD_TRIM_MAX))
                     {
-                        gt_jig_trimming_step = TRIMMING_STEP_E2P_PROGRAM;
+                        gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM;
                     }
                     else
                     {
-                        gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_INIT;
+                        gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                     }
-                    gn_read_adc_vout_channel = 0;
-                    gt_trim_search_mode = t_trim_search_mode_next;
+                    gn_xd_adc_channel = 0;
+                    gt_xd_trim_search_mode = t_trim_search_mode_next;
                 }
-            }
-            break;
-
-/* TRIMMING_STEP_CHANGE_REGISTER  ***************************************/
-        case TRIMMING_STEP_CHANGE_REGISTER:
-            channel = 0;
-            u16_tmp_regVal = 0;
-            switch(gt_trim_search_mode)
-            {
-            case TRIM_VREF_CTL:
-            case TRIM_OSC_FREQUENCY:
-                channel = CH_01;
                 break;
-
-            case TRIM_ICTL_L_CHS:
-            case TRIM_ICTL_H_CHS:
-                channel = gn_read_adc_vout_channel;
-                break;
-            }
-
-            u16_tmp_regVal = XDIC_Get_Mirror_Register_By_Trim_Mode(channel, gt_trim_search_mode);
-            if (g_trim_algo_param.trim_adjust_flag[channel] == ADJ_PLUS)
-            {
-                uint16_t u16_tmp_limit = XDIC_Get_Mirror_Register_Limit_By_Trim_Mode(channel, gt_trim_search_mode);
-                u16_tmp_regVal += g_trim_algo_param.trim_step[channel];
-
-                if (u16_tmp_regVal <= u16_tmp_limit)
+            case XD_TRIM_STEP_CHANGE_REGISTER:
+                channel = 0;
+                u16_tmp_regVal = 0;
+                switch(gt_xd_trim_search_mode)
                 {
-                    XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_trim_search_mode, u16_tmp_regVal);
+                case XD_TRIM_VREF_CTL:
+                case XD_TRIM_OSC_FREQUENCY:
+                    channel = XD_CH_01;
+                    break;
+
+                case XD_TRIM_OFS_CHS:
+                case XD_TRIM_GAIN_CHS:
+                    channel = gn_xd_adc_channel;
+                    break;
+                }
+
+                u16_tmp_regVal = XDIC_Get_Mirror_Register_By_Trim_Mode(channel, gt_xd_trim_search_mode);
+                if (gt_trim_algorithm.trim_adjust_flag[channel] == ADJ_PLUS)
+                {
+                    uint16_t u16_tmp_limit = XDIC_Get_Mirror_Register_Limit_By_Trim_Mode(channel, gt_xd_trim_search_mode);
+                    u16_tmp_regVal += gt_trim_algorithm.adjust_amount[channel];
+
+                    if (u16_tmp_regVal <= u16_tmp_limit)
+                    {
+                        XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_tmp_regVal);
+                    }
+                    else
+                    {
+                        print(LOG_ERROR, "%s ERROR: TRIM STOP - OVER LIMIT-%d:[%d/%d]%s\r\n", ANSI_FONT_RED, gt_xd_trim_search_mode ,u16_tmp_regVal ,u16_tmp_limit, ANSI_FONT_NONE);
+                        gt_trim_error_code = TRIM_ERROR_OVER_COUNT;
+                    }
+                }
+                else if (gt_trim_algorithm.trim_adjust_flag[channel] == ADJ_MINUS)
+                {
+                    if (u16_tmp_regVal >= gt_trim_algorithm.adjust_amount[channel])
+                    {
+                        u16_tmp_regVal -= gt_trim_algorithm.adjust_amount[channel];
+                        XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_tmp_regVal);
+                    }
+                    else
+                    {
+                        print(LOG_ERROR, "%s ERROR: TRIM STOP - UNDER ZERO-%d:[%d-%d]%s\r\n", ANSI_FONT_RED, gt_xd_trim_search_mode ,u16_tmp_regVal ,gt_trim_algorithm.adjust_amount[channel], ANSI_FONT_NONE);
+                        gt_trim_error_code = TRIM_ERROR_UNDER_COUNT;
+                    }
+                }
+                if (gt_trim_error_code == TRIM_ERROR_NONE)
+                {
+                    gn_task_delay = 5;
+                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
                 }
                 else
                 {
-                    print(LOG_ERROR, "ERROR: TRIM STOP - OVER LIMIT-%d:[%d/%d]\r\n", gt_trim_search_mode ,u16_tmp_regVal ,u16_tmp_limit);
-                    gt_trim_error_code = TRIM_ERROR_OVER_COUNT;
+                    gt_xd_trim_step = XD_TRIM_STEP_RESULT;
                 }
-            }
-            else if (g_trim_algo_param.trim_adjust_flag[channel] == ADJ_MINUS)
-            {
-                if (u16_tmp_regVal >= g_trim_algo_param.trim_step[channel])
+                break;
+            case XD_TRIM_STEP_E2P_PROGRAM:   /* E2P program */
+                if (gb_xd_otp_write_flag)
                 {
-                    u16_tmp_regVal -= g_trim_algo_param.trim_step[channel];
-                    XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_trim_search_mode, u16_tmp_regVal);
+                    XDIC_Save_Trim_Regs();
+                    JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
+                    print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
+                    gn_task_delay = 100;
+                    gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM_START;
                 }
                 else
                 {
-                    print(LOG_ERROR, "ERROR: TRIM STOP - UNDER ZERO-%d:[%d-%d]\r\n", gt_trim_search_mode ,u16_tmp_regVal ,g_trim_algo_param.trim_step[channel]);
-                    gt_trim_error_code = TRIM_ERROR_UNDER_COUNT;
+                    print(LOG_INFO, "\r\n OTP WRITE - DISABLE!! \r\n");
+                    gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 }
-            }
-            if (gt_trim_error_code == TRIM_ERROR_NONE)
-            {
-                gn_step_delay = 5;
-                gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT;
-            }
-            else
-            {
-                gt_jig_trimming_step = TRIMMING_STEP_RESULT;
-            }
-            break;
-/* TRIMMING_STEP_E2P_PROGRAM  ***************************************/
-        case TRIMMING_STEP_E2P_PROGRAM:   /* E2P program */
-            if (gb_xd_otp_write_flag)
-            {
-                XDIC_Save_Trim_Regs();
-                JigBD_IF_XD_VCC_Level(PWR_ON_5V7);
-                print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
-                gn_step_delay = 100;
-                gt_jig_trimming_step = TRIMMING_STEP_E2P_PROGRAM_START;
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n OTP WRITE - DISABLE!! \r\n");
-                gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
-            }
-            break;
-        case TRIMMING_STEP_E2P_PROGRAM_START:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                break;
+            case XD_TRIM_STEP_E2P_PROGRAM_START:
                 print(LOG_INFO, "\r\n OTP WRITE - START!! \r\n");
                 XDIC_Set_OTP_PG_Start(true);
-                gn_step_delay = 1000;
-                gt_jig_trimming_step = TRIMMING_STEP_E2P_PROGRAM_END;
-            }
-            break;
-        case TRIMMING_STEP_E2P_PROGRAM_END:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                gn_task_delay = 1000;
+                gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM_END;
+                break;
+            case XD_TRIM_STEP_E2P_PROGRAM_END:
                 print(LOG_INFO, "\r\n OTP WRITE - DONE!! \r\n");
                 XDIC_Set_OTP_PG_Start(false);
-                // TargetIC Power ON - 5.0V
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-                gn_step_delay = 5;
-                gt_jig_trimming_step = TRIMMING_STEP_STOP;
-            }
-            break;
-/* TRIMMING_STEP_STOP  ***************************************/
-        case TRIMMING_STEP_STOP:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                gn_task_delay = 5;
+                gt_xd_trim_step = XD_TRIM_STEP_STOP;
+                break;
+            case XD_TRIM_STEP_STOP:
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
-                gn_step_delay = 100;
-                gt_jig_trimming_step = TRIMMING_STEP_REBOOT;
-            }
-            break;
-/* TRIMMING_STEP_RESULT  ***************************************/
-        case TRIMMING_STEP_RESULT:
-            if (gt_trim_error_code == TRIM_ERROR_OVER_COUNT)
-            {
-                print(LOG_ERROR, "%s======== TRIM_ERROR_OVER_COUNT ========%s\r\n", ANSI_FONT_RED, ANSI_FONT_NONE);
-            }
-            else
-            {
-                print(LOG_INFO, "======== TRIM END ========\r\n");
-            }
-            gt_jig_trimming_step = TRIMMING_STEP_STANDBY;
-            break;
-        case TRIMMING_STEP_REBOOT:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
+                gn_task_delay = 100;
+                gt_xd_trim_step = XD_TRIM_STEP_REBOOT;
+                break;
+            case XD_TRIM_STEP_RESULT:
+                if (gt_trim_error_code == TRIM_ERROR_OVER_COUNT)
+                {
+                    print(LOG_ERROR, "%s======== TRIM_ERROR_OVER_COUNT ========%s\r\n", ANSI_FONT_RED, ANSI_FONT_NONE);
+                }
+                else
+                {
+                    print(LOG_INFO, "======== TRIM END ========\r\n");
+                }
+                gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
+                break;
+            case XD_TRIM_STEP_REBOOT:
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
                 JigBD_IF_XD_VCC_EN(PWR_ON);
 
@@ -1029,18 +937,10 @@ void Trimming_Procedure_Run(void)
 
                 XDIC_Trim_Init();
                 JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_step_delay = 10;
-                gt_jig_trimming_step = TRIMMING_STEP_COMPARE;
-            }
-            break;
-        case TRIMMING_STEP_COMPARE:
-            if (gn_step_delay)
-            {
-                --gn_step_delay;
-            }
-            else
-            {
-                uint64_t u64_tmp_xd_otp_burn_result = 0xFFFFFFFFFFFFFFFF;
+                gn_task_delay = 10;
+                gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
+                break;
+            case XD_TRIM_STEP_COMPARE:
                 u64_tmp_xd_otp_burn_result = XDIC_Compare_Trim_Regs();
                 if (u64_tmp_xd_otp_burn_result)
                 {
@@ -1050,152 +950,139 @@ void Trimming_Procedure_Run(void)
                 {
                     print(LOG_INFO, "%s======== TRIM_OTP_BURN_OK[%llu] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
                 }
-                gt_jig_trimming_step = TRIMMING_STEP_PWR_OFF;
+                gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
+                break;
+            case XD_TRIM_STEP_PWR_OFF:
+                JigBD_IF_VLED_9V_EN(PWR_OFF);
+                JigBD_IF_XD_VCC_EN(PWR_OFF);
+                JigBD_IF_XC_VCC_EN(PWR_OFF);
+                print(LOG_INFO, "======== TRIM END ========\r\n");
+                gt_xd_trim_step = XD_TRIM_STEP_NONE;
+                break;
+            default:
+                break;
             }
-            break;
-        case TRIMMING_STEP_PWR_OFF:
-            JigBD_IF_VLED_9V_EN(PWR_OFF);
-            JigBD_IF_XD_VCC_EN(PWR_OFF);
-            JigBD_IF_XC_VCC_EN(PWR_OFF);
-            print(LOG_INFO, "======== TRIM END ========\r\n");
-            gt_jig_trimming_step = TRIMMING_STEP_NONE;
-            break;
-        default:
-            break;
         }
     }
 }
-/* END - TRIMMING_PROCEDURE_RUN   *****************************************/
-void Screening_Procedure_Run(void)
+/* END - TRIM_PROCEDURE_RUN   *****************************************/
+void XD_Screen_Task(void)
 {
-    switch(gt_jig_screening_step)
+    double max_current = 0.0f;
+    if (gn_task_delay)
     {
-    case SCREEN_STEP_NONE :
-        break;
-    case SCREEN_STEP_PWR_ON :
-        JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-        //gt_screen_gain = GAIN_HIGH;
-        gt_screen_gain = GAIN_MID;
-        JigBD_IF_Change_Current_Gain(gt_screen_gain);
-
-        JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-        JigBD_IF_XD_VCC_EN(PWR_ON);
-        JigBD_IF_Detect_XC24();
-
-        gn_read_adc_vout_channel = 0;
-        gn_step_delay = 10;
-        gt_jig_screening_step = SCREEN_STEP_SETUP;
-        break;
-    case SCREEN_STEP_SETUP :
-        if (gn_step_delay)
+        --gn_task_delay;
+    }
+    else
+    {
+        switch(gt_xd_screen_step)
         {
-            --gn_step_delay;
-        }
-        else
-        {
+        case XD_SCREEN_STEP_PWR_ON :
+            JigBD_IF_Select_Output_Ch(XD_CH_MAX);  /* Output OFF */
+            //gt_screen_gain = GAIN_HIGH;
+            gt_screen_gain = GAIN_MID;
+            JigBD_IF_Change_Current_Gain(gt_screen_gain);
+
+            JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
+            JigBD_IF_XD_VCC_EN(PWR_ON);
+            JigBD_IF_Detect_XC24();
+
+            gn_xd_adc_channel = 0;
+            gn_task_delay = 10;
+            gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
+            break;
+        case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
-            XDIC_Trim_Init_ICTL();
+            XDIC_Trim_Init_OFS();
             JigBD_IF_VLED_9V_EN(PWR_ON);
-            gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
-
+            gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
+    #if 1
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                print(LOG_INFO, "max_curr, %.1f\r\n", XDIC_Get_Max_Current_level());
+                max_current = (double)XDIC_Get_Max_Current_level();
+                print(LOG_INFO, "max_curr, %.3f\r\n", max_current);
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
-
+    #endif
             print(LOG_INFO, "data, io_1, io_2, io_3, io_4, io_5, io_6, io_7, io_8, io_9, io_10, io_11, io_12\r\n");
-        }
-        break;
-    case SCREEN_STEP_CHANGE_OUTPUT :
-        #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-            XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
-        #else
-            XDIC_Set_Max_Current_Level(gt_xd_screen_max_curr_level);
-        #endif
-        gt_jig_screening_step = SCREEN_STEP_SET_ADC_CH;
-        break;
-    case SCREEN_STEP_SET_ADC_CH :
-        JigBD_IF_Select_Output_Ch(gn_read_adc_vout_channel);
-        ADS114S08_Select_Input_CH(0);
-        gn_step_delay = 5;
-        gt_jig_screening_step = SCREEN_STEP_START_ADC_CONVERSION;
-        break;
-    case SCREEN_STEP_START_ADC_CONVERSION :
-        if (gn_step_delay)
-        {
-            --gn_step_delay;
-        }
-        else
-        {
+            break;
+        case XD_SCREEN_STEP_CHANGE_OUTPUT :
+            #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
+            #else
+                XDIC_Set_LD_Fix(gn_xd_screen_ld_fix);
+            #endif
+            gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
+            break;
+        case XD_SCREEN_STEP_SET_ADC_CH :
+            JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
+            ADS114S08_Select_Input_CH(0);
+            gn_task_delay = 5;
+            gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
+            break;
+        case XD_SCREEN_STEP_START_ADC_CONVERSION :
             gb_ads114s08_drdy_done = 0;
             gn_ads114s08_adc_temp = 0;
 
             gn_adc_read_count = ADS114S08_READ_COUNT;
             ADS114S08_Set_Start(1);
-            gt_jig_screening_step = SCREEN_STEP_GET_ADC_CH;
-        }
-        break;
-    case SCREEN_STEP_GET_ADC_CH :
-        if (gb_ads114s08_drdy_done == 1)
-        {
-            gn_screen_adc[gn_read_adc_vout_channel] = ADS114S08_Get_ADC_Value();
-            ++gn_read_adc_vout_channel;
-            if (gn_read_adc_vout_channel < CH_MAX)
+            gt_xd_screen_step = XD_SCREEN_STEP_GET_ADC_CH;
+            break;
+        case XD_SCREEN_STEP_GET_ADC_CH :
+            if (gb_ads114s08_drdy_done == 1)
             {
-                gt_jig_screening_step = SCREEN_STEP_SET_ADC_CH;
-            }
-            else
-            {
-                gn_read_adc_vout_channel = 0;
-                gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
-
-                for (uint8_t ch = 0 ; ch < CH_MAX ; ++ch)
+                gn_screen_adc[gn_xd_adc_channel] = ADS114S08_Get_ADC_Value();
+                ++gn_xd_adc_channel;
+                if (gn_xd_adc_channel < XD_CH_MAX)
                 {
-                    gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
+                    gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
                 }
+                else
+                {
+                    gn_xd_adc_channel = 0;
+                    gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
 
-                #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
-                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
-                    gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
-
-                    gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
-                    if (gn_xd_screen_ana > 0xFFF)
+                    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
                     {
-                        gt_jig_screening_step = SCREEN_STEP_STOP;
+                        gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
                     }
-                #else
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gt_xd_screen_max_curr_level, \
-                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
-                    gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                    ++gt_xd_screen_max_curr_level;
-                    if (gt_xd_screen_max_curr_level > DEV_MAX_CURR_LEVEL_64mA)
-                    {
-                        gt_jig_screening_step = SCREEN_STEP_STOP;
-                    }
-                #endif
+                    #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                        print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
+                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
+                        gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
+
+                        gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
+                        if (gn_xd_screen_ana > 0xFFF)
+                        {
+                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                        }
+                    #else
+                        print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ld_fix, \
+                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
+                        gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
+
+                        gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
+                        if (gn_xd_screen_ld_fix > 0xFFFF)
+                        {
+                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                        }
+                    #endif
+                }
+                gn_task_delay = 0;
+                gb_ads114s08_drdy_done = 0;
             }
-            gn_step_delay = 0;
-            gb_ads114s08_drdy_done = 0;
+            break;
+        case XD_SCREEN_STEP_STOP :
+            JigBD_IF_VLED_9V_EN(PWR_OFF);
+            JigBD_IF_XD_VCC_EN(PWR_OFF);
+            JigBD_IF_XC_VCC_EN(PWR_OFF);
+            print(LOG_INFO, "======== SCREEN DONE ========\r\n");
+            gt_xd_screen_step = XD_SCREEN_STEP_NONE;
+            break;
+        default :
+            break;
         }
-        break;
-    case SCREEN_STEP_STOP :
-        JigBD_IF_VLED_9V_EN(PWR_OFF);
-        JigBD_IF_XD_VCC_EN(PWR_OFF);
-        JigBD_IF_XC_VCC_EN(PWR_OFF);
-        print(LOG_INFO, "======== SCREEN DONE ========\r\n");
-        gt_jig_screening_step = SCREEN_STEP_NONE;
-        break;
-    default :
-        break;
     }
 }
-
-p_gui_param Trim_Get_Param_GUI(void)
-{
-    return glf_TrimPara_GUI;
-}
-
 /*** end of file ***/

@@ -5,8 +5,11 @@
  * @par
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
-#define __VSYNC_TASK_C__
-#include "config.h"
+ #define __VSYNC_TASK_C__
+
+#include "main.h"
+#include "JigBd_IF.h"
+#include "xdic.h"
 
 #define LD_WIDTH_MAX            (0xFFFF)
 

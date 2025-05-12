@@ -35,12 +35,15 @@
  */
 
 /* Also include device specific header */
-#include "config.h"
+
+#include "main.h"
+#include "ads124s08.h"
+#include "xdic.h"
 
 #define USE_DISPLAY_DEVICE_REGS
 #define ADS114S08_READ_OFS_COUNT    (128) /* must be power of 2 */
 
-typedef enum
+typedef enum tag_ADC_SPS_T
 {
     ADS_SPS_2_5 = 0,
     ADS_SPS_5,
@@ -257,7 +260,7 @@ static void ADS114S08_Get_ADC_Offset()
     JigBD_IF_Change_Current_Gain(GAIN_LOW);
     JigBD_IF_VLED_9V_EN(PWR_ON);
 
-    for (uint8_t ch = 0 ; ch < CH_MAX ; ++ch)
+    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
     {
         gb_ads114s08_drdy_done = 0;
         gn_ads114s08_adc_temp = 0;
@@ -286,7 +289,7 @@ static void ADS114S08_Get_ADC_Offset()
     gn_adc_read_count = ADS114S08_READ_COUNT;
 
     JigBD_IF_VLED_9V_EN(PWR_OFF);
-    JigBD_IF_Select_Output_Ch(CH_MAX);
+    JigBD_IF_Select_Output_Ch(XD_CH_MAX);
     print(LOG_DEBUG, "\r\n ...Get ADC Offset Done...\r\n");
 }
 
@@ -316,6 +319,7 @@ void ADS114S08_Init(void)
 #ifdef USE_DISPLAY_DEVICE_REGS
     ADS114S08_Dump_Registers();
 #endif
+    print(LOG_INFO, "\r\n %s Done\r\n", __func__);
 }
 
 void ADC_DRDY_INT_Handler(void)
@@ -376,7 +380,7 @@ double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 	return ret; //mA
 }
 
-uint16_t JigBD_IF_Convert_Current_To_Adc(double current_A, current_gain_t gain)
+uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
 {
 	uint16_t ret = 0;
 	switch (gain)

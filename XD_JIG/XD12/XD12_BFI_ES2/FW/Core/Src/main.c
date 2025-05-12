@@ -25,7 +25,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "config.h"
-
+#include "types.h"
+#include "jigbd_if.h"
+#include "xc24.h"
+#include "xd_trim.h"
+#include "ads124s08.h"
+#include "vsync_task.h"
+#include "xdic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,14 +43,6 @@
 /* USER CODE BEGIN PD */
 #define RX_PACKET_SIZE  64
 #define RX_BUFF_SIZE    32
-
-typedef enum
-{
-    BTN_KEY_POWER = 0,
-    BTN_KEY_B1,
-    BTN_KEY_TRIM,
-    BTN_KEY_MAX,
-}BTN_KEY_T;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,54 +53,23 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-const char* gs_xdic_dev_max_curr_level[DEV_MAX_CURR_LEVEL_MAX] =
-{
-     "max_4mA",  "max_8mA", "max_12mA", "max_16mA",
-    "max_24mA", "max_32mA", "max_46mA", "max_64mA",
-};
-
-const char* gs_xdic_short_level[SHORT_LEVEL_MAX] =
-{
-     "short_3V",  "short_4V",  "short_6V",  "short_8V",
-    "short_13V", "short_16V", "short_24V", "short_36V",
-};
-
-const char* gs_xdic_fb_level[FB_LEVEL_MAX] =
-{
-     "FB_0.4V", "FB_0.5V",  "FB_0.6V", "FB_0.7V",
-    "FB_0.85V", "FB_1.0V", "FB_1.15V", "FB_1.3V",
-};
-
-const char* gs_jig_gain_level[GAIN_MAX] =
-{
-    "GAIN_LOW",
-    "GAIN_MID",
-    "GAIN_HIGH",
-};
-
-const char* gs_xdic_reg_type[XDIC_REG_TYPE_MAX] =
-{
-    "XDIC_REG_TYPE_NON_TRIM",
-    "XDIC_REG_TYPE_TRIM",
-};
 
 typedef struct
 {
     uint16_t length;
     char buffer[RX_PACKET_SIZE];
-}
-rx_packet_t;
+} rx_packet_t;
 
 typedef struct
 {
     uint16_t RxInCnt;
     uint16_t RxOutCnt;
     rx_packet_t Rxbuff[RX_BUFF_SIZE];
-}RX_UART_t;
+} RX_UART_t;
 static RX_UART_t gt_rx_uart;
 
-static uint32_t gn_timeout_trimming_procedure_run;
-static uint32_t gn_timeout_screening_procedure_run;
+static bool gb_xd_run_trim_task;
+static bool gb_xd_run_screen_task;
 
 static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
@@ -130,13 +97,13 @@ static void TaskDebugUart(void);
 /* USER CODE BEGIN 0 */
 void sys_tick_handler(void)
 {
-    if (gn_timeout_trimming_procedure_run)
+    if (gb_xd_run_trim_task == false)
     {
-        --gn_timeout_trimming_procedure_run;
+        gb_xd_run_trim_task = true;
     }
-    if (gn_timeout_screening_procedure_run)
+    if (gb_xd_run_screen_task == false)
     {
-        --gn_timeout_screening_procedure_run;
+        gb_xd_run_screen_task = true;
     }
     if (gn_xd_rx_timeout)
     {
@@ -165,42 +132,74 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
         }
     }
 }
-
-void comm_print_help()
+void comm_print_help(void)
 {
-    print(LOG_INFO, "\n\r--Command------------------Description------------------------");
+    print(LOG_INFO, "\n\r------------------ Command Help -----------------------------");
 
-    print(LOG_INFO, "\n\r  ");
-    print(LOG_INFO, "\n\r  xd_idgen\t\t : Send idgen cmd to XDIC");
-    print(LOG_INFO, "\n\r  xd_test_en\t\t : Set mode to Trim of XDIC");
-    print(LOG_INFO, "\n\r  xd_r [x]\t\t : Read [x] address normal register of XDIC (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_rt [x]\t\t : Read [x] address trim register of XDIC (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_r_all\t\t : Read all register of XDIC");
-    print(LOG_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to address normal [x] of XDIC (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to address trim [x] of XDIC (Input Type : HEX)");
-    print(LOG_INFO, "\n\r  xd_ldim [x]\t\t : Write [x] to Local Dimming Data of XDIC [0 ~ 65535]");
+    print(LOG_INFO, "\n\r  help / ?\t\t : Show command help");
+    print(LOG_INFO, "\n\r  jig_ic_start\t\t : Start timer for frequency input capture");
+    print(LOG_INFO, "\n\r  jig_ic_stop\t\t : Stop input capture and print measured frequency");
+    print(LOG_INFO, "\n\r  jig_vref_start\t : Start MCU ADC");
 
-    print(LOG_INFO, "\n\r  ");
-    print(LOG_INFO, "\n\r  xc_init\t\t : Initialize XC24");
-    print(LOG_INFO, "\n\r  xc_r [x]\t\t : Read [x] address register of XC24 - HEX");
-    print(LOG_INFO, "\n\r  xc_w [x] [y]\t\t : Write [y] to address [x] of XC24 - HEX");
+    print(LOG_INFO, "\n\r  jig_ch_sel [d]\t : Select output channel (0 ~ XD_CH_MAX)");
+    print(LOG_INFO, "\n\r  jig_xd_vcc [u]\t : XD VCC On/Off (1=On, 0=Off)");
+    print(LOG_INFO, "\n\r  jig_xd_vcc_level [u]\t : XD VCC level (0=5V, 1=5.7V)");
+    print(LOG_INFO, "\n\r  jig_xc_vcc [u]\t : XC VCC On/Off (1=On, 0=Off)");
+    print(LOG_INFO, "\n\r  jig_vled [u]\t\t : VLED 9V On/Off (1=On, 0=Off)");
+    print(LOG_INFO, "\n\r  jig_gain [u]\t\t : Set current gain (0 ~ GAIN_MAX-1)");
+    print(LOG_INFO, "\n\r  jig_vsync [d]\t\t : Start/Stop Vsync (1=Start, 0=Stop)");
+    print(LOG_INFO, "\n\r  vsync [lf]\t\t : Set vsync frequency (Hz)");
+    print(LOG_INFO, "\n\r  pwm_freq [lf]\t\t : Set PWM frequency (kHz)");
 
-    print(LOG_INFO, "\n\r  ");
-    print(LOG_INFO, "\n\r  vsync_start\t : Init XD/XC and start Vsync // Need External VLED");
-    print(LOG_INFO, "\n\r  jig_xd_vcc_on\t\t : XD VCC On");
-    print(LOG_INFO, "\n\r  jig_xd_vcc_off\t : XD VCC Off");
-    print(LOG_INFO, "\n\r  jig_xd_vcc_5\t\t : XD VCC -> 5V");
-    print(LOG_INFO, "\n\r  jig_xd_vcc_5.7\t : XD VCC -> 5.7V");
-    print(LOG_INFO, "\n\r  jig_xc_vcc_on\t\t : XC VCC On");
-    print(LOG_INFO, "\n\r  jig_xc_vcc_off\t : XC VCC Off");
-    print(LOG_INFO, "\n\r  jig_ch_sel [x]\t : Set XD CH SEL [x] [0 ~ 11]");
-    print(LOG_INFO, "\n\r  jig_vled_on\t\t : VLED On");
-    print(LOG_INFO, "\n\r  jig_vled_off\t\t : VLED Off");
-    print(LOG_INFO, "\n\r  jig_gain [x]\t\t : Set JIG Current gain [LOW, MID, HIGH]");
+    print(LOG_INFO, "\n\r  xd_idgen\t\t : Send IDGEN command to XDIC");
+    print(LOG_INFO, "\n\r  xd_reset\t\t : Reset XDIC");
+    print(LOG_INFO, "\n\r  xd_syncgen\t\t : Send SYNCGEN command to XDIC");
+    print(LOG_INFO, "\n\r  xd_test_en\t\t : Enter trim mode of XDIC");
+    print(LOG_INFO, "\n\r  xd_r_all\t\t : Read all registers of XDIC");
+    print(LOG_INFO, "\n\r  xd_r [x]\t\t : Read general register [x] (HEX)");
+    print(LOG_INFO, "\n\r  xd_rt [x]\t\t : Read trim register [x] (HEX)");
+    print(LOG_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to general register [x] (HEX)");
+    print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to trim register [x] (HEX)");
+    print(LOG_INFO, "\n\r  xd_ldim [d]\t\t : Set LDIM value [0 ~ 65535]");
+    print(LOG_INFO, "\n\r  xd_ldim\t\t : Show current LDIM value");
+    print(LOG_INFO, "\n\r  xd_fbi [x]\t\t : Set FBI pin (1=HI, 0=LO)");
+    print(LOG_INFO, "\n\r  xd_fbo\t\t : Read FBO pin status");
+    print(LOG_INFO, "\n\r  xd_ch [d]\t\t : Set XDIC channel (0 ~ XD_CH_MAX)");
 
-    print(LOG_INFO, "\n\r  ");
-    print(LOG_INFO, "\n\r  reset\t\t : Reset MCU");
+    print(LOG_INFO, "\n\r  xd_debug\t\t : Initialize XD debug environment");
+    print(LOG_INFO, "\n\r  xd_trim_debug\t : Initialize XD trim environment");
+    print(LOG_INFO, "\n\r  xd_trim_vref\t\t : Trim VREF of XDIC");
+    print(LOG_INFO, "\n\r  xd_trim_osc\t\t : Trim OSC of XDIC");
+    print(LOG_INFO, "\n\r  xd_trim_ofs [x]\t : Trim offset and fix LD to 1<<12");
+    print(LOG_INFO, "\n\r  xd_trim_gain [x]\t : Trim gain and fix LD to 6<<12");
+    print(LOG_INFO, "\n\r  xd_osc_debug\t\t : Auto scan OSC trim values");
+
+    print(LOG_INFO, "\n\r  xc_debug\t\t : Initialize XC24");
+    print(LOG_INFO, "\n\r  xc_r [x]\t\t : Read register [x] of XC24 (HEX)");
+    print(LOG_INFO, "\n\r  xc_w [x] [y]\t\t : Write [y] to register [x] of XC24 (HEX)");
+    print(LOG_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24");
+    print(LOG_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24 usage (0/1)");
+
+    print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC OTP write");
+    print(LOG_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
+    print(LOG_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
+
+    print(LOG_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
+    print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
+
     print(LOG_INFO, "\n\r--------------------------------------------------------------\n\r");
+}
+
+void comm_init(void)
+{
+    print(LOG_INFO, "\n\r--------------------------------------");
+    print(LOG_INFO, "\n\r    [GT-XD12 BFI (ES2) JIG]");
+    print(LOG_INFO, "\n\r--------------------------------------");
+    print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
+    print(LOG_INFO, "\n\r - Build : %s", __DATE__);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\n\r--------------------------------------\r\n");
 }
 /* USER CODE END 0 */
 
@@ -248,22 +247,12 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-    print(LOG_INFO, "\r\nstart %s TRIMMING_JIG application....\r\n", TARGET_CHIP_NAME);
-    print(LOG_INFO, " - Build time : %s / %s\r\n", __DATE__, __TIME__ );
-
-    /* for GUI App */
-    print(LOG_INFO, " - %s IS SELECTED!\r\n", TARGET_CHIP_NAME);
-
     USE_XC24(FALSE);
-    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
-
-    Trim_IF_Set_OTP_Enable(FALSE);
-    print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XDIC OTP WRITE ENABLE" : "- XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
-
-    Trim_Calculate_Spec();
-    ADS114S08_Init();
-
+    XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
+
+    XD_Trim_Calculate_Spec();
+    ADS114S08_Init();
 
     LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
     LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
@@ -272,6 +261,8 @@ int main(void)
     /* DMA2_Stream2_IRQn interrupt configuration */
     NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+
+    comm_init();
 
   /* USER CODE END 2 */
 
@@ -1085,7 +1076,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOC, PWM_SWITCH_Pin|XDIC_FB_IN_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, XDIC_5_7V_Pin|XC24_VCC_EN_Pin|XC24_NSCS_Pin);
+  LL_GPIO_ResetOutputPin(GPIOB, XC24_5V5_Pin|XDIC_5_7V_Pin|XC24_VCC_EN_Pin|XC24_NSCS_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
@@ -1130,8 +1121,10 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_2|LL_GPIO_PIN_7;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pin = XC24_5V5_Pin|CNT_MR_Pin|XC24_VCC_EN_Pin|ADC_RESET_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -1140,14 +1133,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(XDIC_FB_OUT_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = CNT_MR_Pin|XC24_VCC_EN_Pin|ADC_RESET_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_6|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
@@ -1177,6 +1162,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE4);
@@ -1211,16 +1202,16 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static void JigTestMainTask(void)
 {
-    if (gn_timeout_trimming_procedure_run == 0)
+    if (gb_xd_run_trim_task)
     {
-        Trimming_Procedure_Run();
-        gn_timeout_trimming_procedure_run = 1;
+        XD_Trim_Task();
+        gb_xd_run_trim_task = false;
     }
 
-    if (gn_timeout_screening_procedure_run == 0)
+    if (gb_xd_run_screen_task)
     {
-        Screening_Procedure_Run();
-        gn_timeout_screening_procedure_run = 1;
+        XD_Screen_Task();
+        gb_xd_run_screen_task = false;
     }
 }
 
@@ -1258,24 +1249,23 @@ static void TaskDebugUart(void)
         {
             comm_print_help();
         }
-#if 1
 /* ----------------- command list - jig ----------------- */
         else if (Command_is_("jig_ic_start"))
         {
             print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
-            JigBD_IF_Input_Capture_Start();
+            JigBD_IF_Start_Input_Capture();
         }
         else if (Command_is_("jig_ic_stop"))
         {
-            uint32_t u32_input_freq_Hz = JigBD_IF_Input_Capture_Get_Freq();
+            uint32_t u32_input_freq_Hz = JigBD_IF_Get_Input_Capture_Freq();
 
-            JigBD_IF_Input_Capture_Stop();
+            JigBD_IF_Stop_Input_Capture();
             print(LOG_INFO, "\r\n Stop timer for freq input capture : %u [Hz] => %1.6f [MHz]\r\n", u32_input_freq_Hz, ((u32_input_freq_Hz * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz));
         }
         else if (Command_is_("jig_vref_start"))
         {
             print(LOG_INFO, "\r\n ADC RUN\r\n");
-            JigBD_IF_VREF_ADC_StartStop();
+            JigBD_IF_Start_MCU_ADC();
         }
         else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
@@ -1300,7 +1290,7 @@ static void TaskDebugUart(void)
             if (u32_recv_param[0])
             {
                 print(LOG_INFO, "\r\n XD VCC [5.7V]\r\n");
-                JigBD_IF_XD_VCC_Level(PWR_ON_5V7);
+                JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
             }
             else
             {
@@ -1336,9 +1326,9 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
-            if (u32_recv_param[0] > (CH_MAX + 1))
+            if (u32_recv_param[0] > (XD_CH_MAX + 1))
             {
-                print(LOG_ERROR, "\r\n Out of CH SEL [%d] [0 - %d]\r\n", u32_recv_param[0], CH_MAX);
+                print(LOG_ERROR, "\r\n Out of CH SEL [%d] [0 - %d]\r\n", u32_recv_param[0], XD_CH_MAX);
             }
             else
             {
@@ -1351,7 +1341,6 @@ static void TaskDebugUart(void)
             if (u32_recv_param[0] < GAIN_MAX)
             {
                 JigBD_IF_Change_Current_Gain((current_gain_t)u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set JIG Current [%s]\r\n", gs_jig_gain_level[u32_recv_param[0]]);
             }
             else
             {
@@ -1392,7 +1381,6 @@ static void TaskDebugUart(void)
             LL_TIM_EnableCounter(TIM1);
             print(LOG_INFO, "set pwm freq to %.3lf kHz\r\n", lf_recv_param[0]);
         }
-#endif
 /* ----------------- command list - xd ----------------- */
         else if (Command_is_("xd_idgen"))
         {
@@ -1467,16 +1455,6 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
             }
         }
-        else if (Command_Param_is_("xd_flt_gain", "%d", &u32_recv_param[0]))
-        {
-            XDIC_Set_FLT_Gain(u32_recv_param[0]);
-            print(LOG_INFO, "\r\n OK\r\n");
-        }
-        else if (Command_Param_is_("xd_flt_ctl", "%d", &u32_recv_param[0]))
-        {
-            XDIC_Set_FLT_CTL(u32_recv_param[0]);
-            print(LOG_INFO, "\r\n OK\r\n");
-        }
         else if (Command_is_("xd_ldim"))
         {
             print(LOG_INFO, "\r\n ldim - [%u]\r\n", XDIC_Get_LD_Data());
@@ -1509,7 +1487,7 @@ static void TaskDebugUart(void)
                 LL_mDelay(10);
             }
 
-            JigBD_IF_Select_Output_Ch(CH_MAX);
+            JigBD_IF_Select_Output_Ch(XD_CH_MAX);
             print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
@@ -1555,19 +1533,19 @@ static void TaskDebugUart(void)
         {
             XDIC_Trim_Init_OSC();
         }
-        else if (Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_trim_ofs", "%x", &u32_recv_param[0]))
         {
-            XDIC_Trim_Init_ICTL();
+            XDIC_Trim_Init_OFS();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+            XDIC_Set_LD_Fix(1 << 12);
         }
-        else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_trim_gain", "%x", &u32_recv_param[0]))
         {
-            XDIC_Trim_Init_ICTL();
+            XDIC_Trim_Init_GAIN();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+            XDIC_Set_LD_Fix(6 << 12);
         }
 
         else if (Command_is_("xd_osc_debug"))
@@ -1598,11 +1576,23 @@ static void TaskDebugUart(void)
             for (uint8_t i = 0 ; i <= REG_LIMIT_OSC ; ++i)
             {
                 XDIC_Write_Mirror_Reg(0x01, i);
-                JigBD_IF_Input_Capture_Start();
+                JigBD_IF_Start_Input_Capture();
                 LL_mDelay(150);
-                JigBD_IF_Input_Capture_Stop();
+                JigBD_IF_Stop_Input_Capture();
 
-                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Freq_Count_to_MHZ(JigBD_IF_Input_Capture_Get_Freq()));
+                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Freq_Counter_To_MHZ(JigBD_IF_Get_Input_Capture_Freq()));
+            }
+        }
+        else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] < (XD_CH_MAX + 1))
+            {
+                print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
+                MCU_IF_Set_XDIC_Channel(u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
             }
         }
 
@@ -1625,8 +1615,7 @@ static void TaskDebugUart(void)
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
-/* ----------------- command list - ui ----------------- */
-        else if (Command_Param_is_("ui:use_xc", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < 2)
             {
@@ -1643,18 +1632,19 @@ static void TaskDebugUart(void)
             }
             else
             {
-                print(LOG_ERROR, "\r\n Out of ui:use_xc [%u] [0 - %u]\r\n", u32_recv_param[0], 1);
+                print(LOG_ERROR, "\r\n Out of xc_use [%u] [0 - %u]\r\n", u32_recv_param[0], 1);
             }
         }
+/* ----------------- command list - ui ----------------- */
         else if (Command_is_("xd_trim_start") || Command_is_("1"))
         {
             print(LOG_INFO, "\r\n XDIC OTP Write EN & Activate \r\n");
-            Trim_IF_Trimming_Start();
+            XD_Trim_IF_Trim_Start();
         }
         else if (Command_is_("xd_screen_start") || Command_is_("2"))
         {
             print(LOG_INFO, "\r\n XDIC Screen Start \r\n");
-            Trim_IF_Screening_Start();
+            XD_Trim_IF_Screen_Start();
         }
         else if (Command_is_("xd_dimming_start") || Command_is_("3"))
         {
@@ -1668,7 +1658,7 @@ static void TaskDebugUart(void)
                 LL_mDelay(10);
             }
 
-            JigBD_IF_Select_Output_Ch(CH_MAX);
+            JigBD_IF_Select_Output_Ch(XD_CH_MAX);
             print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
@@ -1685,18 +1675,6 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "vsync start\r\n");
 
             XDIC_Set_LD_Data(100);
-        }
-        else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] < (CH_MAX + 1))
-            {
-                print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
-                MCU_IF_Set_XDIC_Channel(u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], CH_MAX - 1);
-            }
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {

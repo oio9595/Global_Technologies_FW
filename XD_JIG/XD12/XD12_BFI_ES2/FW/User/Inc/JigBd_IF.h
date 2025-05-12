@@ -32,21 +32,13 @@ extern "C" {
 #define JIG_FREQUENCY_DIVIDER       (128)
 #define TIM_CAPTURE_EXT_PRESCALER   (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 
-#define APB1_TIM_FREQ               (72.0) //MHz
-
-typedef enum
+typedef enum tag_CURRENT_GAIN_T
 {
 	GAIN_LOW = 0,   /* Max 0.5mA */
 	GAIN_MID,       /* Max  10mA */
 	GAIN_HIGH,      /* Max 140mA */
 	GAIN_MAX,
 }current_gain_t;
-
-typedef enum
-{
-	DISCHARGE = 0,
-	CHARGE,
-}current_charge_t;
 
 extern uint16_t gn_serialize_tx_buffer[400];
 extern uint16_t gn_serialize_rx_risingBuffer[400];
@@ -78,18 +70,18 @@ extern uint16_t JigBD_IF_Read_Command(uint8_t in_addr);
 extern uint16_t JigBD_IF_Fault_Read_Command(void);
 
 //Read Frequency Hz
-extern void JigBD_IF_Input_Capture_Start(void);
-extern void JigBD_IF_Input_Capture_Stop(void);
-extern uint16_t JigBD_IF_Input_Capture_Get_Freq(void);
-extern void JigBD_IF_Input_Capture_Calculate_Freq(void);
+extern void JigBD_IF_Start_Input_Capture(void);
+extern void JigBD_IF_Stop_Input_Capture(void);
+extern uint16_t JigBD_IF_Get_Input_Capture_Freq(void);
+extern void JigBD_IF_Calculate_Input_Capture_Freq(void);
 
-extern uint16_t JigBD_IF_Freq_ConvertByPrescaler(double in_freq);
-extern double JigBD_IF_Freq_Count_to_MHZ(uint16_t count);
+extern uint16_t JigBD_IF_Convert_Freq_To_Counter(double in_freq);
+extern double JigBD_IF_Freq_Counter_To_MHZ(uint16_t count);
 
-extern uint16_t JigBD_IF_Convert_Volt_to_VREF_ADC(double in_volt);
-extern double JigBD_IF_Convert_VREF_ADC_to_Volt(uint16_t in_adc);
-extern void JigBD_IF_VREF_ADC_StartStop(void);
-extern uint16_t JigBD_IF_VREF_ADC_Get(void);
+extern uint16_t JigBD_IF_Convert_Volt_To_MCU_ADC(double in_volt);
+extern double JigBD_IF_Convert_MCU_ADC_To_Volt(uint16_t in_adc);
+extern void JigBD_IF_Start_MCU_ADC(void);
+extern uint16_t JigBD_IF_Get_MCU_ADC(void);
 
 extern void MCU_IF_Set_XDIC_Channel(uint8_t in_channel);
 

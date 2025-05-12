@@ -6,6 +6,10 @@
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
 #define __XC24_C__
+
+#include "main.h"
+#include "xc24.h"
+#include "jigbd_if.h"
 #include "config.h"
 
 static SPI_TypeDef *g_hSPIx;
