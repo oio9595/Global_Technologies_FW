@@ -20,15 +20,15 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 #define XDIC_VREF_TARGET            (2.2)       /* V */
 
-#define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
-#define XDIC_OFS_TARGET             (6.4000f)   /* mA */
-#define XDIC_OFS_P1                 (1 << 12)
-#define XDIC_OFS_P2                 (3 << 12)
-
 #define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
 #define XDIC_GAIN_TARGET            (25.600f)   /* mA */
-#define XDIC_GAIN_P1                (6 << 12)
-#define XDIC_GAIN_P2                (6 << 12)
+#define XDIC_GAIN_P1                (6 << 12 | 0xFFFF)
+#define XDIC_GAIN_P2                (6 << 12 | 0xFFFF)
+
+#define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
+#define XDIC_OFS_TARGET             (6.4000f)   /* mA */
+#define XDIC_OFS_P1                 (1 << 12 | 0xFFFF)
+#define XDIC_OFS_P2                 (3 << 12 | 0xFFFF)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -231,11 +231,11 @@ static void XD_Trim_Param_Algorithm_Init(void)
         case XD_TRIM_OSC_FREQUENCY:
             temp_gain_level = GAIN_LOW; //Don't Care
             break;
-        case XD_TRIM_OFS_CHS:
-            temp_gain_level = GAIN_MID;
-            break;
         case XD_TRIM_GAIN_CHS:
             temp_gain_level = GAIN_HIGH;
+            break;
+        case XD_TRIM_OFS_CHS:
+            temp_gain_level = GAIN_MID;
             break;
         }
 
@@ -581,17 +581,17 @@ void XD_Trim_Calculate_Spec(void)
             gt_xdic_trim_condition[mode].u16_p1 = 0;
             gt_xdic_trim_condition[mode].u16_p2 = 0;
             break;
-        case XD_TRIM_OFS_CHS:
-            gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000;
-            gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000;
-            gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_P1;
-            gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_P2;
-            break;
         case XD_TRIM_GAIN_CHS:
             gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000;
             gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000;
             gt_xdic_trim_condition[mode].u16_p1 = XDIC_GAIN_P1;
             gt_xdic_trim_condition[mode].u16_p2 = XDIC_GAIN_P2;
+            break;
+        case XD_TRIM_OFS_CHS:
+            gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000;
+            gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_P1;
+            gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_P2;
             break;
         }
     }
@@ -1046,7 +1046,7 @@ void XD_Screen_Task(void)
                     }
 
                     #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                        print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
+                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
                         gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
@@ -1056,7 +1056,7 @@ void XD_Screen_Task(void)
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }
                     #else
-                        print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ld_fix, \
+                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
                         gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 

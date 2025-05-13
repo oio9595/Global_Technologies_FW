@@ -8,9 +8,10 @@
 #define __XDIC_C__
 
 #include "main.h"
-#include "config.h"
 #include "xdic.h"
 #include "JigBd_IF.h"
+#include "types.h"
+#include "config.h"
 
 #define XDIC_REG_GENERAL            (0)
 #define XDIC_REG_MIRROR             (1)
@@ -36,121 +37,125 @@
 
 #ifdef __XDIC_C__
 
-static const char* gs_xdic_general_regs_str[XDIC_ADDR_MAX] =
-{
-    "RESET_ID",
-    "LD_MODE",
-    "SF_PERIOD",
-    "SF_SIZE",
-    "CH_SF_X8_SIZE",
-    "SF_BFI_SIZE",
-    "LD_FIX_1",
-    "LD_FIX_2",
-    "MAX_CURRENT_VREF",
-    "CHANNEL_ENABLE",
-    "DUMMY",
-    "FAULT_STATUS",
-    "FAULT_LEVEL",
-    "FAULT_CONTROL",
-    "DELAY_CH_01",
-    "DELAY_CH_02",
-    "DELAY_CH_03",
-    "DELAY_CH_04",
-    "DELAY_CH_05",
-    "DELAY_CH_06",
-    "DELAY_CH_07",
-    "DELAY_CH_08",
-    "DELAY_CH_09",
-    "DELAY_CH_10",
-    "DELAY_CH_11",
-    "DELAY_CH_12",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "SERIAL_BAUDRATE",
-    "SERIAL_LATENCY",
-    "DCLK_PERIOD",
-    "MCLK_LOCK_1",
-    "MCLK_LOCK_2",
-    "OSC_COMPENSATION",
-    "OSC_COMP_TH_P",
-    "OSC_COMP_TH_N",
-    "LD_CONTROL",
-    "VREF_FIX",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "OTP_ACCESS_1",
-    "OTP_ACCESS_2",
-    "OTP_WRITE",
-    "OTP_RD_PROG",
-    "OTP_PROTECT",
-    "OP_MODE",
-};
-
-static const char* gs_xdic_mirror_regs_str[XDIC_ADDR_TRIM_MAX] =
-{
-    "OTP_CRC",
-    "OSC",
-    "VREF_CTL",
-    "OFS_CH01",
-    "OFS_CH02",
-    "OFS_CH03",
-    "OFS_CH04",
-    "OFS_CH05",
-    "OFS_CH06",
-    "OFS_CH07",
-    "OFS_CH08",
-    "OFS_CH09",
-    "OFS_CH10",
-    "OFS_CH11",
-    "OFS_CH12",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "DUMMY",
-    "GAIN_CH01",
-    "GAIN_CH02",
-    "GAIN_CH03",
-    "GAIN_CH04",
-    "GAIN_CH05",
-    "GAIN_CH06",
-    "GAIN_CH07",
-    "GAIN_CH08",
-    "GAIN_CH09",
-    "GAIN_CH10",
-    "GAIN_CH11",
-    "GAIN_CH12",
-};
-
 #endif //__XDIC_C__
 
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
+
+static _reg_map_t gt_xdic_general_maps[] =
+{
+    { XDIC_ADDR_RESET_ID        ,   "XDIC_ADDR_RESET_ID        ",   &gt_xdic_general_regs._r00 },
+    { XDIC_ADDR_LD_MODE         ,   "XDIC_ADDR_LD_MODE         ",   &gt_xdic_general_regs._r01 },
+    { XDIC_ADDR_SF_PERIOD       ,   "XDIC_ADDR_SF_PERIOD       ",   &gt_xdic_general_regs._r02 },
+    { XDIC_ADDR_SF_SIZE         ,   "XDIC_ADDR_SF_SIZE         ",   &gt_xdic_general_regs._r03 },
+    { XDIC_ADDR_CH_SF_X8_SIZE   ,   "XDIC_ADDR_CH_SF_X8_SIZE   ",   &gt_xdic_general_regs._r04 },
+    { XDIC_ADDR_SF_BFI_SIZE     ,   "XDIC_ADDR_SF_BFI_SIZE     ",   &gt_xdic_general_regs._r05 },
+    { XDIC_ADDR_LD_FIX_1        ,   "XDIC_ADDR_LD_FIX_1        ",   &gt_xdic_general_regs._r06 },
+    { XDIC_ADDR_LD_FIX_2        ,   "XDIC_ADDR_LD_FIX_2        ",   &gt_xdic_general_regs._r07 },
+    { XDIC_ADDR_MAX_CURRENT_VREF,   "XDIC_ADDR_MAX_CURRENT_VREF",   &gt_xdic_general_regs._r08 },
+    { XDIC_ADDR_CHANNEL_ENABLE  ,   "XDIC_ADDR_CHANNEL_ENABLE  ",   &gt_xdic_general_regs._r09 },
+    { XDIC_ADDR_DUMMY_0A        ,   "XDIC_ADDR_DUMMY_0A        ",   &gt_xdic_general_regs._r0A },
+    { XDIC_ADDR_FAULT_STATUS    ,   "XDIC_ADDR_FAULT_STATUS    ",   &gt_xdic_general_regs._r0B },
+    { XDIC_ADDR_FAULT_LEVEL     ,   "XDIC_ADDR_FAULT_LEVEL     ",   &gt_xdic_general_regs._r0C },
+    { XDIC_ADDR_FAULT_CONTROL   ,   "XDIC_ADDR_FAULT_CONTROL   ",   &gt_xdic_general_regs._r0D },
+    { XDIC_ADDR_DELAY_CH_01     ,   "XDIC_ADDR_DELAY_CH_01     ",   &gt_xdic_general_regs._r0E },
+    { XDIC_ADDR_DELAY_CH_02     ,   "XDIC_ADDR_DELAY_CH_02     ",   &gt_xdic_general_regs._r0F },
+    { XDIC_ADDR_DELAY_CH_03     ,   "XDIC_ADDR_DELAY_CH_03     ",   &gt_xdic_general_regs._r10 },
+    { XDIC_ADDR_DELAY_CH_04     ,   "XDIC_ADDR_DELAY_CH_04     ",   &gt_xdic_general_regs._r11 },
+    { XDIC_ADDR_DELAY_CH_05     ,   "XDIC_ADDR_DELAY_CH_05     ",   &gt_xdic_general_regs._r12 },
+    { XDIC_ADDR_DELAY_CH_06     ,   "XDIC_ADDR_DELAY_CH_06     ",   &gt_xdic_general_regs._r13 },
+    { XDIC_ADDR_DELAY_CH_07     ,   "XDIC_ADDR_DELAY_CH_07     ",   &gt_xdic_general_regs._r14 },
+    { XDIC_ADDR_DELAY_CH_08     ,   "XDIC_ADDR_DELAY_CH_08     ",   &gt_xdic_general_regs._r15 },
+    { XDIC_ADDR_DELAY_CH_09     ,   "XDIC_ADDR_DELAY_CH_09     ",   &gt_xdic_general_regs._r16 },
+    { XDIC_ADDR_DELAY_CH_10     ,   "XDIC_ADDR_DELAY_CH_10     ",   &gt_xdic_general_regs._r17 },
+    { XDIC_ADDR_DELAY_CH_11     ,   "XDIC_ADDR_DELAY_CH_11     ",   &gt_xdic_general_regs._r18 },
+    { XDIC_ADDR_DELAY_CH_12     ,   "XDIC_ADDR_DELAY_CH_12     ",   &gt_xdic_general_regs._r19 },
+    { XDIC_ADDR_DUMMY_1A        ,   "XDIC_ADDR_DUMMY_1A        ",   &gt_xdic_general_regs._r1A },
+    { XDIC_ADDR_DUMMY_1B        ,   "XDIC_ADDR_DUMMY_1B        ",   &gt_xdic_general_regs._r1B },
+    { XDIC_ADDR_DUMMY_1C        ,   "XDIC_ADDR_DUMMY_1C        ",   &gt_xdic_general_regs._r1C },
+    { XDIC_ADDR_DUMMY_1D        ,   "XDIC_ADDR_DUMMY_1D        ",   &gt_xdic_general_regs._r1D },
+    { XDIC_ADDR_DUMMY_1E        ,   "XDIC_ADDR_DUMMY_1E        ",   &gt_xdic_general_regs._r1E },
+    { XDIC_ADDR_DUMMY_1F        ,   "XDIC_ADDR_DUMMY_1F        ",   &gt_xdic_general_regs._r1F },
+    { XDIC_ADDR_DUMMY_20        ,   "XDIC_ADDR_DUMMY_20        ",   &gt_xdic_general_regs._r20 },
+    { XDIC_ADDR_DUMMY_21        ,   "XDIC_ADDR_DUMMY_21        ",   &gt_xdic_general_regs._r21 },
+    { XDIC_ADDR_DUMMY_22        ,   "XDIC_ADDR_DUMMY_22        ",   &gt_xdic_general_regs._r22 },
+    { XDIC_ADDR_DUMMY_23        ,   "XDIC_ADDR_DUMMY_23        ",   &gt_xdic_general_regs._r23 },
+    { XDIC_ADDR_DUMMY_24        ,   "XDIC_ADDR_DUMMY_24        ",   &gt_xdic_general_regs._r24 },
+    { XDIC_ADDR_DUMMY_25        ,   "XDIC_ADDR_DUMMY_25        ",   &gt_xdic_general_regs._r25 },
+    { XDIC_ADDR_SERIAL_BAUDRATE ,   "XDIC_ADDR_SERIAL_BAUDRATE ",   &gt_xdic_general_regs._r26 },
+    { XDIC_ADDR_SERIAL_LATENCY  ,   "XDIC_ADDR_SERIAL_LATENCY  ",   &gt_xdic_general_regs._r27 },
+    { XDIC_ADDR_DCLK_PERIOD     ,   "XDIC_ADDR_DCLK_PERIOD     ",   &gt_xdic_general_regs._r28 },
+    { XDIC_ADDR_MCLK_LOCK_1     ,   "XDIC_ADDR_MCLK_LOCK_1     ",   &gt_xdic_general_regs._r29 },
+    { XDIC_ADDR_MCLK_LOCK_2     ,   "XDIC_ADDR_MCLK_LOCK_2     ",   &gt_xdic_general_regs._r2A },
+    { XDIC_ADDR_OSC_COMPENSATION,   "XDIC_ADDR_OSC_COMPENSATION",   &gt_xdic_general_regs._r2B },
+    { XDIC_ADDR_OSC_COMP_TH_P   ,   "XDIC_ADDR_OSC_COMP_TH_P   ",   &gt_xdic_general_regs._r2C },
+    { XDIC_ADDR_OSC_COMP_TH_N   ,   "XDIC_ADDR_OSC_COMP_TH_N   ",   &gt_xdic_general_regs._r2D },
+    { XDIC_ADDR_LD_CONTROL      ,   "XDIC_ADDR_LD_CONTROL      ",   &gt_xdic_general_regs._r2E },
+    { XDIC_ADDR_VREF_FIX        ,   "XDIC_ADDR_VREF_FIX        ",   &gt_xdic_general_regs._r2F },
+    { XDIC_ADDR_DUMMY_30        ,   "XDIC_ADDR_DUMMY_30        ",   &gt_xdic_general_regs._r30 },
+    { XDIC_ADDR_DUMMY_31        ,   "XDIC_ADDR_DUMMY_31        ",   &gt_xdic_general_regs._r31 },
+    { XDIC_ADDR_DUMMY_32        ,   "XDIC_ADDR_DUMMY_32        ",   &gt_xdic_general_regs._r32 },
+    { XDIC_ADDR_DUMMY_33        ,   "XDIC_ADDR_DUMMY_33        ",   &gt_xdic_general_regs._r33 },
+    { XDIC_ADDR_DUMMY_34        ,   "XDIC_ADDR_DUMMY_34        ",   &gt_xdic_general_regs._r34 },
+    { XDIC_ADDR_DUMMY_35        ,   "XDIC_ADDR_DUMMY_35        ",   &gt_xdic_general_regs._r35 },
+    { XDIC_ADDR_DUMMY_36        ,   "XDIC_ADDR_DUMMY_36        ",   &gt_xdic_general_regs._r36 },
+    { XDIC_ADDR_DUMMY_37        ,   "XDIC_ADDR_DUMMY_37        ",   &gt_xdic_general_regs._r37 },
+    { XDIC_ADDR_DUMMY_38        ,   "XDIC_ADDR_DUMMY_38        ",   &gt_xdic_general_regs._r38 },
+    { XDIC_ADDR_DUMMY_39        ,   "XDIC_ADDR_DUMMY_39        ",   &gt_xdic_general_regs._r39 },
+    { XDIC_ADDR_OTP_ACCESS_1    ,   "XDIC_ADDR_OTP_ACCESS_1    ",   &gt_xdic_general_regs._r3A },
+    { XDIC_ADDR_OTP_ACCESS_2    ,   "XDIC_ADDR_OTP_ACCESS_2    ",   &gt_xdic_general_regs._r3B },
+    { XDIC_ADDR_OTP_WRITE       ,   "XDIC_ADDR_OTP_WRITE       ",   &gt_xdic_general_regs._r3C },
+    { XDIC_ADDR_OTP_RD_PROG     ,   "XDIC_ADDR_OTP_RD_PROG     ",   &gt_xdic_general_regs._r3D },
+    { XDIC_ADDR_OTP_PROTECT     ,   "XDIC_ADDR_OTP_PROTECT     ",   &gt_xdic_general_regs._r3E },
+    { XDIC_ADDR_OTP_OP_MODE     ,   "XDIC_ADDR_OTP_OP_MODE     ",   &gt_xdic_general_regs._r3F },
+};
+static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
+
+static _reg_map_t gt_xdic_mirror_maps[] =
+{
+    { XDIC_ADDR_TRIM_OTP_CRC   ,    "XDIC_ADDR_TRIM_OTP_CRC   ",    &gt_xdic_mirror_regs._r00 },
+    { XDIC_ADDR_TRIM_OSC       ,    "XDIC_ADDR_TRIM_OSC       ",    &gt_xdic_mirror_regs._r01 },
+    { XDIC_ADDR_TRIM_VREF_CTL  ,    "XDIC_ADDR_TRIM_VREF_CTL  ",    &gt_xdic_mirror_regs._r02 },
+    { XDIC_ADDR_TRIM_OFS_CH_01 ,    "XDIC_ADDR_TRIM_OFS_CH_01 ",    &gt_xdic_mirror_regs._r03 },
+    { XDIC_ADDR_TRIM_OFS_CH_02 ,    "XDIC_ADDR_TRIM_OFS_CH_02 ",    &gt_xdic_mirror_regs._r04 },
+    { XDIC_ADDR_TRIM_OFS_CH_03 ,    "XDIC_ADDR_TRIM_OFS_CH_03 ",    &gt_xdic_mirror_regs._r05 },
+    { XDIC_ADDR_TRIM_OFS_CH_04 ,    "XDIC_ADDR_TRIM_OFS_CH_04 ",    &gt_xdic_mirror_regs._r06 },
+    { XDIC_ADDR_TRIM_OFS_CH_05 ,    "XDIC_ADDR_TRIM_OFS_CH_05 ",    &gt_xdic_mirror_regs._r07 },
+    { XDIC_ADDR_TRIM_OFS_CH_06 ,    "XDIC_ADDR_TRIM_OFS_CH_06 ",    &gt_xdic_mirror_regs._r08 },
+    { XDIC_ADDR_TRIM_OFS_CH_07 ,    "XDIC_ADDR_TRIM_OFS_CH_07 ",    &gt_xdic_mirror_regs._r09 },
+    { XDIC_ADDR_TRIM_OFS_CH_08 ,    "XDIC_ADDR_TRIM_OFS_CH_08 ",    &gt_xdic_mirror_regs._r0A },
+    { XDIC_ADDR_TRIM_OFS_CH_09 ,    "XDIC_ADDR_TRIM_OFS_CH_09 ",    &gt_xdic_mirror_regs._r0B },
+    { XDIC_ADDR_TRIM_OFS_CH_10 ,    "XDIC_ADDR_TRIM_OFS_CH_10 ",    &gt_xdic_mirror_regs._r0C },
+    { XDIC_ADDR_TRIM_OFS_CH_11 ,    "XDIC_ADDR_TRIM_OFS_CH_11 ",    &gt_xdic_mirror_regs._r0D },
+    { XDIC_ADDR_TRIM_OFS_CH_12 ,    "XDIC_ADDR_TRIM_OFS_CH_12 ",    &gt_xdic_mirror_regs._r0E },
+    { XDIC_ADDR_TRIM_DUMMY_0F  ,    "XDIC_ADDR_TRIM_DUMMY_0F  ",    &gt_xdic_mirror_regs._r0F },
+    { XDIC_ADDR_TRIM_DUMMY_10  ,    "XDIC_ADDR_TRIM_DUMMY_10  ",    &gt_xdic_mirror_regs._r10 },
+    { XDIC_ADDR_TRIM_DUMMY_11  ,    "XDIC_ADDR_TRIM_DUMMY_11  ",    &gt_xdic_mirror_regs._r11 },
+    { XDIC_ADDR_TRIM_DUMMY_12  ,    "XDIC_ADDR_TRIM_DUMMY_12  ",    &gt_xdic_mirror_regs._r12 },
+    { XDIC_ADDR_TRIM_DUMMY_13  ,    "XDIC_ADDR_TRIM_DUMMY_13  ",    &gt_xdic_mirror_regs._r13 },
+    { XDIC_ADDR_TRIM_DUMMY_14  ,    "XDIC_ADDR_TRIM_DUMMY_14  ",    &gt_xdic_mirror_regs._r14 },
+    { XDIC_ADDR_TRIM_DUMMY_15  ,    "XDIC_ADDR_TRIM_DUMMY_15  ",    &gt_xdic_mirror_regs._r15 },
+    { XDIC_ADDR_TRIM_DUMMY_16  ,    "XDIC_ADDR_TRIM_DUMMY_16  ",    &gt_xdic_mirror_regs._r16 },
+    { XDIC_ADDR_TRIM_DUMMY_17  ,    "XDIC_ADDR_TRIM_DUMMY_17  ",    &gt_xdic_mirror_regs._r17 },
+    { XDIC_ADDR_TRIM_DUMMY_18  ,    "XDIC_ADDR_TRIM_DUMMY_18  ",    &gt_xdic_mirror_regs._r18 },
+    { XDIC_ADDR_TRIM_DUMMY_19  ,    "XDIC_ADDR_TRIM_DUMMY_19  ",    &gt_xdic_mirror_regs._r19 },
+    { XDIC_ADDR_TRIM_DUMMY_1A  ,    "XDIC_ADDR_TRIM_DUMMY_1A  ",    &gt_xdic_mirror_regs._r1A },
+    { XDIC_ADDR_TRIM_GAIN_CH_01,    "XDIC_ADDR_TRIM_GAIN_CH_01",    &gt_xdic_mirror_regs._r1B },
+    { XDIC_ADDR_TRIM_GAIN_CH_02,    "XDIC_ADDR_TRIM_GAIN_CH_02",    &gt_xdic_mirror_regs._r1C },
+    { XDIC_ADDR_TRIM_GAIN_CH_03,    "XDIC_ADDR_TRIM_GAIN_CH_03",    &gt_xdic_mirror_regs._r1D },
+    { XDIC_ADDR_TRIM_GAIN_CH_04,    "XDIC_ADDR_TRIM_GAIN_CH_04",    &gt_xdic_mirror_regs._r1E },
+    { XDIC_ADDR_TRIM_GAIN_CH_05,    "XDIC_ADDR_TRIM_GAIN_CH_05",    &gt_xdic_mirror_regs._r1F },
+    { XDIC_ADDR_TRIM_GAIN_CH_06,    "XDIC_ADDR_TRIM_GAIN_CH_06",    &gt_xdic_mirror_regs._r20 },
+    { XDIC_ADDR_TRIM_GAIN_CH_07,    "XDIC_ADDR_TRIM_GAIN_CH_07",    &gt_xdic_mirror_regs._r21 },
+    { XDIC_ADDR_TRIM_GAIN_CH_08,    "XDIC_ADDR_TRIM_GAIN_CH_08",    &gt_xdic_mirror_regs._r22 },
+    { XDIC_ADDR_TRIM_GAIN_CH_09,    "XDIC_ADDR_TRIM_GAIN_CH_09",    &gt_xdic_mirror_regs._r23 },
+    { XDIC_ADDR_TRIM_GAIN_CH_10,    "XDIC_ADDR_TRIM_GAIN_CH_10",    &gt_xdic_mirror_regs._r24 },
+    { XDIC_ADDR_TRIM_GAIN_CH_11,    "XDIC_ADDR_TRIM_GAIN_CH_11",    &gt_xdic_mirror_regs._r25 },
+    { XDIC_ADDR_TRIM_GAIN_CH_12,    "XDIC_ADDR_TRIM_GAIN_CH_12",    &gt_xdic_mirror_regs._r26 },
+};
+static_assert(XDIC_ADDR_TRIM_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
+
+
 static uint16_t gn_xdic_saved_trim_reg[XDIC_ADDR_TRIM_MAX];
 
 /* Variable for XD Registers */
@@ -170,118 +175,141 @@ static uint16_t gn_xd_delay_ch[XD_CH_SIZE] = {0, };
 
 static void XDIC_Set_Delay_CH(void);
 
-void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
+static void XDIC_Set_Register_Type(uint8_t reg_type)
 {
-    if (gt_xdic_general_regs._r3F.addr_ext != XDIC_REG_GENERAL)
+    if (reg_type != XDIC_REG_GENERAL && reg_type != XDIC_REG_MIRROR)
     {
-        gt_xdic_general_regs._r3F.addr_ext = XDIC_REG_GENERAL;
-        JigBD_IF_Write_Command(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+        print(LOG_ERROR, "ERROR: %s - Invalid Register Type !!\r\n", __func__);
+        return;
     }
 
-    if (addr < XDIC_ADDR_MAX)
+    if (gt_xdic_general_regs._r3F.addr_ext != reg_type)
     {
-        *(&gt_xdic_general_regs._r00.val + addr) = data;
+        gt_xdic_general_regs._r3F.addr_ext = reg_type;
+        JigBD_IF_Write_Command(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+    }
+}
+
+static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
+{
+    for (uint8_t i = 0; i < sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0]); ++i)
+    {
+        if (gt_xdic_general_maps[i].address == addr)
+        {
+            return &gt_xdic_general_maps[i];
+        }
+    }
+    return NULL;
+}
+
+void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
+{
+    const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
+    if (map)
+    {
+        XDIC_Set_Register_Type(XDIC_REG_GENERAL);
+        *((uint16_t*)(map->reg_ptr)) = data;
+        JigBD_IF_Write_Command(addr, data);
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
-
-    JigBD_IF_Write_Command(addr, data);
 }
 
 uint16_t XDIC_Read_General_Reg(uint8_t addr)
 {
     uint16_t xdic_reg_val = 0xFFFF;
-    if (gt_xdic_general_regs._r3F.addr_ext != XDIC_REG_GENERAL)
+    const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
+    if (map)
     {
-        gt_xdic_general_regs._r3F.addr_ext = XDIC_REG_GENERAL;
-        JigBD_IF_Write_Command(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
-    }
-
-    xdic_reg_val = JigBD_IF_Read_Command(addr);
-    if (addr < XDIC_ADDR_MAX)
-    {
-        *(&gt_xdic_general_regs._r00.val + addr) = xdic_reg_val;
+        XDIC_Set_Register_Type(XDIC_REG_GENERAL);
+        xdic_reg_val = JigBD_IF_Read_Command(addr);
+        *((uint16_t*)(map->reg_ptr)) = xdic_reg_val;
+        print(LOG_DEBUG, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
-    }
-
-    print(LOG_DEBUG, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xdic_general_regs._r00.val + addr));
-
-    return *(&gt_xdic_general_regs._r00.val + addr);
-}
-
-uint16_t XDIC_Get_General_Reg(uint8_t addr)
-{
-    uint16_t xdic_reg_val = 0xFFFF;
-    if (addr < XDIC_ADDR_MAX)
-    {
-        xdic_reg_val = *(&gt_xdic_general_regs._r00.val + addr);
-    }
-    else
-    {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 
     return xdic_reg_val;
 }
 
-void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data)
+uint16_t XDIC_Get_General_Reg(uint8_t addr)
 {
-    if (gt_xdic_general_regs._r3F.addr_ext != XDIC_REG_MIRROR)
+    uint16_t xdic_reg_val = 0xFFFF;
+    const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
+    if (map)
     {
-        gt_xdic_general_regs._r3F.addr_ext = XDIC_REG_MIRROR;
-        JigBD_IF_Write_Command(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
-    }
-
-    if (addr < XDIC_ADDR_TRIM_MAX)
-    {
-        *(&gt_xdic_mirror_regs._r00.val + addr) = data;
+        xdic_reg_val = *((uint16_t*)(map->reg_ptr));
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
+        return xdic_reg_val;
     }
-    JigBD_IF_Write_Command(addr, data);
+
+    return xdic_reg_val;
+}
+
+static const _reg_map_t* XDIC_Get_Mirror_Map_Pointer(uint8_t addr)
+{
+    for (uint8_t i = 0; i < sizeof(gt_xdic_mirror_maps) / sizeof(gt_xdic_mirror_maps[0]); ++i)
+    {
+        if (gt_xdic_mirror_maps[i].address == addr)
+        {
+            return &gt_xdic_mirror_maps[i];
+        }
+    }
+    return NULL;
+}
+
+void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data)
+{
+    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(addr);
+    if (map)
+    {
+        XDIC_Set_Register_Type(XDIC_REG_MIRROR);
+        *((uint16_t*)(map->reg_ptr)) = data;
+        JigBD_IF_Write_Command(addr, data);
+    }
+    else
+    {
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
+    }
 }
 
 uint16_t XDIC_Read_Mirror_Reg(uint8_t addr)
 {
     uint16_t xdic_reg_val = 0xFFFF;
-    if (gt_xdic_general_regs._r3F.addr_ext != XDIC_REG_MIRROR)
+    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(addr);
+    if (map)
     {
-        gt_xdic_general_regs._r3F.addr_ext = XDIC_REG_MIRROR;
-        JigBD_IF_Write_Command(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
-    }
-
-    xdic_reg_val = JigBD_IF_Read_Command(addr);
-    if (addr < XDIC_ADDR_TRIM_MAX)
-    {
-        *(&gt_xdic_mirror_regs._r00.val + addr) = xdic_reg_val;
+        XDIC_Set_Register_Type(XDIC_REG_MIRROR);
+        xdic_reg_val = JigBD_IF_Read_Command(addr);
+        *((uint16_t*)(map->reg_ptr)) = xdic_reg_val;
+        print(LOG_DEBUG, "XDIC Mirror Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 
-    print(LOG_DEBUG, "XDIC Mirror Read --> [ 0x%02X - 0x%04X] \r\n", addr, *(&gt_xdic_mirror_regs._r00.val + addr));
-
-    return *(&gt_xdic_mirror_regs._r00.val + addr);
+    return xdic_reg_val;
 }
 
 uint16_t XDIC_Get_Mirror_Reg(uint8_t addr)
 {
     uint16_t xdic_reg_val = 0xFFFF;
-    if (addr < XDIC_ADDR_TRIM_MAX)
+    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(addr);
+    if (map)
     {
-        xdic_reg_val = *(&gt_xdic_mirror_regs._r00.val + addr);
+        xdic_reg_val = *((uint16_t*)(map->reg_ptr));
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Over !!\r\n", __func__, addr);
+        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 
     return xdic_reg_val;
@@ -291,16 +319,6 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
 {
     switch(in_trim_mode)
     {
-    case XD_TRIM_OSC_FREQUENCY:
-        if (in_reg_val > REG_LIMIT_OSC)
-        {
-            print(LOG_ERROR, "ERROR: %s XD_TRIM_OSC_FREQUENCY- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
-        }
-        else
-        {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OSC, in_reg_val);
-        }
-        break;
     case XD_TRIM_VREF_CTL:
         if (in_reg_val > REG_LIMIT_VREF)
         {
@@ -311,14 +329,14 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_VREF_CTL, in_reg_val);
         }
         break;
-    case XD_TRIM_OFS_CHS:
-        if (in_reg_val > REG_LIMIT_OFS)
+    case XD_TRIM_OSC_FREQUENCY:
+        if (in_reg_val > REG_LIMIT_OSC)
         {
-            print(LOG_ERROR, "ERROR: %s XD_TRIM_OFS_CHS- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+            print(LOG_ERROR, "ERROR: %s XD_TRIM_OSC_FREQUENCY- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
         }
         else
         {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OFS_CH_01 + ch_num, in_reg_val);
+            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OSC, in_reg_val);
         }
         break;
     case XD_TRIM_GAIN_CHS:
@@ -331,26 +349,43 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_GAIN_CH_01 + ch_num, in_reg_val);
         }
         break;
+    case XD_TRIM_OFS_CHS:
+        if (in_reg_val > REG_LIMIT_OFS)
+        {
+            print(LOG_ERROR, "ERROR: %s XD_TRIM_OFS_CHS- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+        }
+        else
+        {
+            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OFS_CH_01 + ch_num, in_reg_val);
+        }
+        break;
     }
 }
 
 uint16_t XDIC_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
     uint16_t rtn_val = 0xFFFF;
+    uint8_t xd_trim_addr = 0;
     switch(in_trim_mode)
     {
     case XD_TRIM_VREF_CTL:
-        rtn_val = gt_xdic_mirror_regs._r02.val;
+        xd_trim_addr = XDIC_ADDR_TRIM_VREF_CTL;
         break;
     case XD_TRIM_OSC_FREQUENCY:
-        rtn_val = gt_xdic_mirror_regs._r01.val;
-        break;
-    case XD_TRIM_OFS_CHS:
-        rtn_val = *(&gt_xdic_mirror_regs._r03.val + ch_num);
+        xd_trim_addr = XDIC_ADDR_TRIM_OSC;
         break;
     case XD_TRIM_GAIN_CHS:
-        rtn_val = *(&gt_xdic_mirror_regs._r1B.val + ch_num);
+        xd_trim_addr = XDIC_ADDR_TRIM_GAIN_CH_01 + ch_num;
         break;
+    case XD_TRIM_OFS_CHS:
+        xd_trim_addr = XDIC_ADDR_TRIM_OFS_CH_01 + ch_num;
+        break;
+    }
+
+    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_trim_addr);
+    if (map)
+    {
+        rtn_val = *((uint16_t*)(map->reg_ptr));
     }
 
     return rtn_val;
@@ -367,11 +402,11 @@ uint16_t XDIC_Get_Mirror_Register_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mod
     case XD_TRIM_OSC_FREQUENCY:
         rtn_val = REG_LIMIT_OSC;
         break;
-    case XD_TRIM_OFS_CHS:
-        rtn_val = REG_LIMIT_OFS;
-        break;
     case XD_TRIM_GAIN_CHS:
         rtn_val = REG_LIMIT_GAIN;
+        break;
+    case XD_TRIM_OFS_CHS:
+        rtn_val = REG_LIMIT_OFS;
         break;
     }
 
@@ -382,16 +417,22 @@ static void XDIC_Dump_All_Registers(void)
 {
     for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
-        print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                        "\t VALUE : (0x%04X)\r\n\r\n",
-                        gs_xdic_general_regs_str[xd_general_addr], xd_general_addr, gt_xdic_general_regs.ALL[xd_general_addr]);
+        const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xd_general_addr);
+        if (map)
+        {
+            uint16_t value = *((uint16_t*)(map->reg_ptr));
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : (0x%04X)\r\n\r\n", map->name, map->address, value);
+        }
     }
 
     for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_ADDR_TRIM_MAX ; ++xd_mirror_addr)
     {
-        print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                        "\t VALUE : (0x%04X)\r\n\r\n",
-                        gs_xdic_mirror_regs_str[xd_mirror_addr], xd_mirror_addr, gt_xdic_mirror_regs.ALL[xd_mirror_addr]);
+        const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
+        if (map)
+        {
+            uint16_t value = *((uint16_t*)(map->reg_ptr));
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : (0x%04X)\r\n\r\n", map->name, map->address, value);
+        }
     }
 }
 
@@ -437,55 +478,59 @@ void XDIC_Init(void)
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
-        switch (xdic_addr)
+        const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
+        if (map)
         {
-        case XDIC_ADDR_LD_MODE :
-            gt_xdic_general_regs._r01.ld_mode = XD_LD_MODE_NORMAL;
-            gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
-            gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VYI_FBO;
-            break;
-        case XDIC_ADDR_SF_PERIOD :
-            gt_xdic_general_regs._r02.sf_period = gn_xd_sf_period;
-            break;
-        case XDIC_ADDR_SF_SIZE :
-            gt_xdic_general_regs._r03.sf_size = gn_xd_sf_size;
-            break;
-        case XDIC_ADDR_CH_SF_X8_SIZE :
-            gt_xdic_general_regs._r04.sf_x8_size = gn_xd_sf_x8_size;
-            gt_xdic_general_regs._r04.ld_size = gn_xd_ld_size;
-            break;
-        case XDIC_ADDR_MAX_CURRENT_VREF :
-            gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
-            break;
-        case XDIC_ADDR_CHANNEL_ENABLE :
-            gt_xdic_general_regs._r09.val = 0xFFF;
-            break;
-        case XDIC_ADDR_FAULT_LEVEL :
-            gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
-            gt_xdic_general_regs._r0C.short_level = gt_xd_short_level;
-            gt_xdic_general_regs._r0C.dev_max_curr_level = gt_xd_dev_max_curr_level;
-            break;
-        case XDIC_ADDR_FAULT_CONTROL :
-            gt_xdic_general_regs._r0D.timeout_en = 1;
-            break;
-        case XDIC_ADDR_SERIAL_BAUDRATE :
-            gt_xdic_general_regs._r26.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
-            gt_xdic_general_regs._r26.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
-            break;
-        case XDIC_ADDR_SERIAL_LATENCY :
-            gt_xdic_general_regs._r27.serial_latency = 60;
-            break;
-        case XDIC_ADDR_MCLK_LOCK_1 :
-            gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0x000FFF) >>  0);
-            break;
-        case XDIC_ADDR_MCLK_LOCK_2 :
-            gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
-            gt_xdic_general_regs._r2A.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
-            break;
-        default :
-            continue;
+            switch (xdic_addr)
+            {
+            case XDIC_ADDR_LD_MODE :
+                gt_xdic_general_regs._r01.ld_mode = XD_LD_MODE_NORMAL;
+                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VYI_FBO;
+                break;
+            case XDIC_ADDR_SF_PERIOD :
+                gt_xdic_general_regs._r02.sf_period = gn_xd_sf_period;
+                break;
+            case XDIC_ADDR_SF_SIZE :
+                gt_xdic_general_regs._r03.sf_size = gn_xd_sf_size;
+                break;
+            case XDIC_ADDR_CH_SF_X8_SIZE :
+                gt_xdic_general_regs._r04.sf_x8_size = gn_xd_sf_x8_size;
+                gt_xdic_general_regs._r04.ld_size = gn_xd_ld_size;
+                break;
+            case XDIC_ADDR_MAX_CURRENT_VREF :
+                gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
+                break;
+            case XDIC_ADDR_CHANNEL_ENABLE :
+                gt_xdic_general_regs._r09.val = 0xFFF;
+                break;
+            case XDIC_ADDR_FAULT_LEVEL :
+                gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
+                gt_xdic_general_regs._r0C.short_level = gt_xd_short_level;
+                gt_xdic_general_regs._r0C.dev_max_curr_level = gt_xd_dev_max_curr_level;
+                break;
+            case XDIC_ADDR_FAULT_CONTROL :
+                gt_xdic_general_regs._r0D.timeout_en = 1;
+                break;
+            case XDIC_ADDR_SERIAL_BAUDRATE :
+                gt_xdic_general_regs._r26.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
+                gt_xdic_general_regs._r26.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
+                break;
+            case XDIC_ADDR_SERIAL_LATENCY :
+                gt_xdic_general_regs._r27.serial_latency = 60;
+                break;
+            case XDIC_ADDR_MCLK_LOCK_1 :
+                gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0x000FFF) >>  0);
+                break;
+            case XDIC_ADDR_MCLK_LOCK_2 :
+                gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
+                gt_xdic_general_regs._r2A.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
+                break;
+            default :
+                continue;
+            }
+            XDIC_Write_General_Reg(xdic_addr, *((uint16_t*)(map->reg_ptr)));
         }
-        XDIC_Write_General_Reg(xdic_addr, gt_xdic_general_regs.ALL[xdic_addr]);
     }
 
     XDIC_Set_Delay_CH();
@@ -517,34 +562,38 @@ void XDIC_Trim_Init(void)
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
-        switch (xdic_addr)
+        const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
+        if (map)
         {
-        case XDIC_ADDR_MAX_CURRENT_VREF :
-            gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
-            break;
-        case XDIC_ADDR_CHANNEL_ENABLE :
-            gt_xdic_general_regs._r09.val = 0xFFF;
-            break;
-        case XDIC_ADDR_FAULT_LEVEL :
-            gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
-            gt_xdic_general_regs._r0C.short_level = gt_xd_short_level;
-            gt_xdic_general_regs._r0C.dev_max_curr_level = gt_xd_dev_max_curr_level;
-            break;
-        case XDIC_ADDR_SERIAL_BAUDRATE :
-            gt_xdic_general_regs._r26.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
-            gt_xdic_general_regs._r26.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
-            break;
-        case XDIC_ADDR_SERIAL_LATENCY :
-            gt_xdic_general_regs._r27.serial_latency = 60;
-            break;
-        case XDIC_ADDR_OTP_OP_MODE :
-            gt_xdic_general_regs._r3F.test_en = 1;
-            gt_xdic_general_regs._r3F.ddio_dis = 1;
-            break;
-        default :
-            continue;
+            switch (xdic_addr)
+            {
+            case XDIC_ADDR_MAX_CURRENT_VREF :
+                gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
+                break;
+            case XDIC_ADDR_CHANNEL_ENABLE :
+                gt_xdic_general_regs._r09.val = 0xFFF;
+                break;
+            case XDIC_ADDR_FAULT_LEVEL :
+                gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
+                gt_xdic_general_regs._r0C.short_level = gt_xd_short_level;
+                gt_xdic_general_regs._r0C.dev_max_curr_level = gt_xd_dev_max_curr_level;
+                break;
+            case XDIC_ADDR_SERIAL_BAUDRATE :
+                gt_xdic_general_regs._r26.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
+                gt_xdic_general_regs._r26.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
+                break;
+            case XDIC_ADDR_SERIAL_LATENCY :
+                gt_xdic_general_regs._r27.serial_latency = 60;
+                break;
+            case XDIC_ADDR_OTP_OP_MODE :
+                gt_xdic_general_regs._r3F.test_en = 1;
+                gt_xdic_general_regs._r3F.ddio_dis = 1;
+                break;
+            default :
+                continue;
+            }
+            XDIC_Write_General_Reg(xdic_addr, *((uint16_t*)(map->reg_ptr)));
         }
-        XDIC_Write_General_Reg(xdic_addr, gt_xdic_general_regs.ALL[xdic_addr]);
     }
     XDIC_Set_OTP_Protect(false);
     XDIC_Read_All_Registers();
@@ -555,12 +604,20 @@ void XDIC_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XDIC_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = gn_xd_sf_size / gn_xd_ld_size;
-
-    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+    if (gn_xd_ld_size == 0)
     {
-        gn_xd_delay_ch[ch] = delay_per_ch * ch;
-        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, gn_xd_delay_ch[ch]);
+        print(LOG_ERROR, "ERROR: %s - ld_size is zero(%d) !!\r\n", __func__, gn_xd_ld_size);
+        while(1) {}
+    }
+    else
+    {
+        uint16_t delay_per_ch = gn_xd_sf_size / gn_xd_ld_size;
+
+        for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+        {
+            gn_xd_delay_ch[ch] = delay_per_ch * ch;
+            XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, gn_xd_delay_ch[ch]);
+        }
     }
 }
 
@@ -571,6 +628,12 @@ void XDIC_Set_LD_Fix(uint16_t in_ld_fix)
 
     XDIC_Write_General_Reg(XDIC_ADDR_LD_FIX_1, gt_xdic_general_regs._r06.val);
     XDIC_Write_General_Reg(XDIC_ADDR_LD_FIX_2, gt_xdic_general_regs._r07.val);
+}
+
+void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
+{
+    gt_xdic_general_regs._r0C.dev_max_curr_level = in_dev_max_curr;
+    XDIC_Write_General_Reg(XDIC_ADDR_FAULT_LEVEL, gt_xdic_general_regs._r0C.val);
 }
 
 float XDIC_Get_Max_Current_level(void)
@@ -693,11 +756,11 @@ uint64_t XDIC_Compare_Trim_Regs(void)
         if (gn_xdic_saved_trim_reg[trim_addr] != u16_reg_val)
         {
             ret |= ((uint64_t)1 << trim_addr);
-            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gs_xdic_mirror_regs_str[trim_addr]);
+            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[trim_addr].name);
         }
         else
         {
-            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gs_xdic_mirror_regs_str[trim_addr]);
+            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gt_xdic_mirror_maps[trim_addr].name);
         }
         print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xdic_saved_trim_reg[trim_addr], u16_reg_val, ANSI_FONT_NONE);
     }

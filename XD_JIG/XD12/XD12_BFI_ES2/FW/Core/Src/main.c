@@ -32,6 +32,7 @@
 #include "ads124s08.h"
 #include "vsync_task.h"
 #include "xdic.h"
+#include "xc24.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,6 +109,10 @@ void sys_tick_handler(void)
     if (gn_xd_rx_timeout)
     {
         --gn_xd_rx_timeout;
+    }
+    if (gn_xc_spi_timeout)
+    {
+        --gn_xc_spi_timeout;
     }
 }
 

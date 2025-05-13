@@ -92,6 +92,13 @@ extern "C" {
 #define ANSI_FONT_GREEN     "\033[0;32m"
 #define ANSI_FONT_YELLOW    "\033[0;33m"
 
+typedef struct tag_XDIC_REG_INFO_T
+{
+    uint8_t address;
+    const char* name;
+    void* reg_ptr;
+} _reg_map_t;
+
 #ifdef __cplusplus
 }
 #endif

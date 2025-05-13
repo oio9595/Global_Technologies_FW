@@ -85,7 +85,7 @@ typedef enum tag_XDIC_FB_LEVEL_T
     FB_LEVEL_MAX,
 } fb_level_t;
 
-typedef union
+typedef union tag_XDIC_DUMMY_T
 {
     uint16_t ALL;
     struct
@@ -94,7 +94,7 @@ typedef union
     };
 } _xdic_dummy_t;
 
-typedef union // 0x00
+typedef union tag_XDIC_GENERAL_0x00_T
 {
     uint16_t val;
     struct
@@ -106,7 +106,7 @@ typedef union // 0x00
     };
 } _xdic_reset_id_t;
 
-typedef union // 0x01
+typedef union tag_XDIC_GENERAL_0x01_T
 {
     uint16_t val;
     struct
@@ -120,7 +120,7 @@ typedef union // 0x01
     };
 } _xdic_ld_mode_t;
 
-typedef union // 0x02
+typedef union tag_XDIC_GENERAL_0x02_T
 {
     uint16_t val;
     struct
@@ -130,7 +130,7 @@ typedef union // 0x02
     };
 } _xdic_sf_period_t;
 
-typedef union // 0x03
+typedef union tag_XDIC_GENERAL_0x03_T
 {
     uint16_t val;
     struct
@@ -140,7 +140,7 @@ typedef union // 0x03
     };
 } _xdic_sf_size_t;
 
-typedef union // 0x04
+typedef union tag_XDIC_GENERAL_0x04_T
 {
     uint16_t val;
     struct
@@ -152,7 +152,7 @@ typedef union // 0x04
     };
 } _xdic_ch_sf_x8_size_t;
 
-typedef union // 0x05
+typedef union tag_XDIC_GENERAL_0x05_T
 {
     uint16_t val;
     struct
@@ -162,7 +162,7 @@ typedef union // 0x05
     };
 } _xdic_sf_bfi_size_t;
 
-typedef union // 0x06
+typedef union tag_XDIC_GENERAL_0x06_T
 {
     uint16_t val;
     struct
@@ -172,7 +172,7 @@ typedef union // 0x06
     };
 } _xdic_ld_fix_1_t;
 
-typedef union // 0x07
+typedef union tag_XDIC_GENERAL_0x07_T
 {
     uint16_t val;
     struct
@@ -182,7 +182,7 @@ typedef union // 0x07
     };
 } _xdic_ld_fix_2_t;
 
-typedef union // 0x08
+typedef union tag_XDIC_GENERAL_0x08_T
 {
     uint16_t val;
     struct
@@ -192,7 +192,7 @@ typedef union // 0x08
     };
 } _xdic_max_current_vref_t;
 
-typedef union // 0x09
+typedef union tag_XDIC_GENERAL_0x09_T
 {
     uint16_t val;
     struct
@@ -213,7 +213,7 @@ typedef union // 0x09
     };
 } _xdic_channel_enable_t;
 
-typedef union // 0x0B
+typedef union tag_XDIC_GENERAL_0x0B_T
 {
     uint16_t val;
     struct
@@ -231,7 +231,7 @@ typedef union // 0x0B
     };
 } _xdic_fault_status_t;
 
-typedef union // 0x0C
+typedef union tag_XDIC_GENERAL_0x0C_T
 {
     uint16_t val;
     struct
@@ -245,7 +245,7 @@ typedef union // 0x0C
     };
 } _xdic_fault_level_t;
 
-typedef union // 0x0D
+typedef union tag_XDIC_GENERAL_0x0D_T
 {
     uint16_t val;
     struct
@@ -265,7 +265,7 @@ typedef union // 0x0D
     };
 } _xdic_fault_control_t;
 
-typedef union // 0x0E ~ 0x19
+typedef union tag_XDIC_GENERAL_0x0E_0x19_T
 {
     uint16_t val;
     struct
@@ -275,7 +275,7 @@ typedef union // 0x0E ~ 0x19
     };
 } _xdic_delay_ch_x_t;
 
-typedef union // 0x26
+typedef union tag_XDIC_GENERAL_0x26_T
 {
     uint16_t val;
     struct
@@ -286,7 +286,7 @@ typedef union // 0x26
     };
 } _xdic_serial_baudrate_t;
 
-typedef union // 0x27
+typedef union tag_XDIC_GENERAL_0x27_T
 {
     uint16_t val;
     struct
@@ -296,7 +296,7 @@ typedef union // 0x27
     };
 } _xdic_serial_latency_t;
 
-typedef union // 0x28
+typedef union tag_XDIC_GENERAL_0x28_T
 {
     uint16_t val;
     struct
@@ -308,7 +308,7 @@ typedef union // 0x28
     };
 } _xdic_dclk_period_t;
 
-typedef union // 0x29
+typedef union tag_XDIC_GENERAL_0x29_T
 {
     uint16_t val;
     struct
@@ -318,7 +318,7 @@ typedef union // 0x29
     };
 } _xdic_mclk_lock_1_t;
 
-typedef union // 0x2A
+typedef union tag_XDIC_GENERAL_0x2A_T
 {
     uint16_t val;
     struct
@@ -330,7 +330,7 @@ typedef union // 0x2A
     };
 } _xdic_mclk_lock_2_t;
 
-typedef union // 0x2B
+typedef union tag_XDIC_GENERAL_0x2B_T
 {
     uint16_t val;
     struct
@@ -342,7 +342,7 @@ typedef union // 0x2B
     };
 } _xdic_osc_compensation_t;
 
-typedef union // 0x2C
+typedef union tag_XDIC_GENERAL_0x2C_T
 {
     uint16_t val;
     struct
@@ -352,7 +352,7 @@ typedef union // 0x2C
     };
 } _xdic_osc_comp_th_p_t;
 
-typedef union // 0x2D
+typedef union tag_XDIC_GENERAL_0x2D_T
 {
     uint16_t val;
     struct
@@ -362,7 +362,7 @@ typedef union // 0x2D
     };
 } _xdic_osc_comp_th_n_t;
 
-typedef union // 0x2E
+typedef union tag_XDIC_GENERAL_0x2E_T
 {
     uint16_t val;
     struct
@@ -375,7 +375,7 @@ typedef union // 0x2E
     };
 } _xdic_ld_control_t;
 
-typedef union // 0x2F
+typedef union tag_XDIC_GENERAL_0x2F_T
 {
     uint16_t val;
     struct
@@ -385,7 +385,7 @@ typedef union // 0x2F
     };
 } _xdic_vref_fix_t;
 
-typedef union // 0x3A
+typedef union tag_XDIC_GENERAL_0x3A_T
 {
     uint16_t val;
     struct
@@ -395,7 +395,7 @@ typedef union // 0x3A
     };
 } _xdic_otp_access_1_t;
 
-typedef union // 0x3B
+typedef union tag_XDIC_GENERAL_0x3B_T
 {
     uint16_t val;
     struct
@@ -405,7 +405,7 @@ typedef union // 0x3B
     };
 } _xdic_otp_access_2_t;
 
-typedef union // 0x3C
+typedef union tag_XDIC_GENERAL_0x3C_T
 {
     uint16_t val;
     struct
@@ -415,7 +415,7 @@ typedef union // 0x3C
     };
 } _xdic_otp_write_t;
 
-typedef union // 0x3D
+typedef union tag_XDIC_GENERAL_0x3D_T
 {
     uint16_t val;
     struct
@@ -426,7 +426,7 @@ typedef union // 0x3D
     };
 } _xdic_otp_rd_prog_t;
 
-typedef union // 0x3E
+typedef union tag_XDIC_GENERAL_0x3E_T
 {
     uint16_t val;
     struct
@@ -436,7 +436,7 @@ typedef union // 0x3E
     };
 } _xdic_otp_protect_t;
 
-typedef union // 0x3F
+typedef union tag_XDIC_GENERAL_0x3F_T
 {
     uint16_t val;
     struct
@@ -456,7 +456,7 @@ typedef union // 0x3F
 /////////////////////////////////
 //       TRIM REGISTERS        //
 /////////////////////////////////
-typedef union // 0x00
+typedef union tag_XDIC_MIRROR_0x00_T
 {
     uint16_t val;
     struct
@@ -466,7 +466,7 @@ typedef union // 0x00
     };
 } _xdic_otp_crc_t;
 
-typedef union // 0x01
+typedef union tag_XDIC_MIRROR_0x01_T
 {
     uint16_t val;
     struct
@@ -476,7 +476,7 @@ typedef union // 0x01
     };
 } _xdic_osc_t;
 
-typedef union // 0x02
+typedef union tag_XDIC_MIRROR_0x02_T
 {
     uint16_t val;
     struct
@@ -486,7 +486,7 @@ typedef union // 0x02
     };
 } _xdic_vref_ctl_t;
 
-typedef union // 0x03 ~ 0x0E
+typedef union tag_XDIC_MIRROR_0x03_0x0E_T
 {
     uint16_t val;
     struct
@@ -496,7 +496,7 @@ typedef union // 0x03 ~ 0x0E
     };
 } _xdic_ofs_ch_t;
 
-typedef union // 0x1B ~ 0x26
+typedef union tag_XDIC_MIRROR_0x1B_0x26_T
 {
     uint16_t val;
     struct
@@ -508,84 +508,120 @@ typedef union // 0x1B ~ 0x26
 
 typedef enum tag_XDIC_GENERAL_ADDR_T
 {
-    XDIC_ADDR_RESET_ID         = 0x00,  // 0x00
-    XDIC_ADDR_LD_MODE          = 0x01,  // 0x01
-    XDIC_ADDR_SF_PERIOD        = 0x02,  // 0x02
-    XDIC_ADDR_SF_SIZE          = 0x03,  // 0x03
-    XDIC_ADDR_CH_SF_X8_SIZE    = 0x04,  // 0x04
-    XDIC_ADDR_SF_BFI_SIZE      = 0x05,  // 0x05
-    XDIC_ADDR_LD_FIX_1         = 0x06,  // 0x06
-    XDIC_ADDR_LD_FIX_2         = 0x07,  // 0x07
-    XDIC_ADDR_MAX_CURRENT_VREF = 0x08,  // 0x08
-    XDIC_ADDR_CHANNEL_ENABLE   = 0x09,  // 0x09
+    XDIC_ADDR_RESET_ID              = 0x00,  // 0x00
+    XDIC_ADDR_LD_MODE               = 0x01,  // 0x01
+    XDIC_ADDR_SF_PERIOD             = 0x02,  // 0x02
+    XDIC_ADDR_SF_SIZE               = 0x03,  // 0x03
+    XDIC_ADDR_CH_SF_X8_SIZE         = 0x04,  // 0x04
+    XDIC_ADDR_SF_BFI_SIZE           = 0x05,  // 0x05
+    XDIC_ADDR_LD_FIX_1              = 0x06,  // 0x06
+    XDIC_ADDR_LD_FIX_2              = 0x07,  // 0x07
+    XDIC_ADDR_MAX_CURRENT_VREF      = 0x08,  // 0x08
+    XDIC_ADDR_CHANNEL_ENABLE        = 0x09,  // 0x09
+    XDIC_ADDR_DUMMY_0A              = 0x0A,  // 0x0A
+    XDIC_ADDR_FAULT_STATUS          = 0x0B,  // 0x0B
+    XDIC_ADDR_FAULT_LEVEL           = 0x0C,  // 0x0C
+    XDIC_ADDR_FAULT_CONTROL         = 0x0D,  // 0x0D
+    XDIC_ADDR_DELAY_CH_01           = 0x0E,  // 0x0E
+    XDIC_ADDR_DELAY_CH_02           = 0x0F,  // 0x0F
 
-    XDIC_ADDR_FAULT_STATUS     = 0x0B,  // 0x0B
-    XDIC_ADDR_FAULT_LEVEL      = 0x0C,  // 0x0C
-    XDIC_ADDR_FAULT_CONTROL    = 0x0D,  // 0x0D
-    XDIC_ADDR_DELAY_CH_01      = 0x0E,  // 0x0E
-    XDIC_ADDR_DELAY_CH_02      = 0x0F,  // 0x0F
-    XDIC_ADDR_DELAY_CH_03      = 0x10,  // 0x10
-    XDIC_ADDR_DELAY_CH_04      = 0x11,  // 0x11
-    XDIC_ADDR_DELAY_CH_05      = 0x12,  // 0x12
-    XDIC_ADDR_DELAY_CH_06      = 0x13,  // 0x13
-    XDIC_ADDR_DELAY_CH_07      = 0x14,  // 0x14
-    XDIC_ADDR_DELAY_CH_08      = 0x15,  // 0x15
-    XDIC_ADDR_DELAY_CH_09      = 0x16,  // 0x16
-    XDIC_ADDR_DELAY_CH_10      = 0x17,  // 0x17
-    XDIC_ADDR_DELAY_CH_11      = 0x18,  // 0x18
-    XDIC_ADDR_DELAY_CH_12      = 0x19,  // 0x19
+    XDIC_ADDR_DELAY_CH_03           = 0x10,  // 0x10
+    XDIC_ADDR_DELAY_CH_04           = 0x11,  // 0x11
+    XDIC_ADDR_DELAY_CH_05           = 0x12,  // 0x12
+    XDIC_ADDR_DELAY_CH_06           = 0x13,  // 0x13
+    XDIC_ADDR_DELAY_CH_07           = 0x14,  // 0x14
+    XDIC_ADDR_DELAY_CH_08           = 0x15,  // 0x15
+    XDIC_ADDR_DELAY_CH_09           = 0x16,  // 0x16
+    XDIC_ADDR_DELAY_CH_10           = 0x17,  // 0x17
+    XDIC_ADDR_DELAY_CH_11           = 0x18,  // 0x18
+    XDIC_ADDR_DELAY_CH_12           = 0x19,  // 0x19
+    XDIC_ADDR_DUMMY_1A              = 0x1A,  // 0x1A
+    XDIC_ADDR_DUMMY_1B              = 0x1B,  // 0x1B
+    XDIC_ADDR_DUMMY_1C              = 0x1C,  // 0x1C
+    XDIC_ADDR_DUMMY_1D              = 0x1D,  // 0x1D
+    XDIC_ADDR_DUMMY_1E              = 0x1E,  // 0x1E
+    XDIC_ADDR_DUMMY_1F              = 0x1F,  // 0x1F
 
-    XDIC_ADDR_SERIAL_BAUDRATE  = 0x26,  // 0x26
-    XDIC_ADDR_SERIAL_LATENCY   = 0x27,  // 0x27
-    XDIC_ADDR_DCLK_PERIOD      = 0x28,  // 0x28
-    XDIC_ADDR_MCLK_LOCK_1      = 0x29,  // 0x29
-    XDIC_ADDR_MCLK_LOCK_2      = 0x2A,  // 0x2A
-    XDIC_ADDR_OSC_COMPENSATION = 0x2B,  // 0x2B
-    XDIC_ADDR_OSC_COMP_TH_P    = 0x2C,  // 0x2C
-    XDIC_ADDR_OSC_COMP_TH_N    = 0x2D,  // 0x2D
-    XDIC_ADDR_LD_CONTROL       = 0x2E,  // 0x2E
-    XDIC_ADDR_VREF_FIX         = 0x2F,  // 0x2F
+    XDIC_ADDR_DUMMY_20              = 0x20,  // 0x20
+    XDIC_ADDR_DUMMY_21              = 0x21,  // 0x21
+    XDIC_ADDR_DUMMY_22              = 0x22,  // 0x22
+    XDIC_ADDR_DUMMY_23              = 0x23,  // 0x23
+    XDIC_ADDR_DUMMY_24              = 0x24,  // 0x24
+    XDIC_ADDR_DUMMY_25              = 0x25,  // 0x25
+    XDIC_ADDR_SERIAL_BAUDRATE       = 0x26,  // 0x26
+    XDIC_ADDR_SERIAL_LATENCY        = 0x27,  // 0x27
+    XDIC_ADDR_DCLK_PERIOD           = 0x28,  // 0x28
+    XDIC_ADDR_MCLK_LOCK_1           = 0x29,  // 0x29
+    XDIC_ADDR_MCLK_LOCK_2           = 0x2A,  // 0x2A
+    XDIC_ADDR_OSC_COMPENSATION      = 0x2B,  // 0x2B
+    XDIC_ADDR_OSC_COMP_TH_P         = 0x2C,  // 0x2C
+    XDIC_ADDR_OSC_COMP_TH_N         = 0x2D,  // 0x2D
+    XDIC_ADDR_LD_CONTROL            = 0x2E,  // 0x2E
+    XDIC_ADDR_VREF_FIX              = 0x2F,  // 0x2F
 
-    XDIC_ADDR_OTP_ACCESS_1     = 0x3A,  // 0x3A
-    XDIC_ADDR_OTP_ACCESS_2     = 0x3B,  // 0x3B
-    XDIC_ADDR_OTP_WRITE        = 0x3C,  // 0x3C
-    XDIC_ADDR_OTP_RD_PROG      = 0x3D,  // 0x3D
-    XDIC_ADDR_OTP_PROTECT      = 0x3E,  // 0x3E
-    XDIC_ADDR_OTP_OP_MODE      = 0x3F,  // 0x3F
-    XDIC_ADDR_MAX              = 0x40   // 0x40
+    XDIC_ADDR_DUMMY_30              = 0x30,  // 0x30
+    XDIC_ADDR_DUMMY_31              = 0x31,  // 0x31
+    XDIC_ADDR_DUMMY_32              = 0x32,  // 0x32
+    XDIC_ADDR_DUMMY_33              = 0x33,  // 0x33
+    XDIC_ADDR_DUMMY_34              = 0x34,  // 0x34
+    XDIC_ADDR_DUMMY_35              = 0x35,  // 0x35
+    XDIC_ADDR_DUMMY_36              = 0x36,  // 0x36
+    XDIC_ADDR_DUMMY_37              = 0x37,  // 0x37
+    XDIC_ADDR_DUMMY_38              = 0x38,  // 0x38
+    XDIC_ADDR_DUMMY_39              = 0x39,  // 0x39
+    XDIC_ADDR_OTP_ACCESS_1          = 0x3A,  // 0x3A
+    XDIC_ADDR_OTP_ACCESS_2          = 0x3B,  // 0x3B
+    XDIC_ADDR_OTP_WRITE             = 0x3C,  // 0x3C
+    XDIC_ADDR_OTP_RD_PROG           = 0x3D,  // 0x3D
+    XDIC_ADDR_OTP_PROTECT           = 0x3E,  // 0x3E
+    XDIC_ADDR_OTP_OP_MODE           = 0x3F,  // 0x3F
+    XDIC_ADDR_MAX                   = 0x40   // 0x40
 } xdic_addr_t;
 
 typedef enum tag_XDIC_MIRROR_ADDR_T
 {
-    XDIC_ADDR_TRIM_OTP_CRC       = 0x00,  // 0x00
-    XDIC_ADDR_TRIM_OSC           = 0x01,  // 0x01
-    XDIC_ADDR_TRIM_VREF_CTL      = 0x02,  // 0x02
-    XDIC_ADDR_TRIM_OFS_CH_01     = 0x03,  // 0x03
-    XDIC_ADDR_TRIM_OFS_CH_02     = 0x04,  // 0x04
-    XDIC_ADDR_TRIM_OFS_CH_03     = 0x05,  // 0x05
-    XDIC_ADDR_TRIM_OFS_CH_04     = 0x06,  // 0x06
-    XDIC_ADDR_TRIM_OFS_CH_05     = 0x07,  // 0x07
-    XDIC_ADDR_TRIM_OFS_CH_06     = 0x08,  // 0x08
-    XDIC_ADDR_TRIM_OFS_CH_07     = 0x09,  // 0x09
-    XDIC_ADDR_TRIM_OFS_CH_08     = 0x0A,  // 0x0A
-    XDIC_ADDR_TRIM_OFS_CH_09     = 0x0B,  // 0x0B
-    XDIC_ADDR_TRIM_OFS_CH_10     = 0x0C,  // 0x0C
-    XDIC_ADDR_TRIM_OFS_CH_11     = 0x0D,  // 0x0D
-    XDIC_ADDR_TRIM_OFS_CH_12     = 0x0E,  // 0x0E
-    /* BLANK - 0x0F ~ 0x1A */
-    XDIC_ADDR_TRIM_GAIN_CH_01    = 0x1B,  // 0x1B
-    XDIC_ADDR_TRIM_GAIN_CH_02    = 0x1C,  // 0x1C
-    XDIC_ADDR_TRIM_GAIN_CH_03    = 0x1D,  // 0x1D
-    XDIC_ADDR_TRIM_GAIN_CH_04    = 0x1E,  // 0x1E
-    XDIC_ADDR_TRIM_GAIN_CH_05    = 0x1F,  // 0x1F
-    XDIC_ADDR_TRIM_GAIN_CH_06    = 0x20,  // 0x20
-    XDIC_ADDR_TRIM_GAIN_CH_07    = 0x21,  // 0x21
-    XDIC_ADDR_TRIM_GAIN_CH_08    = 0x22,  // 0x22
-    XDIC_ADDR_TRIM_GAIN_CH_09    = 0x23,  // 0x23
-    XDIC_ADDR_TRIM_GAIN_CH_10    = 0x24,  // 0x24
-    XDIC_ADDR_TRIM_GAIN_CH_11    = 0x25,  // 0x25
-    XDIC_ADDR_TRIM_GAIN_CH_12    = 0x26,  // 0x26
-    XDIC_ADDR_TRIM_MAX           = 0x27   // 0x27
+    XDIC_ADDR_TRIM_OTP_CRC          = 0x00,  // 0x00
+    XDIC_ADDR_TRIM_OSC              = 0x01,  // 0x01
+    XDIC_ADDR_TRIM_VREF_CTL         = 0x02,  // 0x02
+    XDIC_ADDR_TRIM_OFS_CH_01        = 0x03,  // 0x03
+    XDIC_ADDR_TRIM_OFS_CH_02        = 0x04,  // 0x04
+    XDIC_ADDR_TRIM_OFS_CH_03        = 0x05,  // 0x05
+    XDIC_ADDR_TRIM_OFS_CH_04        = 0x06,  // 0x06
+    XDIC_ADDR_TRIM_OFS_CH_05        = 0x07,  // 0x07
+    XDIC_ADDR_TRIM_OFS_CH_06        = 0x08,  // 0x08
+    XDIC_ADDR_TRIM_OFS_CH_07        = 0x09,  // 0x09
+    XDIC_ADDR_TRIM_OFS_CH_08        = 0x0A,  // 0x0A
+    XDIC_ADDR_TRIM_OFS_CH_09        = 0x0B,  // 0x0B
+    XDIC_ADDR_TRIM_OFS_CH_10        = 0x0C,  // 0x0C
+    XDIC_ADDR_TRIM_OFS_CH_11        = 0x0D,  // 0x0D
+    XDIC_ADDR_TRIM_OFS_CH_12        = 0x0E,  // 0x0E
+    XDIC_ADDR_TRIM_DUMMY_0F         = 0x0F,  // 0x0F
+
+    XDIC_ADDR_TRIM_DUMMY_10         = 0x10,  // 0x10
+    XDIC_ADDR_TRIM_DUMMY_11         = 0x11,  // 0x11
+    XDIC_ADDR_TRIM_DUMMY_12         = 0x12,  // 0x12
+    XDIC_ADDR_TRIM_DUMMY_13         = 0x13,  // 0x13
+    XDIC_ADDR_TRIM_DUMMY_14         = 0x14,  // 0x14
+    XDIC_ADDR_TRIM_DUMMY_15         = 0x15,  // 0x15
+    XDIC_ADDR_TRIM_DUMMY_16         = 0x16,  // 0x16
+    XDIC_ADDR_TRIM_DUMMY_17         = 0x17,  // 0x17
+    XDIC_ADDR_TRIM_DUMMY_18         = 0x18,  // 0x18
+    XDIC_ADDR_TRIM_DUMMY_19         = 0x19,  // 0x19
+    XDIC_ADDR_TRIM_DUMMY_1A         = 0x1A,  // 0x1A
+    XDIC_ADDR_TRIM_GAIN_CH_01       = 0x1B,  // 0x1B
+    XDIC_ADDR_TRIM_GAIN_CH_02       = 0x1C,  // 0x1C
+    XDIC_ADDR_TRIM_GAIN_CH_03       = 0x1D,  // 0x1D
+    XDIC_ADDR_TRIM_GAIN_CH_04       = 0x1E,  // 0x1E
+    XDIC_ADDR_TRIM_GAIN_CH_05       = 0x1F,  // 0x1F
+
+    XDIC_ADDR_TRIM_GAIN_CH_06       = 0x20,  // 0x20
+    XDIC_ADDR_TRIM_GAIN_CH_07       = 0x21,  // 0x21
+    XDIC_ADDR_TRIM_GAIN_CH_08       = 0x22,  // 0x22
+    XDIC_ADDR_TRIM_GAIN_CH_09       = 0x23,  // 0x23
+    XDIC_ADDR_TRIM_GAIN_CH_10       = 0x24,  // 0x24
+    XDIC_ADDR_TRIM_GAIN_CH_11       = 0x25,  // 0x25
+    XDIC_ADDR_TRIM_GAIN_CH_12       = 0x26,  // 0x26
+    XDIC_ADDR_TRIM_MAX              = 0x27   // 0x27
 } xdic_trim_addr_t;
 
 typedef union _xdic_regs
@@ -728,6 +764,7 @@ extern void XDIC_Trim_Param_Init(void);
 extern void XDIC_Trim_Init(void);
 
 extern void XDIC_Set_LD_Fix(uint16_t in_ld_fix);
+extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XDIC_Get_Max_Current_level(void);
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
 
