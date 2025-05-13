@@ -126,7 +126,7 @@ void XD12_Vsync_Task(void)
 
         if (gb_xd_id_read_error_flag)
         {
-            Vsync_Timer_Stop();
+            //Vsync_Timer_Stop();
         }
 
         gb_xd12_vsync_flag = false;
