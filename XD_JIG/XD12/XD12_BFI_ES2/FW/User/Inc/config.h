@@ -88,9 +88,11 @@ extern "C" {
 #define VERSION_REVISION    0x0001
 
 #define ANSI_FONT_NONE      "\033[0m"
-#define ANSI_FONT_RED       "\033[0;31m"
-#define ANSI_FONT_GREEN     "\033[0;32m"
-#define ANSI_FONT_YELLOW    "\033[0;33m"
+#define ANSI_FONT_RED       "\033[31m"
+#define ANSI_FONT_GREEN     "\033[32m"
+#define ANSI_FONT_YELLOW    "\033[33m"
+#define ANSI_FONT_BLUE      "\033[34m"
+#define ANSI_FONT_MAGENTA   "\033[35m"
 
 typedef struct tag_XDIC_REG_INFO_T
 {
