@@ -623,7 +623,7 @@ void XD_Trim_Task(void)
                 gt_trim_error_code = TRIM_ERROR_NONE;
                 gn_xd_adc_channel = XD_CH_01;
 
-                JigBD_IF_Select_Output_Ch(XD_CH_MAX);  /* Output OFF */
+                JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 JigBD_IF_Change_Current_Gain(GAIN_HIGH);
                 XD_Trim_Param_Algorithm_Init();
 
@@ -646,10 +646,24 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 break;
             case XD_TRIM_STEP_CHANGE_OUTPUT_INIT:
-                if (gt_xd_trim_search_mode > XD_TRIM_OSC_FREQUENCY)
+                switch(gt_xd_trim_search_mode)
                 {
+                case XD_TRIM_VREF_CTL:
+                    XDIC_Trim_Init_VREF_CTL();
+                    break;
+                case XD_TRIM_OSC_FREQUENCY:
+                    XDIC_Trim_Init_OSC();
+                    break;
+                case XD_TRIM_ICTL_L_CHS:
+                    XDIC_Trim_Init_ICTL_L_CH();
                     JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
+                    break;
+                case XD_TRIM_ICTL_H_CHS:
+                    XDIC_Trim_Init_ICTL_H_CH();
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
+                    JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
+                    break;
                 }
                 gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
                 break;
@@ -657,18 +671,15 @@ void XD_Trim_Task(void)
                 switch(gt_xd_trim_search_mode)
                 {
                 case XD_TRIM_VREF_CTL:
-                    XDIC_Trim_Init_VREF_CTL();
                     gn_task_delay = 50;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
                     break;
                 case XD_TRIM_OSC_FREQUENCY:
-                    XDIC_Trim_Init_OSC();
                     JigBD_IF_Start_Input_Capture();
                     gn_task_delay = 10;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
                     break;
                 case XD_TRIM_ICTL_L_CHS:
-                    XDIC_Trim_Init_ICTL_L_CH();
                     if (gn_slope_cnt == 0)
                     {
                         XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
@@ -681,7 +692,6 @@ void XD_Trim_Task(void)
                     gn_task_delay = 0;
                     break;
                 case XD_TRIM_ICTL_H_CHS:
-                    XDIC_Trim_Init_ICTL_H_CH();
                     if (gn_slope_cnt == 0)
                     {
                         XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
@@ -703,17 +713,16 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_CHANGE_OUTPUT_DONE:
                 switch(gt_xd_trim_search_mode)
                 {
+                case XD_TRIM_VREF_CTL:
+                    JigBD_IF_Start_MCU_ADC();
+                    gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                    break;
                 case XD_TRIM_OSC_FREQUENCY:
                     if (gb_timer_input_capture_done)
                     {
                         JigBD_IF_Stop_Input_Capture();
                         gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     }
-                    break;
-
-                case XD_TRIM_VREF_CTL:
-                    JigBD_IF_Start_MCU_ADC();
-                    gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 }
                 break;
