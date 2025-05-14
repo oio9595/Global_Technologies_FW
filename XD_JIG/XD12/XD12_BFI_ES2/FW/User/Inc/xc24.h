@@ -34,7 +34,7 @@ typedef union tag_XC24_CMD
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////// DATA FORMAT ///////////////////////////////////////
-typedef enum _xc24_addr_
+typedef enum tag_XC24_ADDR_T
 {
     XC24_ADDR_SOFT_RESET                    = 0x00, // 0x00
     XC24_ADDR_GLOBAL_WRITE                  = 0x01, // 0x01
@@ -159,7 +159,7 @@ typedef enum _xc24_addr_
     XC24_ADDR_MAX                           = 0x71, // 0x71
 }xc24_addr_t;
 
-typedef enum tag_XC24_TRIM_ADDR
+typedef enum tag_XC24_MIRROR_ADDR_T
 {
     XC24_MIRROR_ADDR_START                  = 0xF0, // 0xF0
     XC24_MIRROR_ADDR_TEST_CONTROL           = 0xF0, // 0xF0
