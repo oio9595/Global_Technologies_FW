@@ -22,13 +22,13 @@
 
 #define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
 #define XDIC_GAIN_TARGET            (25.600f)   /* mA */
-#define XDIC_GAIN_P1                (6 << 12 | 0xFFFF)
-#define XDIC_GAIN_P2                (6 << 12 | 0xFFFF)
+#define XDIC_GAIN_P1                (6 << 12 | 0xFFF)
+#define XDIC_GAIN_P2                (6 << 12 | 0xFFF)
 
 #define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
 #define XDIC_OFS_TARGET             (6.4000f)   /* mA */
-#define XDIC_OFS_P1                 (1 << 12 | 0xFFFF)
-#define XDIC_OFS_P2                 (3 << 12 | 0xFFFF)
+#define XDIC_OFS_P1                 (1 << 12 | 0xFFF)
+#define XDIC_OFS_P2                 (3 << 12 | 0xFFF)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -1008,7 +1008,7 @@ void XD_Screen_Task(void)
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
-                XDIC_Set_LD_Fix(gn_xd_screen_ld_fix);
+                XDIC_Set_Max_Current_Level(gn_xd_screen_ld_fix);
             #endif
             gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
             break;
