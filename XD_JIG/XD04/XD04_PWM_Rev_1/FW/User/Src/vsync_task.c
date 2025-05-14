@@ -157,7 +157,7 @@ void XDIC_Vsync_Task(void)
         if (gb_xdic_read_flag)
         {
             uint16_t ret = XDIC_Read_General_Reg(gn_xdic_read_addr);
-            print(LOG_INFO, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
+            print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
             gb_xdic_read_flag = false;
         }
 

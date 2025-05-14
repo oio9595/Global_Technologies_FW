@@ -1443,6 +1443,7 @@ static void TaskDebugUart(void)
             else
             {
                 uint16_t ret = XDIC_Read_General_Reg((uint8_t)u32_recv_param[0]);
+                print(LOG_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
             }
             print(LOG_INFO, "\r\n OK\r\n");
         }
