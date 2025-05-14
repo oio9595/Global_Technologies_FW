@@ -28,7 +28,7 @@ extern "C" {
 #define CURRENT_LIMIT_GAIN_MID      (9.0f)      //Max  10mA
 #define CURRENT_LIMIT_GAIN_HIGH     (140.0f)    //Max 140mA
 
-#define XDIC_INTERNAL_DIVIDER       (32)        // BFI 16, PWM 32
+#define XDIC_INTERNAL_DIVIDER       (16)        // BFI 16, PWM 32
 #define JIG_FREQUENCY_DIVIDER       (128)
 #define TIM_CAPTURE_EXT_PRESCALER   (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 
