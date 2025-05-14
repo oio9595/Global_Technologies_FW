@@ -16,11 +16,8 @@ extern "C" {
 
 #define REG_LIMIT_OSC                   (127) /* 7-bit */
 #define REG_LIMIT_VREF                  ( 63) /* 6-bit */
-#define REG_LIMIT_OFS                   (127) /* 7-bit */
 #define REG_LIMIT_GAIN                  (127) /* 7-bit */
-#define REG_LIMIT_DEV_MAX_CURR_LEVEL    (  7) /* 3-bit */
-#define REG_LIMIT_SHORT_LEVEL           (  7) /* 3-bit */
-#define REG_LIMIT_FB_LEVEL              (  7) /* 3-bit */
+#define REG_LIMIT_OFS                   (127) /* 7-bit */
 
 typedef enum tag_XDIC_REG_TYPE_T
 {
