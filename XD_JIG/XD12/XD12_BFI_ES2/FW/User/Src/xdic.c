@@ -13,150 +13,154 @@
 #include "types.h"
 #include "config.h"
 
-#define XDIC_REG_GENERAL            (0)
-#define XDIC_REG_MIRROR             (1)
+#define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
+#define XDIC_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xdic_mirror_regs.reg }
 
-#define XDIC_OTP_PROTECT_DISABLE    (0xA5A)
-#define XDIC_OTP_PROTECT_ENABLE     (0x5A5)
+#define XDIC_REG_GENERAL                    (0)
+#define XDIC_REG_MIRROR                     (1)
 
-#define XD_LD_DIR_HEAD_SHIFT        (0)
-#define XD_LD_DIR_TAIL_SHIFT        (1)
+#define XDIC_OTP_PROTECT_DISABLE            (0xA5A)
+#define XDIC_OTP_PROTECT_ENABLE             (0x5A5)
 
-#define XD_LD_MODE_NORMAL           (0)
-#define XD_LD_MODE_X8               (1)
+#define XD_LD_DIR_HEAD_SHIFT                (0)
+#define XD_LD_DIR_TAIL_SHIFT                (1)
 
-#define XD_IO_MODE_NOP              (0)
-#define XD_IO_MODE_EXT_VSYNC        (1)
-#define XD_IO_MODE_FBO              (2)
-#define XD_IO_MODE_EXT_VYI_FBO      (3)
+#define XD_LD_MODE_NORMAL                   (0)
+#define XD_LD_MODE_X8                       (1)
 
-#define XD_MCLK_FLL_ENABLE          (0)
-#define XD_MCLK_FLL_DISABLE         (1)
+#define XD_IO_MODE_NOP                      (0)
+#define XD_IO_MODE_EXT_VSYNC                (1)
+#define XD_IO_MODE_FBO                      (2)
+#define XD_IO_MODE_EXT_VYI_FBO              (3)
 
-#define XD_SUBFRAME_SIZE            (96)
+#define XD_MCLK_FLL_ENABLE                  (0)
+#define XD_MCLK_FLL_DISABLE                 (1)
 
-#ifdef __XDIC_C__
+#define XD_SUBFRAME_SIZE                    (96)
 
-#endif //__XDIC_C__
+#define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
+#define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
+
+#define XDIC_CHANNEL_ENABLE_MAX             (0xFFF)
 
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
 
 static _reg_map_t gt_xdic_general_maps[] =
 {
-    { XDIC_ADDR_RESET_ID        ,   "XDIC_ADDR_RESET_ID        ",   &gt_xdic_general_regs._r00 },
-    { XDIC_ADDR_LD_MODE         ,   "XDIC_ADDR_LD_MODE         ",   &gt_xdic_general_regs._r01 },
-    { XDIC_ADDR_SF_PERIOD       ,   "XDIC_ADDR_SF_PERIOD       ",   &gt_xdic_general_regs._r02 },
-    { XDIC_ADDR_SF_SIZE         ,   "XDIC_ADDR_SF_SIZE         ",   &gt_xdic_general_regs._r03 },
-    { XDIC_ADDR_CH_SF_X8_SIZE   ,   "XDIC_ADDR_CH_SF_X8_SIZE   ",   &gt_xdic_general_regs._r04 },
-    { XDIC_ADDR_SF_BFI_SIZE     ,   "XDIC_ADDR_SF_BFI_SIZE     ",   &gt_xdic_general_regs._r05 },
-    { XDIC_ADDR_LD_FIX_1        ,   "XDIC_ADDR_LD_FIX_1        ",   &gt_xdic_general_regs._r06 },
-    { XDIC_ADDR_LD_FIX_2        ,   "XDIC_ADDR_LD_FIX_2        ",   &gt_xdic_general_regs._r07 },
-    { XDIC_ADDR_MAX_CURRENT_VREF,   "XDIC_ADDR_MAX_CURRENT_VREF",   &gt_xdic_general_regs._r08 },
-    { XDIC_ADDR_CHANNEL_ENABLE  ,   "XDIC_ADDR_CHANNEL_ENABLE  ",   &gt_xdic_general_regs._r09 },
-    { XDIC_ADDR_DUMMY_0A        ,   "XDIC_ADDR_DUMMY_0A        ",   &gt_xdic_general_regs._r0A },
-    { XDIC_ADDR_FAULT_STATUS    ,   "XDIC_ADDR_FAULT_STATUS    ",   &gt_xdic_general_regs._r0B },
-    { XDIC_ADDR_FAULT_LEVEL     ,   "XDIC_ADDR_FAULT_LEVEL     ",   &gt_xdic_general_regs._r0C },
-    { XDIC_ADDR_FAULT_CONTROL   ,   "XDIC_ADDR_FAULT_CONTROL   ",   &gt_xdic_general_regs._r0D },
-    { XDIC_ADDR_DELAY_CH_01     ,   "XDIC_ADDR_DELAY_CH_01     ",   &gt_xdic_general_regs._r0E },
-    { XDIC_ADDR_DELAY_CH_02     ,   "XDIC_ADDR_DELAY_CH_02     ",   &gt_xdic_general_regs._r0F },
-    { XDIC_ADDR_DELAY_CH_03     ,   "XDIC_ADDR_DELAY_CH_03     ",   &gt_xdic_general_regs._r10 },
-    { XDIC_ADDR_DELAY_CH_04     ,   "XDIC_ADDR_DELAY_CH_04     ",   &gt_xdic_general_regs._r11 },
-    { XDIC_ADDR_DELAY_CH_05     ,   "XDIC_ADDR_DELAY_CH_05     ",   &gt_xdic_general_regs._r12 },
-    { XDIC_ADDR_DELAY_CH_06     ,   "XDIC_ADDR_DELAY_CH_06     ",   &gt_xdic_general_regs._r13 },
-    { XDIC_ADDR_DELAY_CH_07     ,   "XDIC_ADDR_DELAY_CH_07     ",   &gt_xdic_general_regs._r14 },
-    { XDIC_ADDR_DELAY_CH_08     ,   "XDIC_ADDR_DELAY_CH_08     ",   &gt_xdic_general_regs._r15 },
-    { XDIC_ADDR_DELAY_CH_09     ,   "XDIC_ADDR_DELAY_CH_09     ",   &gt_xdic_general_regs._r16 },
-    { XDIC_ADDR_DELAY_CH_10     ,   "XDIC_ADDR_DELAY_CH_10     ",   &gt_xdic_general_regs._r17 },
-    { XDIC_ADDR_DELAY_CH_11     ,   "XDIC_ADDR_DELAY_CH_11     ",   &gt_xdic_general_regs._r18 },
-    { XDIC_ADDR_DELAY_CH_12     ,   "XDIC_ADDR_DELAY_CH_12     ",   &gt_xdic_general_regs._r19 },
-    { XDIC_ADDR_DUMMY_1A        ,   "XDIC_ADDR_DUMMY_1A        ",   &gt_xdic_general_regs._r1A },
-    { XDIC_ADDR_DUMMY_1B        ,   "XDIC_ADDR_DUMMY_1B        ",   &gt_xdic_general_regs._r1B },
-    { XDIC_ADDR_DUMMY_1C        ,   "XDIC_ADDR_DUMMY_1C        ",   &gt_xdic_general_regs._r1C },
-    { XDIC_ADDR_DUMMY_1D        ,   "XDIC_ADDR_DUMMY_1D        ",   &gt_xdic_general_regs._r1D },
-    { XDIC_ADDR_DUMMY_1E        ,   "XDIC_ADDR_DUMMY_1E        ",   &gt_xdic_general_regs._r1E },
-    { XDIC_ADDR_DUMMY_1F        ,   "XDIC_ADDR_DUMMY_1F        ",   &gt_xdic_general_regs._r1F },
-    { XDIC_ADDR_DUMMY_20        ,   "XDIC_ADDR_DUMMY_20        ",   &gt_xdic_general_regs._r20 },
-    { XDIC_ADDR_DUMMY_21        ,   "XDIC_ADDR_DUMMY_21        ",   &gt_xdic_general_regs._r21 },
-    { XDIC_ADDR_DUMMY_22        ,   "XDIC_ADDR_DUMMY_22        ",   &gt_xdic_general_regs._r22 },
-    { XDIC_ADDR_DUMMY_23        ,   "XDIC_ADDR_DUMMY_23        ",   &gt_xdic_general_regs._r23 },
-    { XDIC_ADDR_DUMMY_24        ,   "XDIC_ADDR_DUMMY_24        ",   &gt_xdic_general_regs._r24 },
-    { XDIC_ADDR_DUMMY_25        ,   "XDIC_ADDR_DUMMY_25        ",   &gt_xdic_general_regs._r25 },
-    { XDIC_ADDR_SERIAL_BAUDRATE ,   "XDIC_ADDR_SERIAL_BAUDRATE ",   &gt_xdic_general_regs._r26 },
-    { XDIC_ADDR_SERIAL_LATENCY  ,   "XDIC_ADDR_SERIAL_LATENCY  ",   &gt_xdic_general_regs._r27 },
-    { XDIC_ADDR_DCLK_PERIOD     ,   "XDIC_ADDR_DCLK_PERIOD     ",   &gt_xdic_general_regs._r28 },
-    { XDIC_ADDR_MCLK_LOCK_1     ,   "XDIC_ADDR_MCLK_LOCK_1     ",   &gt_xdic_general_regs._r29 },
-    { XDIC_ADDR_MCLK_LOCK_2     ,   "XDIC_ADDR_MCLK_LOCK_2     ",   &gt_xdic_general_regs._r2A },
-    { XDIC_ADDR_OSC_COMPENSATION,   "XDIC_ADDR_OSC_COMPENSATION",   &gt_xdic_general_regs._r2B },
-    { XDIC_ADDR_OSC_COMP_TH_P   ,   "XDIC_ADDR_OSC_COMP_TH_P   ",   &gt_xdic_general_regs._r2C },
-    { XDIC_ADDR_OSC_COMP_TH_N   ,   "XDIC_ADDR_OSC_COMP_TH_N   ",   &gt_xdic_general_regs._r2D },
-    { XDIC_ADDR_LD_CONTROL      ,   "XDIC_ADDR_LD_CONTROL      ",   &gt_xdic_general_regs._r2E },
-    { XDIC_ADDR_VREF_FIX        ,   "XDIC_ADDR_VREF_FIX        ",   &gt_xdic_general_regs._r2F },
-    { XDIC_ADDR_DUMMY_30        ,   "XDIC_ADDR_DUMMY_30        ",   &gt_xdic_general_regs._r30 },
-    { XDIC_ADDR_DUMMY_31        ,   "XDIC_ADDR_DUMMY_31        ",   &gt_xdic_general_regs._r31 },
-    { XDIC_ADDR_DUMMY_32        ,   "XDIC_ADDR_DUMMY_32        ",   &gt_xdic_general_regs._r32 },
-    { XDIC_ADDR_DUMMY_33        ,   "XDIC_ADDR_DUMMY_33        ",   &gt_xdic_general_regs._r33 },
-    { XDIC_ADDR_DUMMY_34        ,   "XDIC_ADDR_DUMMY_34        ",   &gt_xdic_general_regs._r34 },
-    { XDIC_ADDR_DUMMY_35        ,   "XDIC_ADDR_DUMMY_35        ",   &gt_xdic_general_regs._r35 },
-    { XDIC_ADDR_DUMMY_36        ,   "XDIC_ADDR_DUMMY_36        ",   &gt_xdic_general_regs._r36 },
-    { XDIC_ADDR_DUMMY_37        ,   "XDIC_ADDR_DUMMY_37        ",   &gt_xdic_general_regs._r37 },
-    { XDIC_ADDR_DUMMY_38        ,   "XDIC_ADDR_DUMMY_38        ",   &gt_xdic_general_regs._r38 },
-    { XDIC_ADDR_DUMMY_39        ,   "XDIC_ADDR_DUMMY_39        ",   &gt_xdic_general_regs._r39 },
-    { XDIC_ADDR_OTP_ACCESS_1    ,   "XDIC_ADDR_OTP_ACCESS_1    ",   &gt_xdic_general_regs._r3A },
-    { XDIC_ADDR_OTP_ACCESS_2    ,   "XDIC_ADDR_OTP_ACCESS_2    ",   &gt_xdic_general_regs._r3B },
-    { XDIC_ADDR_OTP_WRITE       ,   "XDIC_ADDR_OTP_WRITE       ",   &gt_xdic_general_regs._r3C },
-    { XDIC_ADDR_OTP_RD_PROG     ,   "XDIC_ADDR_OTP_RD_PROG     ",   &gt_xdic_general_regs._r3D },
-    { XDIC_ADDR_OTP_PROTECT     ,   "XDIC_ADDR_OTP_PROTECT     ",   &gt_xdic_general_regs._r3E },
-    { XDIC_ADDR_OTP_OP_MODE     ,   "XDIC_ADDR_OTP_OP_MODE     ",   &gt_xdic_general_regs._r3F },
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_RESET_ID        , _r00 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_MODE         , _r01 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_SF_PERIOD       , _r02 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_SF_SIZE         , _r03 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_CH_SF_X8_SIZE   , _r04 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_SF_BFI_SIZE     , _r05 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_FIX_1        , _r06 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_FIX_2        , _r07 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_MAX_CURRENT_VREF, _r08 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_CHANNEL_ENABLE  , _r09 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_0A        , _r0A ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_FAULT_STATUS    , _r0B ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_FAULT_LEVEL     , _r0C ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_FAULT_CONTROL   , _r0D ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_01     , _r0E ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_02     , _r0F ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_03     , _r10 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_04     , _r11 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_05     , _r12 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_06     , _r13 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_07     , _r14 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_08     , _r15 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_09     , _r16 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_10     , _r17 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_11     , _r18 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DELAY_CH_12     , _r19 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1A        , _r1A ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1B        , _r1B ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1C        , _r1C ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1D        , _r1D ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1E        , _r1E ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_1F        , _r1F ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_20        , _r20 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_21        , _r21 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_22        , _r22 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_23        , _r23 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_24        , _r24 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_25        , _r25 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_SERIAL_BAUDRATE , _r26 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_SERIAL_LATENCY  , _r27 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DCLK_PERIOD     , _r28 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_MCLK_LOCK_1     , _r29 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_MCLK_LOCK_2     , _r2A ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OSC_COMPENSATION, _r2B ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OSC_COMP_TH_P   , _r2C ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OSC_COMP_TH_N   , _r2D ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_CONTROL      , _r2E ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_VREF_FIX        , _r2F ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_30        , _r30 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_31        , _r31 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_32        , _r32 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_33        , _r33 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_34        , _r34 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_35        , _r35 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_36        , _r36 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_37        , _r37 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_38        , _r38 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_DUMMY_39        , _r39 ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_ACCESS_1    , _r3A ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_ACCESS_2    , _r3B ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_WRITE       , _r3C ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_RD_PROG     , _r3D ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_PROTECT     , _r3E ),
+    XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_OP_MODE     , _r3F ),
 };
 static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
 
 static _reg_map_t gt_xdic_mirror_maps[] =
 {
-    { XDIC_ADDR_TRIM_OTP_CRC   ,    "XDIC_ADDR_TRIM_OTP_CRC   ",    &gt_xdic_mirror_regs._r00 },
-    { XDIC_ADDR_TRIM_OSC       ,    "XDIC_ADDR_TRIM_OSC       ",    &gt_xdic_mirror_regs._r01 },
-    { XDIC_ADDR_TRIM_VREF_CTL  ,    "XDIC_ADDR_TRIM_VREF_CTL  ",    &gt_xdic_mirror_regs._r02 },
-    { XDIC_ADDR_TRIM_OFS_CH_01 ,    "XDIC_ADDR_TRIM_OFS_CH_01 ",    &gt_xdic_mirror_regs._r03 },
-    { XDIC_ADDR_TRIM_OFS_CH_02 ,    "XDIC_ADDR_TRIM_OFS_CH_02 ",    &gt_xdic_mirror_regs._r04 },
-    { XDIC_ADDR_TRIM_OFS_CH_03 ,    "XDIC_ADDR_TRIM_OFS_CH_03 ",    &gt_xdic_mirror_regs._r05 },
-    { XDIC_ADDR_TRIM_OFS_CH_04 ,    "XDIC_ADDR_TRIM_OFS_CH_04 ",    &gt_xdic_mirror_regs._r06 },
-    { XDIC_ADDR_TRIM_OFS_CH_05 ,    "XDIC_ADDR_TRIM_OFS_CH_05 ",    &gt_xdic_mirror_regs._r07 },
-    { XDIC_ADDR_TRIM_OFS_CH_06 ,    "XDIC_ADDR_TRIM_OFS_CH_06 ",    &gt_xdic_mirror_regs._r08 },
-    { XDIC_ADDR_TRIM_OFS_CH_07 ,    "XDIC_ADDR_TRIM_OFS_CH_07 ",    &gt_xdic_mirror_regs._r09 },
-    { XDIC_ADDR_TRIM_OFS_CH_08 ,    "XDIC_ADDR_TRIM_OFS_CH_08 ",    &gt_xdic_mirror_regs._r0A },
-    { XDIC_ADDR_TRIM_OFS_CH_09 ,    "XDIC_ADDR_TRIM_OFS_CH_09 ",    &gt_xdic_mirror_regs._r0B },
-    { XDIC_ADDR_TRIM_OFS_CH_10 ,    "XDIC_ADDR_TRIM_OFS_CH_10 ",    &gt_xdic_mirror_regs._r0C },
-    { XDIC_ADDR_TRIM_OFS_CH_11 ,    "XDIC_ADDR_TRIM_OFS_CH_11 ",    &gt_xdic_mirror_regs._r0D },
-    { XDIC_ADDR_TRIM_OFS_CH_12 ,    "XDIC_ADDR_TRIM_OFS_CH_12 ",    &gt_xdic_mirror_regs._r0E },
-    { XDIC_ADDR_TRIM_DUMMY_0F  ,    "XDIC_ADDR_TRIM_DUMMY_0F  ",    &gt_xdic_mirror_regs._r0F },
-    { XDIC_ADDR_TRIM_DUMMY_10  ,    "XDIC_ADDR_TRIM_DUMMY_10  ",    &gt_xdic_mirror_regs._r10 },
-    { XDIC_ADDR_TRIM_DUMMY_11  ,    "XDIC_ADDR_TRIM_DUMMY_11  ",    &gt_xdic_mirror_regs._r11 },
-    { XDIC_ADDR_TRIM_DUMMY_12  ,    "XDIC_ADDR_TRIM_DUMMY_12  ",    &gt_xdic_mirror_regs._r12 },
-    { XDIC_ADDR_TRIM_DUMMY_13  ,    "XDIC_ADDR_TRIM_DUMMY_13  ",    &gt_xdic_mirror_regs._r13 },
-    { XDIC_ADDR_TRIM_DUMMY_14  ,    "XDIC_ADDR_TRIM_DUMMY_14  ",    &gt_xdic_mirror_regs._r14 },
-    { XDIC_ADDR_TRIM_DUMMY_15  ,    "XDIC_ADDR_TRIM_DUMMY_15  ",    &gt_xdic_mirror_regs._r15 },
-    { XDIC_ADDR_TRIM_DUMMY_16  ,    "XDIC_ADDR_TRIM_DUMMY_16  ",    &gt_xdic_mirror_regs._r16 },
-    { XDIC_ADDR_TRIM_DUMMY_17  ,    "XDIC_ADDR_TRIM_DUMMY_17  ",    &gt_xdic_mirror_regs._r17 },
-    { XDIC_ADDR_TRIM_DUMMY_18  ,    "XDIC_ADDR_TRIM_DUMMY_18  ",    &gt_xdic_mirror_regs._r18 },
-    { XDIC_ADDR_TRIM_DUMMY_19  ,    "XDIC_ADDR_TRIM_DUMMY_19  ",    &gt_xdic_mirror_regs._r19 },
-    { XDIC_ADDR_TRIM_DUMMY_1A  ,    "XDIC_ADDR_TRIM_DUMMY_1A  ",    &gt_xdic_mirror_regs._r1A },
-    { XDIC_ADDR_TRIM_GAIN_CH_01,    "XDIC_ADDR_TRIM_GAIN_CH_01",    &gt_xdic_mirror_regs._r1B },
-    { XDIC_ADDR_TRIM_GAIN_CH_02,    "XDIC_ADDR_TRIM_GAIN_CH_02",    &gt_xdic_mirror_regs._r1C },
-    { XDIC_ADDR_TRIM_GAIN_CH_03,    "XDIC_ADDR_TRIM_GAIN_CH_03",    &gt_xdic_mirror_regs._r1D },
-    { XDIC_ADDR_TRIM_GAIN_CH_04,    "XDIC_ADDR_TRIM_GAIN_CH_04",    &gt_xdic_mirror_regs._r1E },
-    { XDIC_ADDR_TRIM_GAIN_CH_05,    "XDIC_ADDR_TRIM_GAIN_CH_05",    &gt_xdic_mirror_regs._r1F },
-    { XDIC_ADDR_TRIM_GAIN_CH_06,    "XDIC_ADDR_TRIM_GAIN_CH_06",    &gt_xdic_mirror_regs._r20 },
-    { XDIC_ADDR_TRIM_GAIN_CH_07,    "XDIC_ADDR_TRIM_GAIN_CH_07",    &gt_xdic_mirror_regs._r21 },
-    { XDIC_ADDR_TRIM_GAIN_CH_08,    "XDIC_ADDR_TRIM_GAIN_CH_08",    &gt_xdic_mirror_regs._r22 },
-    { XDIC_ADDR_TRIM_GAIN_CH_09,    "XDIC_ADDR_TRIM_GAIN_CH_09",    &gt_xdic_mirror_regs._r23 },
-    { XDIC_ADDR_TRIM_GAIN_CH_10,    "XDIC_ADDR_TRIM_GAIN_CH_10",    &gt_xdic_mirror_regs._r24 },
-    { XDIC_ADDR_TRIM_GAIN_CH_11,    "XDIC_ADDR_TRIM_GAIN_CH_11",    &gt_xdic_mirror_regs._r25 },
-    { XDIC_ADDR_TRIM_GAIN_CH_12,    "XDIC_ADDR_TRIM_GAIN_CH_12",    &gt_xdic_mirror_regs._r26 },
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OTP_CRC   , _r00),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OSC       , _r01),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_VREF_CTL  , _r02),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_01 , _r03),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_02 , _r04),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_03 , _r05),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_04 , _r06),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_05 , _r07),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_06 , _r08),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_07 , _r09),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_08 , _r0A),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_09 , _r0B),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_10 , _r0C),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_11 , _r0D),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OFS_CH_12 , _r0E),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_0F  , _r0F),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_10  , _r10),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_11  , _r11),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_12  , _r12),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_13  , _r13),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_14  , _r14),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_15  , _r15),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_16  , _r16),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_17  , _r17),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_18  , _r18),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_19  , _r19),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_DUMMY_1A  , _r1A),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_01, _r1B),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_02, _r1C),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_03, _r1D),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_04, _r1E),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_05, _r1F),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_06, _r20),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_07, _r21),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_08, _r22),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_09, _r23),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_10, _r24),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_11, _r25),
+    XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_12, _r26),
 };
-static_assert(XDIC_ADDR_TRIM_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
+static_assert(XDIC_MIRROR_ADDR_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
 
 
-static uint16_t gn_xdic_saved_trim_reg[XDIC_ADDR_TRIM_MAX];
+static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX];
 
 /* Variable for XD Registers */
 static float gf_xd_mclk;
@@ -326,7 +330,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
         }
         else
         {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_VREF_CTL, in_reg_val);
+            XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, in_reg_val);
         }
         break;
     case XD_TRIM_OSC_FREQUENCY:
@@ -336,7 +340,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
         }
         else
         {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OSC, in_reg_val);
+            XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OSC, in_reg_val);
         }
         break;
     case XD_TRIM_GAIN_CHS:
@@ -346,7 +350,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
         }
         else
         {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_GAIN_CH_01 + ch_num, in_reg_val);
+            XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num, in_reg_val);
         }
         break;
     case XD_TRIM_OFS_CHS:
@@ -356,7 +360,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
         }
         else
         {
-            XDIC_Write_Mirror_Reg(XDIC_ADDR_TRIM_OFS_CH_01 + ch_num, in_reg_val);
+            XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num, in_reg_val);
         }
         break;
     }
@@ -369,16 +373,16 @@ uint16_t XDIC_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in
     switch(in_trim_mode)
     {
     case XD_TRIM_VREF_CTL:
-        xd_trim_addr = XDIC_ADDR_TRIM_VREF_CTL;
+        xd_trim_addr = XDIC_MIRROR_ADDR_VREF_CTL;
         break;
     case XD_TRIM_OSC_FREQUENCY:
-        xd_trim_addr = XDIC_ADDR_TRIM_OSC;
+        xd_trim_addr = XDIC_MIRROR_ADDR_OSC;
         break;
     case XD_TRIM_GAIN_CHS:
-        xd_trim_addr = XDIC_ADDR_TRIM_GAIN_CH_01 + ch_num;
+        xd_trim_addr = XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num;
         break;
     case XD_TRIM_OFS_CHS:
-        xd_trim_addr = XDIC_ADDR_TRIM_OFS_CH_01 + ch_num;
+        xd_trim_addr = XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num;
         break;
     }
 
@@ -425,7 +429,7 @@ static void XDIC_Dump_All_Registers(void)
         }
     }
 
-    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_ADDR_TRIM_MAX ; ++xd_mirror_addr)
+    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
     {
         const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
         if (map)
@@ -443,7 +447,7 @@ void XDIC_Read_All_Registers(void)
         XDIC_Read_General_Reg(xd_general_addr);
     }
 
-    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_ADDR_TRIM_MAX ; ++xd_mirror_addr)
+    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
     {
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
@@ -476,6 +480,9 @@ void XDIC_Init(void)
     JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
+    print(LOG_INFO, "XDIC Dump Register Before Initial\r\n");
+    XDIC_Read_All_Registers();
+
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
         const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
@@ -502,7 +509,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
                 break;
             case XDIC_ADDR_CHANNEL_ENABLE :
-                gt_xdic_general_regs._r09.val = 0xFFF;
+                gt_xdic_general_regs._r09.val = XDIC_CHANNEL_ENABLE_MAX;
                 break;
             case XDIC_ADDR_FAULT_LEVEL :
                 gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
@@ -520,16 +527,20 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r27.serial_latency = 60;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0x000FFF) >>  0);
+                gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
+                gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r2A.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             default :
                 continue;
             }
             XDIC_Write_General_Reg(xdic_addr, *((uint16_t*)(map->reg_ptr)));
+        }
+        else
+        {
+            print(LOG_ERROR, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
         }
     }
 
@@ -543,6 +554,7 @@ void XDIC_Init(void)
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
+    print(LOG_INFO, "XDIC Dump Register After Initial\r\n");
     XDIC_Read_All_Registers();
 }
 
@@ -560,6 +572,9 @@ void XDIC_Trim_Init(void)
     JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
+    print(LOG_INFO, "XDIC Dump Register Before Initial\r\n");
+    XDIC_Read_All_Registers();
+
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
         const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
@@ -571,7 +586,7 @@ void XDIC_Trim_Init(void)
                 gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
                 break;
             case XDIC_ADDR_CHANNEL_ENABLE :
-                gt_xdic_general_regs._r09.val = 0xFFF;
+                gt_xdic_general_regs._r09.val = XDIC_CHANNEL_ENABLE_MAX;
                 break;
             case XDIC_ADDR_FAULT_LEVEL :
                 gt_xdic_general_regs._r0C.fb_level = gt_xd_fb_level;
@@ -594,8 +609,14 @@ void XDIC_Trim_Init(void)
             }
             XDIC_Write_General_Reg(xdic_addr, *((uint16_t*)(map->reg_ptr)));
         }
+        else
+        {
+            print(LOG_ERROR, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
+        }
     }
     XDIC_Set_OTP_Protect(false);
+
+    print(LOG_INFO, "XDIC Dump Register After Initial\r\n");
     XDIC_Read_All_Registers();
 }
 
@@ -710,8 +731,8 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 
     // 3. change mclk_lock_cnt
     gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);
-    gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0x000FFF) >>  0);
-    gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & 0xFFF000) >> 12);
+    gt_xdic_general_regs._r29.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+    gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
 
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_1, gt_xdic_general_regs._r29.val);
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_2, gt_xdic_general_regs._r2A.val);
@@ -726,7 +747,7 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 
 void XDIC_Save_Trim_Regs(void)
 {
-    for (uint8_t addr = XDIC_ADDR_TRIM_OTP_CRC ; addr < XDIC_ADDR_TRIM_MAX ; ++addr)
+    for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
     {
         gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
     }
@@ -749,7 +770,7 @@ uint64_t XDIC_Compare_Trim_Regs(void)
     uint64_t ret = 0;
     uint16_t u16_reg_val = 0;
 
-    for (xdic_trim_addr_t trim_addr = XDIC_ADDR_TRIM_OSC ; trim_addr < XDIC_ADDR_TRIM_MAX ; ++trim_addr)
+    for (xdic_mirror_addr_t trim_addr = XDIC_MIRROR_ADDR_OSC ; trim_addr < XDIC_MIRROR_ADDR_MAX ; ++trim_addr)
     {
         u16_reg_val = XDIC_Read_Mirror_Reg(trim_addr);
 

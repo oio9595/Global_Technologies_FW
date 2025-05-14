@@ -524,7 +524,6 @@ typedef enum tag_XDIC_GENERAL_ADDR_T
     XDIC_ADDR_FAULT_CONTROL         = 0x0D,  // 0x0D
     XDIC_ADDR_DELAY_CH_01           = 0x0E,  // 0x0E
     XDIC_ADDR_DELAY_CH_02           = 0x0F,  // 0x0F
-
     XDIC_ADDR_DELAY_CH_03           = 0x10,  // 0x10
     XDIC_ADDR_DELAY_CH_04           = 0x11,  // 0x11
     XDIC_ADDR_DELAY_CH_05           = 0x12,  // 0x12
@@ -541,7 +540,6 @@ typedef enum tag_XDIC_GENERAL_ADDR_T
     XDIC_ADDR_DUMMY_1D              = 0x1D,  // 0x1D
     XDIC_ADDR_DUMMY_1E              = 0x1E,  // 0x1E
     XDIC_ADDR_DUMMY_1F              = 0x1F,  // 0x1F
-
     XDIC_ADDR_DUMMY_20              = 0x20,  // 0x20
     XDIC_ADDR_DUMMY_21              = 0x21,  // 0x21
     XDIC_ADDR_DUMMY_22              = 0x22,  // 0x22
@@ -558,7 +556,6 @@ typedef enum tag_XDIC_GENERAL_ADDR_T
     XDIC_ADDR_OSC_COMP_TH_N         = 0x2D,  // 0x2D
     XDIC_ADDR_LD_CONTROL            = 0x2E,  // 0x2E
     XDIC_ADDR_VREF_FIX              = 0x2F,  // 0x2F
-
     XDIC_ADDR_DUMMY_30              = 0x30,  // 0x30
     XDIC_ADDR_DUMMY_31              = 0x31,  // 0x31
     XDIC_ADDR_DUMMY_32              = 0x32,  // 0x32
@@ -580,51 +577,49 @@ typedef enum tag_XDIC_GENERAL_ADDR_T
 
 typedef enum tag_XDIC_MIRROR_ADDR_T
 {
-    XDIC_ADDR_TRIM_OTP_CRC          = 0x00,  // 0x00
-    XDIC_ADDR_TRIM_OSC              = 0x01,  // 0x01
-    XDIC_ADDR_TRIM_VREF_CTL         = 0x02,  // 0x02
-    XDIC_ADDR_TRIM_OFS_CH_01        = 0x03,  // 0x03
-    XDIC_ADDR_TRIM_OFS_CH_02        = 0x04,  // 0x04
-    XDIC_ADDR_TRIM_OFS_CH_03        = 0x05,  // 0x05
-    XDIC_ADDR_TRIM_OFS_CH_04        = 0x06,  // 0x06
-    XDIC_ADDR_TRIM_OFS_CH_05        = 0x07,  // 0x07
-    XDIC_ADDR_TRIM_OFS_CH_06        = 0x08,  // 0x08
-    XDIC_ADDR_TRIM_OFS_CH_07        = 0x09,  // 0x09
-    XDIC_ADDR_TRIM_OFS_CH_08        = 0x0A,  // 0x0A
-    XDIC_ADDR_TRIM_OFS_CH_09        = 0x0B,  // 0x0B
-    XDIC_ADDR_TRIM_OFS_CH_10        = 0x0C,  // 0x0C
-    XDIC_ADDR_TRIM_OFS_CH_11        = 0x0D,  // 0x0D
-    XDIC_ADDR_TRIM_OFS_CH_12        = 0x0E,  // 0x0E
-    XDIC_ADDR_TRIM_DUMMY_0F         = 0x0F,  // 0x0F
+    XDIC_MIRROR_ADDR_OTP_CRC          = 0x00,  // 0x00
+    XDIC_MIRROR_ADDR_OSC              = 0x01,  // 0x01
+    XDIC_MIRROR_ADDR_VREF_CTL         = 0x02,  // 0x02
+    XDIC_MIRROR_ADDR_OFS_CH_01        = 0x03,  // 0x03
+    XDIC_MIRROR_ADDR_OFS_CH_02        = 0x04,  // 0x04
+    XDIC_MIRROR_ADDR_OFS_CH_03        = 0x05,  // 0x05
+    XDIC_MIRROR_ADDR_OFS_CH_04        = 0x06,  // 0x06
+    XDIC_MIRROR_ADDR_OFS_CH_05        = 0x07,  // 0x07
+    XDIC_MIRROR_ADDR_OFS_CH_06        = 0x08,  // 0x08
+    XDIC_MIRROR_ADDR_OFS_CH_07        = 0x09,  // 0x09
+    XDIC_MIRROR_ADDR_OFS_CH_08        = 0x0A,  // 0x0A
+    XDIC_MIRROR_ADDR_OFS_CH_09        = 0x0B,  // 0x0B
+    XDIC_MIRROR_ADDR_OFS_CH_10        = 0x0C,  // 0x0C
+    XDIC_MIRROR_ADDR_OFS_CH_11        = 0x0D,  // 0x0D
+    XDIC_MIRROR_ADDR_OFS_CH_12        = 0x0E,  // 0x0E
+    XDIC_MIRROR_ADDR_DUMMY_0F         = 0x0F,  // 0x0F
+    XDIC_MIRROR_ADDR_DUMMY_10         = 0x10,  // 0x10
+    XDIC_MIRROR_ADDR_DUMMY_11         = 0x11,  // 0x11
+    XDIC_MIRROR_ADDR_DUMMY_12         = 0x12,  // 0x12
+    XDIC_MIRROR_ADDR_DUMMY_13         = 0x13,  // 0x13
+    XDIC_MIRROR_ADDR_DUMMY_14         = 0x14,  // 0x14
+    XDIC_MIRROR_ADDR_DUMMY_15         = 0x15,  // 0x15
+    XDIC_MIRROR_ADDR_DUMMY_16         = 0x16,  // 0x16
+    XDIC_MIRROR_ADDR_DUMMY_17         = 0x17,  // 0x17
+    XDIC_MIRROR_ADDR_DUMMY_18         = 0x18,  // 0x18
+    XDIC_MIRROR_ADDR_DUMMY_19         = 0x19,  // 0x19
+    XDIC_MIRROR_ADDR_DUMMY_1A         = 0x1A,  // 0x1A
+    XDIC_MIRROR_ADDR_GAIN_CH_01       = 0x1B,  // 0x1B
+    XDIC_MIRROR_ADDR_GAIN_CH_02       = 0x1C,  // 0x1C
+    XDIC_MIRROR_ADDR_GAIN_CH_03       = 0x1D,  // 0x1D
+    XDIC_MIRROR_ADDR_GAIN_CH_04       = 0x1E,  // 0x1E
+    XDIC_MIRROR_ADDR_GAIN_CH_05       = 0x1F,  // 0x1F
+    XDIC_MIRROR_ADDR_GAIN_CH_06       = 0x20,  // 0x20
+    XDIC_MIRROR_ADDR_GAIN_CH_07       = 0x21,  // 0x21
+    XDIC_MIRROR_ADDR_GAIN_CH_08       = 0x22,  // 0x22
+    XDIC_MIRROR_ADDR_GAIN_CH_09       = 0x23,  // 0x23
+    XDIC_MIRROR_ADDR_GAIN_CH_10       = 0x24,  // 0x24
+    XDIC_MIRROR_ADDR_GAIN_CH_11       = 0x25,  // 0x25
+    XDIC_MIRROR_ADDR_GAIN_CH_12       = 0x26,  // 0x26
+    XDIC_MIRROR_ADDR_MAX              = 0x27   // 0x27
+} xdic_mirror_addr_t;
 
-    XDIC_ADDR_TRIM_DUMMY_10         = 0x10,  // 0x10
-    XDIC_ADDR_TRIM_DUMMY_11         = 0x11,  // 0x11
-    XDIC_ADDR_TRIM_DUMMY_12         = 0x12,  // 0x12
-    XDIC_ADDR_TRIM_DUMMY_13         = 0x13,  // 0x13
-    XDIC_ADDR_TRIM_DUMMY_14         = 0x14,  // 0x14
-    XDIC_ADDR_TRIM_DUMMY_15         = 0x15,  // 0x15
-    XDIC_ADDR_TRIM_DUMMY_16         = 0x16,  // 0x16
-    XDIC_ADDR_TRIM_DUMMY_17         = 0x17,  // 0x17
-    XDIC_ADDR_TRIM_DUMMY_18         = 0x18,  // 0x18
-    XDIC_ADDR_TRIM_DUMMY_19         = 0x19,  // 0x19
-    XDIC_ADDR_TRIM_DUMMY_1A         = 0x1A,  // 0x1A
-    XDIC_ADDR_TRIM_GAIN_CH_01       = 0x1B,  // 0x1B
-    XDIC_ADDR_TRIM_GAIN_CH_02       = 0x1C,  // 0x1C
-    XDIC_ADDR_TRIM_GAIN_CH_03       = 0x1D,  // 0x1D
-    XDIC_ADDR_TRIM_GAIN_CH_04       = 0x1E,  // 0x1E
-    XDIC_ADDR_TRIM_GAIN_CH_05       = 0x1F,  // 0x1F
-
-    XDIC_ADDR_TRIM_GAIN_CH_06       = 0x20,  // 0x20
-    XDIC_ADDR_TRIM_GAIN_CH_07       = 0x21,  // 0x21
-    XDIC_ADDR_TRIM_GAIN_CH_08       = 0x22,  // 0x22
-    XDIC_ADDR_TRIM_GAIN_CH_09       = 0x23,  // 0x23
-    XDIC_ADDR_TRIM_GAIN_CH_10       = 0x24,  // 0x24
-    XDIC_ADDR_TRIM_GAIN_CH_11       = 0x25,  // 0x25
-    XDIC_ADDR_TRIM_GAIN_CH_12       = 0x26,  // 0x26
-    XDIC_ADDR_TRIM_MAX              = 0x27   // 0x27
-} xdic_trim_addr_t;
-
-typedef union _xdic_regs
+typedef union tag_XDIC_GENERAL_REG_T
 {
     uint16_t ALL[XDIC_ADDR_MAX];
     struct
@@ -696,9 +691,9 @@ typedef union _xdic_regs
     };
 } _xdic_general_regs_t;
 
-typedef union _xdic_trim_regs
+typedef union tag_XDIC_MIRROR_REG_T
 {
-    uint16_t ALL[XDIC_ADDR_TRIM_MAX];
+    uint16_t ALL[XDIC_MIRROR_ADDR_MAX];
     struct
     {
         _xdic_otp_crc_t     _r00;
