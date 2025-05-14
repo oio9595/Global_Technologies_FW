@@ -1483,7 +1483,7 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
             if (IS_XC24_Support())
             {
@@ -1493,22 +1493,22 @@ static void TaskDebugUart(void)
             }
 
             JigBD_IF_Select_Output_Ch(XD_CH_MAX);
-            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
             XDIC_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
         }
         else if (Command_is_("xd_trim_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
             if (IS_XC24_Support())
             {
@@ -1518,17 +1518,17 @@ static void TaskDebugUart(void)
             }
 
             JigBD_IF_Select_Output_Ch(0);
-            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
             XDIC_Trim_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
         }
         else if (Command_is_("xd_trim_vref"))
         {
@@ -1556,7 +1556,7 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_osc_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
             if (IS_XC24_Support())
             {
@@ -1565,18 +1565,18 @@ static void TaskDebugUart(void)
             }
 
             JigBD_IF_Select_Output_Ch(0);
-            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
             XDIC_Trim_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
             XDIC_Trim_Init_OSC();
-            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
 
             for (uint8_t i = 0 ; i <= REG_LIMIT_OSC ; ++i)
             {
@@ -1654,7 +1654,7 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_dimming_start") || Command_is_("3"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
             if (IS_XC24_Support())
             {
@@ -1664,17 +1664,17 @@ static void TaskDebugUart(void)
             }
 
             JigBD_IF_Select_Output_Ch(XD_CH_MAX);
-            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
             LL_mDelay(10);
 
             XDIC_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
 
             Vsync_Timer_Start();
             print(LOG_INFO, "vsync start\r\n");
