@@ -161,17 +161,17 @@ typedef enum _xc24_addr_
 
 typedef enum tag_XC24_TRIM_ADDR
 {
-    XC24_ADDR_TRIM_START                    = 0xF0, // 0xF0
-    XC24_ADDR_TRIM_TEST_CONTROL             = 0xF0, // 0xF0
-    XC24_ADDR_TRIM_OTP_PG_ACCESS            = 0xF1, // 0xF1
-    XC24_ADDR_TRIM_OTP_WRITE                = 0xF2, // 0xF2
-    XC24_ADDR_TRIM_OTP_RD_PROG              = 0xF3, // 0xF3
-    XC24_ADDR_TRIM_OTP_PROTECT              = 0xF4, // 0xF4
-    XC24_ADDR_TRIM_MIRROR1                  = 0xF5, // 0xF5
-    XC24_ADDR_TRIM_MIRROR2                  = 0xF6, // 0xF6
-    XC24_ADDR_TRIM_MIRROR3                  = 0xF7, // 0xF7
-    XC24_ADDR_TRIM_MAX                      = 0xF8, // 0xF8
-}xc24_addr_trim_t;
+    XC24_MIRROR_ADDR_START                  = 0xF0, // 0xF0
+    XC24_MIRROR_ADDR_TEST_CONTROL           = 0xF0, // 0xF0
+    XC24_MIRROR_ADDR_OTP_PG_ACCESS          = 0xF1, // 0xF1
+    XC24_MIRROR_ADDR_OTP_WRITE              = 0xF2, // 0xF2
+    XC24_MIRROR_ADDR_OTP_RD_PROG            = 0xF3, // 0xF3
+    XC24_MIRROR_ADDR_OTP_PROTECT            = 0xF4, // 0xF4
+    XC24_MIRROR_ADDR_MIRROR1                = 0xF5, // 0xF5
+    XC24_MIRROR_ADDR_MIRROR2                = 0xF6, // 0xF6
+    XC24_MIRROR_ADDR_MIRROR3                = 0xF7, // 0xF7
+    XC24_MIRROR_ADDR_MAX                    = 0xF8, // 0xF8
+}xc24_mirror_addr_t;
 
 /*
 typedef enum _xc24_data_addr_
@@ -1657,7 +1657,7 @@ typedef union _xc24_regs
 
 typedef union _xc24_mirror_regs
 {
-    uint16_t ALL[XC24_ADDR_TRIM_MAX - XC24_ADDR_TRIM_START];
+    uint16_t ALL[XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START];
     struct
     {
         _v_test_control_t                   _rF0;

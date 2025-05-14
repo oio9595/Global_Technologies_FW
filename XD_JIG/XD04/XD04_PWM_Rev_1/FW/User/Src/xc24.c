@@ -149,16 +149,16 @@ static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t
 
 static _reg_map_t gt_xc24_mirror_maps[] =
 {
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_TEST_CONTROL,  _rF0 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_OTP_PG_ACCESS, _rF1 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_OTP_WRITE,     _rF2 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_OTP_RD_PROG,   _rF3 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_OTP_PROTECT,   _rF4 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_MIRROR1,       _rF5 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_MIRROR2,       _rF6 ),
-    XC24_MIRROR_REG_ENTRY( XC24_ADDR_TRIM_MIRROR3,       _rF7 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_TEST_CONTROL,  _rF0 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_PG_ACCESS, _rF1 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_WRITE,     _rF2 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_RD_PROG,   _rF3 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_PROTECT,   _rF4 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR1,       _rF5 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR2,       _rF6 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR3,       _rF7 ),
 };
-static_assert((XC24_ADDR_TRIM_MAX - XC24_ADDR_TRIM_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
+static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
 __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t len)
 {
@@ -341,7 +341,7 @@ void XC24_Read_Register_All(void)
         us_delay(10);
     }
 
-    for (uint8_t xc_addr = XC24_ADDR_TRIM_START ; xc_addr < XC24_ADDR_TRIM_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         XC24_Read_Register(xc_addr);
         us_delay(10);
@@ -362,7 +362,7 @@ void XC24_Dump_All_Register(void)
         }
     }
 
-    for (uint8_t xc_addr = XC24_ADDR_TRIM_START ; xc_addr < XC24_ADDR_TRIM_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_Mirror_Map_Pointer(xc_addr);
         if (map)
@@ -489,17 +489,17 @@ void XC24_Trim_Init(void)
         }
     }
 
-    for (uint8_t xc_addr = XC24_ADDR_TRIM_START ; xc_addr < XC24_ADDR_TRIM_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
         {
             switch (xc_addr)
             {
-            case XC24_ADDR_TRIM_TEST_CONTROL:
+            case XC24_MIRROR_ADDR_TEST_CONTROL:
                 gt_xc24_mirror_regs._rF0.test_en = 1;
                 break;
-            case XC24_ADDR_TRIM_OTP_PROTECT:
+            case XC24_MIRROR_ADDR_OTP_PROTECT:
                 gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
                 break;
             default :
@@ -520,7 +520,7 @@ void XC24_DAC_GAIN_TRIM_INIT(void)
     gt_xc24_mirror_regs._rF0.test_en = 1;
     gt_xc24_mirror_regs._rF0.daco_direct = 1;
 
-    XC24_Write_Register(XC24_ADDR_TRIM_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
+    XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
 }
 
 void XC24_Set_OTP_Protect(bool en)
@@ -533,7 +533,7 @@ void XC24_Set_OTP_Protect(bool en)
     {
         gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
     }
-    XC24_Write_Register(XC24_ADDR_TRIM_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
 }
 
 void XC24_Start_MCLK_Oscillation(bool en)
