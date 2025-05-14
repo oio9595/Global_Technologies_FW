@@ -263,6 +263,7 @@ int main(void)
     USE_XC24(FALSE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
+    JigBD_IF_Link_DMA_With_Buffer();
 
     XD_Trim_Calculate_Spec();
     ADS114S08_Init();
@@ -632,12 +633,6 @@ static void MX_TIM1_Init(void)
   LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
   /* USER CODE BEGIN TIM1_Init 2 */
 
-    LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)(&(TIM1->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)gn_serialize_tx_buffer);
-
-    //LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
-    //LL_DMA_EnableIT_TE(DMA2, LL_DMA_STREAM_1);
-
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableDMAReq_CC1(TIM1);
 
@@ -748,30 +743,6 @@ static void MX_TIM2_Init(void)
   LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM2);
   /* USER CODE BEGIN TIM2_Init 2 */
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)(&(TIM2->CCR2)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)gn_serialize_rx_risingBuffer);
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)(&(TIM2->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)gn_serialize_rx_fallingBuffer);
-
-    //LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_6);
-    //LL_DMA_EnableIT_TE(DMA1, LL_DMA_STREAM_6);
-
-#if 1
-    LL_TIM_DisableDMAReq_CC1(TIM2);
-    LL_TIM_DisableDMAReq_CC2(TIM2);
-    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-#else
-    LL_TIM_EnableDMAReq_CC1(TIM2);
-    LL_TIM_EnableDMAReq_CC2(TIM2);
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-#endif
-
-    //LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_6);
-    //LL_DMA_EnableIT_TE(DMA1, LL_DMA_STREAM_6);
 
     LL_DMA_ClearFlag_FE5(DMA1);
     LL_DMA_ClearFlag_FE6(DMA1);
@@ -922,8 +893,6 @@ static void MX_TIM8_Init(void)
   TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_ENABLE;
   LL_TIM_BDTR_Init(TIM8, &TIM_BDTRInitStruct);
   /* USER CODE BEGIN TIM8_Init 2 */
-
-  LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
 
   /* USER CODE END TIM8_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);

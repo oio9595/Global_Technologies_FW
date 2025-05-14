@@ -36,10 +36,6 @@ typedef enum tag_CURRENT_GAIN_T
 	GAIN_MAX,
 }current_gain_t;
 
-extern uint16_t gn_serialize_tx_buffer[400];
-extern uint16_t gn_serialize_rx_risingBuffer[400];
-extern uint16_t gn_serialize_rx_fallingBuffer[400];
-
 extern volatile uint16_t gn_xd_rx_timeout;
 
 extern bool gb_timer_input_capture_activated;
@@ -66,6 +62,7 @@ extern uint16_t JigBD_IF_Read_Command(uint8_t in_addr);
 extern uint16_t JigBD_IF_Fault_Read_Command(void);
 
 //Read Frequency Hz
+extern void JigBD_IF_Link_DMA_With_Buffer(void);
 extern void JigBD_IF_Start_Input_Capture(void);
 extern void JigBD_IF_Stop_Input_Capture(void);
 extern uint16_t JigBD_IF_Get_Input_Capture_Freq(void);

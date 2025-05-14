@@ -300,6 +300,18 @@ double JigBD_IF_Convert_MCU_ADC_To_Volt(uint16_t in_adc)
 /* END - Internal ADC ******************************************/
 
 /* BEGIN - PWM Read Frequency ******************************************/
+void JigBD_IF_Link_DMA_With_Buffer(void)
+{
+    LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)(&(TIM1->CCR1)));
+    LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)gn_serialize_tx_buffer);
+
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)(&(TIM2->CCR2)));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)gn_serialize_rx_risingBuffer);
+
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)(&(TIM2->CCR1)));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)gn_serialize_rx_fallingBuffer);
+}
+
 void JigBD_IF_Start_Input_Capture(void)
 {
     gf_internal_freq_Hz = 0;
@@ -729,7 +741,6 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     return (uint16_t)(n_response & 0x0FFF);
 }
-
 
 static void MCU_IF_IdGen_Command()
 {
