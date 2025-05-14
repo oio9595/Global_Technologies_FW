@@ -160,6 +160,16 @@ static _reg_map_t gt_xc24_mirror_maps[] =
 };
 static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
+__STATIC_INLINE bool SPI_Timeout_Handler(void)
+{
+    if (gn_xc_spi_timeout == 0)
+    {
+        print(LOG_ERROR, "SPI Timeout Error\r\n");
+        return false;
+    }
+    return true;
+}
+
 __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t len)
 {
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
@@ -174,22 +184,14 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     {
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
         {
-            if (gn_xc_spi_timeout == 0)
-            {
-                print(LOG_ERROR, "SPI Timeout Error\r\n");
-                break;
-            }
+            if (!SPI_Timeout_Handler()) return;
         }
         LL_SPI_TransmitData16(SPIx, p_buffer[i]);
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx))
     {
-        if (gn_xc_spi_timeout == 0)
-        {
-            print(LOG_ERROR, "SPI Timeout Error\r\n");
-            break;
-        }
+        if (!SPI_Timeout_Handler()) return;
     };
     us_delay(1);
 
@@ -215,31 +217,19 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
     {
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
         {
-            if (gn_xc_spi_timeout == 0)
-            {
-                print(LOG_ERROR, "SPI Timeout Error\r\n");
-                break;
-            }
+            if (!SPI_Timeout_Handler()) return;
         }
         LL_SPI_TransmitData16(SPIx, p_tx_buffer[i]);
 
         while(RESET == LL_SPI_IsActiveFlag_RXNE(SPIx))
         {
-            if (gn_xc_spi_timeout == 0)
-            {
-                print(LOG_ERROR, "SPI Timeout Error\r\n");
-                break;
-            }
+            if (!SPI_Timeout_Handler()) return;
         }
         p_rx_buffer[i] = LL_SPI_ReceiveData16(SPIx);
     }
     while(LL_SPI_IsActiveFlag_BSY(SPIx))
     {
-        if (gn_xc_spi_timeout == 0)
-        {
-            print(LOG_ERROR, "SPI Timeout Error\r\n");
-            break;
-        }
+        if (!SPI_Timeout_Handler()) return;
     }
     us_delay(1);
 
@@ -356,9 +346,7 @@ void XC24_Dump_All_Register(void)
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t VALUE : (0x%04X)\r\n\r\n",
-                            map->name, map->address, *((uint16_t*)(map->reg_ptr)));
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
 
@@ -367,9 +355,7 @@ void XC24_Dump_All_Register(void)
         const _reg_map_t* map = XC24_Get_Mirror_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_INFO, "[%s (0x%02X)]\r\n"
-                            "\t VALUE : (0x%04X)\r\n\r\n",
-                            map->name, map->address, *((uint16_t*)(map->reg_ptr)));
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
 }

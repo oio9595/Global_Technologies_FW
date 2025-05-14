@@ -40,7 +40,7 @@
 #define XD_SCREEN_MAX_CURRENT       (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
-static const char* gstr_TRIM_MODE[XD_TRIM_MAX] =
+static const char* gs_trim_mode[XD_TRIM_MAX] =
 {
     "XD_TRIM_VREF_CTL",
     "XD_TRIM_OSC_FREQUENCY",
@@ -88,7 +88,7 @@ typedef struct
     trim_adjust_type_t trim_adjust_flag[XD_CH_MAX]; // Result
 } trim_algo_param_t;
 
-const static char* str_ALGO_BODY_STATE[4] =
+const static char* gs_trim_algorithm_result[4] =
 {
     "NONE",
     "MINUS",
@@ -278,7 +278,7 @@ static void XD_Trim_Param_Algorithm_Init(void)
     print(LOG_INFO, "\r\n\t[trim_type] - [min/max] [p1/p2]");
     for (xd_trim_mode_t trim_mode = XD_TRIM_START ; trim_mode < XD_TRIM_MAX ; ++trim_mode)
     {
-        print(LOG_INFO, "\r\n\t[%s] - [%.3f/%.3f] [%u/%u]", gstr_TRIM_MODE[trim_mode],
+        print(LOG_INFO, "\r\n\t[%s] - [%.3f/%.3f] [%u/%u]", gs_trim_mode[trim_mode],
             1000 * gt_xdic_trim_condition[trim_mode].f_target_min, 1000 * gt_xdic_trim_condition[trim_mode].f_target_max,
             gt_xdic_trim_condition[trim_mode].u16_p1, gt_xdic_trim_condition[trim_mode].u16_p2);
     }
@@ -297,7 +297,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     uint16_t u16_adc_pre = 0;
     uint8_t u8_rtn_val = TRIM_ALGORITHM_CONTINUE;
     double temp_value = 0;
-    const char *str_ADJ_result = str_ALGO_BODY_STATE[0];
+    const char *str_trim_result = gs_trim_algorithm_result[0];
 
     static uint16_t u16_reg_saved[12] = {0, };
 
@@ -354,7 +354,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         if (u16_adc_cur < u16_adc_range_target)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_PLUS;
-            str_ADJ_result = str_ALGO_BODY_STATE[2];
+            str_trim_result = gs_trim_algorithm_result[2];
             if (u16_adc_per_register == 0)
             {
                 ptr_Param->adjust_amount[channel] = 1;
@@ -391,7 +391,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         else if (u16_adc_cur > u16_adc_range_target)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_MINUS;
-            str_ADJ_result = str_ALGO_BODY_STATE[1];
+            str_trim_result = gs_trim_algorithm_result[1];
             if (u16_adc_per_register == 0)
             {
                 ptr_Param->adjust_amount[channel] = 1;
@@ -428,7 +428,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         else
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_NONE;
-            str_ADJ_result = str_ALGO_BODY_STATE[0];
+            str_trim_result = gs_trim_algorithm_result[0];
             ptr_Param->adjust_amount[channel] = 0;
 
             for (int i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
@@ -469,7 +469,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
         if (u8_closest_adc_index == TRIM_REGISTER_SAVED_CNT)
         {
-            print(LOG_ERROR, "%s ********ADJUST_OVER_RANGE ERROR(%d,%d)******** %s\r\n", ANSI_FONT_RED, channel + 1, u8_closest_adc_index, ANSI_FONT_NONE);
+            print(LOG_ERROR, "********ADJUST_OVER_RANGE ERROR(%d,%d)********\r\n", channel + 1, u8_closest_adc_index);
             XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
             u8_rtn_val = TRIM_ALGORITHM_ERROR;
         }
@@ -488,7 +488,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     // Check Limit count of trying
     if (u8_loop_cnt > (TRIM_REGISTER_SAVED_CNT + TRIM_OUT_RANGE_CNT))
     {
-        print(LOG_ERROR, "%s ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d %s\r\n", ANSI_FONT_RED, channel + 1, u8_loop_cnt, ANSI_FONT_NONE);
+        print(LOG_ERROR, "ERROR!! TRIM_CH[%d] : RETRY COUNT is OVER %d\r\n", channel + 1, u8_loop_cnt);
         XD_Trim_Algorithm_Clear_Buffer_All(ptr_Param);
         u8_rtn_val = TRIM_ALGORITHM_ERROR;
         return u8_rtn_val;
@@ -497,7 +497,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     // Print Status
     if (u8_loop_cnt == 1)
     {
-        print(LOG_INFO, "Mode : %s / CH : %02d\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode], channel + 1);
+        print(LOG_INFO, "Mode : %s / CH : %02d\r\n", gs_trim_mode[ptr_Param->trim_mode], channel + 1);
         if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
             print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[MHz]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
@@ -513,13 +513,13 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     }
     print(LOG_INFO, "%02d\t\t%5u/%5u\t\t%5u\t\t%.3f\t\t%4u\t\t%7s\t\t[ %5u, %u ]\r\n", u8_loop_cnt,
         u16_adc_range_min, u16_adc_range_max, u16_adc_cur, temp_value,
-        u16_reg_value_cur, str_ADJ_result,
+        u16_reg_value_cur, str_trim_result,
         u16_adc_range_target, ptr_Param->trim_saved_cnt);
 
     // Check Last Channel
     if (ptr_Param->u8_channel_cur >= u8_CH_MAX)
     {
-        print(LOG_INFO, "[%s]\r\n", gstr_TRIM_MODE[ptr_Param->trim_mode]);
+        print(LOG_INFO, "[%s]\r\n", gs_trim_mode[ptr_Param->trim_mode]);
 
         print(LOG_INFO, "[RANGE]   %7u   %7u   %7u\r\n",u16_adc_range_min, u16_adc_range_target, u16_adc_range_max);
 
@@ -688,8 +688,8 @@ void XD_Trim_Task(void)
                     {
                         XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
                     }
-                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
                     gn_task_delay = 0;
+                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
                     break;
                 case XD_TRIM_OFS_CHS:
                     if (gn_slope_cnt == 0)
@@ -700,8 +700,8 @@ void XD_Trim_Task(void)
                     {
                         XDIC_Set_LD_Fix(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
                     }
-                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
                     gn_task_delay = 0;
+                    gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
                     break;
                 default:
                     XDIC_Read_All_Registers();
@@ -735,11 +735,9 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_START_ADC_CONVERSION:
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
-
                 gn_adc_read_count = ADS114S08_READ_COUNT;
-                gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
-
                 ADS114S08_Set_Start(1);
+                gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
                 break;
             case XD_TRIM_STEP_GET_ADC_CH:
                 if (gb_ads114s08_drdy_done == 1)
@@ -808,7 +806,7 @@ void XD_Trim_Task(void)
 
                 if (trim_algorithm_result == TRIM_ALGORITHM_ERROR)
                 {
-                    print(LOG_ERROR, "\t  %s ERROR STOP\r\n %s", ANSI_FONT_RED, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "\t  ERROR STOP\r\n");
                     gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 }
                 else if (trim_algorithm_result == TRIM_ALGORITHM_CONTINUE)
@@ -865,7 +863,7 @@ void XD_Trim_Task(void)
                     }
                     else
                     {
-                        print(LOG_ERROR, "%s ERROR: TRIM STOP - OVER LIMIT-%d:[%d/%d]%s\r\n", ANSI_FONT_RED, gt_xd_trim_search_mode ,u16_tmp_regVal ,u16_tmp_limit, ANSI_FONT_NONE);
+                        print(LOG_ERROR, "ERROR: TRIM STOP - OVER LIMIT-%d:[%d/%d]\r\n", gt_xd_trim_search_mode ,u16_tmp_regVal ,u16_tmp_limit);
                         gt_trim_error_code = TRIM_ERROR_OVER_COUNT;
                     }
                 }
@@ -878,7 +876,7 @@ void XD_Trim_Task(void)
                     }
                     else
                     {
-                        print(LOG_ERROR, "%s ERROR: TRIM STOP - UNDER ZERO-%d:[%d-%d]%s\r\n", ANSI_FONT_RED, gt_xd_trim_search_mode ,u16_tmp_regVal ,gt_trim_algorithm.adjust_amount[channel], ANSI_FONT_NONE);
+                        print(LOG_ERROR, "ERROR: TRIM STOP - UNDER ZERO-%d:[%d-%d]\r\n", gt_xd_trim_search_mode ,u16_tmp_regVal ,gt_trim_algorithm.adjust_amount[channel]);
                         gt_trim_error_code = TRIM_ERROR_UNDER_COUNT;
                     }
                 }
@@ -917,7 +915,7 @@ void XD_Trim_Task(void)
                 print(LOG_INFO, "\r\n OTP WRITE - DONE!! \r\n");
                 XDIC_Set_OTP_PG_Start(false);
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-                gn_task_delay = 5;
+                gn_task_delay = 10;
                 gt_xd_trim_step = XD_TRIM_STEP_STOP;
                 break;
             case XD_TRIM_STEP_STOP:
@@ -930,7 +928,7 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_RESULT:
                 if (gt_trim_error_code == TRIM_ERROR_OVER_COUNT)
                 {
-                    print(LOG_ERROR, "%s======== TRIM_ERROR_OVER_COUNT ========%s\r\n", ANSI_FONT_RED, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "======== TRIM_ERROR_OVER_COUNT ========\r\n");
                 }
                 else
                 {
@@ -946,14 +944,14 @@ void XD_Trim_Task(void)
 
                 XDIC_Trim_Init();
                 JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_task_delay = 10;
+                gn_task_delay = 100;
                 gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
                 break;
             case XD_TRIM_STEP_COMPARE:
                 u64_tmp_xd_otp_burn_result = XDIC_Compare_Trim_Regs();
                 if (u64_tmp_xd_otp_burn_result)
                 {
-                    print(LOG_ERROR, "%s======== TRIM_OTP_BURN_ERROR[%llu] ========%s\r\n", ANSI_FONT_RED, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                    print(LOG_ERROR, "======== TRIM_OTP_BURN_ERROR[%llu] ========\r\n", u64_tmp_xd_otp_burn_result);
                 }
                 else
                 {

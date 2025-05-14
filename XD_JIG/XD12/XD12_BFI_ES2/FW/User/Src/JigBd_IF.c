@@ -625,7 +625,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     if (gb_xd_timeout_event)
     {
-        print(LOG_ERROR, "%sRx Timeout!!!\r\n%s", ANSI_FONT_RED, ANSI_FONT_NONE);
+        print(LOG_ERROR, "Rx Timeout!!!\r\n");
     }
     else
     {
@@ -714,7 +714,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     if (gb_xd_timeout_event)
     {
-        print(LOG_ERROR, "%sRx Timeout!!!\r\n%s", ANSI_FONT_RED, ANSI_FONT_NONE);
+        print(LOG_ERROR, "Rx Timeout!!!\r\n");
     }
     else
     {
