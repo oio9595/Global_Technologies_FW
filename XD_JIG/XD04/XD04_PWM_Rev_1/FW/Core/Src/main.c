@@ -122,8 +122,15 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     {
         int len = 0;
         char msg_buffer[PRINT_BUFF_SIZE] = {0, };
-        va_list ap;
 
+        if (log_lv > LOG_INFO)
+        {
+            char temp_buffer[PRINT_BUFF_SIZE] = {0, };
+            snprintf(temp_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
+            fmt = temp_buffer;
+        }
+
+        va_list ap;
         va_start(ap, fmt);
         len = vsnprintf(msg_buffer, (PRINT_BUFF_SIZE - 1), fmt, ap);
         va_end(ap);
@@ -137,6 +144,7 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
         }
     }
 }
+
 void comm_print_help(void)
 {
     print(LOG_INFO, "\n\r------------------ Command Help -----------------------------");
