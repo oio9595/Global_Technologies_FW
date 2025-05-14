@@ -797,6 +797,9 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r3F.ld_fix_en = 1;
     gt_xdic_general_regs._r3F.mclk16_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
+    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 }
 void XDIC_Trim_Init_OSC(void)
 {
