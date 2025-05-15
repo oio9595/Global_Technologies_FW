@@ -617,7 +617,7 @@ typedef union
 
 #define ADS114S08_READ_COUNT    (16) /* must be power of 2 */
 
-EXTERN uint8_t gb_ads114s08_drdy_done;
+EXTERN volatile uint8_t gb_ads114s08_drdy_done;
 EXTERN uint64_t gn_ads114s08_adc_temp;
 EXTERN uint16_t gn_adc_read_count;
 

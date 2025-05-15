@@ -1688,6 +1688,110 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Freq_Count_to_MHZ(JigBD_IF_Input_Capture_Get_Freq()));
             }
         }
+        else if (Command_is_("xd_ictl_l_debug"))
+        {
+            JigBD_IF_XD_VCC_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+
+            if (IS_XC24())
+            {
+                XC24_Init();
+                print(LOG_INFO, "\r\n xc_init\r\n");
+                LL_mDelay(10);
+            }
+
+            JigBD_IF_Select_Output_Ch(0);
+            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            LL_mDelay(10);
+
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            LL_mDelay(10);
+
+            XD12_Trim_Init();
+
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+
+            XD12_Trim_Init_ICTL();
+            XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+
+            uint16_t adc_val = 0;
+            float current_val = 0.0f;
+            for (uint8_t ictl_l_cnt = 0 ; ictl_l_cnt < 128 ; ++ictl_l_cnt)
+            {
+                XD12_Write_Mirror_Reg(XD12_ADDR_TRIM_ICTL_L_CH_1, ictl_l_cnt);
+                HAL_Delay(1);
+
+                ADS114S08_Select_Single_Ended_Input(0);
+                HAL_Delay(1);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                HAL_Delay(1);
+
+                ADS114S08_Set_Start(1);
+                while(gb_ads114s08_drdy_done == 0) {}
+                adc_val = ADS114S08_Get_Adc_Value();
+                current_val = JigBD_IF_Convert_Adc_To_Current(adc_val, GAIN_HIGH);
+
+                print(LOG_INFO, "%4u, %.5f\r\n", ictl_l_cnt, current_val);
+                gb_ads114s08_drdy_done = 0;
+            }
+        }
+        else if (Command_is_("xd_ictl_h_debug"))
+        {
+            JigBD_IF_XD_VCC_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vcc_on\r\n");
+
+            if (IS_XC24())
+            {
+                XC24_Init();
+                print(LOG_INFO, "\r\n xc_init\r\n");
+                LL_mDelay(10);
+            }
+
+            JigBD_IF_Select_Output_Ch(0);
+            print(LOG_INFO, "\r\n jig_ch_sel_0\r\n");
+            LL_mDelay(10);
+
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            print(LOG_INFO, "\r\n jig_gain_high\r\n");
+            LL_mDelay(10);
+
+            XD12_Trim_Init();
+
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            print(LOG_INFO, "\r\n xd_vled_on\r\n");
+
+            XD12_Trim_Init_ICTL();
+            XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
+
+            uint16_t adc_val = 0;
+            float current_val = 0.0f;
+            for (uint8_t ictl_l_cnt = 0 ; ictl_l_cnt < 128 ; ++ictl_l_cnt)
+            {
+                XD12_Write_Mirror_Reg(XD12_ADDR_TRIM_ICTL_H_CH_1, ictl_l_cnt);
+                HAL_Delay(1);
+
+                ADS114S08_Select_Single_Ended_Input(0);
+                HAL_Delay(1);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                HAL_Delay(1);
+
+                ADS114S08_Set_Start(1);
+                while(gb_ads114s08_drdy_done == 0) {}
+                adc_val = ADS114S08_Get_Adc_Value();
+                current_val = JigBD_IF_Convert_Adc_To_Current(adc_val, GAIN_HIGH);
+
+                print(LOG_INFO, "%4u, %.5f\r\n", ictl_l_cnt, current_val);
+                gb_ads114s08_drdy_done = 0;
+            }
+        }
 
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_init"))
