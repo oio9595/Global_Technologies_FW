@@ -423,12 +423,12 @@ double JigBD_IF_Freq_Counter_To_MHZ(uint16_t count)
 /* END - PWM Read Frequency ******************************************/
 
 /* BEGIN - Make XDIC DATA SIGNAL through PWM DMA *******************************************/
-__STATIC_INLINE uint16_t Get_Nth_Bit(uint16_t x, int n)
+static uint16_t Get_Nth_Bit(uint16_t x, int n)
 {
     return ((x & (1 << (n - 1))) >> (n - 1));
 }
 
-__STATIC_INLINE void Serialize_Tx_Start(uint32_t len)
+static void Serialize_Tx_Start(uint32_t len)
 {
     gb_pwm_dma_tx_flag = TRUE;
 
@@ -438,7 +438,7 @@ __STATIC_INLINE void Serialize_Tx_Start(uint32_t len)
     LL_TIM_EnableCounter(TIM1);
 }
 
-__STATIC_INLINE void Serialize_Tx_Done(void)
+static void Serialize_Tx_Done(void)
 {
     LL_TIM_DisableCounter(TIM1);
     LL_DMA_ClearFlag_TC1(DMA2);
@@ -446,7 +446,7 @@ __STATIC_INLINE void Serialize_Tx_Done(void)
     LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
 }
 
-__STATIC_INLINE void Serialize_Rx_Start(uint32_t len)
+static void Serialize_Rx_Start(uint32_t len)
 {
     gn_xd_rx_timeout = XD_TIMEOUT_MS;
     gb_xd_timeout_event = false;
@@ -499,7 +499,7 @@ __STATIC_INLINE void Serialize_Rx_Start(uint32_t len)
     PWM_SWITCH_LO();
 }
 
-__STATIC_INLINE float Decode_Input_Response(uint32_t* pdata, uint16_t len)
+static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 {
     uint32_t freq_count_sum = 0;
     uint32_t count = 0;
