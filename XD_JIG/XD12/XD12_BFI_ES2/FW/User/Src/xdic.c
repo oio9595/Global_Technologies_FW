@@ -802,7 +802,7 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
     gt_xdic_general_regs._r3F.test_ana_en = 3;
-    gt_xdic_general_regs._r3F.ld_fix_en = 0;
+    gt_xdic_general_regs._r3F.ld_fix_en = 1;
     gt_xdic_general_regs._r3F.mclk16_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
@@ -833,6 +833,8 @@ void XDIC_Trim_Init_OFS(void)
 
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
+
+    XDIC_Set_LD_Fix((2 << 12 | 0xFFF));
 }
 
 void XDIC_Trim_Init_GAIN(void)
@@ -846,6 +848,8 @@ void XDIC_Trim_Init_GAIN(void)
 
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
+
+    XDIC_Set_LD_Fix((6 << 12 | 0xFFF));
 }
 
 void XDIC_Set_OTP_Protect(bool en)
