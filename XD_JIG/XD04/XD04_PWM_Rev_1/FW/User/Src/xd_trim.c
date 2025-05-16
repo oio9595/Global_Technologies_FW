@@ -17,8 +17,8 @@
 
 /* Trimming spec */
 #define XDIC_ERR_RATE               (1.0/100)   /* % */
-#define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 #define XDIC_VREF_TARGET            (2.2)       /* V */
+#define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_L_TARGET          (12.800f)   /* mA */
@@ -241,8 +241,8 @@ static void XD_Trim_Param_Algorithm_Init(void)
 
         if (i_trim_mode == XD_TRIM_OSC_FREQUENCY) // Freq
         {
-            u16_tmp_trim_range_adc_min = JigBD_IF_Convert_Freq_To_Counter(d_tmp_min);
-            u16_tmp_trim_range_adc_max = JigBD_IF_Convert_Freq_To_Counter(d_tmp_max);
+            u16_tmp_trim_range_adc_min = JigBD_IF_Calculate_Divided_Freq(d_tmp_min);
+            u16_tmp_trim_range_adc_max = JigBD_IF_Calculate_Divided_Freq(d_tmp_max);
         }
         else if (i_trim_mode == XD_TRIM_VREF_CTL) // Internal ADC
         {
@@ -324,7 +324,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
         if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
-            ptr_Param->value[channel] = JigBD_IF_Freq_Counter_To_MHZ(u16_adc_cur);
+            ptr_Param->value[channel] = JigBD_IF_Reconvert_Original_Freq((double)u16_adc_cur);
         }
         else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {
@@ -769,7 +769,7 @@ void XD_Trim_Task(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OSC;
                     u8_tmp_channel_max = 1;
                     t_trim_search_mode_next = XD_TRIM_ICTL_L_CHS;
-                    u16_tmp_adc_cur = JigBD_IF_Get_Input_Capture_Freq();
+                    u16_tmp_adc_cur = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq()); // Intentionally rounded down the frequency to make it appear slower
                     break;
                 case XD_TRIM_ICTL_L_CHS:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_GAIN;

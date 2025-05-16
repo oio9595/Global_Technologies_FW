@@ -339,16 +339,9 @@ void JigBD_IF_Stop_Input_Capture(void)
     LL_GPIO_SetOutputPin(CNT_MR_GPIO_Port, CNT_MR_Pin);
 }
 
-uint16_t JigBD_IF_Get_Input_Capture_Freq(void)
+double JigBD_IF_Get_Input_Capture_Freq(void)
 {
-    uint32_t input_freq = (uint32_t)(gf_internal_freq_Hz + 0.5f);
-    if (input_freq > 65535) //2^16-1
-    {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Get_Input_Capture_Freq() Retrun[%d] is TOO BIG\r\n", input_freq);
-        return 0;
-    }
-    //print(LOG_DEBUG, "\r\n JigBD_IF_Get_Input_Capture_Freq() : %d", input_freq);
-    return (uint16_t)input_freq;
+    return gf_internal_freq_Hz;
 }
 
 void JigBD_IF_Calculate_Input_Capture_Freq(void)
@@ -390,7 +383,7 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
     }
 }
 
-uint16_t JigBD_IF_Convert_Freq_To_Counter(double in_freq) //input must be 'MHz'
+uint16_t JigBD_IF_Calculate_Divided_Freq(double in_freq) //input must be 'MHz'
 {
     // Convert to 'Hz' and Divide by TIM_CAPTURE_EXT_PRESCALER
     uint32_t u32_rtn_val = (uint32_t)(((in_freq * CONST_MHz_TO_Hz) / TIM_CAPTURE_EXT_PRESCALER) + 0.5f);
@@ -410,16 +403,11 @@ uint16_t JigBD_IF_Convert_Freq_To_Counter(double in_freq) //input must be 'MHz'
     return (uint16_t)u32_rtn_val;
 }
 
-double JigBD_IF_Freq_Counter_To_MHZ(uint16_t count)
+double JigBD_IF_Reconvert_Original_Freq(double count)
 {
     double rtn_freq = 0.0;
-    if (count >= 65535) //2^16-1
-    {
-        print(LOG_ERROR, "\r\nERROR: JigBD_IF_Get_Input_Capture_Freq() Retrun[%d] is TOO BIG\r\n", count);
-        return 0;
-    }
 
-    rtn_freq = ((double)count * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz;
+    rtn_freq = (count * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz;
     return rtn_freq;
 }
 /* END - PWM Read Frequency ******************************************/
@@ -741,6 +729,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     return (uint16_t)(n_response & 0x0FFF);
 }
+
 
 static void MCU_IF_IdGen_Command()
 {

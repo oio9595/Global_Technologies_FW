@@ -65,11 +65,11 @@ extern uint16_t JigBD_IF_Fault_Read_Command(void);
 extern void JigBD_IF_Link_DMA_With_Buffer(void);
 extern void JigBD_IF_Start_Input_Capture(void);
 extern void JigBD_IF_Stop_Input_Capture(void);
-extern uint16_t JigBD_IF_Get_Input_Capture_Freq(void);
+extern double JigBD_IF_Get_Input_Capture_Freq(void);
 extern void JigBD_IF_Calculate_Input_Capture_Freq(void);
 
-extern uint16_t JigBD_IF_Convert_Freq_To_Counter(double in_freq);
-extern double JigBD_IF_Freq_Counter_To_MHZ(uint16_t count);
+extern uint16_t JigBD_IF_Calculate_Divided_Freq(double in_freq);
+extern double JigBD_IF_Reconvert_Original_Freq(double count);
 
 extern uint16_t JigBD_IF_Convert_Volt_To_MCU_ADC(double in_volt);
 extern double JigBD_IF_Convert_MCU_ADC_To_Volt(uint16_t in_adc);
