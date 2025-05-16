@@ -17,18 +17,18 @@
 
 /* Trimming spec */
 #define XDIC_ERR_RATE               (1.0/100)   /* % */
-#define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 #define XDIC_VREF_TARGET            (2.2)       /* V */
+#define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
-#define XDIC_GAIN_TARGET            (25.600f)   /* mA */
+#define XDIC_GAIN_TARGET            (1.5484f)   /* mA */
 #define XDIC_GAIN_P1                (6 << 12 | 0xFFF)
 #define XDIC_GAIN_P2                (6 << 12 | 0xFFF)
 
 #define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
-#define XDIC_OFS_TARGET             (6.4000f)   /* mA */
-#define XDIC_OFS_P1                 (1 << 12 | 0xFFF)
-#define XDIC_OFS_P2                 (3 << 12 | 0xFFF)
+#define XDIC_OFS_TARGET             (0.7742f)   /* mA */
+#define XDIC_OFS_P1                 (2 << 12 | 0xFFF)
+#define XDIC_OFS_P2                 (4 << 12 | 0xFFF)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)

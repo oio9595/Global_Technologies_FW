@@ -41,6 +41,8 @@
 
 #define XDIC_CHANNEL_ENABLE_MAX             (0x00F)
 
+#define XDIC_TRIM_OSC_MANUAL                (32768)
+
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
 
@@ -488,7 +490,7 @@ void XDIC_Init(void)
     XDIC_Param_Init();
 
     JigBD_IF_Reset_Command();
-    JigBD_IF_IdGen_Command();v
+    JigBD_IF_IdGen_Command();
 
     print(LOG_INFO, "XDIC Dump Register Before Initial\r\n");
     XDIC_Read_All_Registers();
@@ -716,6 +718,31 @@ void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 }
 
+static void XDIC_Set_OSC_Manual_Enable(bool en)
+{
+    if (en == true)
+    {
+        gt_xdic_general_regs._r2B.osc_fll_man_e = 1;
+    }
+    else
+    {
+        gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
+    }
+    XDIC_Write_General_Reg(XDIC_ADDR_OSC_FLL_MANUAL_2, gt_xdic_general_regs._r2B.val);
+}
+
+static void XDIC_Set_OSC_Manual(uint16_t osc_manual)
+{
+    uint16_t osc_manual_lsb = ((osc_manual & 0x0FFF) >>  0);
+    uint16_t osc_manual_msb = ((osc_manual & 0xF000) >> 12);
+
+    gt_xdic_general_regs._r2A.osc_fll_man = osc_manual_lsb;
+    gt_xdic_general_regs._r2B.osc_fll_man = osc_manual_msb;
+
+    XDIC_Write_General_Reg(XDIC_ADDR_OSC_FLL_MANUAL_1, gt_xdic_general_regs._r2A.val);
+    XDIC_Write_General_Reg(XDIC_ADDR_OSC_FLL_MANUAL_2, gt_xdic_general_regs._r2B.val);
+}
+
 void XDIC_Update_Vsync_Frequency(float n_freq)
 {
     uint32_t prescale = LL_TIM_GetPrescaler(TIM8);
@@ -793,7 +820,7 @@ void XDIC_Trim_Init_VREF_CTL(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 1; // value??
+    gt_xdic_general_regs._r3F.test_ana_en = 3;
     gt_xdic_general_regs._r3F.pwm_full_o = 0;
     gt_xdic_general_regs._r3F.mclk32_o = 0;
     gt_xdic_general_regs._r3F.vref_o = 1;
@@ -802,22 +829,26 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 }
+
 void XDIC_Trim_Init_OSC(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 1; // value??
+    gt_xdic_general_regs._r3F.test_ana_en = 0;
     gt_xdic_general_regs._r3F.pwm_full_o = 0;
     gt_xdic_general_regs._r3F.mclk32_o = 1;
     gt_xdic_general_regs._r3F.vref_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    XDIC_Set_OSC_Manual_Enable(true);
+    XDIC_Set_OSC_Manual(XDIC_TRIM_OSC_MANUAL);
 }
 
 void XDIC_Trim_Init_ICTL_L_CH(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 1; // value??
+    gt_xdic_general_regs._r3F.test_ana_en = 0;
     gt_xdic_general_regs._r3F.pwm_full_o = 1;
     gt_xdic_general_regs._r3F.mclk32_o = 0;
     gt_xdic_general_regs._r3F.vref_o = 0;
@@ -826,14 +857,14 @@ void XDIC_Trim_Init_ICTL_L_CH(void)
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 
-    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_16mA);
 }
 
 void XDIC_Trim_Init_ICTL_H_CH(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 1; // value??
+    gt_xdic_general_regs._r3F.test_ana_en = 0;
     gt_xdic_general_regs._r3F.pwm_full_o = 1;
     gt_xdic_general_regs._r3F.mclk32_o = 0;
     gt_xdic_general_regs._r3F.vref_o = 0;
@@ -842,7 +873,7 @@ void XDIC_Trim_Init_ICTL_H_CH(void)
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 
-    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_64mA);
 }
 
 void XDIC_Set_OTP_Protect(bool en)

@@ -21,14 +21,14 @@
 #define XDIC_VREF_TARGET            (2.2)       /* V */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_TARGET          (6.4000f)   /* mA */
-#define XDIC_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_8mA)
-#define XDIC_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_8mA)
+#define XDIC_ICTL_L_TARGET          (12.800f)   /* mA */
+#define XDIC_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_16mA)
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_TARGET          (25.600f)   /* mA */
-#define XDIC_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_32mA)
-#define XDIC_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_32mA)
+#define XDIC_ICTL_H_TARGET          (51.200f)   /* mA */
+#define XDIC_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_64mA)
+#define XDIC_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_64mA)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)

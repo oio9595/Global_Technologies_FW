@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #define XDIC_VREF_TRIM_VREF     (4095)
-#define XDIC_CURRENT_TRIM_VREF  (2047)
+#define XDIC_CURRENT_TRIM_VREF  (3276)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
