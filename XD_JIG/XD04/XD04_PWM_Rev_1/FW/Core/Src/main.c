@@ -1241,8 +1241,7 @@ static void TaskDebugUart(void)
         {
             JigBD_IF_Stop_Input_Capture();
             double input_freq_Hz = JigBD_IF_Get_Input_Capture_Freq();
-
-            print(LOG_INFO, "\r\n Stop timer for freq input capture : %.3f [Hz] => %1.3f [MHz]\r\n", input_freq_Hz, ((input_freq_Hz * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz));
+            print(LOG_INFO, "\r\n Stop timer for freq input capture : %.3f [Hz]\r\n", input_freq_Hz);
         }
         else if (Command_is_("jig_vref_start"))
         {
@@ -1561,7 +1560,7 @@ static void TaskDebugUart(void)
                 LL_mDelay(150);
                 JigBD_IF_Stop_Input_Capture();
 
-                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Reconvert_Original_Freq(JigBD_IF_Get_Input_Capture_Freq()));
+                print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Reconvert_XDIC_Original_Freq(JigBD_IF_Get_Input_Capture_Freq()));
             }
         }
         else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))

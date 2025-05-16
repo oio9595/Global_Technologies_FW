@@ -241,8 +241,8 @@ static void XD_Trim_Param_Algorithm_Init(void)
 
         if (i_trim_mode == XD_TRIM_OSC_FREQUENCY) // Freq
         {
-            u16_tmp_trim_range_adc_min = JigBD_IF_Calculate_Divided_Freq(d_tmp_min);
-            u16_tmp_trim_range_adc_max = JigBD_IF_Calculate_Divided_Freq(d_tmp_max);
+            u16_tmp_trim_range_adc_min = JigBD_IF_Calculate_XDIC_Divided_Freq(d_tmp_min);
+            u16_tmp_trim_range_adc_max = JigBD_IF_Calculate_XDIC_Divided_Freq(d_tmp_max);
         }
         else if (i_trim_mode == XD_TRIM_VREF_CTL) // Internal ADC
         {
@@ -324,7 +324,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
         if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
-            ptr_Param->value[channel] = JigBD_IF_Reconvert_Original_Freq((double)u16_adc_cur);
+            ptr_Param->value[channel] = JigBD_IF_Reconvert_XDIC_Original_Freq((double)u16_adc_cur);
         }
         else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {

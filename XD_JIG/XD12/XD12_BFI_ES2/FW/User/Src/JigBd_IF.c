@@ -53,8 +53,6 @@ static volatile bool gb_xd_timeout_event;
 volatile bool gb_pwm_dma_tx_flag;
 
 static double gf_internal_freq_Hz;
-static double gf_freq_min;
-static double gf_freq_max;
 
 bool gb_timer_input_capture_activated;
 bool gb_timer_input_capture_done;
@@ -312,9 +310,7 @@ void JigBD_IF_Link_DMA_With_Buffer(void)
 
 void JigBD_IF_Start_Input_Capture(void)
 {
-    gf_internal_freq_Hz = 0;
-    gf_freq_min = DBL_MAX;
-    gf_freq_max = 0;
+    gf_internal_freq_Hz = 0.0f;
 
     LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)(&(TIM5->CCR1)));
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_2, (uint32_t)gn_input_capture_cnt);
@@ -369,22 +365,12 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
         }
 
         gf_internal_freq_Hz = (f_freq_avg / n_count);
-        if (gf_freq_min > gf_internal_freq_Hz)
-        {
-            gf_freq_min = gf_internal_freq_Hz;
-        }
-
-        if (gf_freq_max < gf_internal_freq_Hz)
-        {
-            gf_freq_max = gf_internal_freq_Hz;
-        }
     }
 }
 
-uint16_t JigBD_IF_Calculate_Divided_Freq(double in_freq) //input must be 'MHz'
+uint16_t JigBD_IF_Calculate_XDIC_Divided_Freq(double in_freq) //input must be 'MHz'
 {
-    // Convert to 'Hz' and Divide by TIM_CAPTURE_EXT_PRESCALER
-    uint32_t u32_rtn_val = (uint32_t)(((in_freq * CONST_MHz_TO_Hz) / TIM_CAPTURE_EXT_PRESCALER) + 0.5f);
+    uint32_t u32_rtn_val = (uint32_t)(((in_freq * CONST_MHz_TO_Hz) / XDIC_CONST_FREQ_DIVIDE) + 0.5f);
 
     if (u32_rtn_val > 65535) //2^16-1
     {
@@ -392,20 +378,14 @@ uint16_t JigBD_IF_Calculate_Divided_Freq(double in_freq) //input must be 'MHz'
         return 0;
     }
 
-    if (u32_rtn_val < 1374) // 1374 = ( 90Mhz / 2^16 ) + 1;
-    {
-        print(LOG_ERROR, "\r\nERROR: s (%lf) INPUT TOO SMALL\r\n", __func__, in_freq);
-        return 0;
-    }
-
     return (uint16_t)u32_rtn_val;
 }
 
-double JigBD_IF_Reconvert_Original_Freq(double count)
+double JigBD_IF_Reconvert_XDIC_Original_Freq(double count)
 {
     double rtn_freq = 0.0;
 
-    rtn_freq = (count * TIM_CAPTURE_EXT_PRESCALER) / CONST_MHz_TO_Hz;
+    rtn_freq = (count * XDIC_CONST_FREQ_DIVIDE) / CONST_MHz_TO_Hz;
     return rtn_freq;
 }
 /* END - PWM Read Frequency ******************************************/
