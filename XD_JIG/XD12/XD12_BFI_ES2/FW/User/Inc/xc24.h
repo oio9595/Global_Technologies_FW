@@ -1684,6 +1684,11 @@ extern void XC24_Trim_Init(void);
 
 extern void XC24_Set_OTP_Protect(bool en);
 
+extern void XC24_VCTL_LDO_TRIM_INIT(void);
+extern void XC24_DAC_GAIN_TRIM_INIT(void);
+extern void XC24_DAC_OFS_TRIM_INIT(void);
+extern void XC24_OSC_FCTL_TRIM_INIT(void);
+
 extern void XC24_Start_MCLK_Oscillation(bool en);
 extern bool IS_XC24_Support(void);
 extern void USE_XC24(bool b_support);
@@ -1695,6 +1700,11 @@ extern uint16_t XC24_IF_Fault_Read_Command(void);
 extern void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data);
 extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr);
 extern void XC24_IF_Write_LD(uint16_t in_LD_data);
+
+extern void XC24_TRIM_WRITE_VCTL_LDO(uint8_t vctl_ldo);
+extern void XC24_TRIM_WRITE_OSC_FCTL(uint8_t osc_fctl);
+extern void XC24_TRIM_WRITE_DAC_GAIN(uint8_t dac_gain);
+extern void XC24_TRIM_WRITE_DAC_OFS(uint8_t dac_ofs);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus

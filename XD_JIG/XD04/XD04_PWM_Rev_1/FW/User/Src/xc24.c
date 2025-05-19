@@ -8,6 +8,7 @@
 #define __XC24_C__
 #include "main.h"
 #include "xc24.h"
+#include "xc_trim.h"
 #include "JigBd_IF.h"
 #include "types.h"
 #include "config.h"
@@ -501,14 +502,6 @@ void XC24_Trim_Init(void)
     XC24_Read_Register_All();
 }
 
-void XC24_DAC_GAIN_TRIM_INIT(void)
-{
-    gt_xc24_mirror_regs._rF0.test_en = 1;
-    gt_xc24_mirror_regs._rF0.daco_direct = 1;
-
-    XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
-}
-
 void XC24_Set_OTP_Protect(bool en)
 {
     if (en == true)
@@ -520,6 +513,54 @@ void XC24_Set_OTP_Protect(bool en)
         gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
     }
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
+}
+
+void XC24_VCTL_LDO_TRIM_INIT(void)
+{
+	gt_xc24_mirror_regs._rF5.vctl_ldo = 8;
+	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF5.ALL);
+}
+
+void XC24_DAC_GAIN_TRIM_INIT(void)
+{
+	gt_xc24_mirror_regs._rF0.test_en = 1;
+	gt_xc24_mirror_regs._rF0.daco_direct = 1;
+	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
+
+	gt_xc24_mirror_regs._rF6.dac_gain = 32;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
+}
+
+void XC24_DAC_OFS_TRIM_INIT(void)
+{
+	gt_xc24_mirror_regs._rF0.test_en = 1;
+	gt_xc24_mirror_regs._rF0.daco_direct = 1;
+	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
+
+	gt_xc24_general_regs._r4F.curr_tgt_dac = XC24_DAC_OFS_TGT;
+	XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, gt_xc24_general_regs._r4F.ALL);
+
+	gt_xc24_mirror_regs._rF6.dac_ofs = 0;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
+}
+
+void XC24_OSC_FCTL_TRIM_INIT(void)
+{
+	gt_xc24_mirror_regs._rF0.test_en = 1;
+	gt_xc24_mirror_regs._rF0.mclk32_o = 1;
+	gt_xc24_mirror_regs._rF0.mclk1_o = 0;
+	//gt_xc24_mirror_regs._rF0.daco_direct = 1;
+	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
+
+	gt_xc24_general_regs._r1B.spread_range_a = 4;
+	gt_xc24_general_regs._r1B.osc_spread_en = 0;
+	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_1, gt_xc24_general_regs._r1B.ALL);
+
+	gt_xc24_general_regs._r1C.osc_force_static = XC24_OSC_REG_DEFAULT;
+	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_2, gt_xc24_general_regs._r1C.ALL);
+
+	gt_xc24_mirror_regs._rF5.osc_fctl = 64;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
 }
 
 void XC24_Start_MCLK_Oscillation(bool en)
@@ -640,6 +681,30 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
 
     SPI_Write(g_hSPIx, tx_buffer, 1 + XD_DAISY_SIZE * XD_CH_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
+}
+
+void XC24_TRIM_WRITE_VCTL_LDO(uint8_t vctl_ldo)
+{
+	gt_xc24_mirror_regs._rF5.vctl_ldo = vctl_ldo;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
+}
+
+void XC24_TRIM_WRITE_DAC_OFS(uint8_t dac_ofs)
+{
+	gt_xc24_mirror_regs._rF6.dac_ofs = dac_ofs;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
+}
+
+void XC24_TRIM_WRITE_DAC_GAIN(uint8_t dac_gain)
+{
+	gt_xc24_mirror_regs._rF6.dac_gain = dac_gain;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
+}
+
+void XC24_TRIM_WRITE_OSC_FCTL(uint8_t osc_fctl)
+{
+	gt_xc24_mirror_regs._rF5.osc_fctl = osc_fctl;
+	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/
