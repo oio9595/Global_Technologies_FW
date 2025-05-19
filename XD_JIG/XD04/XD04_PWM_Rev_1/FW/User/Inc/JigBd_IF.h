@@ -24,7 +24,7 @@ extern "C" {
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
 #define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max 140mA
 
-#define XDIC_INTERNAL_DIVIDER       (32)        // BFI 16, PWM 32
+#define XDIC_INTERNAL_DIVIDER       (16)        // BFI 16, PWM 32
 #define XC24_INTERNAL_DIVIDER       (32)
 #define JIG_FREQUENCY_DIVIDER       (128)
 #define XDIC_CONST_FREQ_DIVIDE      (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
@@ -49,6 +49,7 @@ extern void JigBD_IF_Detect_XC24(void);
 extern void JigBD_IF_XC_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_Level(power_volt_t pwr);
+extern void JigBD_IF_XC_VCC_Level(power_volt_t pwr);
 extern void JigBD_IF_VLED_9V_EN(uint8_t on);
 
 extern void JigBD_IF_Change_Current_Gain(current_gain_t gain);

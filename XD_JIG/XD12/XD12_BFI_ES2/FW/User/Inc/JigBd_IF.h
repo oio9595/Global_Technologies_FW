@@ -49,6 +49,7 @@ extern void JigBD_IF_Detect_XC24(void);
 extern void JigBD_IF_XC_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_Level(power_volt_t pwr);
+extern void JigBD_IF_XC_VCC_Level(power_volt_t pwr);
 extern void JigBD_IF_VLED_9V_EN(uint8_t on);
 
 extern void JigBD_IF_Change_Current_Gain(current_gain_t gain);

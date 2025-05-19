@@ -122,6 +122,22 @@ void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
     LL_mDelay(10);
 }
 
+void JigBD_IF_XC_VCC_Level(power_volt_t pwr)
+{
+    uint32_t pin_mask = 0;
+    if (pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
+    {
+        pin_mask |= (XC24_5V5_Pin << 16);   /* reset */
+    }
+    else if (pwr == PWR_ON_5V5) /*5.0V off, 5.7V On */
+    {
+        pin_mask |= (XC24_5V5_Pin <<  0);   /* set */
+    }
+
+    WRITE_REG(XC24_5V5_GPIO_Port->BSRR, pin_mask);
+    LL_mDelay(10);
+}
+
 void JigBD_IF_VLED_9V_EN(uint8_t on)
 {
     if (on == PWR_ON)
