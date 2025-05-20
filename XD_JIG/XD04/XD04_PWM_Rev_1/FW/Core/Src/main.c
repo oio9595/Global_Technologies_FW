@@ -200,9 +200,10 @@ void comm_print_help(void)
     print(LOG_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24");
     print(LOG_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24 usage (0/1)");
 
-    print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC OTP write");
+    print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC trim process");
     print(LOG_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
     print(LOG_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
+    print(LOG_INFO, "\n\r  xc_trim_start / 4\t : Start XC24 trim process");
 
     print(LOG_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
     print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
@@ -219,6 +220,7 @@ void comm_init(void)
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
     print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
     print(LOG_INFO, "\n\r--------------------------------------\r\n");
 }
 /* USER CODE END 0 */
