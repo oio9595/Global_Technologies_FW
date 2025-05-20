@@ -68,9 +68,6 @@ bool XC_Trim_IF_Get_OTP_Enable(void)
     return gb_xc_otp_write_flag;
 }
 
-/* BEGIN - TRIMMING ALGORITHM   ***************************************/
-
-/* BEGIN - TRIMMING_PROCEDURE_RUN   *****************************************/
 void XC_Trim_Task(void)
 {
     static uint8_t over_run_cnt = 1;
@@ -119,7 +116,7 @@ void XC_Trim_Task(void)
                 }
             }
 
-            vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V; // Dac out convert to V
+            vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
             gn_ads114s08_adc_temp = 0;
 
             if((over_run_cnt >= VCTL_LDO_TRIM_OVER_COUNT) || (vctl_ldo_reg >= 15) || (vctl_ldo_reg <= 0))
@@ -170,7 +167,7 @@ void XC_Trim_Task(void)
                 }
             }
 
-            dac_gain_tgt_buff.dac_gain_tgt_p1 = (ADS114S_VREF * (((float)(gn_ads114s08_adc_temp) / ADS114S08_READ_COUNT + 0.5f) / 32767)) / 1000; // dacout convert to V
+            dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
             gn_ads114s08_adc_temp = 0;
 
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P2);
@@ -186,7 +183,7 @@ void XC_Trim_Task(void)
                 }
             }
 
-            dac_gain_tgt_buff.dac_gain_tgt_p2 = (ADS114S_VREF * (((float)(gn_ads114s08_adc_temp) / ADS114S08_READ_COUNT + 0.5f) / 32767)) / 1000; // dacout convert to V
+            dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
             gn_ads114s08_adc_temp = 0;
 
             if((over_run_cnt >= DAC_GAIN_TRIM_OVER_COUNT) || (dac_gain_reg >= 63) || (dac_gain_reg <= 0))
@@ -244,7 +241,7 @@ void XC_Trim_Task(void)
                 }
             }
 
-            dac_ofs = (ADS114S_VREF * (((float)(gn_ads114s08_adc_temp) / ADS114S08_READ_COUNT + 0.5f) / 32767)) / 1000; // dacout convert to V
+            dac_ofs = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
             gn_ads114s08_adc_temp = 0;
 
             if((over_run_cnt >= DAC_OFS_TRIM_OVER_COUNT) || dac_ofs_reg >= 63 || dac_ofs_reg <= 0)
@@ -379,18 +376,17 @@ void XC_Trim_Task(void)
             if (xc_compare_result)
             {
                 print(LOG_INFO, "TRIMMING_COMPARE OK\r\n");
+                gt_xc_trim_step = XC_TRIM_STEP_PWR_OFF;
             }
             else
             {
                 print(LOG_ERROR, "TRIMMING_COMPARE NG\r\n");
+                gt_xc_trim_step = XC_TRIM_STEP_STOP;
             }
-
-            gt_xc_trim_step = XC_TRIM_STEP_PWR_OFF;
             break;
 
         case XC_TRIM_STEP_STOP:
             print(LOG_ERROR, "=============TRIMMING_ERROR=============\r\n");
-
             gt_xc_trim_step = XC_TRIM_STEP_PWR_OFF;
             break;
         case XC_TRIM_STEP_PWR_OFF:
@@ -404,6 +400,4 @@ void XC_Trim_Task(void)
         }
     }
 }
-
-/* END - TRIMMING_PROCEDURE_RUN   *****************************************/
 /*** end of file ***/
