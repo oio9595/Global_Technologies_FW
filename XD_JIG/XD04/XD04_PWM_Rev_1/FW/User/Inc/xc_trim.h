@@ -42,8 +42,8 @@ extern "C" {
 
 typedef struct
 {
-	float dac_gain_tgt_p1;
-	float dac_gain_tgt_p2;
+    float dac_gain_tgt_p1;
+    float dac_gain_tgt_p2;
 } dac_gain_tgt_t;
 
 typedef enum
@@ -56,9 +56,9 @@ typedef enum
     XC_TRIM_STEP_ACTIVATE_END,
 
     XC_TRIM_STEP_VCTL_LDO,
-	XC_TRIM_STEP_DAC_GAIN,
-	XC_TRIM_STEP_DAC_OFS,
-	XC_TRIM_STEP_OSC_FCTL,
+    XC_TRIM_STEP_DAC_GAIN,
+    XC_TRIM_STEP_DAC_OFS,
+    XC_TRIM_STEP_OSC_FCTL,
 
     XC_TRIM_STEP_E2P_PROGRAM,
     XC_TRIM_STEP_E2P_PROGRAM_START,
@@ -74,9 +74,9 @@ typedef enum
 
 typedef enum
 {
-	TRIM_FIND_MIRROR1 = 0,
-	TRIM_FIND_MIRROR2,
-	TRIM_FIND_MAX,
+    TRIM_FIND_MIRROR1 = 0,
+    TRIM_FIND_MIRROR2,
+    TRIM_FIND_MAX,
 } xc_trim_find_regs_t;
 
 /* END -  Input parameter from GUI */

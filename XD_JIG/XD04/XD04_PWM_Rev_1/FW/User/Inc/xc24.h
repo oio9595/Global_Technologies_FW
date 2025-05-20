@@ -1684,10 +1684,10 @@ extern void XC24_Trim_Init(void);
 
 extern void XC24_Set_OTP_Protect(bool en);
 
-extern void XC24_VCTL_LDO_TRIM_INIT(void);
-extern void XC24_DAC_GAIN_TRIM_INIT(void);
-extern void XC24_DAC_OFS_TRIM_INIT(void);
-extern void XC24_OSC_FCTL_TRIM_INIT(void);
+extern void XC24_Trim_Init_VCTL_LDO(void);
+extern void XC24_Trim_Init_DAC_Gain(void);
+extern void XC24_Trim_Init_DAC_OFS(void);
+extern void XC24_Trim_Init_OSC(void);
 
 extern void XC24_Start_MCLK_Oscillation(bool en);
 extern bool IS_XC24_Support(void);
@@ -1701,10 +1701,10 @@ extern void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data);
 extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr);
 extern void XC24_IF_Write_LD(uint16_t in_LD_data);
 
-extern void XC24_TRIM_WRITE_VCTL_LDO(uint8_t vctl_ldo);
-extern void XC24_TRIM_WRITE_OSC_FCTL(uint8_t osc_fctl);
-extern void XC24_TRIM_WRITE_DAC_GAIN(uint8_t dac_gain);
-extern void XC24_TRIM_WRITE_DAC_OFS(uint8_t dac_ofs);
+extern void XC24_Trim_Write_VCTL_LDO(uint8_t vctl_ldo);
+extern void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl);
+extern void XC24_Trim_Write_DAC_GAIN(uint8_t dac_gain);
+extern void XC24_Trim_Write_DAC_OFS(uint8_t dac_ofs);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus

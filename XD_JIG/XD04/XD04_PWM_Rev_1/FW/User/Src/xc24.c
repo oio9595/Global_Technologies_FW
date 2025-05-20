@@ -515,13 +515,13 @@ void XC24_Set_OTP_Protect(bool en)
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
 }
 
-void XC24_VCTL_LDO_TRIM_INIT(void)
+void XC24_Trim_Init_VCTL_LDO(void)
 {
 	gt_xc24_mirror_regs._rF5.vctl_ldo = 8;
 	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF5.ALL);
 }
 
-void XC24_DAC_GAIN_TRIM_INIT(void)
+void XC24_Trim_Init_DAC_Gain(void)
 {
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
@@ -531,7 +531,7 @@ void XC24_DAC_GAIN_TRIM_INIT(void)
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
 }
 
-void XC24_DAC_OFS_TRIM_INIT(void)
+void XC24_Trim_Init_DAC_OFS(void)
 {
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
@@ -544,7 +544,7 @@ void XC24_DAC_OFS_TRIM_INIT(void)
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
 }
 
-void XC24_OSC_FCTL_TRIM_INIT(void)
+void XC24_Trim_Init_OSC(void)
 {
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.mclk32_o = 1;
@@ -683,25 +683,25 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 
-void XC24_TRIM_WRITE_VCTL_LDO(uint8_t vctl_ldo)
+void XC24_Trim_Write_VCTL_LDO(uint8_t vctl_ldo)
 {
 	gt_xc24_mirror_regs._rF5.vctl_ldo = vctl_ldo;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
 }
 
-void XC24_TRIM_WRITE_DAC_OFS(uint8_t dac_ofs)
+void XC24_Trim_Write_DAC_OFS(uint8_t dac_ofs)
 {
 	gt_xc24_mirror_regs._rF6.dac_ofs = dac_ofs;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
 }
 
-void XC24_TRIM_WRITE_DAC_GAIN(uint8_t dac_gain)
+void XC24_Trim_Write_DAC_GAIN(uint8_t dac_gain)
 {
 	gt_xc24_mirror_regs._rF6.dac_gain = dac_gain;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, gt_xc24_mirror_regs._rF6.ALL);
 }
 
-void XC24_TRIM_WRITE_OSC_FCTL(uint8_t osc_fctl)
+void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl)
 {
 	gt_xc24_mirror_regs._rF5.osc_fctl = osc_fctl;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
