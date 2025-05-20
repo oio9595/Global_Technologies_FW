@@ -48,75 +48,45 @@ typedef struct
 
 typedef enum
 {
-    TRIMMING_STEP_NONE = 0,
-    TRIMMING_STEP_STANDBY,
+    XC_TRIM_STEP_NONE = 0,
+    XC_TRIM_STEP_STANDBY,
 
-    TRIMMING_STEP_ACTIVATE_START,
-    TRIMMING_STEP_IC_PWR,
-    TRIMMING_STEP_ACTIVATE_END,
+    XC_TRIM_STEP_ACTIVATE_START,
+    XC_TRIM_STEP_IC_PWR,
+    XC_TRIM_STEP_ACTIVATE_END,
 
-    TRIMMING_STEP_VCTL_LDO,
-	TRIMMING_STEP_DAC_GAIN,
-	TRIMMING_STEP_DAC_OFS,
-	TRIMMING_STEP_OSC_FCTL,
+    XC_TRIM_STEP_VCTL_LDO,
+	XC_TRIM_STEP_DAC_GAIN,
+	XC_TRIM_STEP_DAC_OFS,
+	XC_TRIM_STEP_OSC_FCTL,
 
-    TRIMMING_STEP_E2P_PROGRAM,
-    TRIMMING_STEP_E2P_PROGRAM_START,
-    TRIMMING_STEP_E2P_PROGRAM_END,
-    TRIMMING_STEP_STOP,
-    TRIMMING_STEP_REBOOT,
-    TRIMMING_STEP_COMPARE,
-    TRIMMING_STEP_PWR_OFF,
-    TRIMMING_STEP_MAX,
-}trimming_step_t;
-
-typedef enum
-{
-    TRIM_ERROR_NONE = 0,
-    TRIM_ERROR_OVER_COUNT,
-    TRIM_ERROR_UNDER_COUNT,
-    TRIM_ERROR_MAX,
-}trim_error_code_t;
+    XC_TRIM_STEP_E2P_PROGRAM,
+    XC_TRIM_STEP_E2P_PROGRAM_START,
+    XC_TRIM_STEP_E2P_PROGRAM_END,
+    XC_TRIM_STEP_REBOOT,
+    XC_TRIM_STEP_COMPARE,
+    XC_TRIM_STEP_STOP,
+    XC_TRIM_STEP_PWR_OFF,
+    XC_TRIM_STEP_MAX,
+} xc_trim_step_t;
 
 /* BEGIN - Input parameter from GUI */
-
-enum
-{
-    TRIM_PARA_TARGET_MIN = 0,
-    TRIM_PARA_TARGET_MAX,
-    TRIM_PARA_P1,
-    TRIM_PARA_P2,
-    TRIM_PARA_MAX,
-};
 
 typedef enum
 {
 	TRIM_FIND_MIRROR1 = 0,
 	TRIM_FIND_MIRROR2,
 	TRIM_FIND_MAX,
-}xc_trim_find_regs_t;
-
-typedef double (*p_gui_param)[TRIM_PARA_MAX];
-
-enum
-{
-    TRIM_ALGORITHM_CONTINUE   = 0,
-    TRIM_ALGORITHM_DONE_CHANNEL,
-    TRIM_ALGORITHM_DONE_MODE,
-    TRIM_ALGORITHM_ERROR,
-    TRIM_ALGORITHM_MAX
-};
+} xc_trim_find_regs_t;
 
 /* END -  Input parameter from GUI */
 
-extern void XC_Trimming_Procedure_Run(void);
-extern void Screening_Procedure_Run(void);
+extern void XC_Trim_Task(void);
 
 /* BEGIN - INTERFACE FUNCTIONS */
-extern void Trim_IF_Trimming_Start(void);
-extern void Trim_IF_Set_OTP_Enable(bool in_flag);
-extern bool Trim_IF_Get_OTP_Enable(void);
-void GET_MINIMUM_OSC_FREQ(float* freq_buffer, float target);
+extern void XC_Trim_IF_Trim_Start(void);
+extern void XC_Trim_IF_Set_OTP_Enable(bool in_flag);
+extern bool XC_Trim_IF_Get_OTP_Enable(void);
 
 /* END   - INTERFACE FUNCTIONS */
 

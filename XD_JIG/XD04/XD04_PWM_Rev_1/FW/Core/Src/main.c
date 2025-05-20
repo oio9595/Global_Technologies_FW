@@ -33,6 +33,7 @@
 #include "vsync_task.h"
 #include "xdic.h"
 #include "xc24.h"
+#include "xc_trim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +73,8 @@ static RX_UART_t gt_rx_uart;
 static bool gb_xd_run_trim_task;
 static bool gb_xd_run_screen_task;
 
+static bool gb_xc_run_trim_task;
+
 static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
 
@@ -105,6 +108,10 @@ void sys_tick_handler(void)
     if (gb_xd_run_screen_task == false)
     {
         gb_xd_run_screen_task = true;
+    }
+    if (gb_xc_run_trim_task == false)
+    {
+        gb_xc_run_trim_task = true;
     }
     if (gn_xd_rx_timeout)
     {
@@ -262,6 +269,7 @@ int main(void)
 
     USE_XC24(FALSE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
+    XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
     JigBD_IF_Link_DMA_With_Buffer();
 
@@ -1195,6 +1203,12 @@ static void JigTestMainTask(void)
         XD_Screen_Task();
         gb_xd_run_screen_task = false;
     }
+
+    if (gb_xc_run_trim_task)
+    {
+        XC_Trim_Task();
+        gb_xc_run_trim_task = false;
+    }
 }
 
 static uint8_t comm_get_rx_packet(rx_packet_t** pData)
@@ -1618,7 +1632,7 @@ static void TaskDebugUart(void)
 /* ----------------- command list - ui ----------------- */
         else if (Command_is_("xd_trim_start") || Command_is_("1"))
         {
-            print(LOG_INFO, "\r\n XDIC OTP Write EN & Activate \r\n");
+            print(LOG_INFO, "\r\n XD Trim Start \r\n");
             XD_Trim_IF_Trim_Start();
         }
         else if (Command_is_("xd_screen_start") || Command_is_("2"))
@@ -1655,6 +1669,11 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "vsync start\r\n");
 
             XDIC_Set_LD_Data(100);
+        }
+        else if (Command_is_("xc_trim_start") || Command_is_("4"))
+        {
+            print(LOG_INFO, "\r\n XC Trim Start \r\n");
+            XC_Trim_IF_Trim_Start();
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {
