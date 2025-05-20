@@ -13,32 +13,32 @@ extern "C" {
 #endif
 
 /* Trimming spec */
-#define XC24_ERR_RATE                           (1.0/100)   /* % */
-#define XC24_OSC_TARGET                         (25.0)   	/* MHz */
-#define XC24_OSC_REG_DEFAULT                    (64)
+#define XC24_ERR_RATE                   (1.0/100)   /* % */
+#define XC24_OSC_TARGET                 (25.0)   	/* MHz */
+#define XC24_OSC_REG_DEFAULT            (64)
 
-#define XC24_VCTL_LDO_ERR_RATE     	            (1.0/100)   /* % */
-#define XC24_VCTL_LDO_TARGET                    (1.5)       /* V */
-#define VCTL_LDO_UPPER_LIMIT		            (XC24_VCTL_LDO_TARGET * (1.0f + XC24_VCTL_LDO_ERR_RATE))		/* V */
-#define VCTL_LDO_LOWER_LIMIT  		            (XC24_VCTL_LDO_TARGET * (1.0f - XC24_VCTL_LDO_ERR_RATE))		/* V */
+#define XC24_VCTL_LDO_ERR_RATE          (1.0/100)   /* % */
+#define XC24_VCTL_LDO_TARGET            (1.5)       /* V */
+#define VCTL_LDO_UPPER_LIMIT            (XC24_VCTL_LDO_TARGET * (1.0f + XC24_VCTL_LDO_ERR_RATE))		/* V */
+#define VCTL_LDO_LOWER_LIMIT            (XC24_VCTL_LDO_TARGET * (1.0f - XC24_VCTL_LDO_ERR_RATE))		/* V */
 
-#define XC24_DAC_GAIN_ERR_RATE                  (0.5/100) /* % */
-#define XC24_DAC_GAIN_TARGET                    (1.1)     /* V */
-#define XC24_DAC_GAIN_P1                        (1024)
-#define XC24_DAC_GAIN_P2                        (3072)
-#define DAC_GAIN_UPPER_LIMIT		            (XC24_DAC_GAIN_TARGET * (1.0f + XC24_DAC_GAIN_ERR_RATE))	/* V */
-#define DAC_GAIN_LOWER_LIMIT		            (XC24_DAC_GAIN_TARGET * (1.0f - XC24_DAC_GAIN_ERR_RATE))	/* V */
+#define XC24_DAC_GAIN_ERR_RATE          (0.5/100) /* % */
+#define XC24_DAC_GAIN_TARGET            (1.1)     /* V */
+#define XC24_DAC_GAIN_P1                (1024)
+#define XC24_DAC_GAIN_P2                (3072)
+#define DAC_GAIN_UPPER_LIMIT            (XC24_DAC_GAIN_TARGET * (1.0f + XC24_DAC_GAIN_ERR_RATE))	/* V */
+#define DAC_GAIN_LOWER_LIMIT            (XC24_DAC_GAIN_TARGET * (1.0f - XC24_DAC_GAIN_ERR_RATE))	/* V */
 
-#define XC24_DAC_OFS_ERR_RATE                   (0.5/100)   /* % */
-#define XC24_DAC_OFS_TARGET                     (1.65)      /* V */
-#define XC24_DAC_OFS_TGT                        (2048)
-#define DAC_OFS_UPPER_LIMIT	                    (XC24_DAC_OFS_TARGET * (1.0f + XC24_DAC_OFS_ERR_RATE))	/* V */
-#define DAC_OFS_LOWER_LIMIT	                    (XC24_DAC_OFS_TARGET * (1.0f - XC24_DAC_OFS_ERR_RATE))	/* V */
+#define XC24_DAC_OFS_ERR_RATE           (0.5/100)   /* % */
+#define XC24_DAC_OFS_TARGET             (1.65)      /* V */
+#define XC24_DAC_OFS_TGT                (2048)
+#define DAC_OFS_UPPER_LIMIT             (XC24_DAC_OFS_TARGET * (1.0f + XC24_DAC_OFS_ERR_RATE))	/* V */
+#define DAC_OFS_LOWER_LIMIT             (XC24_DAC_OFS_TARGET * (1.0f - XC24_DAC_OFS_ERR_RATE))	/* V */
 
-#define VCTL_LDO_TRIM_OVER_COUNT       			(50)
-#define DAC_GAIN_TRIM_OVER_COUNT         		(50)
-#define DAC_OFS_TRIM_OVER_COUNT         		(50)
-#define OSC_FCTL_TRIM_OVER_COUNT         		(50)
+#define VCTL_LDO_TRIM_OVER_COUNT        (50)
+#define DAC_GAIN_TRIM_OVER_COUNT        (50)
+#define DAC_OFS_TRIM_OVER_COUNT         (50)
+#define OSC_FCTL_TRIM_OVER_COUNT        (50)
 
 typedef struct
 {
