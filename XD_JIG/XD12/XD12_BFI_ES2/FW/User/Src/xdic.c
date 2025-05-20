@@ -519,6 +519,8 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r0C.dev_max_curr_level = gt_xd_dev_max_curr_level;
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
+                gt_xdic_general_regs._r0D.short_det_en1 = 1;
+                gt_xdic_general_regs._r0D.open_det_en = 1;
                 gt_xdic_general_regs._r0D.timeout_en = 1;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
@@ -833,8 +835,6 @@ void XDIC_Trim_Init_OFS(void)
 
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
-
-    XDIC_Set_LD_Fix((2 << 12 | 0xFFF));
 }
 
 void XDIC_Trim_Init_GAIN(void)
@@ -848,8 +848,6 @@ void XDIC_Trim_Init_GAIN(void)
 
     gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
-
-    XDIC_Set_LD_Fix((6 << 12 | 0xFFF));
 }
 
 void XDIC_Set_OTP_Protect(bool en)
