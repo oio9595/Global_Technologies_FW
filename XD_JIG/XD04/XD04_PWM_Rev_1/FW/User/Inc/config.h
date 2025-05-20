@@ -26,6 +26,7 @@ extern "C" {
 #define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2) //MHz
 
 #define CONST_MHz_TO_Hz             (1000000.0f)
+#define CONST_V_TO_mV               (1000.0f)
 
 #define VSYNC                       (120.0f)
 #define XD_MCLK                     (39319200.0f)

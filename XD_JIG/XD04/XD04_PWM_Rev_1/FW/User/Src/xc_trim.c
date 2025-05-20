@@ -119,7 +119,7 @@ void XC_Trim_Task(void)
 				}
 			}
 
-			vctl_ldo_level = (ADS114S_VREF * (((float)(gn_ads114s08_adc_temp) / ADS114S08_READ_COUNT + 0.5f) / 32767)) / 1000; // Dacout convert to V
+			vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_V_TO_mV; // Dac out convert to V
 			gn_ads114s08_adc_temp = 0;
 
 			if((over_run_cnt >= VCTL_LDO_TRIM_OVER_COUNT) || (vctl_ldo_reg >= 15) || (vctl_ldo_reg <= 0))
