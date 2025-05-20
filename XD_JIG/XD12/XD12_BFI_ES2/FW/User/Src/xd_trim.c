@@ -727,7 +727,7 @@ void XD_Trim_Task(void)
                 }
                 break;
             case XD_TRIM_STEP_SET_ADC_CH:
-                ADS114S08_Select_Input_CH(0);
+                ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 gn_task_delay = 1;
                 gt_xd_trim_step = XD_TRIM_STEP_START_ADC_CONVERSION;
                 break;
@@ -1020,7 +1020,7 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_SET_ADC_CH :
             JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
-            ADS114S08_Select_Input_CH(0);
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             gn_task_delay = 5;
             gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
             break;

@@ -42,6 +42,10 @@ extern "C" {
 
 #include "JigBd_IF.h"
 
+#define ADS114S08_CH_XD_IOUT    (0)
+#define ADS114S08_CH_XC_LDO     (1)
+#define ADS114S08_CH_XC_DAC     (2)
+
 #define ADS114S08_READ_COUNT    (16) /* must be power of 2 */
 
 #define ADS114S_VREF            (5000)  /* 5V */

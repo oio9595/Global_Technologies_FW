@@ -267,7 +267,7 @@ static void ADS114S08_Get_ADC_Offset()
         gn_adc_read_count = ADS114S08_READ_OFS_COUNT;
 
         JigBD_IF_Select_Output_Ch(ch);
-        ADS114S08_Select_Input_CH(0);
+        ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
         LL_mDelay(10);
 
         ADS114S08_Set_Start(1);
