@@ -71,6 +71,7 @@ bool XC_Trim_IF_Get_OTP_Enable(void)
 void XC_Trim_Task(void)
 {
     static uint8_t over_run_cnt = 1;
+    bool xc_compare_result = true;
 
     if (gt_xc_trim_step != XC_TRIM_STEP_NONE)
     {
@@ -360,8 +361,6 @@ void XC_Trim_Task(void)
         case XC_TRIM_STEP_COMPARE:
             print(LOG_INFO, "=============XC_TRIM_STEP_COMPARE=============\r\n");
             //find reg compare to saved reg
-
-            bool xc_compare_result = true;
 
             if(trim_find_regs[TRIM_FIND_MIRROR1] != XC24_Read_Register(XC24_MIRROR_ADDR_MIRROR1))
             {
