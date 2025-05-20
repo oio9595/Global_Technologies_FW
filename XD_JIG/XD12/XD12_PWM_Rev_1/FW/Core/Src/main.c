@@ -1492,6 +1492,30 @@ static void TaskDebugUart(void)
             JigBD_IF_SyncGen_Command();
             us_tdelay(5);
         }
+        else if (Command_Param_is_("xd_ld_trans", "%u", &u32_recv_param[0]))
+        {
+            print(LOG_INFO, "\r\n XD LD Trans %u\r\n", u32_recv_param[0]);
+            JigBD_IF_Write_LD_Command(u32_recv_param[0]);
+            us_tdelay(5);
+        }
+        else if (Command_is_("xd_fault"))
+        {
+            uint16_t fault = JigBD_IF_Fault_Read_Command();
+            print(LOG_INFO, "\r\n XD Fault Read - 0x%02X\r\n", fault);
+            us_tdelay(5);
+        }
+        else if (Command_Param_is_("xd_test", "%u", &u32_recv_param[0]))
+        {
+            print(LOG_INFO, "\r\n XD LD Trans %u\r\n", u32_recv_param[0]);
+            JigBD_IF_Write_LD_Command(u32_recv_param[0]);
+            us_tdelay(500);
+
+            JigBD_IF_SyncGen_Command();
+            us_tdelay(10);
+
+            uint16_t fault = JigBD_IF_Fault_Read_Command();
+            print(LOG_INFO, "\r\n XD Fault Read - 0x%02X\r\n", fault);
+        }
         else if (Command_is_("xd_test_en"))
         {
             print(LOG_INFO, "\r\n XD TEST_EN\r\n");

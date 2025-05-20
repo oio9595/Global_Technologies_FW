@@ -796,7 +796,8 @@ void XD12_Param_Init(void)
     gf_xd_mclk = XD_MCLK;
     gf_vsync_out = VSYNC;
 
-    gn_xd_pwm_res = XD_PWM_RES_14BIT;
+    //gn_xd_pwm_res = XD_PWM_RES_14BIT;
+    gn_xd_pwm_res = XD_PWM_RES_12BIT;
     gn_xd_scan_no = 0;
 
     if (gn_xd_pwm_res == XD_PWM_RES_12BIT)
@@ -834,11 +835,11 @@ void XD12_Init(void)
         switch (xd12_addr)
         {
         case XD12_ADDR_LD_CONTROL :
-            gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
+            gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
             gt_xd12_general_regs._r01.over_to_e = 0;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
-            gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_EXT_VYI_FBO;
+            gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_NOP;
             gt_xd12_general_regs._r01.ch_size = gn_xd_ch_size;
             break;
         case XD12_ADDR_FPWM_DIVIDER :
@@ -893,7 +894,8 @@ void XD12_Init(void)
             break;
         case XD12_ADDR_OSC_FLL_MANUAL_2 :
             gt_xd12_general_regs._r2B.osc_fll_man = 8;
-            gt_xd12_general_regs._r2B.osc_man_e = 0;
+            // gt_xd12_general_regs._r2B.osc_man_e = 0;
+            gt_xd12_general_regs._r2B.osc_man_e = 1;
             break;
         /*case XD12_ADDR_OSC_FLL_MONITOR :
             gt_xd12_general_regs._r2C.osc_fll_flt = 0;
