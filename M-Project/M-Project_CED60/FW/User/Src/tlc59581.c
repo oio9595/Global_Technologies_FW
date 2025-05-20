@@ -1,37 +1,41 @@
 #ifndef __TLC59581_C__
 #define __TLC59581_C__
 
+#include "main.h"
 #include "tlc59581.h"
 #include "comm_debug.h"
 
-#define CMD_WRTFC           (0x01)
-#define CMD_FCWRTEN         (0x02)
-#define CMD_VSYNC           (0x11)
-#define CMD_WRTGS           (0x21) // transmit FPGA's frame buffer to TLC59581
-#define CMD_WRTFB           (0x28) // custom CMD, fill FPGA's frame buffer
+#define CED_PARALLEL_SIZE           (1)
 
-#define CMD_READSID         (0x04)
-#define CMD_READFC1         (0x05)
-#define CMD_READFC2         (0x06)
+#define CMD_WRTFC                   (0x01)
+#define CMD_FCWRTEN                 (0x02)
+#define CMD_VSYNC                   (0x11)
+#define CMD_WRTGS                   (0x21) // transmit FPGA's frame buffer to TLC59581
+#define CMD_WRTFB                   (0x28) // custom CMD, fill FPGA's frame buffer
 
-#define TLC_OUTPUT_SIZE     (120 + 8) // 16 * 8 = 128; valid : 120, dummy 8
-#define TLC_LINE_SIZE       (30)
-#define TLC_CH_SIZE         (3)
+#define CMD_READSID                 (0x04)
+#define CMD_READFC1                 (0x05)
+#define CMD_READFC2                 (0x06)
 
-#define TLC_CMD_SIZE        (1)
-#define TLC_PAYLOAD         (3)
+#define TLC_VIRTUAL_OUTPUT_SIZE     (64)
+#define TLC_PHYSICAL_OUTPUT_SIZE    (60)
+#define TLC_LINE_SIZE               (30)
+#define TLC_CH_SIZE                 (3)
 
-#define TLC_WRTFC_SIZE      (TLC_CMD_SIZE + TLC_PAYLOAD)
-#define TLC_FCWRTEN_SIZE    (TLC_CMD_SIZE + TLC_PAYLOAD)
-#define TLC_VSYNC_SIZE      (TLC_CMD_SIZE + TLC_PAYLOAD)
-#define TLC_WRTGS_SIZE      (TLC_CMD_SIZE + TLC_PAYLOAD)
-#define TLC_WRTFB_SIZE      (TLC_CMD_SIZE + (TLC_LINE_SIZE * TLC_OUTPUT_SIZE * TLC_CH_SIZE))
+#define TLC_CMD_SIZE                (1)
+#define TLC_PAYLOAD                 (3)
 
-#define CH_BLUE             (0)
-#define CH_GREEN            (1)
-#define CH_RED              (2)
+#define TLC_WRTFC_SIZE              (TLC_CMD_SIZE + TLC_PAYLOAD)
+#define TLC_FCWRTEN_SIZE            (TLC_CMD_SIZE + TLC_PAYLOAD)
+#define TLC_VSYNC_SIZE              (TLC_CMD_SIZE + TLC_PAYLOAD)
+#define TLC_WRTGS_SIZE              (TLC_CMD_SIZE + TLC_PAYLOAD)
+#define TLC_WRTFB_SIZE              (TLC_CMD_SIZE + (TLC_LINE_SIZE * TLC_VIRTUAL_OUTPUT_SIZE * TLC_CH_SIZE))
 
-#define GRAY_SCALE_MAX      (0xFFFF)
+#define CH_BLUE                     (0)
+#define CH_GREEN                    (1)
+#define CH_RED                      (2)
+
+#define GRAY_SCALE_MAX              (0xFFFF)
 
 typedef union _tag_tlc59581_reg_fc1_
 {
@@ -97,23 +101,23 @@ typedef struct _tag_rgb_format_
 typedef struct _tag_gray_scale_format_
 {
     uint16_t  command;
-    _tlc59581_rgb_format_t_  payload[TLC_OUTPUT_SIZE][TLC_LINE_SIZE];
+    _tlc59581_rgb_format_t_  payload[TLC_VIRTUAL_OUTPUT_SIZE][TLC_LINE_SIZE];
 }_tlc59581_gray_scale_format_t_;
 
 static _tlc59581_fc1_t_ gt_tlc59581_fc1;
 static _tlc59581_fc2_t_ gt_tlc59581_fc2;
 
-static _tlc59581_gray_scale_format_t_ gt_tlc59581_gray_scale_data;
+static _tlc59581_gray_scale_format_t_ gt_tlc59581_gray_scale_buffer;
 static _tlc59581_pattern_t_ gt_tlc59581_pattern;
 static uint16_t gn_gray_scale_value;
 
-static const uint16_t gn_vsync_data_buffer[4] = { CMD_VSYNC, 0, 0, 0 };
-static const uint16_t gn_write_gray_scale_data_buffer[4] = { CMD_WRTGS, 0, 0, 0 };
-static const uint16_t gn_fc_enable_data_buffer[4] = { CMD_FCWRTEN, 0, 0, 0 };
+static const uint16_t const_cmd_vsync[4] = { CMD_VSYNC, 0, 0, 0 };
+static const uint16_t const_cmd_write_gray_scale[4] = { CMD_WRTGS, 0, 0, 0 };
+static const uint16_t const_cmd_fc_enable[4] = { CMD_FCWRTEN, 0, 0, 0 };
 
-_system_operating_mode_t_ gt_system_operating_mode;
 
 volatile bool gb_vsync_flag = false;
+volatile bool gb_gray_scale_parsing_flag = false;
 volatile bool gb_spi_tx_flag = false;
 
 static void spi_write(uint16_t* p_data, uint16_t length)
@@ -176,74 +180,80 @@ void tlc59581_set_pattern(_tlc59581_pattern_t_ pattern)
 
 static void tlc59581_generate_pattern(void)
 {
-    switch (gt_tlc59581_pattern)
+    if (gb_gray_scale_parsing_flag)
     {
-        case PATTERN_NONE :
-            for (uint8_t output = 0 ; output < (TLC_OUTPUT_SIZE - 8) ; ++output)
-            {
-                for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+        switch (gt_tlc59581_pattern)
+        {
+            case PATTERN_NONE :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_r = gn_gray_scale_value;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_g = gn_gray_scale_value;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_b = gn_gray_scale_value;
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = gn_gray_scale_value;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = gn_gray_scale_value;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = gn_gray_scale_value;
+                    }
                 }
-            }
-            break;
-        case PATTERN_RED :
-            for (uint8_t output = 0 ; output < (TLC_OUTPUT_SIZE - 8) ; ++output)
-            {
-                for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                break;
+            case PATTERN_RED :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_r = gn_gray_scale_value;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_g = 0;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_b = 0;
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = gn_gray_scale_value;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = 0;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = 0;
+                    }
                 }
-            }
-            break;
-        case PATTERN_GREEN :
-            for (uint8_t output = 0 ; output < (TLC_OUTPUT_SIZE - 8) ; ++output)
-            {
-                for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                break;
+            case PATTERN_GREEN :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_r = 0;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_g = gn_gray_scale_value;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_b = 0;
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = 0;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = gn_gray_scale_value;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = 0;
+                    }
                 }
-            }
-            break;
-        case PATTERN_BLUE :
-            for (uint8_t output = 0 ; output < (TLC_OUTPUT_SIZE - 8) ; ++output)
-            {
-                for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                break;
+            case PATTERN_BLUE :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_r = 0;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_g = 0;
-                    gt_tlc59581_gray_scale_data.payload[output][line].out_b = gn_gray_scale_value;
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = 0;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = 0;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = gn_gray_scale_value;
+                    }
                 }
-            }
-            break;
+                break;
+        }
+        gb_gray_scale_parsing_flag = false;
     }
 }
 
 void tlc59581_transmit_vsync(void)
 {
-    spi_write((uint16_t*)gn_vsync_data_buffer, TLC_VSYNC_SIZE);
+    spi_write((uint16_t*)const_cmd_vsync, TLC_VSYNC_SIZE);
 }
 
 static inline void tlc59581_transmit_frame_buffer(void)
 {
-    gt_tlc59581_gray_scale_data.command = CMD_WRTFB;
-    spi_write(&gt_tlc59581_gray_scale_data.command, TLC_WRTFB_SIZE);
+    gt_tlc59581_gray_scale_buffer.command = CMD_WRTFB;
+    spi_write(&gt_tlc59581_gray_scale_buffer.command, TLC_WRTFB_SIZE);
+
+    gb_gray_scale_parsing_flag = true;
 }
 
 static inline void tlc59581_transmit_write_gray_scale(void)
 {
-    spi_write((uint16_t*)gn_write_gray_scale_data_buffer, TLC_WRTGS_SIZE);
+    spi_write((uint16_t*)const_cmd_write_gray_scale, TLC_WRTGS_SIZE);
 }
 
 static inline void tlc59581_transmit_fc_enable(void)
 {
-    spi_write((uint16_t*)gn_fc_enable_data_buffer, TLC_FCWRTEN_SIZE);
+    spi_write((uint16_t*)const_cmd_fc_enable, TLC_FCWRTEN_SIZE);
 }
 
 static void tlc59581_fc1_reg_init(void)
@@ -254,9 +264,9 @@ static void tlc59581_fc1_reg_init(void)
     gt_tlc59581_fc1.u.SEL_TD0         =  1;
     gt_tlc59581_fc1.u.LOD_REMOVAL_EN  =  1;
 
-    gt_tlc59581_fc1.u.CCB             =  (gt_system_operating_mode + 1) * 25; /* 100.5uA */
-    gt_tlc59581_fc1.u.CCG             =  (gt_system_operating_mode + 1) * 25;
-    gt_tlc59581_fc1.u.CCR             =  (gt_system_operating_mode + 1) * 25;
+    gt_tlc59581_fc1.u.CCB             =  (CED_PARALLEL_SIZE + 1) * 25; /* 100.5uA */
+    gt_tlc59581_fc1.u.CCG             =  (CED_PARALLEL_SIZE + 1) * 25;
+    gt_tlc59581_fc1.u.CCR             =  (CED_PARALLEL_SIZE + 1) * 25;
 
     gt_tlc59581_fc1.u.BC              =  0;
     gt_tlc59581_fc1.u.CMD_FC1         =  9;    /* 0b1001, refer to datasheet page.14 */
@@ -301,7 +311,7 @@ void tlc59581_init(void)
     LL_TIM_EnableCounter(TIM1);
 }
 
-void tlc59581_process(void)
+static void tlc59581_vsync_task(void)
 {
     if (gb_vsync_flag)
     {
@@ -309,11 +319,16 @@ void tlc59581_process(void)
         // tlc59581_transmit_vsync();
         tlc59581_transmit_write_gray_scale();
 
-        tlc59581_generate_pattern();
         tlc59581_transmit_frame_buffer();
 
         gb_vsync_flag = false;
     }
+}
+
+void tlc59581_process(void)
+{
+    tlc59581_vsync_task();
+    tlc59581_generate_pattern();
 }
 
 #endif /* end of __TLC59581_C__ */
