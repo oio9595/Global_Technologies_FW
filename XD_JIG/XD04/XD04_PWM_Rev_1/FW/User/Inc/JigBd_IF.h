@@ -36,7 +36,7 @@ typedef enum tag_CURRENT_GAIN_T
 	GAIN_MID,       /* Max  10mA */
 	GAIN_HIGH,      /* Max 140mA */
 	GAIN_MAX,
-}current_gain_t;
+} current_gain_t;
 
 extern volatile uint16_t gn_xd_rx_timeout;
 
