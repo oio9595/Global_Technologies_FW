@@ -22,13 +22,13 @@
 
 #define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
 #define XDIC_GAIN_TARGET            (1.5484f)   /* mA */
-#define XDIC_GAIN_P1                (6 << 12 | 0xFFF)
-#define XDIC_GAIN_P2                (6 << 12 | 0xFFF)
+#define XDIC_GAIN_P1                (6 << 11 | 0x7FF)
+#define XDIC_GAIN_P2                (6 << 11 | 0x7FF)
 
 #define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
 #define XDIC_OFS_TARGET             (0.7742f)   /* mA */
-#define XDIC_OFS_P1                 (2 << 12 | 0xFFF)
-#define XDIC_OFS_P2                 (4 << 12 | 0xFFF)
+#define XDIC_OFS_P1                 (2 << 11 | 0x7FF)
+#define XDIC_OFS_P2                 (4 << 11 | 0x7FF)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
