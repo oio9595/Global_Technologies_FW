@@ -86,6 +86,8 @@ extern uint8_t gn_btn_process_systick;
 #define RMII_REF_CLK_GPIO_Port GPIOA
 #define RMII_MDIO_Pin LL_GPIO_PIN_2
 #define RMII_MDIO_GPIO_Port GPIOA
+#define FPGA_SCK_Pin LL_GPIO_PIN_5
+#define FPGA_SCK_GPIO_Port GPIOA
 #define RMII_CRS_DV_Pin LL_GPIO_PIN_7
 #define RMII_CRS_DV_GPIO_Port GPIOA
 #define RMII_RXD0_Pin LL_GPIO_PIN_4
@@ -111,8 +113,8 @@ extern uint8_t gn_btn_process_systick;
 #define FPGA_BOOT_Pin LL_GPIO_PIN_8
 #define FPGA_BOOT_GPIO_Port GPIOC
 #define FPGA_BOOT_EXTI_IRQn EXTI9_5_IRQn
-#define SPI1_CS_Pin LL_GPIO_PIN_9
-#define SPI1_CS_GPIO_Port GPIOC
+#define FPGA_CS_Pin LL_GPIO_PIN_9
+#define FPGA_CS_GPIO_Port GPIOC
 #define USB_SOF_Pin LL_GPIO_PIN_8
 #define USB_SOF_GPIO_Port GPIOA
 #define USB_VBUS_Pin LL_GPIO_PIN_9
@@ -135,6 +137,8 @@ extern uint8_t gn_btn_process_systick;
 #define RMII_TXD0_GPIO_Port GPIOG
 #define SW0_Pin LL_GPIO_PIN_3
 #define SW0_GPIO_Port GPIOB
+#define FPGA_MOSI_Pin LL_GPIO_PIN_5
+#define FPGA_MOSI_GPIO_Port GPIOB
 #define LD2_Pin LL_GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 

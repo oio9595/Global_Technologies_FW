@@ -115,7 +115,6 @@ static const uint16_t const_cmd_vsync[4] = { CMD_VSYNC, 0, 0, 0 };
 static const uint16_t const_cmd_write_gray_scale[4] = { CMD_WRTGS, 0, 0, 0 };
 static const uint16_t const_cmd_fc_enable[4] = { CMD_FCWRTEN, 0, 0, 0 };
 
-
 volatile bool gb_vsync_flag = false;
 volatile bool gb_gray_scale_parsing_flag = false;
 volatile bool gb_spi_tx_flag = false;
