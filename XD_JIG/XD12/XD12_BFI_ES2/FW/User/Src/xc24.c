@@ -665,10 +665,9 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 
 void XC24_IF_Write_LD(uint16_t in_LD_data)
 {
-    _xc24_cmd_t cmd_format;
+    _xc24_cmd_t cmd_format = {0, };
     uint16_t tx_buffer[1 + XD_DAISY_SIZE * XD_CH_SIZE] = {0,};
 
-    cmd_format.ALL = 0;
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
     cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
