@@ -1950,9 +1950,6 @@ void sal_trimming_procedure(void)
 #endif
 
 #endif
-        gt_sal_trim_regs._rF1.pwm_max_r = 2418;
-        gt_sal_trim_regs._rF2.pwm_max_g = 3413;
-        gt_sal_trim_regs._rF3.pwm_max_b = 3990;
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
         i2c_info.data = gt_sal_trim_regs._rF1.val;
