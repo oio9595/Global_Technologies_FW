@@ -17,11 +17,6 @@
 #define CMD_READFC1                 (0x05)
 #define CMD_READFC2                 (0x06)
 
-#define TLC_VIRTUAL_OUTPUT_SIZE     (64)
-#define TLC_PHYSICAL_OUTPUT_SIZE    (60)
-#define TLC_LINE_SIZE               (30)
-#define TLC_CH_SIZE                 (3)
-
 #define TLC_CMD_SIZE                (1)
 #define TLC_PAYLOAD                 (3)
 
@@ -30,6 +25,11 @@
 #define TLC_VSYNC_SIZE              (TLC_CMD_SIZE + TLC_PAYLOAD)
 #define TLC_WRTGS_SIZE              (TLC_CMD_SIZE + TLC_PAYLOAD)
 #define TLC_WRTFB_SIZE              (TLC_CMD_SIZE + (TLC_LINE_SIZE * TLC_VIRTUAL_OUTPUT_SIZE * TLC_CH_SIZE))
+
+#define TLC_VIRTUAL_OUTPUT_SIZE     (64)
+#define TLC_PHYSICAL_OUTPUT_SIZE    (60)
+#define TLC_LINE_SIZE               (30)
+#define TLC_CH_SIZE                 (3)
 
 #define CH_BLUE                     (0)
 #define CH_GREEN                    (1)
@@ -91,21 +91,21 @@ typedef union _tag_tlc59518_reg_fc2_
     }u;
 }_tlc59581_fc2_t_;
 
+static _tlc59581_fc1_t_ gt_tlc59581_fc1;
+static _tlc59581_fc2_t_ gt_tlc59581_fc2;
+
 typedef struct _tag_rgb_format_
 {
-    uint16_t  out_b;
-    uint16_t  out_g;
-    uint16_t  out_r;
+    uint16_t out_b;
+    uint16_t out_g;
+    uint16_t out_r;
 }_tlc59581_rgb_format_t_;
 
 typedef struct _tag_gray_scale_format_
 {
-    uint16_t  command;
-    _tlc59581_rgb_format_t_  payload[TLC_VIRTUAL_OUTPUT_SIZE][TLC_LINE_SIZE];
+    uint16_t command;
+    _tlc59581_rgb_format_t_ payload[TLC_VIRTUAL_OUTPUT_SIZE][TLC_LINE_SIZE];
 }_tlc59581_gray_scale_format_t_;
-
-static _tlc59581_fc1_t_ gt_tlc59581_fc1;
-static _tlc59581_fc2_t_ gt_tlc59581_fc2;
 
 static _tlc59581_gray_scale_format_t_ gt_tlc59581_gray_scale_buffer;
 static _tlc59581_pattern_t_ gt_tlc59581_pattern;
@@ -227,6 +227,54 @@ static void tlc59581_generate_pattern(void)
                     }
                 }
                 break;
+            case PATTERN_HORIZONTAL :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
+                {
+                    bool is_hor_even = (output % 2) ? false : true;
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = (is_hor_even ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = (is_hor_even ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = (is_hor_even ? gn_gray_scale_value : 0);
+                    }
+                }
+                break;
+            case PATTERN_VERTICAL :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
+                {
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        bool is_ver_odd = (line % 2) ? false : true;
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = (is_ver_odd ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = (is_ver_odd ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = (is_ver_odd ? gn_gray_scale_value : 0);
+                    }
+                }
+                break;
+            case PATTERN_CHECKERBOARD_1 :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
+                {
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        bool is_bright = ((output % 2) == (line % 2));
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = (is_bright ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = (is_bright ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = (is_bright ? gn_gray_scale_value : 0);
+                    }
+                }
+                break;
+            case PATTERN_CHECKERBOARD_2 :
+                for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
+                {
+                    for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
+                    {
+                        bool is_bright = ((output % 2) != (line % 2));
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_r = (is_bright ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_g = (is_bright ? gn_gray_scale_value : 0);
+                        gt_tlc59581_gray_scale_buffer.payload[output][line].out_b = (is_bright ? gn_gray_scale_value : 0);
+                    }
+                }
+                break;
         }
         gb_gray_scale_parsing_flag = false;
     }
@@ -263,9 +311,9 @@ static void tlc59581_fc1_reg_init(void)
     gt_tlc59581_fc1.u.SEL_TD0         =  1;
     gt_tlc59581_fc1.u.LOD_REMOVAL_EN  =  1;
 
-    gt_tlc59581_fc1.u.CCB             =  (CED_PARALLEL_SIZE + 1) * 25; /* 100.5uA */
-    gt_tlc59581_fc1.u.CCG             =  (CED_PARALLEL_SIZE + 1) * 25;
-    gt_tlc59581_fc1.u.CCR             =  (CED_PARALLEL_SIZE + 1) * 25;
+    gt_tlc59581_fc1.u.CCB             =  CED_PARALLEL_SIZE * 25; /* 100.5uA */
+    gt_tlc59581_fc1.u.CCG             =  CED_PARALLEL_SIZE * 25;
+    gt_tlc59581_fc1.u.CCR             =  CED_PARALLEL_SIZE * 25;
 
     gt_tlc59581_fc1.u.BC              =  0;
     gt_tlc59581_fc1.u.CMD_FC1         =  9;    /* 0b1001, refer to datasheet page.14 */

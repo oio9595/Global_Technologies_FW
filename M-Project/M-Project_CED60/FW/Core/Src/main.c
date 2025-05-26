@@ -231,14 +231,15 @@ int main(void)
     //__enable_irq();
     comm_init();
 
-    gb_fpga_boot_done = true;// only for debug
+    gb_fpga_boot_done = true; // only for debug
 
     while(!gb_fpga_boot_done) {}
 
     print("FPGA Boot Done!!\r\n");
 
-    //tlc59581_init();
+    tlc59581_init();
 
+#if 0
     uint32_t temp_data = 0x56789012;
     uint32_t temp_read_data = 0;
 
@@ -251,10 +252,10 @@ int main(void)
     // Flash에 값 저장
     Flash_Write(FLASH_USER_START_ADDR, temp_data);
 
+    // Flash에서 값 읽기
     temp_read_data = Flash_Read(FLASH_USER_START_ADDR);
     print("read : 0x%08lX\r\n", temp_read_data);
-
-    // Flash에서 값 읽기
+#endif
 
   /* USER CODE END 2 */
 

@@ -28,7 +28,6 @@ static _uart_ring_buffer_t_ gt_uart_rx;
 void print(const char *fmt, ...)
 {
     int len = 0;
-    //char buffer[256] = {0, };
 
     va_list args;
     va_start(args, fmt);
@@ -168,9 +167,8 @@ void comm_debugging_process(void)
     if(comm_get_rx_packet(&p_rx_data))
     {
         char str_in[UART_PACKET_SIZE + 1] = {0, };
-        uint32_t param1 = 0;
-        uint32_t param2 = 0;
-        float f_param1 = 0;
+        uint32_t u32_param[2] = {0, };
+        // float f_param[2] = {0, };
 
         memcpy(str_in, p_rx_data->buffer, p_rx_data->length);
         p_rx_data->length = 0;
@@ -184,17 +182,17 @@ void comm_debugging_process(void)
             print("\r\n system reset \r\n");
             NVIC_SystemReset();
         }
-        else if(sscanf(str_in, "p %u", &param1) == 1)
+        else if(sscanf(str_in, "p %u", &u32_param[0]) == 1)
         {
-            tlc59581_set_pattern((_tlc59581_pattern_t_)param1);
+            tlc59581_set_pattern((_tlc59581_pattern_t_)u32_param[0]);
         }
         else if(!(strcmp(str_in, "p")))
         {
             print("\r\n pattern - [%s] \r\n", gs_tlc59581_pattern[tlc59581_get_pattern()]);
         }
-        else if(sscanf(str_in, "gs %u", &param1) == 1)
+        else if(sscanf(str_in, "gs %u", &u32_param[0]) == 1)
         {
-            tlc59581_set_gray_scale((uint16_t)param1);
+            tlc59581_set_gray_scale((uint16_t)u32_param[0]);
         }
         else if(!(strcmp(str_in, "gs")))
         {

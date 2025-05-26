@@ -7,6 +7,10 @@ typedef enum _tag_tlc59581_pattern_t_
     PATTERN_RED,
     PATTERN_GREEN,
     PATTERN_BLUE,
+    PATTERN_HORIZONTAL,
+    PATTERN_VERTICAL,
+    PATTERN_CHECKERBOARD_1,
+    PATTERN_CHECKERBOARD_2,
     PATTERN_MAX
 }_tlc59581_pattern_t_;
 

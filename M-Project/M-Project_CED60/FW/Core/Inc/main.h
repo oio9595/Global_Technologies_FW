@@ -144,8 +144,8 @@ extern uint8_t gn_btn_process_systick;
 
 /* USER CODE BEGIN Private defines */
 
-#define SPI1_CS_HI()    SPI1_CS_GPIO_Port->BSRR = (uint32_t)SPI1_CS_Pin <<  0
-#define SPI1_CS_LO()    SPI1_CS_GPIO_Port->BSRR = (uint32_t)SPI1_CS_Pin << 16
+#define SPI1_CS_HI()    FPGA_CS_GPIO_Port->BSRR = (uint32_t)FPGA_CS_Pin <<  0
+#define SPI1_CS_LO()    FPGA_CS_GPIO_Port->BSRR = (uint32_t)FPGA_CS_Pin << 16
 
 /* USER CODE END Private defines */
 
