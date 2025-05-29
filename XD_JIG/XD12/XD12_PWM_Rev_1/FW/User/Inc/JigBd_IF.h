@@ -26,7 +26,8 @@
 
 #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
 #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
-#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
+//#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
+#define CURRENT_SENSE_R_HIGH        (56.0f)     /* ohm */
 #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
 #define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
 

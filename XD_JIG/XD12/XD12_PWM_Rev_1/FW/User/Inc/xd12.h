@@ -834,6 +834,7 @@ extern void XD12_Update_Vsync_Frequency(float n_freq);
 
 extern void XD12_Save_Trim_Regs(void);
 extern uint64_t XD12_Compare_Trim_Regs(void);
+extern void XD12_Write_Trim_Find_Regs(void);
 
 extern void XD12_Trim_Init_VREF_CTL(void);
 extern void XD12_Trim_Init_OSC(void);

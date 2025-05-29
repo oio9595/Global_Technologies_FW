@@ -836,7 +836,7 @@ void XD12_Init(void)
         case XD12_ADDR_LD_CONTROL :
             gt_xd12_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
             gt_xd12_general_regs._r01.pwm_res = gn_xd_pwm_res;
-            gt_xd12_general_regs._r01.over_to_e = 0;
+            gt_xd12_general_regs._r01.over_to_e = 1;
             gt_xd12_general_regs._r01.scan_no = gn_xd_scan_no;
             gt_xd12_general_regs._r01.io_mode = XD_IO_MODE_NOP;
             gt_xd12_general_regs._r01.ch_size = gn_xd_ch_size;
@@ -923,7 +923,7 @@ void XD12_Trim_Param_Init(void)
 {
     gt_xd_fb_level = FB_LEVEL_0V4;
     gt_xd_short_level = SHORT_LEVEL_36V;
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_32mA;
 }
 
 void XD12_Trim_Init(void)
@@ -1168,6 +1168,14 @@ uint64_t XD12_Compare_Trim_Regs(void)
     }
 
     return ret;
+}
+
+void XD12_Write_Trim_Find_Regs(void)
+{
+    for (xd12_trim_addr_t trim_addr = XD12_ADDR_TRIM_OSC ; trim_addr < XD12_ADDR_TRIM_MAX ; ++trim_addr)
+    {
+        XD12_Write_Mirror_Reg(trim_addr, gn_xd12_saved_trim_reg[trim_addr]);
+    }
 }
 
 void XD12_Trim_Init_VREF_CTL(void)

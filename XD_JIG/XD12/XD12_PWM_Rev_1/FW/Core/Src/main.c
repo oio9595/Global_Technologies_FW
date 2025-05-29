@@ -259,7 +259,7 @@ int main(void)
     USE_XC24(FALSE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (IS_XC24() ? "- XC24 ES2 REV ES2 IS SELECTED!" : "- NOT SUPPORT XC24"), ANSI_FONT_NONE);
 
-    Trim_IF_Set_OTP_Enable(TRUE);
+    Trim_IF_Set_OTP_Enable(FALSE);
     print(LOG_INFO, "%s %s %s\r\n", ANSI_FONT_YELLOW, (Trim_IF_Get_OTP_Enable() ? "- XD12 OTP WRITE ENABLE" : "- XD12 OTP WRITE DISABLE"), ANSI_FONT_NONE);
 
     Trim_Calculate_Spec();

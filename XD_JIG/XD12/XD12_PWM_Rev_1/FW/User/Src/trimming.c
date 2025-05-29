@@ -15,12 +15,12 @@
 #define XD12_VREF_TARGET            (2.2)     /* V */
 
 #define XD12_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_L_TARGET          (6.4000f)   /* mA */
+#define XD12_ICTL_L_TARGET          (8.0f * XD12_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
 #define XD12_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_8mA)
 #define XD12_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_8mA)
 
 #define XD12_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_H_TARGET          (25.600f)  /* mA */
+#define XD12_ICTL_H_TARGET          (32.0f * XD12_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
 #define XD12_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_32mA)
 #define XD12_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_32mA)
 
@@ -50,7 +50,11 @@ static float gf_screen_current[CH_MAX];
 static current_gain_t gt_screen_gain;
 
 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+#define XD12_ANA_TABLE_SIZE 6
     static uint32_t gn_xd_screen_ana;
+    static uint16_t gn_xd_screen_ana_table[XD12_ANA_TABLE_SIZE] = {XD12_CURRENT_TRIM_VREF, 353, 505, 3191, 3276, 4095};
+    static uint8_t gn_xd_screen_ana_tick;
+    static uint8_t gn_xd_screen_max_current_change;
 #else
     static dev_max_curr_level_t gt_xd_screen_max_curr_level;
 #endif
@@ -272,6 +276,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
     const char *str_ADJ_result = str_ALGO_BODY_STATE[0];
 
     static uint16_t u16_reg_saved[12] = {0, };
+    static uint16_t u16_data_gap[12] = {0, };
 
     u16_adc_range_min = ptr_Param->sTrimRange[ptr_Param->trim_mode].u16_trim_range_adc_min;
     u16_adc_range_max = ptr_Param->sTrimRange[ptr_Param->trim_mode].u16_trim_range_adc_max;
@@ -407,6 +412,11 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
             {
                 if (ptr_Param->sTrimSaved[i].u16_saved_reg == u16_reg_value_cur) //If there is an 2 times matched
                 {
+                    // Write Register
+                    print(LOG_DEBUG, "********Trim Done - Exactly(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[i].u16_saved_reg);
+                    XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
+                    u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
+                    u16_data_gap[ptr_Param->u8_channel_cur] = 0;
                     ++ptr_Param->u8_channel_cur;
                     Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
@@ -456,9 +466,10 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         else
         {
             // Write Register
-            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
+            print(LOG_DEBUG, "********Trim Done - Closest(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
             XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[u8_closest_adc_index].u16_saved_reg;
+            u16_data_gap[ptr_Param->u8_channel_cur] = u16_adc_gap_closest;
             ++ptr_Param->u8_channel_cur;
             Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
             u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
@@ -539,6 +550,12 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
         {
             print(LOG_INFO, "   %7u", u16_reg_saved[i]);
+        }
+
+        print(LOG_INFO, "\r\n[Gap]");
+        for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
+        {
+            print(LOG_INFO, "   %7u", u16_data_gap[i]);
         }
         print(LOG_INFO, "\r\n");
 
@@ -1080,8 +1097,8 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_PWR_ON :
         JigBD_IF_Select_Output_Ch(CH_MAX);  /* Output OFF */
-        //gt_screen_gain = GAIN_HIGH;
-        gt_screen_gain = GAIN_MID;
+        gt_screen_gain = GAIN_HIGH;
+        //gt_screen_gain = GAIN_MID;
         JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
         JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
@@ -1100,7 +1117,9 @@ void Screening_Procedure_Run(void)
         else
         {
             XD12_Trim_Init();
+            XD12_Write_Trim_Find_Regs();
             XD12_Trim_Init_ICTL();
+            XD12_Read_All_Registers();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
 
@@ -1115,17 +1134,34 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_CHANGE_OUTPUT :
         #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+            gn_xd_screen_ana = gn_xd_screen_ana_table[gn_xd_screen_ana_tick];
             XD12_Set_Max_Curr_Vref(gn_xd_screen_ana);
+            if (gn_xd_screen_max_current_change == 0)
+            {
+                XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+            }
+            else
+            {
+                XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+            }
         #else
             XD12_Set_Max_Current_Level(gt_xd_screen_max_curr_level);
         #endif
+        gn_step_delay = 10;
         gt_jig_screening_step = SCREEN_STEP_SET_ADC_CH;
         break;
     case SCREEN_STEP_SET_ADC_CH :
-        JigBD_IF_Select_Output_Ch(gn_read_adc_vout_channel);
-        ADS114S08_Select_Single_Ended_Input(0);
-        gn_step_delay = 5;
-        gt_jig_screening_step = SCREEN_STEP_START_ADC_CONVERSION;
+        if (gn_step_delay)
+        {
+            --gn_step_delay;
+        }
+        else
+        {
+            JigBD_IF_Select_Output_Ch(gn_read_adc_vout_channel);
+            ADS114S08_Select_Single_Ended_Input(0);
+            gn_step_delay = 5;
+            gt_jig_screening_step = SCREEN_STEP_START_ADC_CONVERSION;
+        }
         break;
     case SCREEN_STEP_START_ADC_CONVERSION :
         if (gn_step_delay)
@@ -1162,17 +1198,34 @@ void Screening_Procedure_Run(void)
                 }
 
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
                     gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
                     gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
+                    #if 0
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                     if (gn_xd_screen_ana > 0xFFF)
                     {
                         gt_jig_screening_step = SCREEN_STEP_STOP;
                     }
+                    #else
+                    ++gn_xd_screen_ana_tick;
+                    if (gn_xd_screen_ana_tick >= XD12_ANA_TABLE_SIZE)
+                    {
+                        if (gn_xd_screen_max_current_change == 0)
+                        {
+                            gn_xd_screen_ana_tick = 0;
+                            gn_xd_screen_max_current_change = 1;
+                        }
+                        else
+                        {
+                            gt_jig_screening_step = SCREEN_STEP_STOP;
+                        }
+                    }
+                    #endif
+
                 #else
-                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gt_xd_screen_max_curr_level, \
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gt_xd_screen_max_curr_level, \
                     gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
                     gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
