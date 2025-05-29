@@ -559,8 +559,6 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
         }
         print(LOG_INFO, "\r\n");
 
-        print(LOG_INFO, "\t CHANNEL[%d] DONE:EXIT\r\n\r\n", ptr_Param->u8_channel_cur);
-
         // Clear Buffers All
         Trim_Algorithm_Clear_Buffer_All(ptr_Param);
         u8_rtn_val = TRIM_ALGORITHM_DONE_MODE; // Done - Mode

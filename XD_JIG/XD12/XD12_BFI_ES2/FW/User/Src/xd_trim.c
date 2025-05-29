@@ -300,6 +300,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     const char *str_trim_result = gs_trim_algorithm_result[0];
 
     static uint16_t u16_reg_saved[12] = {0, };
+    static uint16_t u16_data_gap[12] = {0, };
 
     u16_adc_range_min = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_min;
     u16_adc_range_max = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_max;
@@ -439,6 +440,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                     print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[i].u16_saved_reg);
                     XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
                     u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
+                    u16_data_gap[ptr_Param->u8_channel_cur] = 0;
                     ++ptr_Param->u8_channel_cur;
                     XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
@@ -483,6 +485,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
             print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg;
+            u16_data_gap[ptr_Param->u8_channel_cur] = u16_adc_gap_closest;
             ++ptr_Param->u8_channel_cur;
             XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
             u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL;
@@ -555,9 +558,13 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             print(LOG_INFO, "   %7u", u16_reg_saved[i]);
         }
-        print(LOG_INFO, "\r\n");
 
-        print(LOG_INFO, "\t CHANNEL[%d] DONE:EXIT\r\n\r\n", ptr_Param->u8_channel_cur);
+        print(LOG_INFO, "\r\n[Gap]");
+        for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
+        {
+            print(LOG_INFO, "   %7u", u16_data_gap[i]);
+        }
+        print(LOG_INFO, "\r\n");
 
         // Clear Buffers All
         XD_Trim_Algorithm_Clear_Buffer_All(ptr_Param);
