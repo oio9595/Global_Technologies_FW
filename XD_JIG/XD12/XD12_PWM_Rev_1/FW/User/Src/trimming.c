@@ -525,7 +525,7 @@ static uint8_t Trim_Algorithm_Body(_trim_algo_param *ptr_Param)
 
         if (ptr_Param->trim_mode == TRIM_OSC_FREQUENCY)
         {
-            print(LOG_INFO, "[Freq] ");
+            print(LOG_INFO, "[MHz] ");
         }
         else if (ptr_Param->trim_mode == TRIM_VREF_CTL)
         {

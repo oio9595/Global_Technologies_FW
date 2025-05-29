@@ -539,7 +539,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
         if (ptr_Param->trim_mode == XD_TRIM_OSC_FREQUENCY)
         {
-            print(LOG_INFO, "[Freq] ");
+            print(LOG_INFO, "[MHz] ");
         }
         else if (ptr_Param->trim_mode == XD_TRIM_VREF_CTL)
         {
