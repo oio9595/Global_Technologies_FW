@@ -1511,9 +1511,10 @@ typedef union tag_MIRROR2
     uint16_t ALL;
     struct
     {
-        uint16_t dac_ofs  : 8;
-        uint16_t dac_gain : 6;
-        uint16_t          : 2;
+        uint16_t dac_ofs_val    : 7;
+        uint16_t dac_ofs_sign   : 1;
+        uint16_t dac_gain       : 6;
+        uint16_t                : 2;
     };
 }_v_mirror2_t;
 
