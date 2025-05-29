@@ -227,7 +227,7 @@ static void comm_help_command(void)
 void comm_print_startup(void)
 {
     print(LOG_LV_INFO, "\n\r--------------------------------------");
-    print(LOG_LV_INFO, "\n\r    [GT-SAL(CS1) TEST/TRIM JIG]");
+    print(LOG_LV_INFO, "\n\r    [GT-SAL(CS2) TEST/TRIM JIG]");
     print(LOG_LV_INFO, "\n\r--------------------------------------");
     print(LOG_LV_INFO, "\n\r-Project\t: STM32 SAL JIG");
     print(LOG_LV_INFO, "\n\r-Author\t\t: xxx@glbltech.com");
@@ -862,6 +862,95 @@ void comm_debugging_process(void)
         {
             sal_tmux_sel_test(u32_param[0]);
             print(LOG_LV_INFO, gp_msg_okay);
+            print(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(sscanf(str_in, "dc %u", &u32_param[0]) == 1)
+        {
+            if (u32_param[0] == 1)
+            {
+                _sal_i2c_info_t _info_ = {0, };
+                _info_.reg_addr = SAL_TRIM_ADDR_TRIM_CONTROL;
+                _info_.data = 0x834;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
+                _info_.data = 0xFFF;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR15;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR16;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB1;
+                _info_.data = 0xFF0;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB2;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+            }
+            else if (u32_param[0] == 2)
+            {
+                _sal_i2c_info_t _info_ = {0, };
+                _info_.reg_addr = SAL_TRIM_ADDR_TRIM_CONTROL;
+                _info_.data = 0x832;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR15;
+                _info_.data = 0xFFF;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR16;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB1;
+                _info_.data = 0x00F;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB2;
+                _info_.data = 0xF00;
+                sal_write_reg_i2c(&_info_);
+            }
+            else if (u32_param[0] == 3)
+            {
+                _sal_i2c_info_t _info_ = {0, };
+                _info_.reg_addr = SAL_TRIM_ADDR_TRIM_CONTROL;
+                _info_.data = 0x831;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR15;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR16;
+                _info_.data = 0xFFF;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB1;
+                _info_.data = 0x000;
+                sal_write_reg_i2c(&_info_);
+
+                _info_.reg_addr = SAL_ADDR_RGB2;
+                _info_.data = 0x0FF;
+                sal_write_reg_i2c(&_info_);
+            }
+            else
+            {
+                print(LOG_LV_INFO, "Invalid Input dc [%u] - [0 ~ 1]\r\n", u32_param[0]);
+            }
             print(LOG_LV_INFO, gp_msg_prompt);
         }
 

@@ -115,52 +115,6 @@ void spi_read(uint8_t spi_rx_len)
     LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_0);
 }
 
-
-static SPI_TypeDef* gp_spi_handle[2] = { SPI1, SPI2 };
-
-static DMA_TypeDef* gp_spi_tx_dma[2] = { DMA2, DMA1 };
-static uint32_t gn_spi_tx_dma_stream[2] = { LL_DMA_STREAM_3, LL_DMA_STREAM_4 };
-static DMA_TypeDef* gp_spi_rx_dma[2] = { DMA2, DMA1 };
-static uint32_t gn_spi_rx_dma_stream[2] = { LL_DMA_STREAM_0, LL_DMA_STREAM_3 };
-
-void spi_write_dma(uint8_t strip, uint8_t* p_data, uint8_t spi_tx_len)
-{
-    if(LL_SPI_GetMode(gp_spi_handle[strip]) != LL_SPI_MODE_MASTER)
-    {
-        LL_SPI_Disable(gp_spi_handle[strip]);
-        LL_SPI_SetMode(gp_spi_handle[strip], LL_SPI_MODE_MASTER);
-        LL_SPI_SetTransferDirection(gp_spi_handle[strip], LL_SPI_FULL_DUPLEX);
-        LL_SPI_Enable(gp_spi_handle[strip]);
-    }
-
-    for(uint8_t i = 0 ; i < spi_tx_len ; ++i)
-    {
-        gn_spi_tx_buff[strip][i] = p_data[i];
-    }
-
-    LL_DMA_SetDataLength(gp_spi_tx_dma[strip], gn_spi_tx_dma_stream[strip], (uint32_t)spi_tx_len);
-    LL_DMA_EnableStream(gp_spi_tx_dma[strip], gn_spi_tx_dma_stream[strip]);
-}
-
-void spi_read_dma(uint8_t strip, uint8_t spi_rx_len)
-{
-    if(LL_SPI_GetMode(gp_spi_handle[strip]) != LL_SPI_MODE_SLAVE)
-    {
-        LL_SPI_Disable(gp_spi_handle[strip]);
-        LL_SPI_SetMode(gp_spi_handle[strip], LL_SPI_MODE_SLAVE);
-        LL_SPI_SetTransferDirection(gp_spi_handle[strip], LL_SPI_SIMPLEX_RX);
-        LL_SPI_Enable(gp_spi_handle[strip]);
-    }
-
-    while(LL_SPI_IsActiveFlag_RXNE(gp_spi_handle[strip]))
-    {
-        volatile uint8_t dummy = LL_SPI_ReceiveData8(gp_spi_handle[strip]);
-    }
-
-    LL_DMA_SetDataLength(gp_spi_rx_dma[strip], gn_spi_rx_dma_stream[strip], (uint32_t)spi_rx_len);
-    LL_DMA_EnableStream(gp_spi_rx_dma[strip], gn_spi_rx_dma_stream[strip]);
-}
-
 void btn_process(void)
 {
 	static uint32_t prev_pin_state = 1;
@@ -200,7 +154,7 @@ void btn_process(void)
 				if (!(gn_btn_cnt % 50))
 				{
 					//print(LOG_LV_DEBUG, "long_key\r\n");
-          			sal_init();
+                    sal_init();
 					gb_long_key_flag = true;
 				}
 			}

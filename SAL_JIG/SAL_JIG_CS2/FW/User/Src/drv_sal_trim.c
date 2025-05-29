@@ -16,8 +16,9 @@
 #ifdef __DRV_SAL_TRIM_C__
 
 #define TRIM_WAFER              (0)
-#define TRIM_FULL               (1)
-#define TRIM_TYPE               TRIM_FULL
+#define TRIM_PACKAGE            (1)
+#define TRIM_FULL               (2)
+#define TRIM_TYPE               TRIM_WAFER
 
 #define LED_EP                  (0)
 #define LED_HC                  (1)
@@ -69,31 +70,28 @@ static uint8_t gn_trim_delay;
 
 static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
 {
-                    // TARGET_MIN  TARGET_MAX       INPUT1
-    /*V_TRIM_BGR*/    {     1.045,      1.155,      0.0}, // 1.2 V
-    /*V_R1_R2*/       {      1.14,       1.26,      0.0}, // 1.2 V
-    /*I_TRIM_BGR*/    {      0.95,       1.05,      0.0}, // 1 uA
-    /*LDO_CTL*/       {     1.425,      1.575,      0.0}, // 1.5 V
-    /*OSC_CTL*/       {        16,      16.16,      0.0}, // 16 MHz
-    /*LVDS_TX*/       {       0.0,        0.0,      0.0}, // skip
-    /*LVDS_RX*/       {       0.0,        0.0,      0.0}, // skip
-    /*ADC_GAIN*/      {     263.0,      291.0,      0.0}, // 277 reg value
-    /*ADC_OFFSET*/    {     479.0,      530.0,      0.0}, // 505 reg value
-    /*TEMP_TRIM_BGR*/ {     495.0,      547.0,      0.0}, // 521 reg value
-
-                      // TARGET_R    TARGET_G   TARGET_B
-    /*CURRENT_ITRIM*/ {      22.3,       13.8,     6.24}, // mA , check RGB Max current
+    { 1.045, 1.155, 0.0}, /* V_TRIM_BGR         1.2 V */
+    {  1.14,  1.26, 0.0}, /* V_R1_R2             1.2 V */
+    {  0.95,  1.05, 0.0}, /* I_TRIM_BGR          1 uA */
+    { 1.425, 1.575, 0.0}, /* LDO_CTL             1.5 V */
+    {    16, 16.16, 0.0}, /* OSC_CTL             16 MHz */
+    {   0.0,   0.0, 0.0}, /* LVDS_TX             skip */
+    {   0.0,   0.0, 0.0}, /* LVDS_RX             skip */
+    { 263.0, 291.0, 0.0}, /* ADC_GAIN            277 reg value */
+    { 479.0, 530.0, 0.0}, /* ADC_OFFSET          505 reg value */
+    { 495.0, 547.0, 0.0}, /* TEMP_TRIM_BGR       521 reg value */
+    { 15.96,  14.5, 5.8}, /* CURRENT_ITRIM mA    check RGB Max current */
 };
 
 static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =
 {
     0x3F, /*V_TRIM_BGR*/
-    0xF, /*V_R1_R2*/
+    0x0F, /*V_R1_R2*/
     0x1F, /*I_TRIM_BGR*/
-    0x7, /*LDO_CTL*/
+    0x07, /*LDO_CTL*/
     0xFF, /*OSC_CTL*/
-    0x7, /*LVDS_TX*/
-    0x3, /*LVDS_RX*/
+    0x07, /*LVDS_TX*/
+    0x03, /*LVDS_RX*/
     0x1F, /*ADC_GAIN*/
     0x1FF, /*ADC_OFFSET*/
     0x3F, /*TEMP_TRIM_BGR*/
@@ -109,6 +107,9 @@ static uint16_t gn_sal_trim_temp_adc_value[2];
 static uint16_t gn_sal_trim_v_trim_r1_r2[16 * 16];
 static uint16_t gn_sal_trim_v_trim_r1_r2_cnt;
 
+static uint8_t gn_v_trim_r1;
+static uint8_t gn_v_trim_r2;
+
 static uint16_t gn_sal_trim_ldo[8];
 static uint16_t gn_sal_trim_ldo_cnt;
 
@@ -118,9 +119,6 @@ volatile static uint32_t gn_input_capture_count[INPUT_CAPTURE_SIZE];;
 volatile bool gb_input_capture_started;
 
 static otp_verify_step_t gt_otp_verify_step;
-
-static uint8_t gn_v_trim_r1;
-static uint8_t gn_v_trim_r2;
 
 static uint8_t gn_sal_osc_trim_val = 128;
 static uint16_t gn_sal_adc_offset_trim_val = 256;
@@ -564,8 +562,7 @@ static void sal_trim_reg_write(uint8_t ch, trim_mode_t trim_mode, uint16_t n_val
     case TRIM_MODE_OSC_CTL :
         if (n_value < 128)
         {
-            // bit invert lsb 7-bits
-            n_value ^= 127;
+            n_value ^= 127; // bit invert lsb 7-bits
         }
         gt_sal_trim_regs._rE7.osc_ctl = (n_value & 0x7F);
         gt_sal_trim_regs._rE7.osc_ctl_sign = ((n_value & 0x80) >> 7);
@@ -604,8 +601,7 @@ static void sal_trim_reg_write(uint8_t ch, trim_mode_t trim_mode, uint16_t n_val
     case TRIM_MODE_ADC_OFFSET :
         if (n_value < 256)
         {
-            // bit invert lsb 8-bits
-            n_value ^= 255;
+            n_value ^= 255; // bit invert lsb 8-bits
         }
         gt_sal_trim_regs._rEA.adc_offset = n_value;
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP1_MIRROR7;
@@ -1315,10 +1311,11 @@ void sal_trimming_procedure(void)
 
             // write something if needed
             sal_trim_regs_init();
+#if (TRIM_TYPE != TRIM_PACKAGE)
             change_trim_step(TRIM_STEP_MODE_INIT);
-            /************************************/
-            //change_trim_step(TRIM_STEP_OTP_START);
-            /************************************/
+#else
+            change_trim_step(TRIM_STEP_OTP_WRITE_INIT);
+#endif
         }
         break;
     case TRIM_STEP_MODE_INIT :
@@ -1938,17 +1935,15 @@ void sal_trimming_procedure(void)
         gt_sal_trim_regs._rF2.pwm_max_g = 0;
         gt_sal_trim_regs._rF3.pwm_max_b = 0;
 #else
-
-#if (LED_TYPE == LED_EP)
-        gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
-        gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
-        gt_sal_trim_regs._rF3.pwm_max_b = 0x429;
-#else
-        gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
-        gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
-        gt_sal_trim_regs._rF3.pwm_max_b = 0x466;
-#endif
-
+    #if (LED_TYPE == LED_EP)
+            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
+            gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
+            gt_sal_trim_regs._rF3.pwm_max_b = 0x429;
+    #else
+            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
+            gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
+            gt_sal_trim_regs._rF3.pwm_max_b = 0x466;
+    #endif
 #endif
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
@@ -1970,9 +1965,6 @@ void sal_trimming_procedure(void)
         change_trim_step(TRIM_STEP_DONE);
         print(LOG_LV_INFO, "OTP Burn Skip!!! \n\r");
 #endif
-//-------------------------------------------------------------
-        //change_trim_step(TRIM_STEP_PWR_OFF);
-//-------------------------------------------------------------
         break;
     case TRIM_STEP_OTP_START :
         if (gn_trim_delay)
@@ -1984,6 +1976,9 @@ void sal_trimming_procedure(void)
 #if (TRIM_TYPE == TRIM_WAFER)
             gt_sal_trim_regs._rE1.otp_pg1 = 1;
             gt_sal_trim_regs._rE1.otp_pg2 = 0;
+#elif (TRIM_TYPE == TRIM_PACKAGE)
+            gt_sal_trim_regs._rE1.otp_pg1 = 0;
+            gt_sal_trim_regs._rE1.otp_pg2 = 1;
 #else
             gt_sal_trim_regs._rE1.otp_pg1 = 1;
             gt_sal_trim_regs._rE1.otp_pg2 = 1;

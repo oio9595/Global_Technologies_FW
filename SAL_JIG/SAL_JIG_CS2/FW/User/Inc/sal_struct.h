@@ -520,25 +520,25 @@ typedef union
 
 typedef enum
 {
-    SAL_MAX_CURR_1_mA_44 = 0,
-    SAL_MAX_CURR_2_mA_87,
-    SAL_MAX_CURR_4_mA_31,
-    SAL_MAX_CURR_5_mA_75,
-    SAL_MAX_CURR_7_mA_18,
-    SAL_MAX_CURR_8_mA_62,
-    SAL_MAX_CURR_10_mA_05,
-    SAL_MAX_CURR_11_mA_48,
-    SAL_MAX_CURR_12_mA_92,
-    SAL_MAX_CURR_14_mA_35,
-    SAL_MAX_CURR_15_mA_78,
-    SAL_MAX_CURR_17_mA_21,
-    SAL_MAX_CURR_18_mA_65,
-    SAL_MAX_CURR_20_mA_08,
-    SAL_MAX_CURR_21_mA_51,
-    SAL_MAX_CURR_22_mA_94,
+    SAL_MAX_CURR_1_mA_44 = 0,   //0x0
+    SAL_MAX_CURR_2_mA_87,       //0x1
+    SAL_MAX_CURR_4_mA_31,       //0x2
+    SAL_MAX_CURR_5_mA_75,       //0x3
+    SAL_MAX_CURR_7_mA_18,       //0x4
+    SAL_MAX_CURR_8_mA_62,       //0x5
+    SAL_MAX_CURR_10_mA_05,      //0x6
+    SAL_MAX_CURR_11_mA_48,      //0x7
+    SAL_MAX_CURR_12_mA_92,      //0x8
+    SAL_MAX_CURR_14_mA_35,      //0x9
+    SAL_MAX_CURR_15_mA_78,      //0xA
+    SAL_MAX_CURR_17_mA_21,      //0xB
+    SAL_MAX_CURR_18_mA_65,      //0xC
+    SAL_MAX_CURR_20_mA_08,      //0xD
+    SAL_MAX_CURR_21_mA_51,      //0xE
+    SAL_MAX_CURR_22_mA_94,      //0xF
 }sal_max_curr_t;
 
-#define SAL_R_MAX_CURR      SAL_MAX_CURR_21_mA_51
+#define SAL_R_MAX_CURR      SAL_MAX_CURR_15_mA_78
 #define SAL_G_MAX_CURR      SAL_MAX_CURR_14_mA_35
 #define SAL_B_MAX_CURR      SAL_MAX_CURR_5_mA_75
 
