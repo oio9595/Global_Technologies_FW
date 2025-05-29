@@ -21,12 +21,12 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_TARGET          (12.800f)   /* mA */
+#define XDIC_ICTL_L_TARGET          (16.0f * XDIC_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
 #define XDIC_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_16mA)
 #define XDIC_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_16mA)
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_TARGET          (51.200f)   /* mA */
+#define XDIC_ICTL_H_TARGET          (64.0f * XDIC_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
 #define XDIC_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_64mA)
 #define XDIC_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_64mA)
 
@@ -440,7 +440,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                     XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
                     u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
                     ++ptr_Param->u8_channel_cur;
-                    Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+                    XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
                     break;
                 }

@@ -440,7 +440,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                     XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
                     u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
                     ++ptr_Param->u8_channel_cur;
-                    Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
+                    XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
                     break;
                 }
