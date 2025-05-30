@@ -15,14 +15,14 @@
 #define XD12_VREF_TARGET            (2.2)     /* V */
 
 #define XD12_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_L_TARGET          (8.0f * XD12_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
-#define XD12_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_8mA)
-#define XD12_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_8mA)
+#define XD12_ICTL_L_P1              (400)
+#define XD12_ICTL_L_P2              (2000)
+#define XD12_ICTL_L_TARGET          (8.0f * (XD12_ICTL_L_P2 + XD12_ICTL_L_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
 
 #define XD12_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_H_TARGET          (32.0f * XD12_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
-#define XD12_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_32mA)
-#define XD12_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_32mA)
+#define XD12_ICTL_H_P1              (400)
+#define XD12_ICTL_H_P2              (2000)
+#define XD12_ICTL_H_TARGET          (32.0f * (XD12_ICTL_H_P2 + XD12_ICTL_H_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
 
 #define ADJ_NONE                    (0)
 #define ADJ_PLUS                    (1)
@@ -50,9 +50,9 @@ static float gf_screen_current[CH_MAX];
 static current_gain_t gt_screen_gain;
 
 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-#define XD12_ANA_TABLE_SIZE 6
+#define XD12_ANA_TABLE_SIZE 8
     static uint32_t gn_xd_screen_ana;
-    static uint16_t gn_xd_screen_ana_table[XD12_ANA_TABLE_SIZE] = {XD12_CURRENT_TRIM_VREF, 353, 505, 3191, 3276, 4095};
+    static uint16_t gn_xd_screen_ana_table[XD12_ANA_TABLE_SIZE] = { XD12_ICTL_L_P1, XD12_ICTL_L_P2, (XD12_ICTL_L_P1 + XD12_ICTL_L_P2)/2, 353, 505, 3191, 3276, 4095};
     static uint8_t gn_xd_screen_ana_tick;
     static uint8_t gn_xd_screen_max_current_change;
 #else
@@ -719,15 +719,28 @@ void Trimming_Procedure_Run(void)
                 gt_jig_trimming_step = TRIMMING_STEP_CHANGE_OUTPUT_DONE;
                 break;
             case TRIM_ICTL_L_CHS:
-            case TRIM_ICTL_H_CHS:
-                XD12_Trim_Init_ICTL();
+                XD12_Trim_Init_ICTL_L();
                 if (gn_slope_cnt == 0)
                 {
-                    XD12_Set_Max_Current_Level((dev_max_curr_level_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P1]);
+                    XD12_Set_Max_Curr_Vref((uint16_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P1]);
                 }
                 else
                 {
-                    XD12_Set_Max_Current_Level((dev_max_curr_level_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P2]);
+                    XD12_Set_Max_Curr_Vref((uint16_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P2]);
+                }
+
+                gt_jig_trimming_step = TRIMMING_STEP_SET_ADC_CH;
+                gn_step_delay = 0;
+                break;
+            case TRIM_ICTL_H_CHS:
+                XD12_Trim_Init_ICTL_H();
+                if (gn_slope_cnt == 0)
+                {
+                    XD12_Set_Max_Curr_Vref((uint16_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P1]);
+                }
+                else
+                {
+                    XD12_Set_Max_Curr_Vref((uint16_t)glf_TrimPara_GUI[gt_trim_search_mode][TRIM_PARA_P2]);
                 }
 
                 gt_jig_trimming_step = TRIMMING_STEP_SET_ADC_CH;
@@ -807,7 +820,7 @@ void Trimming_Procedure_Run(void)
                 case TRIM_ICTL_L_CHS:
                 case TRIM_ICTL_H_CHS:
                     gn_slope_adc[gn_read_adc_vout_channel][gn_slope_cnt] = ADS114S08_Get_Adc_Value();
-                    #if 0 //if 2-point
+                    #if 1 //if 2-point
                     ++gn_slope_cnt;
                         if (gn_slope_cnt >= 2)
                         {
@@ -854,8 +867,8 @@ void Trimming_Procedure_Run(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_ICTL_L;
                     u8_tmp_channel_max = CH_MAX;
                     t_trim_search_mode_next = TRIM_ICTL_H_CHS;
-                    #if 0 //if 2-point
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_read_adc_vout_channel][1] + gn_slope_adc[gn_read_adc_vout_channel][0]) / 2) + 0.5f);
+                    #if 1 //if 2-point
+                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_read_adc_vout_channel][1] + gn_slope_adc[gn_read_adc_vout_channel][0]) / 2.0f) + 0.5f); //average of 2-point
                     #else //else 1-point
                         u16_tmp_adc_cur = gn_slope_adc[gn_read_adc_vout_channel][0];
                     #endif
@@ -864,7 +877,11 @@ void Trimming_Procedure_Run(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_ICTL_H;
                     u8_tmp_channel_max = CH_MAX;
                     t_trim_search_mode_next = TRIM_MAX;
-                    u16_tmp_adc_cur = gn_slope_adc[gn_read_adc_vout_channel][0];
+                    #if 1 //if 2-point
+                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_read_adc_vout_channel][1] + gn_slope_adc[gn_read_adc_vout_channel][0]) / 2.0f) + 0.5f); //average of 2-point
+                    #else //else 1-point
+                        u16_tmp_adc_cur = gn_slope_adc[gn_read_adc_vout_channel][0];
+                    #endif
                     break;
                 }
 
@@ -1116,7 +1133,7 @@ void Screening_Procedure_Run(void)
         {
             XD12_Trim_Init();
             XD12_Write_Trim_Find_Regs();
-            XD12_Trim_Init_ICTL();
+            XD12_Trim_Init_ICTL_H();
             XD12_Read_All_Registers();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_jig_screening_step = SCREEN_STEP_CHANGE_OUTPUT;
@@ -1132,16 +1149,20 @@ void Screening_Procedure_Run(void)
         break;
     case SCREEN_STEP_CHANGE_OUTPUT :
         #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-            gn_xd_screen_ana = gn_xd_screen_ana_table[gn_xd_screen_ana_tick];
-            XD12_Set_Max_Curr_Vref(gn_xd_screen_ana);
-            if (gn_xd_screen_max_current_change == 0)
-            {
-                XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
-            }
-            else
-            {
-                XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
-            }
+            #if 0
+                gn_xd_screen_ana = gn_xd_screen_ana_table[gn_xd_screen_ana_tick];
+                XD12_Set_Max_Curr_Vref(gn_xd_screen_ana);
+                if (gn_xd_screen_max_current_change == 0)
+                {
+                    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+                }
+                else
+                {
+                    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+                }
+            #else
+                XD12_Set_Max_Curr_Vref(gn_xd_screen_ana);
+            #endif
         #else
             XD12_Set_Max_Current_Level(gt_xd_screen_max_curr_level);
         #endif
@@ -1200,11 +1221,12 @@ void Screening_Procedure_Run(void)
                     gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3], gf_screen_current[ 4], gf_screen_current[ 5], \
                     gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                    #if 0
+                    #if 1
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                     if (gn_xd_screen_ana > 0xFFF)
                     {
-                        gt_jig_screening_step = SCREEN_STEP_STOP;
+                        gn_xd_screen_ana = 0xFFF;
+                        //gt_jig_screening_step = SCREEN_STEP_STOP;
                     }
                     #else
                     ++gn_xd_screen_ana_tick;

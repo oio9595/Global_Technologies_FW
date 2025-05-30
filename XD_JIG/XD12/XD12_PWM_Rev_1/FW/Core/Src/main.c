@@ -1664,14 +1664,14 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
         {
-            XD12_Trim_Init_ICTL();
+            XD12_Trim_Init_ICTL_L();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
         }
         else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
         {
-            XD12_Trim_Init_ICTL();
+            XD12_Trim_Init_ICTL_L();
             JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
@@ -1737,7 +1737,7 @@ static void TaskDebugUart(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
 
-            XD12_Trim_Init_ICTL();
+            XD12_Trim_Init_ICTL_L();
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
 
             uint16_t adc_val = 0;
@@ -1789,7 +1789,7 @@ static void TaskDebugUart(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_INFO, "\r\n xd_vled_on\r\n");
 
-            XD12_Trim_Init_ICTL();
+            XD12_Trim_Init_ICTL_L();
             XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
 
             uint16_t adc_val = 0;

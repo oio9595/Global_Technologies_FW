@@ -838,7 +838,8 @@ extern void XD12_Write_Trim_Find_Regs(void);
 
 extern void XD12_Trim_Init_VREF_CTL(void);
 extern void XD12_Trim_Init_OSC(void);
-extern void XD12_Trim_Init_ICTL(void);
+extern void XD12_Trim_Init_ICTL_L(void);
+extern void XD12_Trim_Init_ICTL_H(void);
 
 extern void XD12_Set_OTP_Protect(bool en);
 extern void XD12_Set_OTP_PG_Start(bool en);

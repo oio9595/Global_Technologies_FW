@@ -1200,7 +1200,7 @@ void XD12_Trim_Init_OSC(void)
     XD12_Set_OSC_Manual(32768);
 }
 
-void XD12_Trim_Init_ICTL(void)
+void XD12_Trim_Init_ICTL_L(void)
 {
     gt_xd12_general_regs._r3F.test_en = 1;
     gt_xd12_general_regs._r3F.vref_o = 0;
@@ -1209,8 +1209,19 @@ void XD12_Trim_Init_ICTL(void)
     gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
-    gt_xd12_general_regs._r08.max_curr_vref = XD12_CURRENT_TRIM_VREF;
-    XD12_Write_General_Reg(XD12_ADDR_MAX_CURR_VREF, gt_xd12_general_regs._r08.val);
+    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+}
+
+void XD12_Trim_Init_ICTL_H(void)
+{
+    gt_xd12_general_regs._r3F.test_en = 1;
+    gt_xd12_general_regs._r3F.vref_o = 0;
+    gt_xd12_general_regs._r3F.mclk32_o = 0;
+    gt_xd12_general_regs._r3F.pwm_full_o = 1;
+    gt_xd12_general_regs._r3F.test_ana_en = 0;
+    XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
+
+    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
 }
 
 void XD12_Set_OTP_Protect(bool en)
