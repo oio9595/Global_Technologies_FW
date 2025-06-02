@@ -1209,7 +1209,7 @@ void XD12_Trim_Init_ICTL_L(void)
     gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
-    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+    XD12_Set_Max_Current_Level(XD12_ICTL_L_MAX_CURRENT_LVL);
 }
 
 void XD12_Trim_Init_ICTL_H(void)
@@ -1221,7 +1221,7 @@ void XD12_Trim_Init_ICTL_H(void)
     gt_xd12_general_regs._r3F.test_ana_en = 0;
     XD12_Write_General_Reg(XD12_ADDR_OTP_OP_MODE, gt_xd12_general_regs._r3F.val);
 
-    XD12_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+    XD12_Set_Max_Current_Level(XD12_ICTL_H_MAX_CURRENT_LVL);
 }
 
 void XD12_Set_OTP_Protect(bool en)

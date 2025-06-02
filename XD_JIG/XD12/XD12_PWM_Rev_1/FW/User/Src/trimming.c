@@ -15,13 +15,13 @@
 #define XD12_VREF_TARGET            (2.2)     /* V */
 
 #define XD12_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_L_P1              (400)
-#define XD12_ICTL_L_P2              (2000)
+#define XD12_ICTL_L_P1              (300)
+#define XD12_ICTL_L_P2              (1600)
 #define XD12_ICTL_L_TARGET          (8.0f * (XD12_ICTL_L_P2 + XD12_ICTL_L_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
 
 #define XD12_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
-#define XD12_ICTL_H_P1              (400)
-#define XD12_ICTL_H_P2              (2000)
+#define XD12_ICTL_H_P1              (300)
+#define XD12_ICTL_H_P2              (1600)
 #define XD12_ICTL_H_TARGET          (32.0f * (XD12_ICTL_H_P2 + XD12_ICTL_H_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
 
 #define ADJ_NONE                    (0)
@@ -1225,8 +1225,7 @@ void Screening_Procedure_Run(void)
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                     if (gn_xd_screen_ana > 0xFFF)
                     {
-                        gn_xd_screen_ana = 0xFFF;
-                        //gt_jig_screening_step = SCREEN_STEP_STOP;
+                        gt_jig_screening_step = SCREEN_STEP_STOP;
                     }
                     #else
                     ++gn_xd_screen_ana_tick;
