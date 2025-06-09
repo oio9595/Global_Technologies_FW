@@ -437,9 +437,9 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                 if (ptr_Param->trim_saved_data[i].u16_saved_reg == u16_reg_value_cur) //If there is an 2 times matched
                 {
                     // Write Register
-                    print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[i].u16_saved_reg);
-                    XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
-                    u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
+                    print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[i].u16_saved_reg;
                     u16_data_gap[ptr_Param->u8_channel_cur] = 0;
                     ++ptr_Param->u8_channel_cur;
                     XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);

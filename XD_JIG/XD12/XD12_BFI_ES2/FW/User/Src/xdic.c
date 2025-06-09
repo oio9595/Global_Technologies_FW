@@ -12,6 +12,7 @@
 #include "JigBd_IF.h"
 #include "types.h"
 #include "config.h"
+#include "xd_trim.h"
 
 #define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
 #define XDIC_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xdic_mirror_regs.reg }
