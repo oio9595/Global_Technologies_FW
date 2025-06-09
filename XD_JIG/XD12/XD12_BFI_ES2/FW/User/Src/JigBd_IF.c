@@ -87,6 +87,8 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
     else
     {
         LL_GPIO_ResetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
+        XC_NSCS_LO();
+        XC24_Start_MCLK_Oscillation(FALSE);
     }
     LL_mDelay(10);
 }

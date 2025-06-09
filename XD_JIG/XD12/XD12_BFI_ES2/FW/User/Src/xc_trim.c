@@ -20,7 +20,7 @@ typedef struct
     uint8_t min_gap_index;
     float min_gap_freq;
 } _osc_min_t;
-_osc_min_t _osc_min;
+_osc_min_t gt_xc_osc_closest;
 
 uint16_t trim_find_regs[TRIM_FIND_MAX] = {0, };
 dac_gain_tgt_t dac_gain_tgt_buff = {0, };
@@ -32,8 +32,8 @@ static xc_trim_step_t gt_xc_trim_step;
 
 static void XC_Get_Minimum_OSC_Freq(float* freq_buffer, float target)
 {
-    _osc_min.min_gap_freq = freq_buffer[0];
-    _osc_min.min_gap_index = 0;
+    gt_xc_osc_closest.min_gap_index = 0;
+    gt_xc_osc_closest.min_gap_freq = freq_buffer[0];
     float min_diff = fabsf(target - freq_buffer[0]);
 
     for (uint8_t i = 1 ; i < 128 ; ++i)
@@ -42,12 +42,12 @@ static void XC_Get_Minimum_OSC_Freq(float* freq_buffer, float target)
         if (diff < min_diff)
         {
             min_diff = diff;
-            _osc_min.min_gap_freq = freq_buffer[i];
-            _osc_min.min_gap_index = i;
+            gt_xc_osc_closest.min_gap_freq = freq_buffer[i];
+            gt_xc_osc_closest.min_gap_index = i;
         }
     }
 
-    print(LOG_INFO, "OSC_FREQ REG[%u] -> OSC_FREQ Level : %f\r\n", _osc_min.min_gap_index, _osc_min.min_gap_freq);
+    print(LOG_INFO, "CLOSEST OSC_FREQ REG[%u] -> OSC_FREQ Level : %f\r\n", gt_xc_osc_closest.min_gap_index, gt_xc_osc_closest.min_gap_freq);
 }
 
 void XC_Trim_IF_Trim_Start(void)
@@ -71,38 +71,49 @@ bool XC_Trim_IF_Get_OTP_Enable(void)
 void XC_Trim_Task(void)
 {
     static uint8_t over_run_cnt = 1;
+    uint16_t ext_adc_value = 0;
     bool xc_compare_result = true;
+    bool xc_over_under_flow = false;
 
     if (gt_xc_trim_step != XC_TRIM_STEP_NONE)
     {
         switch(gt_xc_trim_step)
         {
         case XC_TRIM_STEP_STANDBY:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_STANDBY=============\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_ACTIVATE_START;
+        }
+        break;
 
         case XC_TRIM_STEP_ACTIVATE_START:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_ACTIVATE_START=============\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_IC_PWR;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_IC_PWR:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_IC_PWR=============\r\n");
             XC24_Trim_Init();
             gt_xc_trim_step = XC_TRIM_STEP_ACTIVATE_END;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_ACTIVATE_END:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_ACTIVATE_END=============\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_VCTL_LDO;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_VCTL_LDO:
+        {
+            static uint8_t vctl_ldo_reg = 8;
+
             print(LOG_INFO, "=============XC_TRIM_STEP_VCTL_LDO=============\r\n");
             XC24_Trim_Init_VCTL_LDO();
-
-            static uint8_t vctl_ldo_reg = 8;
-            static float vctl_ldo_level = 0;
 
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             HAL_Delay(1);
@@ -117,44 +128,65 @@ void XC_Trim_Task(void)
                 }
             }
 
-            vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
-            gn_ads114s08_adc_temp = 0;
+            ext_adc_value = ADS114S08_Get_ADC_Value();
+            float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
+            print(LOG_INFO, "Loop[%d] VCTL_LDO_REGS[%d] -> LDO_LEVEL : %f\r\n", over_run_cnt, vctl_ldo_reg, vctl_ldo_level);
+            ++over_run_cnt;
 
-            if((over_run_cnt >= VCTL_LDO_TRIM_OVER_COUNT) || (vctl_ldo_reg >= 15) || (vctl_ldo_reg <= 0))
+            if (vctl_ldo_level > VCTL_LDO_UPPER_LIMIT)
             {
-                print(LOG_ERROR, "VCTL_LDO trim error\r\n");
-                gt_xc_trim_step = XC_TRIM_STEP_STOP;
-                break;
+                if (vctl_ldo_reg > 0)
+                {
+                    --vctl_ldo_reg;
+                }
+                else
+                {
+                    print(LOG_INFO, "VCTL_LDO Trim underflow\r\n");
+                    xc_over_under_flow = true;
+                }
             }
-            if(vctl_ldo_level >= VCTL_LDO_UPPER_LIMIT)
+            else if (vctl_ldo_level < VCTL_LDO_LOWER_LIMIT)
             {
-                --vctl_ldo_reg;
-            }
-            else if(vctl_ldo_level <= VCTL_LDO_LOWER_LIMIT)
-            {
-                ++vctl_ldo_reg;
+                if (vctl_ldo_reg < 15)
+                {
+                    ++vctl_ldo_reg;
+                }
+                else
+                {
+                    xc_over_under_flow = true;
+                    print(LOG_INFO, "VCTL_LDO Trim overflow\r\n");
+                }
             }
             else // in range
             {
-                print(LOG_INFO, "Loop[%d] VCTL_LDO_REGS[%d] -> LDO_LEVEL : %f\r\n", over_run_cnt, vctl_ldo_reg, vctl_ldo_level);
                 print(LOG_INFO, "VCTL_LDO Trim done\r\n");
                 over_run_cnt = 1;
                 gt_xc_trim_step = XC_TRIM_STEP_DAC_GAIN;
                 break;
             }
-            XC24_Trim_Write_VCTL_LDO(vctl_ldo_reg);
-            print(LOG_INFO, "Loop[%d] VCTL_LDO_REGS[%d] -> LDO_LEVEL : %f\r\n", over_run_cnt, vctl_ldo_reg, vctl_ldo_level);
-            ++over_run_cnt;
-            break;
+
+            if (xc_over_under_flow == false)
+            {
+                XC24_Trim_Write_VCTL_LDO(vctl_ldo_reg);
+                gt_xc_trim_step = XC_TRIM_STEP_VCTL_LDO;
+            }
+            else if ((over_run_cnt >= VCTL_LDO_TRIM_OVER_COUNT) || xc_over_under_flow)
+            {
+                print(LOG_ERROR, "VCTL_LDO trim error\r\n");
+                gt_xc_trim_step = XC_TRIM_STEP_STOP;
+                break;
+            }
+        }
+        break;
 
         case XC_TRIM_STEP_DAC_GAIN:
-            print(LOG_INFO, "=============XC_TRIM_STEP_DAC_GAIN=============\r\n");
+        {
             static uint8_t dac_gain_reg = 32;
 
+            print(LOG_INFO, "=============XC_TRIM_STEP_DAC_GAIN=============\r\n");
             XC24_Trim_Init_DAC_Gain();
 
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P1);
-
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             HAL_Delay(1);
             gb_ads114s08_drdy_done = 0;
@@ -167,11 +199,12 @@ void XC_Trim_Task(void)
                     break;
                 }
             }
-
-            dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
-            gn_ads114s08_adc_temp = 0;
+            ext_adc_value = ADS114S08_Get_ADC_Value();
+            dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P2);
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
+            HAL_Delay(1);
 
             gb_ads114s08_drdy_done = 0;
             gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -183,50 +216,66 @@ void XC_Trim_Task(void)
                     break;
                 }
             }
+            ext_adc_value = ADS114S08_Get_ADC_Value();
+            dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
-            dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
-            gn_ads114s08_adc_temp = 0;
+            float dac_gain_delta = dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1;
+            print(LOG_INFO, "Loop[%d] DAC_GAIN_REG[%d] -> DAC_GAIN_LEVEL : %f\r\n" , over_run_cnt, dac_gain_reg, dac_gain_delta);
+            ++over_run_cnt;
 
-            if((over_run_cnt >= DAC_GAIN_TRIM_OVER_COUNT) || (dac_gain_reg >= 63) || (dac_gain_reg <= 0))
+            if(dac_gain_delta > DAC_GAIN_UPPER_LIMIT)
             {
-                print(LOG_ERROR, "DAC_GAIN trim error\r\n");
-                gt_xc_trim_step = XC_TRIM_STEP_STOP;
-
-                break;
+                if (dac_gain_reg > 0)
+                {
+                    --dac_gain_reg;
+                }
+                else
+                {
+                    print(LOG_INFO, "DAC_GAIN Trim underflow\r\n");
+                    xc_over_under_flow = true;
+                }
             }
-
-            if((dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1) >= DAC_GAIN_UPPER_LIMIT)
+            else if (dac_gain_delta < DAC_GAIN_LOWER_LIMIT)
             {
-                --dac_gain_reg;
-            }
-            else if ((dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1) <= DAC_GAIN_LOWER_LIMIT)
-            {
-                ++dac_gain_reg;
+                if (dac_gain_reg < 63)
+                {
+                    ++dac_gain_reg;
+                }
+                else
+                {
+                    xc_over_under_flow = true;
+                    print(LOG_INFO, "DAC_GAIN Trim overflow\r\n");
+                }
             }
             else
             {
-                print(LOG_INFO, "Loop[%d] DAC_GAIN_REG[%d] -> DAC_GAIN_LEVEL : %f\r\n"
-                , over_run_cnt, dac_gain_reg
-                , dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1);
                 print(LOG_INFO, "DAC_GAIN Trim done\r\n");
                 over_run_cnt = 1;
                 gt_xc_trim_step = XC_TRIM_STEP_DAC_OFS;
-
                 break;
             }
-
-            XC24_Trim_Write_DAC_GAIN(dac_gain_reg);
-            print(LOG_INFO, "Loop[%d] DAC_GAIN_REG[%d] -> DAC_GAIN_LEVEL : %f\r\n"
-                , over_run_cnt, dac_gain_reg
-                , dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1);
-            ++over_run_cnt;
-
-            break;
+            if (xc_over_under_flow == false)
+            {
+                XC24_Trim_Write_DAC_GAIN(dac_gain_reg);
+                gt_xc_trim_step = XC_TRIM_STEP_DAC_GAIN;
+            }
+            else if ((over_run_cnt >= DAC_GAIN_TRIM_OVER_COUNT) || xc_over_under_flow)
+            {
+                print(LOG_ERROR, "DAC_GAIN trim error\r\n");
+                gt_xc_trim_step = XC_TRIM_STEP_STOP;
+                break;
+            }
+        }
+        break;
 
         case XC_TRIM_STEP_DAC_OFS:
-            print(LOG_INFO, "=============XC_TRIM_STEP_DAC_OFS=============\r\n");
+        {
             static float dac_ofs = 0;
+            static uint8_t dac_ofs_val = 0;
+            static uint8_t dac_ofs_sign = 0;
             static uint8_t dac_ofs_reg = 0;
+
+            print(LOG_INFO, "=============XC_TRIM_STEP_DAC_OFS=============\r\n");
             XC24_Trim_Init_DAC_OFS();
 
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
@@ -242,44 +291,62 @@ void XC_Trim_Task(void)
                 }
             }
 
-            dac_ofs = (float)(ADC_VOLT_PER_STEP * gn_ads114s08_adc_temp)  / CONST_mV_TO_V;
-            gn_ads114s08_adc_temp = 0;
+            ext_adc_value = ADS114S08_Get_ADC_Value();
+            dac_ofs = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
+            print(LOG_INFO, "Loop[%d] dac_ofs_val[%d] -> DAC_OFS_LEVEL : %f\r\n", over_run_cnt, dac_ofs_val, dac_ofs);
+            ++over_run_cnt;
 
-            if((over_run_cnt >= DAC_OFS_TRIM_OVER_COUNT) || dac_ofs_reg >= 63 || dac_ofs_reg <= 0)
+            if(dac_ofs > DAC_OFS_UPPER_LIMIT)
             {
-                print(LOG_ERROR, "DAC_OFS trim error\r\n");
-                gt_xc_trim_step = XC_TRIM_STEP_STOP;
-                break;
+                dac_ofs_sign = 1;
+                if (dac_ofs_val > 127)
+                {
+                    ++dac_ofs_val;
+                }
+                else
+                {
+                    xc_over_under_flow = true;
+                    print(LOG_INFO, "DAC_OFS Trim overflow\r\n");
+                }
             }
-
-            if(dac_ofs >= DAC_OFS_UPPER_LIMIT)
+            else if (dac_ofs < DAC_OFS_LOWER_LIMIT)
             {
-                --dac_ofs_reg;
-            }
-            else if (dac_ofs <= DAC_OFS_LOWER_LIMIT)
-            {
-                ++dac_ofs_reg;
+                dac_ofs_sign = 0;
+                if (dac_ofs_val > 127)
+                {
+                    ++dac_ofs_val;
+                }
+                else
+                {
+                    xc_over_under_flow = true;
+                    print(LOG_INFO, "DAC_OFS Trim overflow\r\n");
+                }
             }
             else
             {
-                print(LOG_INFO, "Loop[%d] DAC_OFS_REG[%d] -> DAC_OFS_LEVEL : %f\r\n", over_run_cnt, dac_ofs_reg, dac_ofs);
                 print(LOG_INFO, "DAC_OFS Trim done\r\n");
                 over_run_cnt = 1;
                 gt_xc_trim_step = XC_TRIM_STEP_OSC_FCTL;
 
                 break;
             }
-
-            XC24_Trim_Write_DAC_OFS(dac_ofs_reg);
-            print(LOG_INFO, "Loop[%d] DAC_OFS_REG[%d] -> DAC_OFS_LEVEL : %f\r\n", over_run_cnt, dac_ofs_reg, dac_ofs);
-            ++over_run_cnt;
-
-            break;
+            dac_ofs_reg = (dac_ofs_sign << 7) | dac_ofs_val;
+            if (xc_over_under_flow == false)
+            {
+                XC24_Trim_Write_DAC_OFS(dac_ofs_reg);
+            }
+            else if ((over_run_cnt >= DAC_OFS_TRIM_OVER_COUNT) || xc_over_under_flow)
+            {
+                print(LOG_ERROR, "DAC_OFS trim error\r\n");
+                gt_xc_trim_step = XC_TRIM_STEP_STOP;
+                break;
+            }
+        }
+        break;
 
         case XC_TRIM_STEP_OSC_FCTL:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_OSC_FCTL=============\r\n");
-            static uint8_t osc_fctl_reg = XC24_OSC_REG_DEFAULT;
-            static double osc_freq = 0;
             XC24_Trim_Init_OSC();
 
             for(uint8_t reg_index = 0 ; reg_index < 128 ; ++reg_index)
@@ -296,27 +363,26 @@ void XC_Trim_Task(void)
                 }
 
                 JigBD_IF_Stop_Input_Capture();
-                osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-
+                float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
                 osc_value_buffer[reg_index] = osc_freq;
-                print(LOG_INFO, "Loop[%d] OSC_FREQ REG[%d] -> OSC_FREQ Level : %f\r\n", reg_index, osc_fctl_reg, osc_freq);
+                print(LOG_INFO, "Loop[%d] OSC_FREQ REG[%d] -> OSC_FREQ Level : %.3f\r\n", over_run_cnt, reg_index, osc_freq);
+                ++over_run_cnt;
             }
 
             XC_Get_Minimum_OSC_Freq(osc_value_buffer, XC24_OSC_TARGET);
-            XC24_Trim_Write_OSC_FCTL(_osc_min.min_gap_index);
+            XC24_Trim_Write_OSC_FCTL(gt_xc_osc_closest.min_gap_index);
 
             print(LOG_INFO, "OSC_FCTL Trim done\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_E2P_PROGRAM;
-
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_E2P_PROGRAM:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_E2P_PROGRAM=============\r\n");
             //trim regs save
-            for(uint8_t addr = XC24_MIRROR_ADDR_MIRROR1 ; addr < (XC24_MIRROR_ADDR_MIRROR2 + 1) ; ++addr)
-            {
-                trim_find_regs[addr] = XC24_Read_Register(addr);
-            }
+            trim_find_regs[TRIM_FIND_MIRROR1] = XC24_Read_Register(XC24_MIRROR_ADDR_MIRROR1);
+            trim_find_regs[TRIM_FIND_MIRROR2] = XC24_Read_Register(XC24_MIRROR_ADDR_MIRROR2);
             if (gb_xc_otp_write_flag)
             {
                 gt_xc_trim_step = XC_TRIM_STEP_E2P_PROGRAM_START;
@@ -325,9 +391,11 @@ void XC_Trim_Task(void)
             {
                 gt_xc_trim_step = XC_TRIM_STEP_PWR_OFF;
             }
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_E2P_PROGRAM_START:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_E2P_PROGRAM_START=============\r\n");
             //set 5.7v & 50mS delay & otp write = 1 & 1Sec delay
             JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
@@ -336,29 +404,33 @@ void XC_Trim_Task(void)
             LL_mDelay(1000);
 
             gt_xc_trim_step = XC_TRIM_STEP_E2P_PROGRAM_END;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_E2P_PROGRAM_END:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_E2P_PROGRAM_END=============\r\n");
 
             JigBD_IF_XC_VCC_EN(PWR_OFF);
-            XC_NSCS_LO();
-            XC24_Start_MCLK_Oscillation(FALSE);
 
             LL_mDelay(100);
 
             gt_xc_trim_step = XC_TRIM_STEP_REBOOT;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_REBOOT:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_REBOOT=============\r\n");
             JigBD_IF_XC_VCC_Level(PWR_ON_5V0);
             XC24_Trim_Init();
 
             gt_xc_trim_step = XC_TRIM_STEP_COMPARE;
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_COMPARE:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_COMPARE=============\r\n");
             //find reg compare to saved reg
 
@@ -382,20 +454,28 @@ void XC_Trim_Task(void)
                 print(LOG_ERROR, "TRIMMING_COMPARE NG\r\n");
                 gt_xc_trim_step = XC_TRIM_STEP_STOP;
             }
-            break;
+        }
+        break;
 
         case XC_TRIM_STEP_STOP:
+        {
             print(LOG_ERROR, "=============TRIMMING_ERROR=============\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_PWR_OFF;
-            break;
+        }
+        break;
+
         case XC_TRIM_STEP_PWR_OFF:
+        {
             print(LOG_INFO, "=============XC_TRIM_STEP_PWR_OFF\r\n=============");
             JigBD_IF_XC_VCC_EN(PWR_OFF);
-            XC_NSCS_LO();
-            XC24_Start_MCLK_Oscillation(FALSE);
-            break;
+        }
+        break;
+
         default:
-            break;
+        {
+
+        }
+        break;
         }
     }
 }
