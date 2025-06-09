@@ -32,7 +32,6 @@
 #include "ads124s08.h"
 #include "vsync_task.h"
 #include "xdic.h"
-#include "xc24.h"
 #include "xc_trim.h"
 /* USER CODE END Includes */
 

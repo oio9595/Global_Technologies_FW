@@ -21,14 +21,14 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_TARGET          (16.0f * XDIC_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
-#define XDIC_ICTL_L_P1              (DEV_MAX_CURR_LEVEL_16mA)
-#define XDIC_ICTL_L_P2              (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_ICTL_L_P1              (300)
+#define XDIC_ICTL_L_P2              (1600)
+#define XDIC_ICTL_L_TARGET          (16.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_TARGET          (64.0f * XDIC_CURRENT_TRIM_VREF / XD12_VREF_MAX)   /* mA */
-#define XDIC_ICTL_H_P1              (DEV_MAX_CURR_LEVEL_64mA)
-#define XDIC_ICTL_H_P2              (DEV_MAX_CURR_LEVEL_64mA)
+#define XDIC_ICTL_H_P1              (300)
+#define XDIC_ICTL_H_P2              (1600)
+#define XDIC_ICTL_H_TARGET          (64.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -437,9 +437,9 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                 if (ptr_Param->trim_saved_data[i].u16_saved_reg == u16_reg_value_cur) //If there is an 2 times matched
                 {
                     // Write Register
-                    print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->sTrimSaved[i].u16_saved_reg);
-                    XD12_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->sTrimSaved[i].u16_saved_reg);
-                    u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->sTrimSaved[i].u16_saved_reg;
+                    print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[i].u16_saved_reg;
                     u16_data_gap[ptr_Param->u8_channel_cur] = 0;
                     ++ptr_Param->u8_channel_cur;
                     XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
@@ -482,7 +482,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         else
         {
             // Write Register
-            print(LOG_DEBUG, "********ADJUST_RANGE(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
+            print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg;
             u16_data_gap[ptr_Param->u8_channel_cur] = u16_adc_gap_closest;
@@ -693,11 +693,11 @@ void XD_Trim_Task(void)
                 case XD_TRIM_ICTL_L_CHS:
                     if (gn_slope_cnt == 0)
                     {
-                        XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
+                        XDIC_Set_Max_Curr_Vref(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
                     }
                     else
                     {
-                        XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
+                        XDIC_Set_Max_Curr_Vref(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
                     }
                     gn_task_delay = 0;
                     gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
@@ -705,11 +705,11 @@ void XD_Trim_Task(void)
                 case XD_TRIM_ICTL_H_CHS:
                     if (gn_slope_cnt == 0)
                     {
-                        XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
+                        XDIC_Set_Max_Curr_Vref(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
                     }
                     else
                     {
-                        XDIC_Set_Max_Current_Level((dev_max_curr_level_t)gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
+                        XDIC_Set_Max_Curr_Vref(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p2);
                     }
                     gn_task_delay = 0;
                     gt_xd_trim_step = XD_TRIM_STEP_SET_ADC_CH;
@@ -755,12 +755,18 @@ void XD_Trim_Task(void)
                     switch(gt_xd_trim_search_mode)
                     {
                     case XD_TRIM_ICTL_L_CHS:
-                        gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
-                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                        break;
                     case XD_TRIM_ICTL_H_CHS:
                         gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
-                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                        ++gn_slope_cnt;
+                        if (gn_slope_cnt >= 2)
+                        {
+                            gn_slope_cnt = 0;
+                            gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                        }
+                        else
+                        {
+                            gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                        }
                         break;
                     }
                     gn_task_delay = 0;
@@ -786,13 +792,13 @@ void XD_Trim_Task(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_GAIN;
                     u8_tmp_channel_max = XD_CH_MAX;
                     t_trim_search_mode_next = XD_TRIM_ICTL_H_CHS;
-                    u16_tmp_adc_cur = gn_slope_adc[gn_xd_adc_channel][0];
+                    u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
                     break;
                 case XD_TRIM_ICTL_H_CHS:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OFS;
                     u8_tmp_channel_max = XD_CH_MAX;
                     t_trim_search_mode_next = XD_TRIM_MAX;
-                    u16_tmp_adc_cur = gn_slope_adc[gn_xd_adc_channel][0];
+                    u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
                     break;
                 }
 

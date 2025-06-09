@@ -87,6 +87,8 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
     else
     {
         LL_GPIO_ResetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
+        XC_NSCS_LO();
+        XC24_Start_MCLK_Oscillation(FALSE);
     }
     LL_mDelay(10);
 }
@@ -214,6 +216,7 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
+#if 0
     case XD_CH_05 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
@@ -262,6 +265,7 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
+#endif
     case XD_CH_MAX :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();

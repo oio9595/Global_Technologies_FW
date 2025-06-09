@@ -12,6 +12,7 @@
 #include "JigBd_IF.h"
 #include "types.h"
 #include "config.h"
+#include "xd_trim.h"
 
 #define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
 #define XDIC_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xdic_mirror_regs.reg }
@@ -826,7 +827,7 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r3F.vref_o = 1;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_TRIM_VREF;
+    gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_MAX;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
 }
 
@@ -854,10 +855,7 @@ void XDIC_Trim_Init_ICTL_L_CH(void)
     gt_xdic_general_regs._r3F.vref_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
-    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
-
-    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_16mA);
+    XDIC_Set_Max_Current_Level(XDIC_ICTL_L_MAX_CURRENT_LVL);
 }
 
 void XDIC_Trim_Init_ICTL_H_CH(void)
@@ -870,10 +868,7 @@ void XDIC_Trim_Init_ICTL_H_CH(void)
     gt_xdic_general_regs._r3F.vref_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    gt_xdic_general_regs._r08.max_curr_vref = XDIC_CURRENT_TRIM_VREF;
-    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
-
-    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_64mA);
+    XDIC_Set_Max_Current_Level(XDIC_ICTL_H_MAX_CURRENT_LVL);
 }
 
 void XDIC_Set_OTP_Protect(bool en)

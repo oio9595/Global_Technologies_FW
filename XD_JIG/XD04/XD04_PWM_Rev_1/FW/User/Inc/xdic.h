@@ -708,7 +708,6 @@ extern void XDIC_Init(void);
 extern void XDIC_Trim_Param_Init(void);
 extern void XDIC_Trim_Init(void);
 
-extern void XDIC_Set_LD_Fix(uint16_t in_ld_fix);
 extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XDIC_Get_Max_Current_level(void);
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);

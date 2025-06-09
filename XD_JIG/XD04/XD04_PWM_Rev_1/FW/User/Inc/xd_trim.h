@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-#define XD12_CURRENT_TRIM_VREF  (3276)
-#define XD12_VREF_TRIM_VREF     (4095)
-#define XD12_VREF_MAX           (4095)
+#define XDIC_VREF_MAX                   (4095)
+#define XDIC_ICTL_L_MAX_CURRENT_LVL     (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_ICTL_H_MAX_CURRENT_LVL     (DEV_MAX_CURR_LEVEL_64mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
