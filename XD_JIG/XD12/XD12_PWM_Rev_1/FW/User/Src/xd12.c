@@ -948,7 +948,7 @@ void XD12_Trim_Init(void)
             gt_xd12_general_regs._r06.dev_max_curr_level = gt_xd_dev_max_curr_level;
             break;
         case XD12_ADDR_MAX_CURR_VREF :
-            gt_xd12_general_regs._r08.max_curr_vref = XD12_VREF_TRIM_VREF;
+            gt_xd12_general_regs._r08.max_curr_vref = XD12_VREF_MAX;
             break;
         case XD12_ADDR_SERIAL_CLOCK_GEN :
             gt_xd12_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
