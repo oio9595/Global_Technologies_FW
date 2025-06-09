@@ -486,9 +486,6 @@ void XC24_Trim_Init(void)
             case XC24_MIRROR_ADDR_TEST_CONTROL:
                 gt_xc24_mirror_regs._rF0.test_en = 1;
                 break;
-            case XC24_MIRROR_ADDR_OTP_PROTECT:
-                gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
-                break;
             default :
                 continue;
             }
@@ -517,10 +514,13 @@ void XC24_Set_OTP_Protect(bool en)
 
 void XC24_Trim_Init_VCTL_LDO(void)
 {
+    print(LOG_DEBUG, " ...XC24 VCTL LDO Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", VCTL_LDO_LOWER_LIMIT, VCTL_LDO_UPPER_LIMIT, XC24_VCTL_LDO_TARGET);
 }
 
 void XC24_Trim_Init_DAC_Gain(void)
 {
+    print(LOG_DEBUG, " ...XC24 DAC Gain Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_GAIN_LOWER_LIMIT, DAC_GAIN_UPPER_LIMIT, XC24_DAC_GAIN_TARGET);
+
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
 	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
@@ -528,6 +528,8 @@ void XC24_Trim_Init_DAC_Gain(void)
 
 void XC24_Trim_Init_DAC_OFS(void)
 {
+    print(LOG_DEBUG, " ...XC24 DAC Ofs Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_OFS_LOWER_LIMIT, DAC_OFS_UPPER_LIMIT, XC24_DAC_OFS_TARGET);
+
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
 	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);

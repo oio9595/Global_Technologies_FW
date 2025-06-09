@@ -419,7 +419,7 @@ void XC_Trim_Task(void)
 
             JigBD_IF_XC_VCC_EN(PWR_OFF);
 
-            LL_mDelay(100);
+            LL_mDelay(10);
 
             gt_xc_trim_step = XC_TRIM_STEP_REBOOT;
         }

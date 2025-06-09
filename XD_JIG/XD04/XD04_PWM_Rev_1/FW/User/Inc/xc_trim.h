@@ -23,7 +23,7 @@ extern "C" {
 #define VCTL_LDO_LOWER_LIMIT            (XC24_VCTL_LDO_TARGET * (1.0f - XC24_VCTL_LDO_ERR_RATE))		/* V */
 
 #define XC24_DAC_GAIN_ERR_RATE          (0.5f/100) /* % */
-#define XC24_DAC_GAIN_TARGET            (1.1f)     /* V */
+#define XC24_DAC_GAIN_TARGET            (1.65f)     /* V */
 #define XC24_DAC_GAIN_P1                (1024)
 #define XC24_DAC_GAIN_P2                (3072)
 #define DAC_GAIN_UPPER_LIMIT            (XC24_DAC_GAIN_TARGET * (1.0f + XC24_DAC_GAIN_ERR_RATE))	/* V */
