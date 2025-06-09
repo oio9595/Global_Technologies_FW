@@ -15,6 +15,11 @@
 #include "config.h"
 #include "math.h"
 
+#define XC_VCTL_LDO_DEFAULT     (0x08)
+#define XC_DAC_GAIN_DEFAULT     (0x20)
+#define XC_DAC_OFS_DEFAULT      (0x00)
+#define XC_OSC_FCTL_DEFAULT     (0x40)
+
 typedef struct
 {
     uint8_t min_gap_index;
@@ -110,7 +115,7 @@ void XC_Trim_Task(void)
 
         case XC_TRIM_STEP_VCTL_LDO:
         {
-            static uint8_t vctl_ldo_reg = 8;
+            static uint8_t vctl_ldo_reg = XC_VCTL_LDO_DEFAULT;
 
             print(LOG_INFO, "=============XC_TRIM_STEP_VCTL_LDO=============\r\n");
             XC24_Trim_Init_VCTL_LDO();
@@ -130,7 +135,7 @@ void XC_Trim_Task(void)
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
             float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
-            print(LOG_INFO, "Loop[%d] VCTL_LDO_REGS[%d] -> LDO_LEVEL : %f\r\n", over_run_cnt, vctl_ldo_reg, vctl_ldo_level);
+            print(LOG_INFO, "Loop[%d] VCTL_LDO_REGS[%d] -> LDO_LEVEL : %.3f\r\n", over_run_cnt, vctl_ldo_reg, vctl_ldo_level);
             ++over_run_cnt;
 
             if (vctl_ldo_level > VCTL_LDO_UPPER_LIMIT)
@@ -174,18 +179,18 @@ void XC_Trim_Task(void)
             {
                 print(LOG_ERROR, "VCTL_LDO trim error\r\n");
                 gt_xc_trim_step = XC_TRIM_STEP_STOP;
-                break;
             }
         }
         break;
 
         case XC_TRIM_STEP_DAC_GAIN:
         {
-            static uint8_t dac_gain_reg = 32;
+            static uint8_t dac_gain_reg = XC_DAC_GAIN_DEFAULT;
 
             print(LOG_INFO, "=============XC_TRIM_STEP_DAC_GAIN=============\r\n");
             XC24_Trim_Init_DAC_Gain();
 
+            // Get DAC Gain P1
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P1);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             HAL_Delay(1);
@@ -202,6 +207,7 @@ void XC_Trim_Task(void)
             ext_adc_value = ADS114S08_Get_ADC_Value();
             dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
+            // Get DAC Gain P2
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P2);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             HAL_Delay(1);
@@ -220,7 +226,7 @@ void XC_Trim_Task(void)
             dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
             float dac_gain_delta = dac_gain_tgt_buff.dac_gain_tgt_p2 - dac_gain_tgt_buff.dac_gain_tgt_p1;
-            print(LOG_INFO, "Loop[%d] DAC_GAIN_REG[%d] -> DAC_GAIN_LEVEL : %f\r\n" , over_run_cnt, dac_gain_reg, dac_gain_delta);
+            print(LOG_INFO, "Loop[%d] DAC_GAIN_REG[%d] -> DAC_GAIN_LEVEL : %.3f\r\n" , over_run_cnt, dac_gain_reg, dac_gain_delta);
             ++over_run_cnt;
 
             if(dac_gain_delta > DAC_GAIN_UPPER_LIMIT)
@@ -270,10 +276,9 @@ void XC_Trim_Task(void)
 
         case XC_TRIM_STEP_DAC_OFS:
         {
-            static float dac_ofs = 0;
-            static uint8_t dac_ofs_val = 0;
-            static uint8_t dac_ofs_sign = 0;
-            static uint8_t dac_ofs_reg = 0;
+            static uint8_t dac_ofs_reg = XC_DAC_OFS_DEFAULT;
+            uint8_t dac_ofs_val = ((dac_ofs_reg & 0x7F) >> 0);
+            uint8_t dac_ofs_sign = ((dac_ofs_reg & 0x80) >> 7);
 
             print(LOG_INFO, "=============XC_TRIM_STEP_DAC_OFS=============\r\n");
             XC24_Trim_Init_DAC_OFS();
@@ -292,8 +297,8 @@ void XC_Trim_Task(void)
             }
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
-            dac_ofs = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
-            print(LOG_INFO, "Loop[%d] dac_ofs_val[%d] -> DAC_OFS_LEVEL : %f\r\n", over_run_cnt, dac_ofs_val, dac_ofs);
+            float dac_ofs = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
+            print(LOG_INFO, "Loop[%d] dac_ofs_sign[%d], dac_ofs_val[%d] -> DAC_OFS_LEVEL : %.3f\r\n", over_run_cnt, dac_ofs_sign, dac_ofs_val, dac_ofs);
             ++over_run_cnt;
 
             if(dac_ofs > DAC_OFS_UPPER_LIMIT)
@@ -330,7 +335,7 @@ void XC_Trim_Task(void)
 
                 break;
             }
-            dac_ofs_reg = (dac_ofs_sign << 7) | dac_ofs_val;
+            dac_ofs_reg = ((dac_ofs_sign << 7) | dac_ofs_val);
             if (xc_over_under_flow == false)
             {
                 XC24_Trim_Write_DAC_OFS(dac_ofs_reg);
@@ -352,6 +357,7 @@ void XC_Trim_Task(void)
             for(uint8_t reg_index = 0 ; reg_index < 128 ; ++reg_index)
             {
                 XC24_Trim_Write_OSC_FCTL(reg_index);
+                HAL_Delay(1);
                 JigBD_IF_Start_Input_Capture();
 
                 while(1)
