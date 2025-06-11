@@ -700,17 +700,17 @@ typedef union tag_CLK_CONTROL_1
     uint16_t ALL;
     struct
     {
-        uint16_t mclk_mode          : 1;
-        uint16_t serializer_skew_en : 1;
-        uint16_t osc_spread_en      : 1;
-        uint16_t serializer_clk_sel : 1;
-        uint16_t spread_dir		    : 2;
-        uint16_t spread_speed	    : 2;
-        uint16_t spread_range	    : 2;
-        uint16_t                    : 1;
-        uint16_t b_rd_clk_sel	    : 1;
-        uint16_t spread_range_a     : 3;
-        uint16_t                    : 1;
+        uint16_t mclk_mode              : 1;
+        uint16_t serializer_skew_en     : 1;
+        uint16_t osc_spread_en          : 1;
+        uint16_t serializer_clk_sel     : 1;
+        uint16_t spread_dir		        : 2;
+        uint16_t spread_speed	        : 2;
+        uint16_t spread_range	        : 2;
+        uint16_t serialize_clk_status   : 1;
+        uint16_t ld_b_rd_clk_sel	    : 1;
+        uint16_t spread_range_a         : 3;
+        uint16_t                        : 1;
     };
 }_v_clk_control_1_t;
 
@@ -1313,7 +1313,7 @@ typedef union tag_VALID_CNT
     uint16_t ALL;
     struct
     {
-        uint16_t valid_cnt : 16;
+        uint16_t dac_fb_valid_cnt : 16;
     };
 }_v_valid_cnt_t;
 
