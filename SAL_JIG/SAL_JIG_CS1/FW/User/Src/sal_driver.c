@@ -1903,7 +1903,9 @@ uint32_t sal_rx_parser(uint8_t* in, uint8_t size, uint8_t strip_num)
             {
                 if (!gb_sal_crc_en)
                 {
+                    #if 0
                     print(LOG_LV_DEBUG, "rx : addr - %3u, cmd - 0x%02X, data - 0x%06X \r\n", dev_address, command, payload);
+                    #endif
                 }
                 else
                 {

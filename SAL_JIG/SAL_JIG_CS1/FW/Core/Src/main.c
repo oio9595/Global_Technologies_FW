@@ -297,7 +297,7 @@ int main(void)
 	{
 		if (gn_sw_demo_tickcount == 0)
 		{
-			gn_sw_demo_tickcount = 10;
+			gn_sw_demo_tickcount = 10; // 100Hz
 			gb_sal_sync_flag = true;
 		}
 	}

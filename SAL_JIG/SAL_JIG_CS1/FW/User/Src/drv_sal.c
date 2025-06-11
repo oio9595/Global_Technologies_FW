@@ -367,6 +367,15 @@ static uint8_t gn_sal_daisy_length;
 static bool gb_sal_parsing_flag;
 static uint8_t gn_sal_parsing_buffer_idx;
 
+typedef struct
+{
+    uint16_t temp_adc;
+    uint16_t max_curr_lvl;
+}sal_temp_comp_t;
+static sal_temp_comp_t gt_sal_temp_comp[100];
+static uint8_t gn_sal_temp_comp_tick;
+
+
 static uint8_t sal_calculate_crc(uint8_t* data, uint8_t size);
 static void sal_manchester_encoding(uint64_t data, uint8_t* p, uint8_t size);
 
@@ -529,7 +538,7 @@ static void sal_regs_init(void)
             gt_sal_cmd_data.temp_lut_tc10.temp_lut_tc10 = 0x2BB;
             break;
 #endif
-         default:
+        default:
             continue;
         }
 
@@ -1437,6 +1446,50 @@ static void sal_set_dimming_buffer()
     }
 }
 
+static void sal_temperature_compensation(void)
+{
+    for (uint8_t id = 0 ; id < gn_sal_daisy_length ; ++id)
+    {
+        _sal_single_ended_info_t _info_ = {0, };
+        _info_.dev_id = id + 1;
+        _info_.command = CMD_SAL_READ_TEMP;
+        _info_.data_size = 12;
+
+        gt_sal_temp_comp[id].temp_adc = sal_read_reg_single_ended(&_info_);
+        float temp_celsius = 25 + (((float)gt_sal_temp_comp[id].temp_adc - 512) / 3.6f);
+        print(LOG_LV_INFO, "Device ID %u - Temp: %u / %.3f\r\n", (id + 1), gt_sal_temp_comp[id].temp_adc, temp_celsius);
+
+        // SAL_R_MAX_CURR      SAL_MAX_CURR_21_mA_51
+        // SAL_G_MAX_CURR      SAL_MAX_CURR_14_mA_35
+        // SAL_B_MAX_CURR      SAL_MAX_CURR_5_mA_75
+
+        uint16_t max_curr_lvl = 0;
+        if (temp_celsius < 50)
+        {
+            max_curr_lvl = ((SAL_MAX_CURR_21_mA_51 << 8) | (SAL_MAX_CURR_14_mA_35 << 4) | (SAL_MAX_CURR_5_mA_75 << 0));
+        }
+        else if (temp_celsius < 75)
+        {
+            max_curr_lvl = ((SAL_MAX_CURR_22_mA_94 << 8) | (SAL_MAX_CURR_14_mA_35 << 4) | (SAL_MAX_CURR_5_mA_75 << 0));
+        }
+        //print(LOG_LV_INFO, "1 - Device ID %u - Max Curr: 0x%04X\r\n", (id + 1), max_curr_lvl);
+
+        if (max_curr_lvl != gt_sal_temp_comp[id].max_curr_lvl)
+        {
+            gt_sal_temp_comp[id].max_curr_lvl = max_curr_lvl;
+            _info_.dev_id = id + 1;
+            _info_.command = CMD_SAL_SET_CURR_MAX_LVL;
+            _info_.data_size = 12;
+            _info_.data = gt_sal_temp_comp[id].max_curr_lvl;
+
+            sal_write_reg_single_ended(&_info_);
+
+            print(LOG_LV_INFO, "\t Max Curr LVL Changed!! %u - 0x%04X\r\n", (id + 1), gt_sal_temp_comp[id].max_curr_lvl);
+        }
+    }
+    print(LOG_LV_INFO, "\r\n");
+}
+
 void sal_demo_process(void)
 {
     if (gb_sal_sync_flag == true)
@@ -1445,6 +1498,8 @@ void sal_demo_process(void)
         sal_set_dimming_buffer();
         gb_sal_sync_flag = false;
         gb_sal_parsing_flag = true;
+
+        ++gn_sal_temp_comp_tick;
     }
 
     if (gb_sal_parsing_flag == true)
@@ -1460,6 +1515,12 @@ void sal_demo_process(void)
         sal_read_status2_register();
 
         gb_sal_rw_flag = false;
+    }
+
+    if (gn_sal_temp_comp_tick >= 100)
+    {
+        gn_sal_temp_comp_tick = 0;
+        sal_temperature_compensation();
     }
 }
 /*
