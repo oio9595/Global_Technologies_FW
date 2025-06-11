@@ -268,7 +268,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(FALSE);
+    USE_XC24(TRUE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
@@ -1182,6 +1182,7 @@ static void MX_GPIO_Init(void)
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
     PWM_SWITCH_LO();
+    LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
 
 	GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
