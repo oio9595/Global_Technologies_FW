@@ -318,7 +318,7 @@ typedef union tag_XDIC_GENERAL_0x2D_T
     struct
     {
         uint16_t reg_wr_protect : 10;
-        uint16_t                :  1;
+        uint16_t pck_sync_e     :  1;
         uint16_t pck_mode       :  1;
         uint16_t                :  4;
     };
