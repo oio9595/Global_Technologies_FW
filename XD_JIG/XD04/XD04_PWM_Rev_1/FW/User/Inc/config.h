@@ -37,8 +37,8 @@ extern "C" {
 #define XC_SERIAL_CLK_CNT_LOW       (6)
 #define XC_SERIAL_CLK_CNT_HIGH      (10)
 
-#define XD_SERIAL_CLK_CNT_LOW       (5)
-#define XD_SERIAL_CLK_CNT_HIGH      (9)
+#define XD_SERIAL_CLK_CNT_LOW       (13)
+#define XD_SERIAL_CLK_CNT_HIGH      (26)
 
 #define SERIAL_CMD_SIZE             (4)
 #define SERIAL_ID_SIZE              (5)
