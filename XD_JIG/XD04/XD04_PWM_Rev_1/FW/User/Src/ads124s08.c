@@ -324,16 +324,12 @@ void ADS114S08_Init(void)
 
 void ADC_DRDY_INT_Handler(void)
 {
-    int32_t temp = 0;
+    uint16_t temp = 0;
     temp = ADS114S08_Get_RData();
 
-    if (temp < 0)
-    {
-        temp = 0;
-    }
     if (temp > 32767)
     {
-        temp = 32767;
+        temp = 0;
     }
 
     if (gn_adc_read_count)
