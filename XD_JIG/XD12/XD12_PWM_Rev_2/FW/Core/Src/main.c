@@ -213,7 +213,7 @@ void comm_print_help(void)
 void comm_init(void)
 {
     print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r    [GT-XD04 PWM (ES2) JIG]");
+    print(LOG_INFO, "\n\r    [GT-XD12 PWM (ES2) JIG]");
     print(LOG_INFO, "\n\r--------------------------------------");
     print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
@@ -268,7 +268,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(TRUE);
+    USE_XC24(FALSE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
