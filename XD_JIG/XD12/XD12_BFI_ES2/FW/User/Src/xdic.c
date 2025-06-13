@@ -42,7 +42,7 @@
 #define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
 #define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
 
-#define XDIC_CHANNEL_ENABLE_MAX             (0xFFF)
+#define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_MAX) - 1)
 
 #define XDIC_OSC_TRIM_OSC_COMP              (16)
 

@@ -40,7 +40,7 @@
 #define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
 #define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
 
-#define XDIC_CHANNEL_ENABLE_MAX             (0x00F)
+#define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_MAX) - 1)
 
 #define XDIC_TRIM_OSC_MANUAL                (32768)
 
@@ -482,7 +482,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_12mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
     gt_xd_short_level = SHORT_LEVEL_3V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -509,7 +509,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VYI_FBO;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER :
