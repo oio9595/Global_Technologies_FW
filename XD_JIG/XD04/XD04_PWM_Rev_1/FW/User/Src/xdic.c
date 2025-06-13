@@ -40,7 +40,7 @@
 #define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
 #define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
 
-#define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_MAX) - 1)
+#define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_SIZE) - 1)
 
 #define XDIC_TRIM_OSC_MANUAL                (32768)
 
