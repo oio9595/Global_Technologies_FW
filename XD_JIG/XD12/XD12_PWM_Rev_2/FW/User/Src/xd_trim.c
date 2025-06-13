@@ -23,12 +23,12 @@
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_L_P1              (300)
 #define XDIC_ICTL_L_P2              (1600)
-#define XDIC_ICTL_L_TARGET          (16.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
+#define XDIC_ICTL_L_TARGET          (8.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_H_P1              (300)
 #define XDIC_ICTL_H_P2              (1600)
-#define XDIC_ICTL_H_TARGET          (64.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
+#define XDIC_ICTL_H_TARGET          (32.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -1016,7 +1016,7 @@ void XD_Screen_Task(void)
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
     #endif
-            print(LOG_INFO, "data, io_1, io_2, io_3, io_4, io_5, io_6, io_7, io_8, io_9, io_10, io_11, io_12\r\n");
+            print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
@@ -1060,8 +1060,10 @@ void XD_Screen_Task(void)
                     }
 
                     #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
-                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
+                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
+                            gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
+                            gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
+                            gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
                         gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                         if (gn_xd_screen_ana > 0xFFF)
@@ -1070,7 +1072,9 @@ void XD_Screen_Task(void)
                         }
                     #else
                         print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
-                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
+                            gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
+                            gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
+                            gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
                         gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
                         if (gn_xd_screen_ld_fix > 0xFFFF)

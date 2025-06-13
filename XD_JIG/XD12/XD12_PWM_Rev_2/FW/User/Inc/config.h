@@ -32,7 +32,7 @@ extern "C" {
 #define XD_MCLK                     (39319200.0f)
 
 #define XD_DAISY_SIZE               (1)
-#define XD_CH_SIZE                  (4)
+#define XD_CH_SIZE                  (12)
 
 #define XC_SERIAL_CLK_CNT_LOW       (6)
 #define XC_SERIAL_CLK_CNT_HIGH      (10)

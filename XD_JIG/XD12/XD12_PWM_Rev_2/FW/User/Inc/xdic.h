@@ -40,7 +40,7 @@ typedef enum tag_XDIC_CHANNEL_T
     XD_CH_10,
     XD_CH_11,
     XD_CH_12,
-    XD_CH_MAX
+    XD_CH_MAX,
 } XD_CH_t;
 
 typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
