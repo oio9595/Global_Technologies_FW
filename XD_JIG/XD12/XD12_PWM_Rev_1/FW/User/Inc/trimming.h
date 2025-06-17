@@ -24,7 +24,7 @@
 #endif
 
 #define XD12_VREF_MAX                   (4095)
-#define XD12_ICTL_L_MAX_CURRENT_LVL     (DEV_MAX_CURR_LEVEL_8mA)   /* mA */
+#define XD12_ICTL_L_MAX_CURRENT_LVL     (DEV_MAX_CURR_LEVEL_4mA)   /* mA */
 #define XD12_ICTL_H_MAX_CURRENT_LVL     (DEV_MAX_CURR_LEVEL_32mA)   /* mA */
 
 typedef enum

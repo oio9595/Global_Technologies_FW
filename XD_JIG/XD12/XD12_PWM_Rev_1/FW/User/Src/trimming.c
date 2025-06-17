@@ -17,7 +17,7 @@
 #define XD12_ICTL_L_ERR_RATE        (0.5/100) /* +/-% */
 #define XD12_ICTL_L_P1              (300)
 #define XD12_ICTL_L_P2              (1600)
-#define XD12_ICTL_L_TARGET          (8.0f * (XD12_ICTL_L_P2 + XD12_ICTL_L_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
+#define XD12_ICTL_L_TARGET          (4.0f * (XD12_ICTL_L_P2 + XD12_ICTL_L_P1) / (XD12_VREF_MAX * 2.0f))   /* mA */
 
 #define XD12_ICTL_H_ERR_RATE        (0.5/100) /* +/-% */
 #define XD12_ICTL_H_P1              (300)
