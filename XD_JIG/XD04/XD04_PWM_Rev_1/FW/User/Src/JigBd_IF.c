@@ -192,6 +192,7 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 {
     switch (in_output_ch)
     {
+#if 0
     case XD_CH_01 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
@@ -216,7 +217,6 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
-#if 0
     case XD_CH_05 :
         ENABLE_SELECT1_LO();
         ENABLE_SELECT2_LO();
@@ -266,6 +266,30 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT4_HI();
         break;
 #endif
+    case XD_CH_01 :
+        ENABLE_SELECT1_LO();
+        ENABLE_SELECT2_LO();
+        ENABLE_SELECT3_LO();
+        ENABLE_SELECT4_LO();
+        break;
+    case XD_CH_02 :
+        ENABLE_SELECT1_HI();
+        ENABLE_SELECT2_LO();
+        ENABLE_SELECT3_LO();
+        ENABLE_SELECT4_LO();
+        break;
+    case XD_CH_03 :
+        ENABLE_SELECT1_LO();
+        ENABLE_SELECT2_LO();
+        ENABLE_SELECT3_LO();
+        ENABLE_SELECT4_HI();
+        break;
+    case XD_CH_04 :
+        ENABLE_SELECT1_HI();
+        ENABLE_SELECT2_LO();
+        ENABLE_SELECT3_LO();
+        ENABLE_SELECT4_HI();
+        break;
     case XD_CH_MAX :
         ENABLE_SELECT1_HI();
         ENABLE_SELECT2_HI();
