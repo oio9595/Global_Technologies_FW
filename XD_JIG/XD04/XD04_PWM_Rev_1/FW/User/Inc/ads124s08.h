@@ -331,7 +331,7 @@ typedef struct
     ads114s08_gpiocon_t gpiocon;
 }ads114s08_regs_t;
 
-extern bool gb_ads114s08_drdy_done;
+extern volatile bool gb_ads114s08_drdy_done;
 extern uint64_t gn_ads114s08_adc_temp;
 extern uint16_t gn_adc_read_count;
 extern uint16_t gn_ads114s08_offset[12];

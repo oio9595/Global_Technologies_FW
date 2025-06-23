@@ -67,7 +67,7 @@ static SPI_TypeDef* gp_SPI = SPI2;
 static ads114s08_regs_t gt_ads114s08_regs;
 
 static uint8_t gn_ads114s08_init_flag;
-bool gb_ads114s08_drdy_done;
+volatile bool gb_ads114s08_drdy_done;
 uint64_t gn_ads114s08_adc_temp;
 uint16_t gn_adc_read_count;
 uint16_t gn_ads114s08_offset[12];
