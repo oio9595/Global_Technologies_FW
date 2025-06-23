@@ -748,6 +748,7 @@ extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
 extern bool XDIC_Is_Vsync_Mode_External(void);
 extern void XDIC_Update_Vsync_Frequency(float n_freq);
 
+extern void XDIC_Write_Trim_Regs(void);
 extern void XDIC_Save_Trim_Regs(void);
 extern uint64_t XDIC_Compare_Trim_Regs(void);
 

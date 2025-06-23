@@ -162,8 +162,17 @@ static _reg_map_t gt_xdic_mirror_maps[] =
 };
 static_assert(XDIC_MIRROR_ADDR_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
 
+static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX] =
+{
+    // 00     01     02     03     04     05     06     07     08     09     0A     0B     0C     0D     0E     0F
+    0x000, 0x020, 0x020, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x000,
 
-static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX];
+    // 10     11     12     13     14     15     16     17     18     19     1A     1B     1C     1D     1E     1F
+    0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x040, 0x040, 0x040, 0x040, 0x040,
+
+    // 20     21     22     23     24     25     26
+    0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040
+};
 
 /* Variable for XD Registers */
 static float gf_xd_mclk;
@@ -755,6 +764,22 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 /* ================================================================================================================================================= */
 /* Trim Function */
 /* ================================================================================================================================================= */
+
+void XDIC_Write_Trim_Regs(void)
+{
+    uint16_t u16_otp_crc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
+    if (u16_otp_crc != 0)
+    {
+        print(LOG_INFO, "XDIC Already Trimmed!!!!\r\n");
+    }
+    else
+    {
+        for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
+        {
+            XDIC_Write_Mirror_Reg(addr, gn_xdic_saved_trim_reg[addr]);
+        }
+    }
+}
 
 void XDIC_Save_Trim_Regs(void)
 {

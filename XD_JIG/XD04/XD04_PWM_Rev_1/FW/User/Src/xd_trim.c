@@ -1028,6 +1028,7 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
+            XDIC_Write_Trim_Regs();
             XDIC_Trim_Init_ICTL_L_CH();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
