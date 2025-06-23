@@ -298,7 +298,6 @@ int main(void)
     /* USER CODE BEGIN 3 */
     JigTestMainTask();
     TaskDebugUart();
-
     XDIC_Vsync_Task();
   }
   /* USER CODE END 3 */
