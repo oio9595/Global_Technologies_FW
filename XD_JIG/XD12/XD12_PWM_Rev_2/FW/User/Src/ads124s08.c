@@ -326,7 +326,6 @@ void ADC_DRDY_INT_Handler(void)
 {
     uint16_t temp = 0;
     temp = ADS114S08_Get_RData();
-    print(LOG_INFO, "adc : %u\r\n", temp);
 
     if (temp > 32767)
     {
