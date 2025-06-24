@@ -438,7 +438,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
         }
     }
 
@@ -448,7 +448,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
         }
     }
 }
@@ -491,7 +491,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
     gt_xd_short_level = SHORT_LEVEL_3V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -536,7 +536,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r07.timeout_en = 1;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
-                gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
+                gt_xdic_general_regs._r08.max_curr_vref = 0xCCC;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;

@@ -437,7 +437,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
         }
     }
 
@@ -447,7 +447,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
         }
     }
 }
