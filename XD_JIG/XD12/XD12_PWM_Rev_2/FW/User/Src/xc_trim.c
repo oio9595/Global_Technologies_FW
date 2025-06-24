@@ -478,7 +478,7 @@ void XC_Trim_Task(void)
         case XC_TRIM_STEP_PWR_OFF:
         {
             print(LOG_INFO, "=============XC_TRIM_STEP_PWR_OFF\r\n=============");
-            print("%.3f, %.3f, %.3f, %.3f\r\n", gf_xc_screen_info[0], gf_xc_screen_info[1], gf_xc_screen_info[2], gf_xc_screen_info[3]);
+            print(LOG_INFO, "%.3f, %.3f, %.3f, %.3f\r\n", gf_xc_screen_info[0], gf_xc_screen_info[1], gf_xc_screen_info[2], gf_xc_screen_info[3]);
             JigBD_IF_XC_VCC_EN(PWR_OFF);
         }
         break;
