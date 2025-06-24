@@ -528,7 +528,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     if (ptr_Param->u8_channel_cur >= u8_CH_MAX)
     {
         uint8_t save_index_start = ptr_Param->trim_mode;
-        if (save_index_start == XD_TRIM_ICTL_H_CHS)
+        if (save_index_start == XD_TRIM_OFS_CHS)
         {
             save_index_start = save_index_start + u8_CH_MAX - 1;
         }
