@@ -131,6 +131,7 @@ static uint16_t gn_slope_adc[XD_CH_MAX][2];
 static trim_algo_param_t gt_trim_algorithm;
 
 static xdic_trim_condition_t gt_xdic_trim_condition[XD_TRIM_MAX];
+static float gf_xd_characteristic[2 + 2 * XD_CH_MAX] = {0.0f, };
 
 void XD_Trim_IF_Trim_Start(void)
 {
@@ -526,6 +527,11 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     // Check Last Channel
     if (ptr_Param->u8_channel_cur >= u8_CH_MAX)
     {
+        uint8_t save_index_start = ptr_Param->trim_mode;
+        if (save_index_start == XD_TRIM_ICTL_H_CHS)
+        {
+            save_index_start = save_index_start + u8_CH_MAX - 1;
+        }
         print(LOG_INFO, "[%s]\r\n", gs_trim_mode[ptr_Param->trim_mode]);
 
         print(LOG_INFO, "[RANGE]   %7u   %7u   %7u\r\n",u16_adc_range_min, u16_adc_range_target, u16_adc_range_max);
@@ -552,6 +558,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
         {
             print(LOG_INFO, "   %7.3f",ptr_Param->value[i]);
+            gf_xd_characteristic[save_index_start + i] = ptr_Param->value[i];
         }
         print(LOG_INFO, "\r\n[Reg]");
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
@@ -761,15 +768,15 @@ void XD_Trim_Task(void)
                     case XD_TRIM_OFS_CHS:
                         gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
                         ++gn_slope_cnt;
-                            if (gn_slope_cnt >= 2)
-                            {
-                                gn_slope_cnt = 0;
-                                gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                            }
-                            else
-                            {
-                                gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
-                            }
+                        if (gn_slope_cnt >= 2)
+                        {
+                            gn_slope_cnt = 0;
+                            gt_xd_trim_step = XD_TRIM_STEP_CHECK;
+                        }
+                        else
+                        {
+                            gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                        }
                         break;
                     }
                     gn_task_delay = 0;
@@ -974,6 +981,10 @@ void XD_Trim_Task(void)
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
                 print(LOG_INFO, "======== TRIM END ========\r\n");
+                for (uint8_t i = 0 ; i < 2 + 2 * XD_CH_SIZE ; ++i)
+                {
+                    print(LOG_INFO, "%.3f, ", gf_xd_characteristic[i]);
+                }
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
                 break;
             default:

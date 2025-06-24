@@ -1263,6 +1263,29 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n ADC RUN\r\n");
             JigBD_IF_Start_MCU_ADC();
         }
+        else if (Command_Param_is_("jig_adc", "%d", &u32_recv_param[0]))
+        {
+            ADS114S08_Select_Input_CH(u32_recv_param[0]);
+            LL_mDelay(5);
+
+            gb_ads114s08_drdy_done = 0;
+            gn_ads114s08_adc_temp = 0;
+            gn_adc_read_count = ADS114S08_READ_COUNT;
+
+            ADS114S08_Set_Start(1);
+            LL_mDelay(1);
+
+            while (1)
+            {
+                if (gb_ads114s08_drdy_done)
+                {
+                    break;
+                }
+            }
+            uint16_t adc_value = ADS114S08_Get_ADC_Value();
+            float adc_voltage = (float)(ADC_VOLT_PER_STEP * adc_value) / CONST_mV_TO_V; // Dac out convert to V
+            print(LOG_INFO, "\r\n ADC CH[%d] : %d / %.3f\r\n", u32_recv_param[0], adc_value, adc_voltage);
+        }
         else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
             print(LOG_INFO, "\r\n Output CH sel - [%u]\r\n", u32_recv_param[0]);
