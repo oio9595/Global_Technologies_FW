@@ -30,6 +30,7 @@ _osc_min_t gt_xc_osc_closest;
 uint16_t trim_find_regs[TRIM_FIND_MAX] = {0, };
 dac_gain_tgt_t dac_gain_tgt_buff = {0, };
 float osc_value_buffer[128] = {0, };
+float gf_xc_screen_info[4] = {0.0f, };
 
 static bool gb_xc_otp_write_flag;
 
@@ -166,6 +167,7 @@ void XC_Trim_Task(void)
             {
                 print(LOG_INFO, "VCTL_LDO Trim done\r\n");
                 over_run_cnt = 1;
+                gf_xc_screen_info[0] = vctl_ldo_level; // Save VCTL_LDO level
                 gt_xc_trim_step = XC_TRIM_STEP_DAC_GAIN;
                 break;
             }
@@ -257,6 +259,7 @@ void XC_Trim_Task(void)
             {
                 print(LOG_INFO, "DAC_GAIN Trim done\r\n");
                 over_run_cnt = 1;
+                gf_xc_screen_info[1] = dac_gain_delta;
                 gt_xc_trim_step = XC_TRIM_STEP_DAC_OFS;
                 break;
             }
@@ -331,6 +334,7 @@ void XC_Trim_Task(void)
             {
                 print(LOG_INFO, "DAC_OFS Trim done\r\n");
                 over_run_cnt = 1;
+                gf_xc_screen_info[2] = dac_ofs; // Save DAC_OFS level
                 gt_xc_trim_step = XC_TRIM_STEP_OSC_FCTL;
 
                 break;
@@ -377,6 +381,7 @@ void XC_Trim_Task(void)
 
             XC_Get_Minimum_OSC_Freq(osc_value_buffer, XC24_OSC_TARGET);
             XC24_Trim_Write_OSC_FCTL(gt_xc_osc_closest.min_gap_index);
+            gf_xc_screen_info[3] = gt_xc_osc_closest.min_gap_freq; // Save OSC_FCTL level
 
             print(LOG_INFO, "OSC_FCTL Trim done\r\n");
             gt_xc_trim_step = XC_TRIM_STEP_E2P_PROGRAM;
@@ -473,6 +478,7 @@ void XC_Trim_Task(void)
         case XC_TRIM_STEP_PWR_OFF:
         {
             print(LOG_INFO, "=============XC_TRIM_STEP_PWR_OFF\r\n=============");
+            print("%.3f, %.3f, %.3f, %.3f\r\n", gf_xc_screen_info[0], gf_xc_screen_info[1], gf_xc_screen_info[2], gf_xc_screen_info[3]);
             JigBD_IF_XC_VCC_EN(PWR_OFF);
         }
         break;
