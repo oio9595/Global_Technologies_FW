@@ -41,7 +41,7 @@ typedef enum tag_CURRENT_GAIN_T
 extern volatile uint16_t gn_xd_rx_timeout;
 
 extern bool gb_timer_input_capture_activated;
-extern bool gb_timer_input_capture_done;
+extern volatile bool gb_timer_input_capture_done;
 
 /* BEGIN - INTERFACE FUNCTIONS */
 extern void us_delay(uint16_t n_delay);
