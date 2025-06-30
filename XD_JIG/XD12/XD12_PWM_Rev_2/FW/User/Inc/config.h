@@ -34,11 +34,20 @@ extern "C" {
 #define XD_DAISY_SIZE               (1)
 #define XD_CH_SIZE                  (12)
 
-#define XC_SERIAL_CLK_CNT_LOW       (6)
-#define XC_SERIAL_CLK_CNT_HIGH      (10)
-
 #define XD_SERIAL_CLK_CNT_LOW       (13)
 #define XD_SERIAL_CLK_CNT_HIGH      (26)
+
+#define XC24_MCLK_INTERNAL          (0x00)
+#define XC24_MCLK_EXTERNAL          (0x01)
+#define XC24_MCLK_MODE              XC24_MCLK_INTERNAL
+
+#if (XC24_MCLK_MODE == XC24_MCLK_INTERNAL)
+    #define XC_SERIAL_CLK_CNT_LOW       (8)
+    #define XC_SERIAL_CLK_CNT_HIGH      (17)
+#else
+    #define XC_SERIAL_CLK_CNT_LOW       (6)
+    #define XC_SERIAL_CLK_CNT_HIGH      (10)
+#endif
 
 #define SERIAL_CMD_SIZE             (4)
 #define SERIAL_ID_SIZE              (5)

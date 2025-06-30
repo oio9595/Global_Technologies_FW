@@ -1619,6 +1619,10 @@ static void TaskDebugUart(void)
         {
             XC24_Init();
         }
+        else if (Command_is_("xc_trim_debug"))
+        {
+            XC24_Trim_Init();
+        }
         else if (Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             print(LOG_INFO, "\r\n XC Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
@@ -1632,6 +1636,11 @@ static void TaskDebugUart(void)
         {
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
+        }
+        else if (Command_is_("xc_trim_osc"))
+        {
+            print(LOG_INFO, "\r\n XC Trim Start \r\n");
+            XC24_Trim_Init_OSC();
         }
         else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
         {
