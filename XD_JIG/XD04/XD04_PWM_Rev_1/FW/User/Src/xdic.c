@@ -490,7 +490,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_128mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -517,7 +517,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER :
@@ -535,7 +535,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r07.timeout_en = 1;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
-                gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
+                gt_xdic_general_regs._r08.max_curr_vref = 4095;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -550,6 +550,9 @@ void XDIC_Init(void)
             case XDIC_ADDR_MCLK_LOCK_2 :
                 gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
+                break;
+            case XDIC_ADDR_OSC_FLL_MANUAL_2 :
+                gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
                 break;
             default :
                 continue;
@@ -798,13 +801,8 @@ void XDIC_Write_Trim_Regs(void)
     }
 }
 
-void XDIC_Save_Trim_Regs(void)
+void XDIC_Display_Trim_Regs(void)
 {
-    for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
-    {
-        gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
-    }
-
     print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
     print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
 
@@ -816,6 +814,15 @@ void XDIC_Save_Trim_Regs(void)
     , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]
     , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]
     );
+}
+
+void XDIC_Save_Trim_Regs(void)
+{
+    for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
+    {
+        gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
+    }
+    XDIC_Display_Trim_Regs();
 }
 
 uint64_t XDIC_Compare_Trim_Regs(void)

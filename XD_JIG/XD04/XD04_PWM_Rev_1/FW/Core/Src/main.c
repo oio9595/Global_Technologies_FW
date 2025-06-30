@@ -74,7 +74,7 @@ static bool gb_xd_run_screen_task;
 
 static bool gb_xc_run_trim_task;
 
-static LOG_LV_T gt_log_lv = LOG_DEBUG;
+static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

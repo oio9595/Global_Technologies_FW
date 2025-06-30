@@ -21,14 +21,14 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_P1              (300)
-#define XDIC_ICTL_L_P2              (1600)
-#define XDIC_ICTL_L_TARGET          (16.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
+#define XDIC_ICTL_L_P1              (600)
+#define XDIC_ICTL_L_P2              (1400)
+#define XDIC_ICTL_L_TARGET          (24.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_P1              (300)
-#define XDIC_ICTL_H_P2              (1600)
-#define XDIC_ICTL_H_TARGET          (64.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
+#define XDIC_ICTL_H_P1              (600)
+#define XDIC_ICTL_H_P2              (1400)
+#define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -1003,8 +1003,8 @@ void XD_Screen_Task(void)
         {
         case XD_SCREEN_STEP_PWR_ON :
             JigBD_IF_Select_Output_Ch(XD_CH_MAX);  /* Output OFF */
-            //gt_screen_gain = GAIN_HIGH;
-            gt_screen_gain = GAIN_MID;
+            gt_screen_gain = GAIN_HIGH;
+            //gt_screen_gain = GAIN_MID;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
             JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
@@ -1018,7 +1018,9 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
             XDIC_Write_Trim_Regs();
-            XDIC_Trim_Init_ICTL_L_CH();
+            XDIC_Trim_Init_ICTL_H_CH();
+            XDIC_Read_All_Registers();
+            XDIC_Display_Trim_Regs();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
     #if 1
@@ -1028,7 +1030,7 @@ void XD_Screen_Task(void)
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
     #endif
-            print(LOG_INFO, "data, io_1, io_2, io_3, io_4, io_5, io_6, io_7, io_8, io_9, io_10, io_11, io_12\r\n");
+            print(LOG_INFO, "data, io_1, io_2, io_3, io_4\r\n");
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
