@@ -552,6 +552,9 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
+            case XDIC_ADDR_OSC_FLL_MANUAL_2 :
+                gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
+                break;
             default :
                 continue;
             }
