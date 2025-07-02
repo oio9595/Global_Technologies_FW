@@ -1548,22 +1548,103 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_trim_vref"))
         {
             XDIC_Trim_Init_VREF_CTL();
+            JigBD_IF_Start_MCU_ADC();
+            uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+            print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
         }
         else if (Command_is_("xd_trim_osc"))
         {
             XDIC_Trim_Init_OSC();
+            JigBD_IF_Start_Input_Capture();
+            while(1)
+            {
+                if (gb_timer_input_capture_done)
+                {
+                    JigBD_IF_Stop_Input_Capture();
+                    break;
+                }
+            }
+            uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
+            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+            print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
         }
-        else if (Command_Param_is_("xd_trim_ictl_l", "%x", &u32_recv_param[0]))
+        else if (Command_is_("xd_trim_ictl_l"))
         {
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
             XDIC_Trim_Init_ICTL_L_CH();
-            JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_MID);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+                XDIC_Set_Max_Curr_Vref(600);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(1000);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_MID);
+                print(LOG_INFO, "\r\n ICTL_L CH[%d] : %.3f\r\n", i, iout_avg);
+            }
         }
-        else if (Command_Param_is_("xd_trim_ictl_h", "%x", &u32_recv_param[0]))
+        else if (Command_is_("xd_trim_ictl_h"))
         {
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
             XDIC_Trim_Init_ICTL_H_CH();
-            JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+                XDIC_Set_Max_Curr_Vref(600);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(1000);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_HIGH);
+                print(LOG_INFO, "\r\n ICTL_L CH[%d] : %.3f\r\n", i, iout_avg);
+            }
         }
 
         else if (Command_is_("xd_osc_debug"))
@@ -1637,10 +1718,86 @@ static void TaskDebugUart(void)
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
+        else if (Command_is_("xc_trim_ldo"))
+        {
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
+            HAL_Delay(1);
+            gb_ads114s08_drdy_done = 0;
+            gn_ads114s08_adc_temp = 0;
+            gn_adc_read_count = ADS114S08_READ_COUNT;
+            ADS114S08_Set_Start(1);
+            while(1)
+            {
+                if (gb_ads114s08_drdy_done)
+                {
+                    break;
+                }
+            }
+
+            uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
+            float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
+            print(LOG_INFO, "Screen  LDO_ADC [%u] -> LDO_LEVEL : %.3f\r\n", ext_adc_value, vctl_ldo_level);
+        }
         else if (Command_is_("xc_trim_osc"))
         {
-            print(LOG_INFO, "\r\n XC Trim Start \r\n");
             XC24_Trim_Init_OSC();
+            HAL_Delay(1);
+            JigBD_IF_Start_Input_Capture();
+
+            while(1)
+            {
+                if (gb_timer_input_capture_done)
+                {
+                    break;
+                }
+            }
+
+            JigBD_IF_Stop_Input_Capture();
+            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+            print(LOG_INFO, "Screen  OSC : %.3f\r\n", osc_freq);
+        }
+        else if (Command_is_("xc_trim_dac"))
+        {
+            XC24_Trim_Init_DAC_Gain();
+            for (uint8_t i = 0 ; i < 4 ; ++i)
+            {
+                uint16_t dac_input = 0;
+                if (i == 0)
+                {
+                    dac_input = 248;
+                }
+                else if (i == 1)
+                {
+                    dac_input = 1241;
+                }
+                else if (i == 2)
+                {
+                    dac_input = 2482;
+                }
+                else if (i == 3)
+                {
+                    dac_input = 3723;
+                }
+                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input);
+
+                ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
+                HAL_Delay(1);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+
+                uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
+                float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
+                print(LOG_INFO, "%u, %.4f\r\n", dac_input, dac_val);
+            }
         }
         else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
         {
