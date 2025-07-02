@@ -22,12 +22,12 @@
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_L_P1              (600)
-#define XDIC_ICTL_L_P2              (1400)
+#define XDIC_ICTL_L_P2              (1000)
 #define XDIC_ICTL_L_TARGET          (24.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_H_P1              (600)
-#define XDIC_ICTL_H_P2              (1400)
+#define XDIC_ICTL_H_P2              (1000)
 #define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
