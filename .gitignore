@@ -75,3 +75,6 @@ Backup*
 thumbs.db
 *.~*
 *.reggroups
+
+# 측정파일 제거
+**/측정자료
