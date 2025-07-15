@@ -17,7 +17,7 @@
 
 #define TRIM_WAFER              (0)
 #define TRIM_FULL               (1)
-#define TRIM_TYPE               TRIM_WAFER
+#define TRIM_TYPE               TRIM_FULL
 
 #define LED_EP                  (0)
 #define LED_HC                  (1)
@@ -82,7 +82,7 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
     /*TEMP_TRIM_BGR*/ {     495.0,      547.0,      0.0}, // 521 reg value
 
                       // TARGET_R    TARGET_G   TARGET_B
-    /*CURRENT_ITRIM*/ {    19.644,       14.5,    7.449}, // mA , check RGB Max current
+    /*CURRENT_ITRIM*/ {    19.0,       13.0,    6.0}, // mA , check RGB Max current
 };
 
 static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =
@@ -1513,14 +1513,26 @@ void sal_trimming_procedure(void)
             }
             gn_trim_delay = 10;
             change_trim_step(TRIM_STEP_ADC_SET_CH);
+
+            print(LOG_LV_INFO, "===============%s DONE===============\r\n", gs_sal_trim_mode_str[gt_trim_mode]);
+            ++gt_trim_mode;
+            change_trim_step(TRIM_STEP_MODE_INIT);
             break;
         case TRIM_MODE_ADC_OFFSET :
             SAL_ADC_1V_LO(); //supply 2.5V to TEST_V
             gn_trim_delay = 10;
             change_trim_step(TRIM_STEP_ADC_SET_CH);
+
+            print(LOG_LV_INFO, "===============%s DONE===============\r\n", gs_sal_trim_mode_str[gt_trim_mode]);
+            ++gt_trim_mode;
+            change_trim_step(TRIM_STEP_MODE_INIT);
             break;
         case TRIM_MODE_TEMP_TRIM_BGR :
             change_trim_step(TRIM_STEP_ADC_SET_CH);
+
+            print(LOG_LV_INFO, "===============%s DONE===============\r\n", gs_sal_trim_mode_str[gt_trim_mode]);
+            ++gt_trim_mode;
+            change_trim_step(TRIM_STEP_MODE_INIT);
             break;
         case TRIM_MODE_CURRENT_ITRIM :
             adc_clear_buff();
@@ -1949,6 +1961,16 @@ void sal_trimming_procedure(void)
         gt_sal_trim_regs._rF3.pwm_max_b = 0x466;
 #endif
 
+#endif
+
+#if 0
+        gt_sal_trim_regs._rF1.pwm_max_r = 0xFFF;
+        gt_sal_trim_regs._rF2.pwm_max_g = 0xFFF;
+        gt_sal_trim_regs._rF3.pwm_max_b = 0xFFF;
+#else
+        gt_sal_trim_regs._rF1.pwm_max_r = 3276; // 18.5 / 19 * 4095
+        gt_sal_trim_regs._rF2.pwm_max_g = 3773; // 12 / 13 * 4095
+        gt_sal_trim_regs._rF3.pwm_max_b = 3149; // 5.5 / 6 * 4095
 #endif
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;

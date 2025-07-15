@@ -538,9 +538,9 @@ typedef enum
     SAL_MAX_CURR_22_mA_94,      //0x0F
 }sal_max_curr_t;
 
-#define SAL_R_MAX_CURR      SAL_MAX_CURR_21_mA_51
-#define SAL_G_MAX_CURR      SAL_MAX_CURR_14_mA_35
-#define SAL_B_MAX_CURR      SAL_MAX_CURR_5_mA_75
+#define SAL_R_MAX_CURR      SAL_MAX_CURR_20_mA_08
+#define SAL_G_MAX_CURR      SAL_MAX_CURR_15_mA_78
+#define SAL_B_MAX_CURR      SAL_MAX_CURR_10_mA_05
 
 /* BEGIN - INTERFACE FUNCTIONS */
 
