@@ -486,7 +486,7 @@ void XDIC_Param_Init(void)
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
-    gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);;
+    gn_xd_mclk_lock_cnt = (uint32_t)((gf_xd_mclk / gf_vsync_out + 0.5f) * (1 + 0.1f / 100));
 
     gn_xd_ch_size = XD_CH_SIZE;
 
@@ -533,9 +533,11 @@ void XDIC_Init(void)
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
                 gt_xdic_general_regs._r07.timeout_en = 1;
+                gt_xdic_general_regs._r07.s_det_e = 1;
+                gt_xdic_general_regs._r07.o_det_e = 1;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
-                gt_xdic_general_regs._r08.max_curr_vref = 4095;
+                gt_xdic_general_regs._r08.max_curr_vref = 0x1E0;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -545,14 +547,19 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r26.serial_latency = 60;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                //gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r27.mclk_lock_cnt = 0x0F8;
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                //gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r28.mclk_lock_cnt = 0x50;
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
                 gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
+                break;
+            case XDIC_ADDR_WR_PROTECT :
+                gt_xdic_general_regs._r2D.val = 0x155;
                 break;
             default :
                 continue;
@@ -806,14 +813,10 @@ void XDIC_Display_Trim_Regs(void)
     print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
     print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
 
-    print(LOG_INFO, "ictl_l,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"
-    , gn_xdic_saved_trim_reg[ 3], gn_xdic_saved_trim_reg[ 4], gn_xdic_saved_trim_reg[ 5] , gn_xdic_saved_trim_reg[ 6], gn_xdic_saved_trim_reg[ 7], gn_xdic_saved_trim_reg[ 8]
-    , gn_xdic_saved_trim_reg[ 9], gn_xdic_saved_trim_reg[10], gn_xdic_saved_trim_reg[11] , gn_xdic_saved_trim_reg[12], gn_xdic_saved_trim_reg[13], gn_xdic_saved_trim_reg[14]
-    );
-    print(LOG_INFO, "ictl_h,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"
-    , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]
-    , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]
-    );
+    print(LOG_INFO, "ictl_l,%3u,%3u,%3u,%3u\r\n"
+    , gn_xdic_saved_trim_reg[ 3], gn_xdic_saved_trim_reg[ 4], gn_xdic_saved_trim_reg[ 5] , gn_xdic_saved_trim_reg[ 6]);
+    print(LOG_INFO, "ictl_h,%3u,%3u,%3u,%3u\r\n"
+    , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30]);
 }
 
 void XDIC_Save_Trim_Regs(void)

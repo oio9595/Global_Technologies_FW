@@ -74,7 +74,7 @@ static bool gb_xd_run_screen_task;
 
 static bool gb_xc_run_trim_task;
 
-static LOG_LV_T gt_log_lv = LOG_DEBUG;
+static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -268,7 +268,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(FALSE);
+    USE_XC24(TRUE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
@@ -865,7 +865,7 @@ static void MX_TIM8_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM8);
 
   /* TIM8 interrupt Init */
-  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
 
   /* USER CODE BEGIN TIM8_Init 1 */
@@ -883,7 +883,7 @@ static void MX_TIM8_Init(void)
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-  TIM_OC_InitStruct.CompareValue = 5;
+  TIM_OC_InitStruct.CompareValue = 1; //5 -> 1us
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
@@ -983,7 +983,7 @@ static void MX_USART2_UART_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USART2 interrupt Init */
-  NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(USART2_IRQn);
 
   /* USER CODE BEGIN USART2_Init 1 */
@@ -1247,6 +1247,10 @@ static void TaskDebugUart(void)
             comm_print_help();
         }
 /* ----------------- command list - jig ----------------- */
+        else if (Command_Param_is_("ccr", "%d", &u32_recv_param[0]))
+        {
+            LL_TIM_OC_SetCompareCH2(TIM8, u32_recv_param[0]);
+        }
         else if (Command_is_("jig_ic_start"))
         {
             print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
@@ -1576,7 +1580,7 @@ static void TaskDebugUart(void)
             for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
                 JigBD_IF_Select_Output_Ch(i);
-                XDIC_Set_Max_Curr_Vref(600);
+                XDIC_Set_Max_Curr_Vref(300);
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
                 gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -1589,7 +1593,7 @@ static void TaskDebugUart(void)
                     }
                 }
                 iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-                XDIC_Set_Max_Curr_Vref(1000);
+                XDIC_Set_Max_Curr_Vref(700);
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
                 gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -1615,7 +1619,7 @@ static void TaskDebugUart(void)
             for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
                 JigBD_IF_Select_Output_Ch(i);
-                XDIC_Set_Max_Curr_Vref(600);
+                XDIC_Set_Max_Curr_Vref(200);
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
                 gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -1628,7 +1632,7 @@ static void TaskDebugUart(void)
                     }
                 }
                 iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-                XDIC_Set_Max_Curr_Vref(1000);
+                XDIC_Set_Max_Curr_Vref(600);
                 gb_ads114s08_drdy_done = 0;
                 gn_ads114s08_adc_temp = 0;
                 gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -1646,7 +1650,19 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n ICTL_L CH[%d] : %.3f\r\n", i, iout_avg);
             }
         }
-
+        else if (Command_is_("xd_vref_debug"))
+        {
+            print(LOG_INFO, "\r\n");
+            XDIC_Trim_Init_VREF_CTL();
+            for (uint8_t i = 0 ; i < 64 ; ++i)
+            {
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, 63 - i);
+                LL_mDelay(0);
+                JigBD_IF_Start_MCU_ADC();
+                uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+                print(LOG_INFO, "%u, %.3f\r\n", i, JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+            }
+        }
         else if (Command_is_("xd_osc_debug"))
         {
             JigBD_IF_XD_VCC_EN(PWR_ON);

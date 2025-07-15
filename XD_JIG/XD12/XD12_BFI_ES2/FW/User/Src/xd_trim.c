@@ -20,24 +20,25 @@
 #define XDIC_VREF_TARGET            (2.2)       /* V */
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
-#define XDIC_GAIN_ERR_RATE          (0.5/100)   /* % */
-#define XDIC_GAIN_TARGET            (1.5484f)   /* mA */
+#define XDIC_GAIN_ERR_RATE          (0.75/100)   /* % */
+#define XDIC_GAIN_TARGET            (0.875f)     /* mA */
 #define XDIC_GAIN_P1                (6 << 11 | 0x7FF)
 #define XDIC_GAIN_P2                (6 << 11 | 0x7FF)
 
-#define XDIC_OFS_ERR_RATE           (0.5/100)   /* % */
-#define XDIC_OFS_TARGET             (0.7742f)   /* mA */
+#define XDIC_OFS_ERR_RATE           (0.75/100)   /* % */
+#define XDIC_OFS_TARGET             (0.500f)     /* mA */
 #define XDIC_OFS_P1                 (2 << 11 | 0x7FF)
 #define XDIC_OFS_P2                 (4 << 11 | 0x7FF)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
 
-#define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
-#define XD_SCREEN_LD_FIX_GAP        ((0xFFFF + 1) / 256 - 1)
+//#define XD_SCREEN_ANA_GAP           35
+#define XD_SCREEN_ANA_GAP           51
+#define XD_SCREEN_LD_FIX_GAP        1
 
 #define XD_SCREEN_ANA               (0)
-#define XD_SCREEN_MAX_CURRENT       (1)
+#define XD_SCREEN_LD_FIX            (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
 static const char* gs_trim_mode[XD_TRIM_MAX] =
@@ -233,7 +234,7 @@ static void XD_Trim_Param_Algorithm_Init(void)
             temp_gain_level = GAIN_LOW; //Don't Care
             break;
         case XD_TRIM_GAIN_CHS:
-            temp_gain_level = GAIN_HIGH;
+            temp_gain_level = GAIN_MID;
             break;
         case XD_TRIM_OFS_CHS:
             temp_gain_level = GAIN_MID;
@@ -746,7 +747,7 @@ void XD_Trim_Task(void)
                 break;
             case XD_TRIM_STEP_SET_ADC_CH:
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-                gn_task_delay = 1;
+                gn_task_delay = 0;
                 gt_xd_trim_step = XD_TRIM_STEP_START_ADC_CONVERSION;
                 break;
             case XD_TRIM_STEP_START_ADC_CONVERSION:
@@ -1022,7 +1023,10 @@ void XD_Screen_Task(void)
             XDIC_Trim_Init();
             XDIC_Write_Trim_Regs();
             XDIC_Trim_Init_OFS();
+            XDIC_Read_All_Registers();
+            XDIC_Display_Trim_Regs();
             JigBD_IF_VLED_9V_EN(PWR_ON);
+            XDIC_Set_LD_Fix(0xFFFF);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
     #if 1
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
@@ -1037,14 +1041,14 @@ void XD_Screen_Task(void)
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
-                XDIC_Set_Max_Current_Level(gn_xd_screen_ld_fix);
+                XDIC_Set_LD_Fix((gn_xd_screen_ld_fix << 11 | 0x7FF));
             #endif
             gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
             break;
         case XD_SCREEN_STEP_SET_ADC_CH :
             JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-            gn_task_delay = 5;
+            gn_task_delay = 0;
             gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
             break;
         case XD_SCREEN_STEP_START_ADC_CONVERSION :
@@ -1090,7 +1094,7 @@ void XD_Screen_Task(void)
                         gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
                         gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
-                        if (gn_xd_screen_ld_fix > 0xFFFF)
+                        if (gn_xd_screen_ld_fix > 31)
                         {
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }

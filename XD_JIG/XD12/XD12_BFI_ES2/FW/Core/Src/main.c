@@ -269,7 +269,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     USE_XC24(FALSE);
-    XD_Trim_IF_Set_OTP_Enable(FALSE);
+    XD_Trim_IF_Set_OTP_Enable(TRUE);
     XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
     JigBD_IF_Link_DMA_With_Buffer();

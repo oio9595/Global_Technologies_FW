@@ -505,7 +505,7 @@ void XDIC_Init(void)
             case XDIC_ADDR_LD_MODE :
                 gt_xdic_general_regs._r01.ld_mode = XD_LD_MODE_NORMAL;
                 gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VYI_FBO;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
                 break;
             case XDIC_ADDR_SF_PERIOD :
                 gt_xdic_general_regs._r02.sf_period = gn_xd_sf_period;
@@ -781,13 +781,8 @@ void XDIC_Write_Trim_Regs(void)
     }
 }
 
-void XDIC_Save_Trim_Regs(void)
+void XDIC_Display_Trim_Regs(void)
 {
-    for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
-    {
-        gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
-    }
-
     print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
     print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
 
@@ -799,6 +794,15 @@ void XDIC_Save_Trim_Regs(void)
     , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]
     , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]
     );
+}
+
+void XDIC_Save_Trim_Regs(void)
+{
+    for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
+    {
+        gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
+    }
+    XDIC_Display_Trim_Regs();
 }
 
 uint64_t XDIC_Compare_Trim_Regs(void)
