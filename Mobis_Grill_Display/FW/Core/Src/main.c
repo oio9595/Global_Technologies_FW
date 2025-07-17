@@ -76,7 +76,74 @@ uint32_t data_tim2_ch1[DATA_SIZE] = {0, };
 uint32_t data_tim2_ch2[DATA_SIZE] = {0, };
 uint32_t data_tim2_ch3[DATA_SIZE] = {0, };
 
-void wait_until_dma_done(void)
+static void update_dimming_buffer(uint8_t in)
+{
+    if (in % 2)
+    {
+        for (uint16_t i = 0; i < DATA_VALID; i++)
+        {
+            data_tim1_ch1[i + DATA_DUMMY] = TIM1_CCR_BIT_1;
+            data_tim1_ch2[i + DATA_DUMMY] = TIM1_CCR_BIT_1;
+            data_tim1_ch3[i + DATA_DUMMY] = TIM1_CCR_BIT_1;
+            data_tim1_ch4[i + DATA_DUMMY] = TIM1_CCR_BIT_1;
+            data_tim2_ch1[i + DATA_DUMMY] = TIM2_CCR_BIT_1;
+            data_tim2_ch2[i + DATA_DUMMY] = TIM2_CCR_BIT_1;
+            data_tim2_ch3[i + DATA_DUMMY] = TIM2_CCR_BIT_1;
+        }
+    }
+    else
+    {
+        for (uint16_t i = 0; i < DATA_VALID; i++)
+        {
+            data_tim1_ch1[i + DATA_DUMMY] = TIM1_CCR_BIT_0;
+            data_tim1_ch2[i + DATA_DUMMY] = TIM1_CCR_BIT_0;
+            data_tim1_ch3[i + DATA_DUMMY] = TIM1_CCR_BIT_0;
+            data_tim1_ch4[i + DATA_DUMMY] = TIM1_CCR_BIT_0;
+            data_tim2_ch1[i + DATA_DUMMY] = TIM2_CCR_BIT_0;
+            data_tim2_ch2[i + DATA_DUMMY] = TIM2_CCR_BIT_0;
+            data_tim2_ch3[i + DATA_DUMMY] = TIM2_CCR_BIT_0;
+        }
+    }
+}
+
+static void start_dma_tx(void)
+{
+    LL_TIM_DisableCounter(TIM1);
+    LL_TIM_SetCounter(TIM1, 0);
+    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
+    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
+
+    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_2);
+    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
+
+    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_6, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_6);
+    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_6);
+
+    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_4, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_4);
+    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_4);
+    LL_TIM_EnableCounter(TIM1);
+
+    LL_TIM_DisableCounter(TIM2);
+    LL_TIM_SetCounter(TIM2, 0);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_5);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
+
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
+
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_1, DATA_SIZE);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_1);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_1);
+    LL_TIM_EnableCounter(TIM2);
+}
+
+static void wait_until_dma_done(void)
 {
     while(1)
     {
@@ -165,62 +232,12 @@ int main(void)
     {
         if (gn_vsync_flag)
         {
-#if 1
             for (uint8_t i = 0 ; i < 4 ; ++i)
             {
-                LL_TIM_DisableCounter(TIM1);
-                LL_TIM_SetCounter(TIM1, 0);
-                LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
-                LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
-                LL_TIM_EnableCounter(TIM1);
-
-                LL_TIM_DisableCounter(TIM1);
-                LL_TIM_SetCounter(TIM1, 0);
-                LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_2);
-                LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
-                LL_TIM_EnableCounter(TIM1);
-
-                LL_TIM_DisableCounter(TIM1);
-                LL_TIM_SetCounter(TIM1, 0);
-                LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_6, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_6);
-                LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_6);
-                LL_TIM_EnableCounter(TIM1);
-
-                LL_TIM_DisableCounter(TIM1);
-                LL_TIM_SetCounter(TIM1, 0);
-                LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_4, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_4);
-                LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_4);
-                LL_TIM_EnableCounter(TIM1);
-
-                LL_TIM_DisableCounter(TIM2);
-                LL_TIM_SetCounter(TIM2, 0);
-                LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_5);
-                LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
-                LL_TIM_EnableCounter(TIM2);
-
-                LL_TIM_DisableCounter(TIM2);
-                LL_TIM_SetCounter(TIM2, 0);
-                LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_6);
-                LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
-                LL_TIM_EnableCounter(TIM2);
-
-                LL_TIM_DisableCounter(TIM2);
-                LL_TIM_SetCounter(TIM2, 0);
-                LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_1, DATA_SIZE);
-                LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_1);
-                LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_1);
-                LL_TIM_EnableCounter(TIM2);
-
+                update_dimming_buffer(i);
+                start_dma_tx();
                 wait_until_dma_done();
-                us_delay(100);
             }
-#endif
             HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
             gn_vsync_flag = 0;
         }
