@@ -21,6 +21,8 @@
 #define XC24_OTP_PROTECT_DISABLE    (0xA5A)
 #define XC24_OTP_PROTECT_ENABLE     (0x5A5)
 
+#define XC_USE_FULL_CHANNEL         (0)
+
 static SPI_TypeDef *g_hSPIx;
 
 static bool gb_xc24_support;
@@ -395,8 +397,10 @@ void XC24_Init(void)
             case XC24_ADDR_CLK_CONTROL_1:
 #if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
                 gt_xc24_general_regs._r1B.serializer_clk_sel = 1;
+                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 1;
 #else
                 gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
+                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
 #endif
                 gt_xc24_general_regs._r1B.osc_spread_en = 1;
                 break;
@@ -435,63 +439,15 @@ void XC24_Init(void)
                 break;
             case XC24_ADDR_DAISY_SIZE1 :
                 gt_xc24_general_regs._r30.daisy_size_ch1 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r30.daisy_size_ch2 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r30.daisy_size_ch3 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE2 :
-                gt_xc24_general_regs._r31.daisy_size_ch4 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r31.daisy_size_ch5 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r31.daisy_size_ch6 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE3 :
-                gt_xc24_general_regs._r32.daisy_size_ch7 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r32.daisy_size_ch8 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r32.daisy_size_ch9 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE4 :
-                gt_xc24_general_regs._r33.daisy_size_ch10 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r33.daisy_size_ch11 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r33.daisy_size_ch12 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE5 :
-                gt_xc24_general_regs._r34.daisy_size_ch13 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r34.daisy_size_ch14 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r34.daisy_size_ch15 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE6 :
-                gt_xc24_general_regs._r35.daisy_size_ch16 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r35.daisy_size_ch17 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r35.daisy_size_ch18 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE7 :
-                gt_xc24_general_regs._r36.daisy_size_ch19 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r36.daisy_size_ch20 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r36.daisy_size_ch21 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE8 :
-                gt_xc24_general_regs._r37.daisy_size_ch22 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r37.daisy_size_ch23 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r37.daisy_size_ch24 = XD_DAISY_SIZE;
                 break;
             case XC24_ADDR_BLOCK_SIZE1 :
                 gt_xc24_general_regs._r38.block_size_ch1 = XD_DAISY_SIZE * XD_CH_SIZE;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE1 :
                 gt_xc24_general_regs._r45.ch1_en = 1;
-                //gt_xc24_general_regs._r45.ALL = 0xFFFF;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE2 :
-            #if 0
-                gt_xc24_general_regs._r46.ch17_en = 1;
-                gt_xc24_general_regs._r46.ch18_en = 1;
-                gt_xc24_general_regs._r46.ch19_en = 1;
-                gt_xc24_general_regs._r46.ch20_en = 1;
-                gt_xc24_general_regs._r46.ch21_en = 1;
-                gt_xc24_general_regs._r46.ch22_en = 1;
-                gt_xc24_general_regs._r46.ch23_en = 1;
-                gt_xc24_general_regs._r46.ch24_en = 1;
-                #endif
-                gt_xc24_general_regs._r46.ld_size = 24;
+                gt_xc24_general_regs._r46.ld_size = 1;
                 gt_xc24_general_regs._r46.ld_width = 3;
                 break;
             case XC24_ADDR_COMMAND_LATENCY :
@@ -507,18 +463,35 @@ void XC24_Init(void)
     XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
 
-    XC24_Write_Register(0x38, 0xC0C);
-    XC24_Write_Register(0x39, 0xC0C);
-    XC24_Write_Register(0x3A, 0xC0C);
-    XC24_Write_Register(0x3B, 0xC0C);
-    XC24_Write_Register(0x3C, 0xC0C);
-    XC24_Write_Register(0x3D, 0xC0C);
-    XC24_Write_Register(0x3E, 0xC0C);
-    XC24_Write_Register(0x3F, 0xC0C);
-    XC24_Write_Register(0x40, 0xC0C);
-    XC24_Write_Register(0x41, 0xC0C);
-    XC24_Write_Register(0x42, 0xC0C);
-    XC24_Write_Register(0x43, 0xC0C);
+#if (XC_USE_FULL_CHANNEL == 1)
+    //daisy size
+    XC24_Write_Register(0x30, 0x0421);
+    XC24_Write_Register(0x31, 0x0421);
+    XC24_Write_Register(0x32, 0x0421);
+    XC24_Write_Register(0x33, 0x0421);
+    XC24_Write_Register(0x34, 0x0421);
+    XC24_Write_Register(0x35, 0x0421);
+    XC24_Write_Register(0x36, 0x0421);
+    XC24_Write_Register(0x37, 0x0421);
+
+    //block size
+    XC24_Write_Register(0x38, 0x0C0C);
+    XC24_Write_Register(0x39, 0x0C0C);
+    XC24_Write_Register(0x3A, 0x0C0C);
+    XC24_Write_Register(0x3B, 0x0C0C);
+    XC24_Write_Register(0x3C, 0x0C0C);
+    XC24_Write_Register(0x3D, 0x0C0C);
+    XC24_Write_Register(0x3E, 0x0C0C);
+    XC24_Write_Register(0x3F, 0x0C0C);
+    XC24_Write_Register(0x40, 0x0C0C);
+    XC24_Write_Register(0x41, 0x0C0C);
+    XC24_Write_Register(0x42, 0x0C0C);
+    XC24_Write_Register(0x43, 0x0C0C);
+
+    //channel enable
+    XC24_Write_Register(0x45, 0xFFFF);
+    XC24_Write_Register(0x46, 0xD8FF);
+#endif
 
     print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
