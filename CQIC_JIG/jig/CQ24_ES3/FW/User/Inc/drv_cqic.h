@@ -822,4 +822,7 @@ typedef struct
     uint16_t ld_i[LD_I_SIZE];
 }cq24_cmd4_ld_i_transfer;
 
+extern void CQ24_Write_CMD1_Reg_main(uint8_t addr, uint16_t data);
+extern void CQ24_Write_CMD2_Reg_main(uint8_t addr, uint16_t data);
+
 #endif

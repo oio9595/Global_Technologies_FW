@@ -221,7 +221,7 @@ static void CQ24_Write_CMD2_Reg(void)
         cmd2.u.rw = CQ24_WR;
         cmd2.u.addr = cmd2_addr;
         cmd2.u.data = cmd2_data;
-        CQ24_Write(cmd2.value, 1);
+        CQ24_Write(cmd2.value, 2);
 
         *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = cmd2_data;
         gt_cq24_cmd2_rw_info.write_flag = false;
@@ -402,7 +402,8 @@ static void CQ24_Register_Init(void)
             gt_cq24_cmd2_regs._r10.u.frame_vref = 4095;
             gt_cq24_cmd2_regs._r10.u.frame_cz = 2;
             break;
-        /*case CQ24_CMD2_DUTY_FIX :
+            /*
+        case CQ24_CMD2_DUTY_FIX :
             break;
         case CQ24_CMD2_LD_I_FIX :
             break;
@@ -564,4 +565,44 @@ void CQ24_Vsync_Task(void)
 
         gb_cq24_vsync_flag = false;
     }
+}
+
+void CQ24_Write_CMD1_Reg_main(uint8_t addr, uint16_t data)
+{
+    cq24_cmd1_type cmd1 = {0, };
+    uint8_t cmd1_addr = 0;
+    uint16_t cmd1_data = 0;
+
+    cmd1_addr = addr;
+    cmd1_data = data;
+
+    cmd1.u.cmd_id = CMD_01;
+    cmd1.u.rw = CQ24_WR;
+    cmd1.u.addr = cmd1_addr;
+    cmd1.u.data = cmd1_data;
+    CQ24_Write(&cmd1.value, 1);
+
+    *(&gt_cq24_cmd1_regs._r00.value + cmd1_addr) = cmd1_data;
+
+    //Print("\t CQ24 CMD1 Write [0x%02X --> 0x%04X]\r\n", cmd1_addr, cmd1_data);
+}
+
+void CQ24_Write_CMD2_Reg_main(uint8_t addr, uint16_t data)
+{
+    cq24_cmd2_type cmd2 = {0, };
+    uint8_t cmd2_addr = 0;
+    uint16_t cmd2_data = 0;
+
+    cmd2_addr = addr;
+    cmd2_data = data;
+
+    cmd2.u.cmd_id = CMD_02;
+    cmd2.u.rw = CQ24_WR;
+    cmd2.u.addr = cmd2_addr;
+    cmd2.u.data = cmd2_data;
+    CQ24_Write(cmd2.value, 2);
+
+    *(&gt_cq24_cmd2_regs._r00.value + cmd2_addr) = cmd2_data;
+
+    //Print("\t CQ24 CMD2 Write [0x%02X --> 0x%04X]\r\n", cmd2_addr, cmd2_data);
 }

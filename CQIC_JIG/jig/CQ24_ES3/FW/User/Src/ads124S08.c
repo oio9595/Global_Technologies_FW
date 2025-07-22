@@ -35,7 +35,7 @@
  */
 
 /* Also include device specific header */
-#include "ADS124S08.h"
+#include "ads124S08.h"
 
 extern SPI_HandleTypeDef hspi1;
 #define USE_DISPLAY_DEVICE_REGS
@@ -226,164 +226,101 @@ static void dump_regs(void)
         ads114s08_gpiodat_t gpiodat;
         ads114s08_gpiocon_t gpiocon;
 
-        snprintf(msg_buffer, sizeof msg_buffer, "Device #1\r\n");
-        print(msg_buffer);
+        Print("Device #1\r\n");
 
         id.value = registers[REG_ADDR_ID];
-        snprintf(msg_buffer, sizeof msg_buffer, "\tDevice identifier : 0x%X(%s)\r\n", id.u.dev_id, (id.u.dev_id == 0x04 ? "ADS114S08" : (id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
-        print(msg_buffer);
+        Print("\tDevice identifier : 0x%X(%s)\r\n", id.u.dev_id, (id.u.dev_id == 0x04 ? "ADS114S08" : (id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
 
         status.value = registers[REG_ADDR_STATUS];
-        print("\tDevice Status\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPOR flag : %s\r\n", (status.u.fl_por == 0x00 ? "0 : Register has been cleared and no POR event has occurred." : "1 : POR event occurred and has not been cleared. Flag must be cleared by user register write (default)."));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tDevice ready flag : %s\r\n", (status.u.rdy == 0x00 ? "0 : ADC ready for communication (default)" : "1 : ADC not ready"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPositive PGA output at positive rail flag : %s\r\n", (status.u.fl_p_railp == 0x00 ? "0 : No error (default)" : "1 : PGA positive output within 150 mV of AVDD"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPositive PGA output at negative rail flag : %s\r\n", (status.u.fl_p_railn == 0x00 ? "0 : No error (default)" : "1 : PGA positive output within 150 mV of AVSS"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tNegative PGA output at positive rail flag : %s\r\n", (status.u.fl_n_railp == 0x00 ? "0 : No error (default)" : "1 : PGA negative output within 150 mV of AVDD"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tNegative PGA output at negative rail flag : %s\r\n", (status.u.fl_n_railn == 0x00 ? "0 : No error (default)" : "1 : PGA negative output within 150 mV of AVSS"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tReference voltage monitor flag, level 1 : %s\r\n", (status.u.fl_ref_l1 == 0x00 ? "0 : Differential reference voltage ≥ 1/3 · (AVDD - AVSS) (default)" : "1 : Differential reference voltage < 1/3 · (AVDD - AVSS)"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tReference voltage monitor flag, level 0 : %s\r\n", (status.u.fl_ref_l0 == 0x00 ? "0 : Differential reference voltage ≥ 0.3 V (default)" : "1 : Differential reference voltage < 0.3 V"));
-        print(msg_buffer);
+        Print("\tDevice Status\r\n");
+        Print("\t\tPOR flag : %s\r\n", (status.u.fl_por == 0x00 ? "0 : Register has been cleared and no POR event has occurred." : "1 : POR event occurred and has not been cleared. Flag must be cleared by user register write (default)."));
+        Print("\t\tDevice ready flag : %s\r\n", (status.u.rdy == 0x00 ? "0 : ADC ready for communication (default)" : "1 : ADC not ready"));
+        Print("\t\tPositive PGA output at positive rail flag : %s\r\n", (status.u.fl_p_railp == 0x00 ? "0 : No error (default)" : "1 : PGA positive output within 150 mV of AVDD"));
+        Print("\t\tPositive PGA output at negative rail flag : %s\r\n", (status.u.fl_p_railn == 0x00 ? "0 : No error (default)" : "1 : PGA positive output within 150 mV of AVSS"));
+        Print("\t\tNegative PGA output at positive rail flag : %s\r\n", (status.u.fl_n_railp == 0x00 ? "0 : No error (default)" : "1 : PGA negative output within 150 mV of AVDD"));
+        Print("\t\tNegative PGA output at negative rail flag : %s\r\n", (status.u.fl_n_railn == 0x00 ? "0 : No error (default)" : "1 : PGA negative output within 150 mV of AVSS"));
+        Print("\t\tReference voltage monitor flag, level 1 : %s\r\n", (status.u.fl_ref_l1 == 0x00 ? "0 : Differential reference voltage ≥ 1/3 · (AVDD - AVSS) (default)" : "1 : Differential reference voltage < 1/3 · (AVDD - AVSS)"));
+        Print("\t\tReference voltage monitor flag, level 0 : %s\r\n", (status.u.fl_ref_l0 == 0x00 ? "0 : Differential reference voltage ≥ 0.3 V (default)" : "1 : Differential reference voltage < 0.3 V"));
 
         inpmux.value = registers[REG_ADDR_INPMUX];
-        print("\tInput Multiplexer\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPositive ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxp]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tNegative ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxn]);
-        print(msg_buffer);
+        Print("\tInput Multiplexer\r\n");
+        Print("\t\tPositive ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxp]);
+        Print("\t\tNegative ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxn]);
 
         gain.value = registers[REG_ADDR_PGA];
-        print("\tGain Setting\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tProgrammable conversion delay selection : %s\r\n", gp_delay_string[gain.u.delay]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPGA enable : %s\r\n", (gain.u.pga_en == 0x00 ? "00 : PGA is powered down and bypassed. Enables single-ended measurements with unipolar supply (Set gain = 1(2)) (default)" : (gain.u.pga_en == 0x01 ? "01 : PGA enabled (gain = 1 to 128)" : "Reserved")));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPGA gain selection : %s\r\n", gp_gain_string[gain.u.gain]);
-        print(msg_buffer);
+        Print("\tGain Setting\r\n");
+        Print("\t\tProgrammable conversion delay selection : %s\r\n", gp_delay_string[gain.u.delay]);
+        Print("\t\tPGA enable : %s\r\n", (gain.u.pga_en == 0x00 ? "00 : PGA is powered down and bypassed. Enables single-ended measurements with unipolar supply (Set gain = 1(2)) (default)" : (gain.u.pga_en == 0x01 ? "01 : PGA enabled (gain = 1 to 128)" : "Reserved")));
+        Print("\t\tPGA gain selection : %s\r\n", gp_gain_string[gain.u.gain]);
 
         datarate.value = registers[REG_ADDR_DATARATE];
-        print("\tData Rate\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tGlobal chop enable : %s\r\n", (datarate.u.g_chop == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tClock source selection : %s\r\n", (datarate.u.clk == 0x00 ? "0 : Internal 4.096-MHz oscillator (default)" : "1 : External clock"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tConversion mode selection : %s\r\n", (datarate.u.mode == 0x00 ? "0 : Continuous conversion mode (default)" : "1 : Single-shot conversion mode"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tDigital filter selection : %s\r\n", (datarate.u.filter == 0x00 ? "0 : Sinc3 filter" : "1 : Low-latency filter (default)"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tData rate selection : %s\r\n", gp_datarate_string[datarate.u.dr]);
-        print(msg_buffer);
+        Print("\tData Rate\r\n");
+        Print("\t\tGlobal chop enable : %s\r\n", (datarate.u.g_chop == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
+        Print("\t\tClock source selection : %s\r\n", (datarate.u.clk == 0x00 ? "0 : Internal 4.096-MHz oscillator (default)" : "1 : External clock"));
+        Print("\t\tConversion mode selection : %s\r\n", (datarate.u.mode == 0x00 ? "0 : Continuous conversion mode (default)" : "1 : Single-shot conversion mode"));
+        Print("\t\tDigital filter selection : %s\r\n", (datarate.u.filter == 0x00 ? "0 : Sinc3 filter" : "1 : Low-latency filter (default)"));
+        Print("\t\tData rate selection : %s\r\n", gp_datarate_string[datarate.u.dr]);
 
         ref_ctrl.value = registers[REG_ADDR_REF];
-        print("\tReference Control (REF)\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tReference monitor configuration : %s\r\n", gp_ref_monitoring_config_string[ref_ctrl.u.fl_ref_en]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPositive reference buffer bypass : %s\r\n", (ref_ctrl.u.refp_buf == 0x00 ? "0 : Enabled (default)" : "1 : Disabled"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tNegative reference buffer bypass : %s\r\n", (ref_ctrl.u.refn_buf == 0x00 ? "0 : Enabled" : "1 : Disabled (default)"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tReference input selection : %s\r\n", gp_ref_input_selection_string[ref_ctrl.u.refsel]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tInternal voltage reference configuration : %s\r\n", gp_internal_voltage_ref_config_string[ref_ctrl.u.refsel]);
-        print(msg_buffer);
+        Print("\tReference Control (REF)\r\n");
+        Print("\t\tReference monitor configuration : %s\r\n", gp_ref_monitoring_config_string[ref_ctrl.u.fl_ref_en]);
+        Print("\t\tPositive reference buffer bypass : %s\r\n", (ref_ctrl.u.refp_buf == 0x00 ? "0 : Enabled (default)" : "1 : Disabled"));
+        Print("\t\tNegative reference buffer bypass : %s\r\n", (ref_ctrl.u.refn_buf == 0x00 ? "0 : Enabled" : "1 : Disabled (default)"));
+        Print("\t\tReference input selection : %s\r\n", gp_ref_input_selection_string[ref_ctrl.u.refsel]);
+        Print("\t\tInternal voltage reference configuration : %s\r\n", gp_internal_voltage_ref_config_string[ref_ctrl.u.refsel]);
 
         idacmag.value = registers[REG_ADDR_IDACMAG];
-        print("\tExcitation Current #1\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tPGA output rail flag enable : %s\r\n", (idacmag.u.fl_rail_en == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tLow-side power switch : %s\r\n", (idacmag.u.psw == 0x00 ? "0 : Open (default)" : "1 : Closed"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tIDAC magnitude selection : %s\r\n", gp_idac_magnitude_selection_string[idacmag.u.imag]);
-        print(msg_buffer);
+        Print("\tExcitation Current #1\r\n");
+        Print("\t\tPGA output rail flag enable : %s\r\n", (idacmag.u.fl_rail_en == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
+        Print("\t\tLow-side power switch : %s\r\n", (idacmag.u.psw == 0x00 ? "0 : Open (default)" : "1 : Closed"));
+        Print("\t\tIDAC magnitude selection : %s\r\n", gp_idac_magnitude_selection_string[idacmag.u.imag]);
 
         idacmux.value = registers[REG_ADDR_IDACMUX];
-        print("\tExcitation Current #2\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tIDAC2 output channel selection : %s\r\n", gp_idac_output_channel_selection_string[idacmux.u.i2mux]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tIDAC1 output channel selection : %s\r\n", gp_idac_output_channel_selection_string[idacmux.u.i1mux]);
-        print(msg_buffer);
+        Print("\tExcitation Current #2\r\n");
+        Print("\t\tIDAC2 output channel selection : %s\r\n", gp_idac_output_channel_selection_string[idacmux.u.i2mux]);
+        Print("\t\tIDAC1 output channel selection : %s\r\n", gp_idac_output_channel_selection_string[idacmux.u.i1mux]);
 
         vbias.value = registers[REG_ADDR_VBIAS];
-        print("\tSensor Biasing\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tVBIAS level selection : %s\r\n", (vbias.u.vb_level == 0x00 ? "0 : (AVDD + AVSS) / 2 (default)" : "1 : (AVDD + AVSS) / 12"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAINCOM VBIAS selection : %s\r\n", (vbias.u.vb_ainc == 0x00 ? "0 : VBIAS disconnected from AINCOM (default)" : "1 : VBIAS connected to AINCOM"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN5 VBIAS selection : %s\r\n", (vbias.u.vb_ain5 == 0x00 ? "0 : VBIAS disconnected from AIN5 (default)" : "1 : VBIAS connected to AIN5"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN4 VBIAS selection : %s\r\n", (vbias.u.vb_ain4 == 0x00 ? "0 : VBIAS disconnected from AIN4 (default)" : "1 : VBIAS connected to AIN4"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN3 VBIAS selection : %s\r\n", (vbias.u.vb_ain3 == 0x00 ? "0 : VBIAS disconnected from AIN3 (default)" : "1 : VBIAS connected to AIN3"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN2 VBIAS selection : %s\r\n", (vbias.u.vb_ain2 == 0x00 ? "0 : VBIAS disconnected from AIN2 (default)" : "1 : VBIAS connected to AIN2"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN1 VBIAS selection : %s\r\n", (vbias.u.vb_ain1 == 0x00 ? "0 : VBIAS disconnected from AIN1 (default)" : "1 : VBIAS connected to AIN1"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tAIN0 VBIAS selection : %s\r\n", (vbias.u.vb_ain0 == 0x00 ? "0 : VBIAS disconnected from AIN0 (default)" : "1 : VBIAS connected to AIN0"));
-        print(msg_buffer);
+        Print("\tSensor Biasing\r\n");
+        Print("\t\tVBIAS level selection : %s\r\n", (vbias.u.vb_level == 0x00 ? "0 : (AVDD + AVSS) / 2 (default)" : "1 : (AVDD + AVSS) / 12"));
+        Print("\t\tAINCOM VBIAS selection : %s\r\n", (vbias.u.vb_ainc == 0x00 ? "0 : VBIAS disconnected from AINCOM (default)" : "1 : VBIAS connected to AINCOM"));
+        Print("\t\tAIN5 VBIAS selection : %s\r\n", (vbias.u.vb_ain5 == 0x00 ? "0 : VBIAS disconnected from AIN5 (default)" : "1 : VBIAS connected to AIN5"));
+        Print("\t\tAIN4 VBIAS selection : %s\r\n", (vbias.u.vb_ain4 == 0x00 ? "0 : VBIAS disconnected from AIN4 (default)" : "1 : VBIAS connected to AIN4"));
+        Print("\t\tAIN3 VBIAS selection : %s\r\n", (vbias.u.vb_ain3 == 0x00 ? "0 : VBIAS disconnected from AIN3 (default)" : "1 : VBIAS connected to AIN3"));
+        Print("\t\tAIN2 VBIAS selection : %s\r\n", (vbias.u.vb_ain2 == 0x00 ? "0 : VBIAS disconnected from AIN2 (default)" : "1 : VBIAS connected to AIN2"));
+        Print("\t\tAIN1 VBIAS selection : %s\r\n", (vbias.u.vb_ain1 == 0x00 ? "0 : VBIAS disconnected from AIN1 (default)" : "1 : VBIAS connected to AIN1"));
+        Print("\t\tAIN0 VBIAS selection : %s\r\n", (vbias.u.vb_ain0 == 0x00 ? "0 : VBIAS disconnected from AIN0 (default)" : "1 : VBIAS connected to AIN0"));
 
         sys.value = registers[REG_ADDR_SYS];
-        print("\tSystem Control\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tSystem monitor configuration : %s\r\n", gp_sys_monitor_config_string[sys.u.sys_mon]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tCalibration sample size selection : %s\r\n", gp_calibration_sample_size_selection_string[sys.u.cal_samp]);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tSPI timeout enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tCRC enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tSTATUS byte enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
-        print(msg_buffer);
+        Print("\tSystem Control\r\n");
+        Print("\t\tSystem monitor configuration : %s\r\n", gp_sys_monitor_config_string[sys.u.sys_mon]);
+        Print("\t\tCalibration sample size selection : %s\r\n", gp_calibration_sample_size_selection_string[sys.u.cal_samp]);
+        Print("\t\tSPI timeout enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
+        Print("\t\tCRC enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
+        Print("\t\tSTATUS byte enable : %s\r\n", (sys.u.timeout == 0x00 ? "0 : Disabled (default)" : "1 : Enabled"));
 
         ofcal0.value = registers[REG_ADDR_OFCAL0];
-        snprintf(msg_buffer, sizeof msg_buffer, "\tOffset Calibration #1 : %u\r\n", ofcal0.value);
-        print(msg_buffer);
+        Print("\tOffset Calibration #1 : %u\r\n", ofcal0.value);
         ofcal1.value = registers[REG_ADDR_OFCAL1];
-        snprintf(msg_buffer, sizeof msg_buffer, "\tOffset Calibration #2 : %u\r\n", ofcal1.value);
-        print(msg_buffer);
+        Print("\tOffset Calibration #2 : %u\r\n", ofcal1.value);
         fscal0.value = registers[REG_ADDR_FSCAL0];
-        snprintf(msg_buffer, sizeof msg_buffer, "\tGain Calibration #1 : %u\r\n", fscal0.value);
-        print(msg_buffer);
+        Print("\tGain Calibration #1 : %u\r\n", fscal0.value);
         fscal1.value = registers[REG_ADDR_FSCAL1];
-        snprintf(msg_buffer, sizeof msg_buffer, "\tGain Calibration #2 : %u\r\n", fscal1.value);
-        print(msg_buffer);
+        Print("\tGain Calibration #2 : %u\r\n", fscal1.value);
 
         gpiodat.value = registers[REG_ADDR_GPIODAT];
-        print("\tGPIO Data\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tGPIO direction : 0x%X\r\n", gpiodat.u.dir);
-        print(msg_buffer);
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tGPIO data : 0x%X\r\n", gpiodat.u.dat);
-        print(msg_buffer);
+        Print("\tGPIO Data\r\n");
+        Print("\t\tGPIO direction : 0x%X\r\n", gpiodat.u.dir);
+        Print("\t\tGPIO data : 0x%X\r\n", gpiodat.u.dat);
 
         gpiocon.value = registers[REG_ADDR_GPIOCON];
-        print("\tGPIO Configuration\r\n");
-        snprintf(msg_buffer, sizeof msg_buffer, "\t\tGPIO pin configuration : 0x%X\r\n", gpiocon.u.con);
-        print(msg_buffer);
+        Print("\tGPIO Configuration\r\n");
+        Print("\t\tGPIO pin configuration : 0x%X\r\n", gpiocon.u.con);
 
     }
-    print("======================================\r\n");
+    Print("======================================\r\n");
 }
 #endif
-
-static void us_delay(uint32_t n_delay) /* not 1us delay */
-{
-    uint32_t i = 0;
-    for( ; n_delay != 0 ; --n_delay)
-    {
-        for(i=0 ; i<1 ; ++i)
-        {
-            asm("NOP");
-        }
-    }
-}
-
 /*
  * Writes the nCS pin low and waits a while for the Tiva to finish working before
  * handing control back to the caller for a SPI transfer.
@@ -529,7 +466,7 @@ void ads114s08_init(void)
     //ads114s08_set_command(dev, CMD_WAKEUP);
 
 #ifdef USE_DISPLAY_DEVICE_REGS
-	print("======== ADS114S08-1 regs value ========\r\n");
+	Print("======== ADS114S08-1 regs value ========\r\n");
     dump_regs();
 #endif
 
@@ -600,7 +537,7 @@ void ads114s08_init(void)
 	//ads114s08_set_command(dev, CMD_WAKEUP);
 
 #ifdef USE_DISPLAY_DEVICE_REGS
-	print("======== ADS114S08-2 regs value ========\r\n");
+	Print("======== ADS114S08-2 regs value ========\r\n");
 	dump_regs();
 #endif
 
@@ -726,16 +663,11 @@ void ads114s08_set_input(uint8_t input_p, uint8_t input_n, adc_ch_t ch)
     ads114s08_set_reg(REG_ADDR_INPMUX, t.value, ch);
 }
 
-extern void cq24_ch_select(uint8_t in, adc_ch_t ch);
-
 void ads114s08_select_single_ended_input(uint8_t input, adc_ch_t ch)
 {
 #if 0
-    snprintf(msg_buffer, sizeof msg_buffer, "\n\r input [%5d]", input);
-    print(msg_buffer);
+    Print("\n\r input [%5d]", input);
 #endif
-
-		cq24_ch_select(input, ch);
 
     switch(input)
     {
@@ -784,10 +716,8 @@ void ads114s08_select_single_ended_input(uint8_t input, adc_ch_t ch)
     registers[DEVICE_1][REG_ADDR_INPMUX] = ads114s08_get_reg(DEVICE_1, REG_ADDR_INPMUX);
 
     inpmux.value = registers[DEVICE_1][REG_ADDR_INPMUX];
-    snprintf(msg_buffer, sizeof msg_buffer, "\t\tPositive ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxp]);
-    print(msg_buffer);
-    snprintf(msg_buffer, sizeof msg_buffer, "\t\tNegative ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxn]);
-    print(msg_buffer);
+    Print("\t\tPositive ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxp]);
+    Print("\t\tNegative ADC input selection : %s\r\n", gp_input_multiplexer_selection_string[inpmux.u.muxn]);
 #endif
 }
 
@@ -821,7 +751,6 @@ void ads114s08_set_reset(adc_ch_t ch)
 #ifdef USE_GPIO_RESET
     HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_RESET);
 
-    //us_delay(10);
     HAL_Delay(5);
 
     /* low for a minimum of 4 · tCLK· cycles */

@@ -43,11 +43,10 @@
 //#define INTERNAL_CLK_DEF
 #define EXTERNAL_CLK_DEF
 
-
-#define ADS114S_VREF    (5000)  /* 5V */
-#define ADS114S_RES     ((1U<<(16-1)) - 1)  /* 16bit */
-#define ADS114S_CH      (12)
-#define ADS114S_DEV_NUM (1)
+#define ADS114S_VREF        (5000)  /* 5V */
+#define ADS114S_RES         ((1U << (16 - 1)) - 1)  /* 16bit */
+#define ADS114S_CH          (12)
+#define ADS114S_DEV_NUM     (1)
 #define ADC_VOLT_PER_STEP   ((double)ADS114S_VREF/ADS114S_RES)
 
 /*
@@ -88,7 +87,7 @@ typedef enum _ADC_CH_
 typedef enum _ADC_DRDY_
 {
 	ADC1_DRDY	= 0,
-	ADC2_DRDY 	
+	ADC2_DRDY
 } adc_drdy_t;
 
 

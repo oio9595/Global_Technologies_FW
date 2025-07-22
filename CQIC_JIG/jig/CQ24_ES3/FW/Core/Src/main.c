@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ads124S08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +43,7 @@
 #define UART_DELETE                 (0x7F)
 #define UART_SPACE                  (0x20)
 
-#define TX_PACKET_SIZE              (100)
+#define TX_PACKET_SIZE              (200)
 #define TX_BUFF_SIZE                (512) // must be power of 2
 
 #define RX_PACKET_SIZE              (20)
@@ -343,6 +343,65 @@ static void Uart_Rx_Decode_String(void)
     {
         CQ24_Set_CMD4_LD_I((uint16_t)u32_param[0]);
     }
+    else if (!Receive_Command_Is("test"))
+    {
+        uint8_t a = 0;
+        uint8_t b = 0;
+        uint16_t cq_id_table[5] = {455, 910, 1820, 2730, 4095};
+        int32_t adc_value[24] = {0, };
+        float f_adc_voltage[5][24] = {0.0f, };
+
+        Print("Vsync stop!! \r\n");
+        CQ24_Set_Vsync(false);
+
+        CQ24_Write_CMD2_Reg_main(CQ24_CMD2_DUTY_FIX, SVSYNC_SIZE);
+        CQ24_Write_CMD2_Reg_main(CQ24_CMD2_FRAME_HEADER_FIX, 0xFFF);
+        CQ24_Write_CMD2_Reg_main(CQ24_CMD2_LD_I_FIX, 2048);
+        CQ24_Write_CMD1_Reg_main(CQ24_CMD1_FIX_CONTROL, 0x170);
+        HAL_Delay(10);
+
+        for (uint8_t j = 0 ; j < 5 ; ++j)
+        {
+            CQ24_Write_CMD2_Reg_main(CQ24_CMD2_LD_I_FIX, (uint16_t)cq_id_table[j]);
+            HAL_Delay(10);
+            for (uint8_t i = 0 ; i < 24 ; ++i)
+            {
+                if (i < 12)
+                {
+                    ads114s08_select_single_ended_input(i, ADC1_CS);
+                    HAL_Delay(1);
+                    ads114s08_set_start(1, ADC1_CS);
+                    HAL_Delay(1);
+                    ads114s08_set_start(0, ADC1_CS);
+                    HAL_Delay(1);
+                    adc_value[i] = ads114s08_get_rdata(&a, &b, ADC1_CS);
+                }
+                else
+                {
+                    ads114s08_select_single_ended_input(i - 12, ADC2_CS);
+                    HAL_Delay(1);
+                    ads114s08_set_start(1, ADC2_CS);
+                    HAL_Delay(1);
+                    ads114s08_set_start(0, ADC2_CS);
+                    HAL_Delay(1);
+                    adc_value[i] = ads114s08_get_rdata(&a, &b, ADC2_CS);
+                }
+                f_adc_voltage[j][i] = ADC_VOLT_PER_STEP * adc_value[i] / 1000.0f;
+                //Print("ADC[%2d] : (%6d - %.3f)\r\n", i, adc_value[i], f_adc_voltage[j][i]);
+            }
+        }
+
+        Print("Input, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9, ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24\r\n");
+        for (uint8_t j = 0 ; j < 5 ; ++j)
+        {
+            Print("%d", cq_id_table[j]);
+            for (uint8_t i = 0 ; i < 24 ; ++i)
+            {
+                Print(",%.3f", f_adc_voltage[j][i]);
+            }
+            Print("\r\n");
+        }
+    }
     else
     {
         Print("\tUnknown CMD!! \r\n");
@@ -491,6 +550,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
     Key_Struct_Init();
     Uart_Debug_Init();
+    ads114s08_init();
 
     CQ24_NSCS_LO();
     CQ24_Set_MCLK(false);
