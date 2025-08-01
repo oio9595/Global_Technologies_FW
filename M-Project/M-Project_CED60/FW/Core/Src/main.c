@@ -231,10 +231,8 @@ int main(void)
     //__enable_irq();
     comm_init();
 
-    gb_fpga_boot_done = true; // only for debug
-
+    print("FPGA Booting...\r\n");
     while(!gb_fpga_boot_done) {}
-
     print("FPGA Boot Done!!\r\n");
 
     tlc59581_init();
