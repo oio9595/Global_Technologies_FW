@@ -21,13 +21,13 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_L_P1              (450)
-#define XDIC_ICTL_L_P2              (850)
+#define XDIC_ICTL_L_P1              (300)
+#define XDIC_ICTL_L_P2              (1100)
 #define XDIC_ICTL_L_TARGET          (8.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_P1              (500)
-#define XDIC_ICTL_H_P2              (900)
+#define XDIC_ICTL_H_P1              (300)
+#define XDIC_ICTL_H_P2              (1100)
 #define XDIC_ICTL_H_TARGET          (24.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_SCREEN_POINT      (6)
@@ -60,6 +60,12 @@
     #define XDIC_ICTL_H_SCREEN_TARGET2  (24.0f * XDIC_ICTL_H_SCREEN_P2 / (XDIC_VREF_MAX))
     #define XDIC_ICTL_H_SCREEN_TARGET3  (24.0f * XDIC_ICTL_H_SCREEN_P3 / (XDIC_VREF_MAX))
 #endif
+
+#define ICTL_L_P1                   (350)
+#define ICTL_L_P2                   (3100)
+
+#define ICTL_H_P1                   (350)
+#define ICTL_H_P2                   (3100)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -1159,6 +1165,7 @@ void XD_Trim_Task(void)
 /* END - TRIM_PROCEDURE_RUN   *****************************************/
 void XD_Screen_Task(void)
 {
+    static uint8_t loop_cnt = 0;
     if (gn_task_delay)
     {
         --gn_task_delay;
@@ -1181,22 +1188,10 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
             XDIC_Write_Trim_Regs();
-            if (gn_xd_screen_phase == 0)
-            {
-                XDIC_Trim_Init_ICTL_L_CH();
-                gt_screen_gain = GAIN_MID;
-                JigBD_IF_Change_Current_Gain(gt_screen_gain);
-                gn_xd_screen_ana = 0;
-                gn_xd_screen_ana = gn_xd_screen_table[gn_xd_screen_table_idx];
-            }
-            else
-            {
-                XDIC_Trim_Init_ICTL_H_CH();
-                gt_screen_gain = GAIN_HIGH;
-                JigBD_IF_Change_Current_Gain(gt_screen_gain);
-                gn_xd_screen_ana = 0;
-                gn_xd_screen_ana = gn_xd_screen_table[gn_xd_screen_table_idx];
-            }
+            XDIC_Trim_Init_ICTL_L_CH();
+            gt_screen_gain = GAIN_MID;
+            JigBD_IF_Change_Current_Gain(gt_screen_gain);
+            gn_xd_screen_ana = 0;
             XDIC_Read_All_Registers();
             //XDIC_Display_Trim_Regs();
             JigBD_IF_VLED_9V_EN(PWR_ON);
@@ -1212,7 +1207,35 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
+                if (loop_cnt == 0)
+                {
+                    gt_screen_gain = GAIN_MID;
+                    XDIC_Trim_Init_ICTL_L_CH();
+                    XDIC_Set_Max_Curr_Vref(ICTL_L_P1);
+                    gn_xd_screen_ana = ICTL_L_P1;
+                }
+                else if (loop_cnt == 1)
+                {
+                    gt_screen_gain = GAIN_MID;
+                    XDIC_Trim_Init_ICTL_L_CH();
+                    XDIC_Set_Max_Curr_Vref(ICTL_L_P2);
+                    gn_xd_screen_ana = ICTL_L_P2;
+                }
+                else if (loop_cnt == 2)
+                {
+                    gt_screen_gain = GAIN_HIGH;
+                    XDIC_Trim_Init_ICTL_H_CH();
+                    XDIC_Set_Max_Curr_Vref(ICTL_H_P1);
+                    gn_xd_screen_ana = ICTL_H_P1;
+                }
+                else if (loop_cnt == 3)
+                {
+                    gt_screen_gain = GAIN_HIGH;
+                    XDIC_Trim_Init_ICTL_H_CH();
+                    XDIC_Set_Max_Curr_Vref(ICTL_H_P2);
+                    gn_xd_screen_ana = ICTL_H_P2;
+                }
+                JigBD_IF_Change_Current_Gain(gt_screen_gain);
             #else
                 XDIC_Set_Max_Current_Level(gn_xd_screen_ld_fix);
             #endif
@@ -1262,20 +1285,11 @@ void XD_Screen_Task(void)
                         {
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }
-                        ++gn_xd_screen_table_idx;
-                        gn_xd_screen_ana = gn_xd_screen_table[gn_xd_screen_table_idx];
-                        if (gn_xd_screen_table_idx >= XD_SCREEN_TABLE_SIZE)
+
+                        ++loop_cnt;
+                        if (loop_cnt > 3)
                         {
-                            gn_xd_screen_table_idx = 0;
-                            ++gn_xd_screen_phase;
-                            if (gn_xd_screen_phase == 1)
-                            {
-                                gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
-                            }
-                            else
-                            {
-                                gt_xd_screen_step = XD_SCREEN_STEP_STOP;
-                            }
+                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }
                     #else
                         print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \

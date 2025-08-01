@@ -145,15 +145,14 @@ void XDIC_Get_Fault_Status(void)
 
 void XDIC_Vsync_Task(void)
 {
-    static uint8_t vsync_count = 0;
+    static uint32_t vsync_count = 0;
     if (gb_xdic_vsync_flag)
     {
-#if 0
-        LL_mDelay(0);
+        us_delay(100);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
 
-        // fault read if needed
-        //XDIC_Get_Fault_Status();
+        us_delay(10);
+        XDIC_Get_Fault_Status();
 
         if (gb_xdic_write_flag)
         {
@@ -166,30 +165,6 @@ void XDIC_Vsync_Task(void)
             print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
             gb_xdic_read_flag = false;
         }
-        uint16_t id = XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID);
-        if (id != 1)
-        {
-            LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
-            print(LOG_ERROR, "ID mismatch [1 - %u] \r\n", id);
-        }
-#else
-        us_delay(1100);
-        //XC24_Write_Register(0x1F, 0x205A);
-
-        //uint16_t xc = XC24_Read_Register(0x0A);
-        //print(LOG_INFO, "0x0A : 0x%X\r\n", xc);
-
-        JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
-        //uint16_t xc = XC24_Read_Register(0x0C);
-        //print(LOG_INFO, "0x%X\r\n", xc);
-
-#endif
-#if 1
-        us_delay(50);
-        //XC24_Write_Register(0x1F, 0x205A);
-        //uint16_t xc = XC24_Read_Register(0x1F);
-        //print(LOG_INFO, "0x%X\r\n", xc);
-#endif
         gb_xdic_vsync_flag = false;
     }
 }

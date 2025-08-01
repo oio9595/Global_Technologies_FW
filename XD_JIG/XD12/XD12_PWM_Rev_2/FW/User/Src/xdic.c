@@ -465,7 +465,7 @@ void XDIC_Read_All_Registers(void)
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
 
-    XDIC_Dump_All_Registers();
+    //XDIC_Dump_All_Registers();
 }
 
 void XDIC_Param_Init(void)
@@ -503,9 +503,6 @@ void XDIC_Init(void)
     JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
-    print(LOG_INFO, "XDIC Dump Register Before Initial\r\n");
-    XDIC_Read_All_Registers();
-
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
         const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
@@ -514,11 +511,11 @@ void XDIC_Init(void)
             switch (xdic_addr)
             {
             case XDIC_ADDR_LD_CONTROL :
-                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
+                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER :
@@ -798,12 +795,6 @@ void XDIC_Write_Trim_Regs(void)
     }
     else
     {
-#if 0
-        for (uint8_t ch = 0 ; ch < 12 ; ++ch)
-        {
-            gn_xdic_saved_trim_reg[27 + ch] = gn_xdic_saved_trim_reg[3 + ch];
-        }
-#endif
         for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
         {
             XDIC_Write_Mirror_Reg(addr, gn_xdic_saved_trim_reg[addr]);

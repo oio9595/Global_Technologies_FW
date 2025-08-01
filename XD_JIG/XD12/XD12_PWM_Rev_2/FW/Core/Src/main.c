@@ -268,7 +268,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(TRUE);
+    USE_XC24(FALSE);
     XD_Trim_IF_Set_OTP_Enable(FALSE);
     XC_Trim_IF_Set_OTP_Enable(FALSE);
     XC24_Start_MCLK_Oscillation(FALSE);
@@ -349,7 +349,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_5);
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_4);
 }
 
 /**
@@ -366,7 +366,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 400;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLI2SP_DIV2;
   PeriphClkInitStruct.PLLI2S.PLLI2SM = 8;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 4;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
   PeriphClkInitStruct.PLLI2SDivQ = 1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -883,7 +883,7 @@ static void MX_TIM8_Init(void)
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-  TIM_OC_InitStruct.CompareValue = 1; //5 -> 1us
+  TIM_OC_InitStruct.CompareValue = 600;
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
@@ -1187,6 +1187,14 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = XC_MCLK_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
+    LL_GPIO_ResetOutputPin(XC_MCLK_GPIO_Port, XC_MCLK_Pin);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
@@ -1734,6 +1742,50 @@ static void TaskDebugUart(void)
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
+        else if (Command_Param_is_("xc_spi_extension", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                XC24_Set_SPI_Extension(true);
+                print(LOG_INFO, "\r\n SPI Extension Enable \r\n");
+            }
+            else
+            {
+                XC24_Set_SPI_Extension(false);
+                print(LOG_INFO, "\r\n SPI Extension Disable \r\n");
+            }
+        }
+        else if (Command_Param_is_("xc_parity", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                XC24_Set_SPI_Parity_Err(true);
+                print(LOG_INFO, "\r\n SPI Parity Enable \r\n");
+            }
+            else
+            {
+                XC24_Set_SPI_Parity_Err(false);
+                print(LOG_INFO, "\r\n SPI Parity Disable \r\n");
+            }
+        }
+        else if (Command_Param_is_("xc_par_man", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                gb_xc24_spi_parity_manual_flag = true;
+                print(LOG_INFO, "\r\n SPI Parity Manual Enable \r\n");
+            }
+            else
+            {
+                gb_xc24_spi_parity_manual_flag = false;
+                print(LOG_INFO, "\r\n SPI Parity Manual Disable \r\n");
+            }
+        }
+        else if (Command_Param_is_("xc_par_num", "%d", &u32_recv_param[0]))
+        {
+            gn_xc24_spi_parity_manual_num = u32_recv_param[0];
+            print(LOG_INFO, "\r\n SPI Parity Manual Number to %u\r\n", gn_xc24_spi_parity_manual_num);
+        }
         else if (Command_is_("xc_trim_ldo"))
         {
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
@@ -1898,6 +1950,11 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n system reset \r\n");
             NVIC_SystemReset();
         }
+        else if (Command_is_("test"))
+        {
+            JigBD_IF_SyncGen_Command();
+            JigBD_IF_IdGen_Command();
+        }
         else
         {
             print(LOG_INFO, "\r\n What?\n\r");
@@ -1908,7 +1965,15 @@ static void TaskDebugUart(void)
 __STATIC_INLINE void UART_PutChar(uint8_t data)
 {
     /* Echo received character on TX */
-    LL_USART_TransmitData8(USART2, (uint8_t)data);
+    if ((data == '\n') || (data == '\r'))
+    {
+        LL_USART_TransmitData8(USART2, '\r');
+        LL_USART_TransmitData8(USART2, '\n');
+    }
+    else
+    {
+        LL_USART_TransmitData8(USART2, data);
+    }
 
     /* Loop until the end of transmission */
     while (RESET == LL_USART_IsActiveFlag_TXE(USART2));

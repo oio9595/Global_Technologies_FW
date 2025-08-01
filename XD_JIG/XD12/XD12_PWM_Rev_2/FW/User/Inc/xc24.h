@@ -684,14 +684,12 @@ typedef union tag_SPI_FAULT_STATUS_CONTROL
     uint16_t ALL;
     struct
     {
-        uint16_t parity_err_det_en  : 1;
-        uint16_t acc_cnt_err_det_en : 1;
-        uint16_t parity_err_mode    : 1;
-        uint16_t                    : 1;
-        uint16_t parity_err         : 1;
-        uint16_t acc_cnt_err        : 1;
-        uint16_t                    : 2;
-        uint16_t acc_counter        : 8;
+        uint16_t spi_ext_en  : 1;
+        uint16_t             : 3;
+        uint16_t parity_err  : 1;
+        uint16_t acc_cnt_err : 1;
+        uint16_t             : 2;
+        uint16_t acc_counter : 8;
     };
 }_v_spi_fault_status_control_t;
 
@@ -1676,6 +1674,9 @@ typedef union _xc24_mirror_regs
 
 extern volatile uint8_t gn_xc_spi_timeout;
 
+extern bool gb_xc24_spi_parity_manual_flag;
+extern uint8_t gn_xc24_spi_parity_manual_num;
+
 extern void XC24_Write_Register(uint16_t in_addr, uint16_t in_data);
 extern uint16_t XC24_Read_Register(uint8_t in_addr);
 extern void XC24_Read_Register_All(void);
@@ -1684,6 +1685,8 @@ extern void XC24_Init(void);
 extern void XC24_Trim_Init(void);
 
 extern void XC24_Set_OTP_Protect(bool en);
+extern void XC24_Set_SPI_Extension(bool en);
+extern void XC24_Set_SPI_Parity_Err(bool en);
 
 extern void XC24_Trim_Init_VCTL_LDO(void);
 extern void XC24_Trim_Init_DAC_Gain(void);
