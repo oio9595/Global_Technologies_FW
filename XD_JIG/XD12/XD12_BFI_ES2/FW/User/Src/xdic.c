@@ -480,7 +480,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ld_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
     gt_xd_short_level = SHORT_LEVEL_6V;
     gt_xd_fb_level = FB_LEVEL_0V5;
 }
@@ -505,7 +505,7 @@ void XDIC_Init(void)
             case XDIC_ADDR_LD_MODE :
                 gt_xdic_general_regs._r01.ld_mode = XD_LD_MODE_NORMAL;
                 gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 break;
             case XDIC_ADDR_SF_PERIOD :
                 gt_xdic_general_regs._r02.sf_period = gn_xd_sf_period;
@@ -516,6 +516,12 @@ void XDIC_Init(void)
             case XDIC_ADDR_CH_SF_X8_SIZE :
                 gt_xdic_general_regs._r04.sf_x8_size = gn_xd_sf_x8_size;
                 gt_xdic_general_regs._r04.ld_size = gn_xd_ld_size;
+                break;
+            case XDIC_ADDR_LD_FIX_1 :
+                gt_xdic_general_regs._r06.ld_fix = 0xFFF;
+                break;
+            case XDIC_ADDR_LD_FIX_2 :
+                gt_xdic_general_regs._r07.ld_fix = 0x00F;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
                 gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
@@ -532,6 +538,8 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r0D.short_det_en1 = 1;
                 gt_xdic_general_regs._r0D.open_det_en = 1;
                 gt_xdic_general_regs._r0D.timeout_en = 1;
+                gt_xdic_general_regs._r0D.ms_vs_det_e = 1;
+                gt_xdic_general_regs._r0D.ms_vs_dimm = 1;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r26.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -546,6 +554,9 @@ void XDIC_Init(void)
             case XDIC_ADDR_MCLK_LOCK_2 :
                 gt_xdic_general_regs._r2A.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r2A.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
+                break;
+            case XDIC_ADDR_VREF_FIX :
+                gt_xdic_general_regs._r2F.vref_fix = 0xFFF;
                 break;
             default :
                 continue;

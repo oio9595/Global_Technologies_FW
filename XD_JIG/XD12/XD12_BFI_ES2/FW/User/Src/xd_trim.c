@@ -21,25 +21,27 @@
 #define XDIC_OSC_TARGET             (XD_MCLK/1000000)   /* MHz */
 
 #define XDIC_GAIN_ERR_RATE          (0.75/100)   /* % */
-#define XDIC_GAIN_TARGET            (0.875f)     /* mA */
 #define XDIC_GAIN_P1                (6 << 11 | 0x7FF)
 #define XDIC_GAIN_P2                (6 << 11 | 0x7FF)
+#define XDIC_GAIN_P_AVG             ((XDIC_GAIN_P1 + XDIC_GAIN_P2) / 2.0f)
+#define XDIC_GAIN_TARGET            (8.0f * XDIC_GAIN_P_AVG / 65535)
 
 #define XDIC_OFS_ERR_RATE           (0.75/100)   /* % */
-#define XDIC_OFS_TARGET             (0.500f)     /* mA */
-#define XDIC_OFS_P1                 (2 << 11 | 0x7FF)
+#define XDIC_OFS_P1                 (1 << 11 | 0x7FF)
 #define XDIC_OFS_P2                 (4 << 11 | 0x7FF)
+#define XDIC_OFS_P_AVG              ((XDIC_OFS_P1 + XDIC_OFS_P2) / 2.0f)
+#define XDIC_OFS_TARGET             (8.0f * XDIC_OFS_P_AVG / 65535)     /* mA */
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
 
-//#define XD_SCREEN_ANA_GAP           35
-#define XD_SCREEN_ANA_GAP           51
-#define XD_SCREEN_LD_FIX_GAP        1
+#define XD_SCREEN_ANA_GAP           (51)
+//#define XD_SCREEN_LD_FIX_GAP        (1)
+#define XD_SCREEN_LD_FIX_GAP        (164)
 
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_LD_FIX            (1)
-#define XD_SCREEN_TYPE              XD_SCREEN_ANA
+#define XD_SCREEN_TYPE              XD_SCREEN_LD_FIX
 
 static const char* gs_trim_mode[XD_TRIM_MAX] =
 {
@@ -1028,20 +1030,20 @@ void XD_Screen_Task(void)
             JigBD_IF_VLED_9V_EN(PWR_ON);
             XDIC_Set_LD_Fix(0xFFFF);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
-    #if 1
+
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
-    #endif
             print(LOG_INFO, "data, io_1, io_2, io_3, io_4, io_5, io_6, io_7, io_8, io_9, io_10, io_11, io_12\r\n");
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
-                XDIC_Set_LD_Fix((gn_xd_screen_ld_fix << 11 | 0x7FF));
+                //XDIC_Set_LD_Fix((gn_xd_screen_ld_fix << 11 | 0x7FF));
+                XDIC_Set_LD_Fix(gn_xd_screen_ld_fix);
             #endif
             gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
             break;
@@ -1086,7 +1088,14 @@ void XD_Screen_Task(void)
                         gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
                         if (gn_xd_screen_ana > 0xFFF)
                         {
-                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                            if (gn_xd_screen_ana == 4146)
+                            {
+                                gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                            }
+                            else
+                            {
+                                gn_xd_screen_ana = 4095;
+                            }
                         }
                     #else
                         print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
@@ -1094,7 +1103,7 @@ void XD_Screen_Task(void)
                         gf_screen_current[ 6], gf_screen_current[ 7], gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
                         gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
-                        if (gn_xd_screen_ld_fix > 31)
+                        if (gn_xd_screen_ld_fix > 65535/*31*/)
                         {
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }
