@@ -5,7 +5,7 @@
 #include "tlc59581.h"
 #include "comm_debug.h"
 
-#define CED_PARALLEL_SIZE           (1)
+#define CED_PARALLEL_SIZE           (3)
 
 #define CMD_WRTFC                   (0x01)
 #define CMD_FCWRTEN                 (0x02)
@@ -56,6 +56,7 @@ typedef union _tag_tlc59581_reg_fc1_
         uint64_t CCR                : 9;    /* color brightness control, OUT_R0 ~ OUT_R15 */
         uint64_t BC                 : 3;    /* global brightness control */
         uint64_t CMD_FC1            : 4;    /* 0b1001 */
+        uint64_t                    :64;    /* reserved */
     }u;
 }_tlc59581_fc1_t_;
 
@@ -88,6 +89,7 @@ typedef union _tag_tlc59518_reg_fc2_
         uint64_t INTERFERENCE_R     : 2;
         uint64_t REVERSE_V_R        : 2;
         uint64_t CMD_FC2            : 4;    /* 0b0110 */
+        uint64_t                    :64;    /* reserved */
     }u;
 }_tlc59581_fc2_t_;
 
@@ -110,6 +112,9 @@ typedef struct _tag_gray_scale_format_
 static _tlc59581_gray_scale_format_t_ gt_tlc59581_gray_scale_buffer;
 static _tlc59581_pattern_t_ gt_tlc59581_pattern;
 static uint16_t gn_gray_scale_value;
+
+static uint16_t gn_tlc_fc1_buffer[4] = {0, };
+static uint16_t gn_tlc_fc2_buffer[4] = {0, };
 
 static const uint16_t const_cmd_vsync[4] = { CMD_VSYNC, 0, 0, 0 };
 static const uint16_t const_cmd_write_gray_scale[4] = { CMD_WRTGS, 0, 0, 0 };
@@ -305,11 +310,9 @@ static inline void tlc59581_transmit_fc_enable(void)
 
 static void tlc59581_fc1_reg_init(void)
 {
-    uint16_t temp_fc1_buff[4] = {0, };
-
     gt_tlc59581_fc1.u.LODVTH          =  1;
     gt_tlc59581_fc1.u.SEL_TD0         =  1;
-    gt_tlc59581_fc1.u.LOD_REMOVAL_EN  =  1;
+    gt_tlc59581_fc1.u.LOD_REMOVAL_EN  =  0;
 
     gt_tlc59581_fc1.u.CCB             =  CED_PARALLEL_SIZE * 25; /* 100.5uA */
     gt_tlc59581_fc1.u.CCG             =  CED_PARALLEL_SIZE * 25;
@@ -318,34 +321,32 @@ static void tlc59581_fc1_reg_init(void)
     gt_tlc59581_fc1.u.BC              =  0;
     gt_tlc59581_fc1.u.CMD_FC1         =  9;    /* 0b1001, refer to datasheet page.14 */
 
-    temp_fc1_buff[0] = CMD_WRTFC;
-    temp_fc1_buff[1] = ((gt_tlc59581_fc1.value >> 32) & 0xFFFF);
-    temp_fc1_buff[2] = ((gt_tlc59581_fc1.value >> 16) & 0xFFFF);
-    temp_fc1_buff[3] = ((gt_tlc59581_fc1.value >>  0) & 0xFFFF);
+    gn_tlc_fc1_buffer[0] = CMD_WRTFC;
+    gn_tlc_fc1_buffer[1] = ((gt_tlc59581_fc1.value >> 32) & 0xFFFF);
+    gn_tlc_fc1_buffer[2] = ((gt_tlc59581_fc1.value >> 16) & 0xFFFF);
+    gn_tlc_fc1_buffer[3] = ((gt_tlc59581_fc1.value >>  0) & 0xFFFF);
 
-    //print("0x%016llX --> 0x%04X, 0x%04X, 0x%04X, 0x%04X\r\n", gt_tlc59581_fc1.value, temp_fc1_buff[0], temp_fc1_buff[1], temp_fc1_buff[2], temp_fc1_buff[3]);
+    print("0x%016llX --> 0x%04X, 0x%04X, 0x%04X, 0x%04X\r\n", gt_tlc59581_fc1.value, gn_tlc_fc1_buffer[0], gn_tlc_fc1_buffer[1], gn_tlc_fc1_buffer[2], gn_tlc_fc1_buffer[3]);
 
     tlc59581_transmit_fc_enable();
-    spi_write(temp_fc1_buff, TLC_WRTFC_SIZE);
+    spi_write((uint16_t*)gn_tlc_fc1_buffer, TLC_WRTFC_SIZE);
 }
 
 static void tlc59581_fc2_reg_init(void)
 {
-    uint16_t temp_fc2_buff[4] = {0, };
-
     gt_tlc59581_fc2.u.RSV_HIGH = 1;
     gt_tlc59581_fc2.u.MAX_LINE = (TLC_LINE_SIZE - 1); /* Max Line num - 1 */
     gt_tlc59581_fc2.u.CMD_FC2 = 6; /* 0b0110, refer to datasheet page.14 */
 
-    temp_fc2_buff[0] = CMD_WRTFC;
-    temp_fc2_buff[1] = ((gt_tlc59581_fc2.value >> 32) & 0xFFFF);
-    temp_fc2_buff[2] = ((gt_tlc59581_fc2.value >> 16) & 0xFFFF);
-    temp_fc2_buff[3] = ((gt_tlc59581_fc2.value >>  0) & 0xFFFF);
+    gn_tlc_fc2_buffer[0] = CMD_WRTFC;
+    gn_tlc_fc2_buffer[1] = ((gt_tlc59581_fc2.value >> 32) & 0xFFFF);
+    gn_tlc_fc2_buffer[2] = ((gt_tlc59581_fc2.value >> 16) & 0xFFFF);
+    gn_tlc_fc2_buffer[3] = ((gt_tlc59581_fc2.value >>  0) & 0xFFFF);
 
-    //print("0x%016llX --> 0x%04X, 0x%04X, 0x%04X, 0x%04X\r\n", gt_tlc59581_fc2.value, temp_fc2_buff[0], temp_fc2_buff[1], temp_fc2_buff[2], temp_fc2_buff[3]);
+    print("0x%016llX --> 0x%04X, 0x%04X, 0x%04X, 0x%04X\r\n", gt_tlc59581_fc2.value, gn_tlc_fc2_buffer[0], gn_tlc_fc2_buffer[1], gn_tlc_fc2_buffer[2], gn_tlc_fc2_buffer[3]);
 
     tlc59581_transmit_fc_enable();
-    spi_write(temp_fc2_buff, TLC_WRTFC_SIZE);
+    spi_write((uint16_t*)gn_tlc_fc2_buffer, TLC_WRTFC_SIZE);
 }
 
 void tlc59581_init(void)
