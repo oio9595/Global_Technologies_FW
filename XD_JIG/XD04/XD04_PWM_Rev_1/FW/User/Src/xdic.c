@@ -646,7 +646,6 @@ void XDIC_Trim_Init(void)
         }
     }
     XDIC_Set_OTP_Protect(false);
-
     print(LOG_INFO, "XDIC Dump Register After Initial\r\n");
     XDIC_Read_All_Registers();
 }

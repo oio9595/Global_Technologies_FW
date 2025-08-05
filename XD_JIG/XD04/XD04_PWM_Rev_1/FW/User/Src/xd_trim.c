@@ -17,7 +17,6 @@
 
 #define XDIC_ICTL_TRIM_AVG          (0)
 #define XDIC_ICTL_TRIM_DELTA        (1)
-
 #define XDIC_ICTL_TRIM_MODE         (XDIC_ICTL_TRIM_AVG)  /* 0: Average, 1: Delta */
 
 /* Trimming spec */
@@ -35,8 +34,11 @@
 #endif
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-#define XDIC_ICTL_H_P1              (500)
-#define XDIC_ICTL_H_P2              (900)
+/**************************************************/
+/*Trim Point!!!!!!!!!!!!!!!!!**/
+#define XDIC_ICTL_H_P1              (400)
+#define XDIC_ICTL_H_P2              (1300)
+/**************************************************/
 #if (XDIC_ICTL_TRIM_MODE == XDIC_ICTL_TRIM_AVG)
     #define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 #else
@@ -56,8 +58,11 @@
 #define XDIC_ICTL_L_SCREEN_TARGET3  (7.962f)
 #endif
 
-#define XDIC_ICTL_H_SCREEN_P1       (270)
-#define XDIC_ICTL_H_SCREEN_P2       (990)
+/**************************************************/
+/*Screen Point!!!!!!!!!!!!!!!!!**/
+#define XDIC_ICTL_H_SCREEN_P1       (500)
+#define XDIC_ICTL_H_SCREEN_P2       (3100)
+/**************************************************/
 #define XDIC_ICTL_H_SCREEN_P3       (4095)
 
 #define XDIC_ICTL_H_SCREEN_TARGET1  (1.600f)
@@ -980,12 +985,18 @@ void XD_Trim_Task(void)
                 break;
 
             case XD_TRIM_STEP_SCREEN :
+                DEBUG_HI();
+                JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
+                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT-1 ; ++i)
                 {
+                    DEBUG_LO();
                     XDIC_Trim_Init_ICTL_H_CH();
+                    DEBUG_HI();
                     JigBD_IF_Change_Current_Gain(gt_xd_screen_param[i].gain);
+                    DEBUG_LO();
                     XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
+                    LL_mDelay(9);
                     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
                     {
                         JigBD_IF_Select_Output_Ch(ch);
@@ -1009,18 +1020,18 @@ void XD_Trim_Task(void)
                     }
                 }
 
-                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
+                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT-1 ; ++i)
                 {
                     if ((gt_xd_screen_param[i].f_avg > gt_xd_screen_param[i].f_target_min) && (gt_xd_screen_param[i].f_avg < gt_xd_screen_param[i].f_target_max))
                     {
                         gt_xd_screen_param[i].judge_flag = true;
                     }
-                    print(LOG_INFO, "%u, %.3f, %.3f, %.3f, %.3f, %.3f\r\n",
-                        gt_xd_screen_param[i].judge_flag, gt_xd_screen_param[i].f_avg,
+                    print(LOG_INFO, "%u, %.3f, %.3f, %.3f, %.3f\r\n",
+                        gt_xd_screen_param[i].vref_point,
                         gt_xd_screen_param[i].f_measured[0], gt_xd_screen_param[i].f_measured[1],
                         gt_xd_screen_param[i].f_measured[2], gt_xd_screen_param[i].f_measured[3]);
                 }
-                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag && gt_xd_screen_param[2].judge_flag && gt_xd_screen_param[3].judge_flag)
+                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag && gt_xd_screen_param[2].judge_flag)
                 {
                     print(LOG_INFO, "\r\n======== XD SCREEN - PASS ========\r\n");
                     if (gb_xd_otp_write_flag)
