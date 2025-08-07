@@ -11,6 +11,8 @@ typedef enum _tag_tlc59581_pattern_t_
     PATTERN_VERTICAL,
     PATTERN_CHECKERBOARD_1,
     PATTERN_CHECKERBOARD_2,
+    PATTERN_INCREASE,
+    PATTERN_DECREASE,
     PATTERN_MAX
 }_tlc59581_pattern_t_;
 
@@ -19,7 +21,13 @@ static const char* gs_tlc59581_pattern[PATTERN_MAX] =
     "PATTERN_NONE",
     "PATTERN_RED",
     "PATTERN_GREEN",
-    "PATTERN_BLUE"
+    "PATTERN_BLUE",
+    "PATTERN_HORIZONTAL",
+    "PATTERN_VERTICAL",
+    "PATTERN_CHECKERBOARD_1",
+    "PATTERN_CHECKERBOARD_2",
+    "PATTERN_INCREASE",
+    "PATTERN_DECREASE",
 };
 
 extern volatile bool gb_vsync_flag;

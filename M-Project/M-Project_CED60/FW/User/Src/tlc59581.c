@@ -124,6 +124,19 @@ volatile bool gb_vsync_flag = false;
 volatile bool gb_gray_scale_parsing_flag = false;
 volatile bool gb_spi_tx_flag = false;
 
+#define PATTERN_INCREASE_TABLE_SIZE (133)
+static uint16_t gn_gs_increase_table[PATTERN_INCREASE_TABLE_SIZE] =
+{
+    0,780,1560,2340,3120,3900,4680,5460,6240,7020,7800,8580,9360,10140,10920,11700,12480,13260,14040,14820,15600,16380,17160,17940,18720,19500,20280,21060,21840,22620,23400,24180,24960,25740,26520,27300,28080,28860,29640,30420,31200,31980,32760,33540,34320,35100,35880,36660,37440,38220,39000,39780,40560,41340,42120,42900,43680,44460,45240,46020,46800,47580,48360,49140,49920,50700,51480,52260,53040,53820,54600,55380,56160,56940,57720,58500,59280,60060,60840,61620,62400,63180,63960,64740,65520,65535,65535,65535,65535,65535,65535,65535,65535,0,0,0,0,0,0,0,0,65535,65535,65535,65535,65535,65535,65535,65535,0,0,0,0,0,0,0,0,65535,65535,65535,65535,65535,65535,65535,65535,0,0,0,0,0,0,0,0,
+};
+
+#define PATTERN_DECREASE_TABLE_SIZE (133)
+static uint16_t gn_gs_decrease_table[PATTERN_DECREASE_TABLE_SIZE] =
+{
+    65535,64755,63975,63195,62415,61635,60855,60075,59295,58515,57735,56955,56175,55395,54615,53835,53055,52275,51495,50715,49935,49155,48375,47595,46815,46035,45255,44475,43695,42915,42135,41355,40575,39795,39015,38235,37455,36675,35895,35115,34335,33555,32775,31995,31215,30435,29655,28875,28095,27315,26535,25755,24975,24195,23415,22635,21855,21075,20295,19515,18735,17955,17175,16395,15615,14835,14055,13275,12495,11715,10935,10155,9375,8595,7815,7035,6255,5475,4695,3915,3135,2355,1575,795,15,0,0,0,0,0,0,0,0,65535,65535,65535,65535,65535,65535,65535,65535,0,0,0,0,0,0,0,0,65535,65535,65535,65535,65535,65535,65535,65535,0,0,0,0,0,0,0,0,65535,65535,65535,65535,65535,65535,65535,65535,
+};
+static uint16_t gn_gs_inc_dec_table_index;
+
 static void spi_write(uint16_t* p_data, uint16_t length)
 {
     while(gb_spi_tx_flag) {}
@@ -174,6 +187,7 @@ void tlc59581_set_pattern(_tlc59581_pattern_t_ pattern)
     if (pattern < PATTERN_MAX)
     {
         gt_tlc59581_pattern = pattern;
+        gn_gs_inc_dec_table_index = 0;
         print("OK!!\r\n");
     }
     else
@@ -189,6 +203,8 @@ static void tlc59581_generate_pattern(void)
         switch (gt_tlc59581_pattern)
         {
             case PATTERN_NONE :
+            case PATTERN_INCREASE :
+            case PATTERN_DECREASE :
                 for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
                     for (uint8_t line = 0 ; line < TLC_LINE_SIZE ; ++line)
@@ -199,6 +215,7 @@ static void tlc59581_generate_pattern(void)
                     }
                 }
                 break;
+
             case PATTERN_RED :
                 for (uint8_t output = 0 ; output < TLC_PHYSICAL_OUTPUT_SIZE ; ++output)
                 {
@@ -314,11 +331,11 @@ static void tlc59581_fc1_reg_init(void)
     gt_tlc59581_fc1.u.SEL_TD0         =  1;
     gt_tlc59581_fc1.u.LOD_REMOVAL_EN  =  0;
 
-    gt_tlc59581_fc1.u.CCB             =  CED_PARALLEL_SIZE * 25; /* 100.5uA */
-    gt_tlc59581_fc1.u.CCG             =  CED_PARALLEL_SIZE * 25;
-    gt_tlc59581_fc1.u.CCR             =  CED_PARALLEL_SIZE * 25;
+    gt_tlc59581_fc1.u.CCB             =  511; // CED_PARALLEL_SIZE * 25; /* 100.5uA */
+    gt_tlc59581_fc1.u.CCG             =  511; // CED_PARALLEL_SIZE * 25;
+    gt_tlc59581_fc1.u.CCR             =  511; // CED_PARALLEL_SIZE * 25;
 
-    gt_tlc59581_fc1.u.BC              =  0;
+    gt_tlc59581_fc1.u.BC              =  7;
     gt_tlc59581_fc1.u.CMD_FC1         =  9;    /* 0b1001, refer to datasheet page.14 */
 
     gn_tlc_fc1_buffer[0] = CMD_WRTFC;
@@ -354,7 +371,7 @@ void tlc59581_init(void)
     tlc59581_fc1_reg_init();
     tlc59581_fc2_reg_init();
 
-    gn_gray_scale_value = 100;
+    gn_gray_scale_value = 30000;
 
     LL_TIM_EnableCounter(TIM1);
 }
@@ -368,6 +385,25 @@ static void tlc59581_vsync_task(void)
         tlc59581_transmit_write_gray_scale();
 
         tlc59581_transmit_frame_buffer();
+
+        if (gt_tlc59581_pattern == PATTERN_INCREASE)
+        {
+            gn_gray_scale_value = gn_gs_increase_table[gn_gs_inc_dec_table_index];
+            ++gn_gs_inc_dec_table_index;
+            if (gn_gs_inc_dec_table_index >= PATTERN_INCREASE_TABLE_SIZE)
+            {
+                gn_gs_inc_dec_table_index = 0;
+            }
+        }
+        else if (gt_tlc59581_pattern == PATTERN_DECREASE)
+        {
+            gn_gray_scale_value = gn_gs_decrease_table[gn_gs_inc_dec_table_index];
+            ++gn_gs_inc_dec_table_index;
+            if (gn_gs_inc_dec_table_index >= PATTERN_DECREASE_TABLE_SIZE)
+            {
+                gn_gs_inc_dec_table_index = 0;
+            }
+        }
 
         gb_vsync_flag = false;
     }
