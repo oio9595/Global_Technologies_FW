@@ -15,10 +15,6 @@
 #include "JigBd_IF.h"
 #include "ads124s08.h"
 
-#define XDIC_ICTL_TRIM_AVG          (0)
-#define XDIC_ICTL_TRIM_DELTA        (1)
-#define XDIC_ICTL_TRIM_MODE         (XDIC_ICTL_TRIM_AVG)  /* 0: Average, 1: Delta */
-
 /* Trimming spec */
 #define XDIC_ERR_RATE               (1.0/100)   /* % */
 #define XDIC_VREF_TARGET            (2.2)       /* V */
@@ -27,47 +23,21 @@
 #define XDIC_ICTL_L_ERR_RATE        (0.5/100)   /* % */
 #define XDIC_ICTL_L_P1              (500)
 #define XDIC_ICTL_L_P2              (900)
-#if (XDIC_ICTL_TRIM_MODE == XDIC_ICTL_TRIM_AVG)
-    #define XDIC_ICTL_L_TARGET          (24.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
-#else
-    #define XDIC_ICTL_L_TARGET          (24.0f * (XDIC_ICTL_L_P2 - XDIC_ICTL_L_P1) / (XDIC_VREF_MAX))   /* mA */
-#endif
+#define XDIC_ICTL_L_TARGET          (24.0f * (XDIC_ICTL_L_P1 + XDIC_ICTL_L_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
 #define XDIC_ICTL_H_ERR_RATE        (0.5/100)   /* % */
-/**************************************************/
-/*Trim Point!!!!!!!!!!!!!!!!!**/
-#define XDIC_ICTL_H_P1              (400)
-#define XDIC_ICTL_H_P2              (1300)
-/**************************************************/
-#if (XDIC_ICTL_TRIM_MODE == XDIC_ICTL_TRIM_AVG)
-    #define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
-#else
-    #define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P2 - XDIC_ICTL_H_P1) / (XDIC_VREF_MAX))   /* mA */
-#endif
+#define XDIC_ICTL_H_P1              (500)
+#define XDIC_ICTL_H_P2              (900)
+#define XDIC_ICTL_H_TARGET          (128.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
-#define XDIC_ICTL_SCREEN_POINT      (3)
+#define XDIC_ICTL_SCREEN_POINT      (2)
 #define XDIC_ICTL_SCREEN_ERR_RATE   (3.2/100)   /* % */
 
-#if 0
-#define XDIC_ICTL_L_SCREEN_P1       (270)
-#define XDIC_ICTL_L_SCREEN_P2       (990)
-#define XDIC_ICTL_L_SCREEN_P3       (4095)
+#define XDIC_ICTL_H_SCREEN_P1       (270)
+#define XDIC_ICTL_H_SCREEN_P2       (990)
 
-#define XDIC_ICTL_L_SCREEN_TARGET1  (0.526f)
-#define XDIC_ICTL_L_SCREEN_TARGET2  (1.932f)
-#define XDIC_ICTL_L_SCREEN_TARGET3  (7.962f)
-#endif
-
-/**************************************************/
-/*Screen Point!!!!!!!!!!!!!!!!!**/
-#define XDIC_ICTL_H_SCREEN_P1       (500)
-#define XDIC_ICTL_H_SCREEN_P2       (3100)
-/**************************************************/
-#define XDIC_ICTL_H_SCREEN_P3       (4095)
-
-#define XDIC_ICTL_H_SCREEN_TARGET1  (1.600f)
-#define XDIC_ICTL_H_SCREEN_TARGET2  (5.862f)
-#define XDIC_ICTL_H_SCREEN_TARGET3  (24.119f)
+#define XDIC_ICTL_H_SCREEN_TARGET1  (8.35965f)
+#define XDIC_ICTL_H_SCREEN_TARGET2  (30.9611f)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -103,11 +73,6 @@ void XD_Screen_Init(void)
     gt_xd_screen_param[1].f_target_max = XDIC_ICTL_H_SCREEN_TARGET2 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
     gt_xd_screen_param[1].vref_point = XDIC_ICTL_H_SCREEN_P2;
     gt_xd_screen_param[1].gain = GAIN_HIGH;
-
-    gt_xd_screen_param[2].f_target_min = XDIC_ICTL_H_SCREEN_TARGET3 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[2].f_target_max = XDIC_ICTL_H_SCREEN_TARGET3 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[2].vref_point = XDIC_ICTL_H_SCREEN_P3;
-    gt_xd_screen_param[2].gain = GAIN_HIGH;
 }
 
 static const char* gs_trim_mode[XD_TRIM_MAX] =
@@ -870,21 +835,13 @@ void XD_Trim_Task(void)
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_GAIN;
                     u8_tmp_channel_max = XD_CH_MAX;
                     t_trim_search_mode_next = XD_TRIM_ICTL_H_CHS;
-                    #if (XDIC_ICTL_TRIM_MODE == XDIC_ICTL_TRIM_AVG)
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
-                    #else
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] - gn_slope_adc[gn_xd_adc_channel][0])) + 0.5f); //delta of 2-point
-                    #endif
+                    u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
                     break;
                 case XD_TRIM_ICTL_H_CHS:
                     u16_tmp_init_adc_per_reg = INIT_ADC_PER_REG_OFS;
                     u8_tmp_channel_max = XD_CH_MAX;
                     t_trim_search_mode_next = XD_TRIM_MAX;
-                    #if (XDIC_ICTL_TRIM_MODE == XDIC_ICTL_TRIM_AVG)
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
-                    #else
-                        u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] - gn_slope_adc[gn_xd_adc_channel][0])) + 0.5f); //delta of 2-point
-                    #endif
+                    u16_tmp_adc_cur = (uint16_t)(((float)(gn_slope_adc[gn_xd_adc_channel][1] + gn_slope_adc[gn_xd_adc_channel][0]) / 2.0f) + 0.5f); //average of 2-point
                     break;
                 }
 
@@ -985,16 +942,12 @@ void XD_Trim_Task(void)
                 break;
 
             case XD_TRIM_STEP_SCREEN :
-                DEBUG_HI();
                 JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT-1 ; ++i)
+                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
                 {
-                    DEBUG_LO();
                     XDIC_Trim_Init_ICTL_H_CH();
-                    DEBUG_HI();
                     JigBD_IF_Change_Current_Gain(gt_xd_screen_param[i].gain);
-                    DEBUG_LO();
                     XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
                     LL_mDelay(9);
                     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
@@ -1020,7 +973,7 @@ void XD_Trim_Task(void)
                     }
                 }
 
-                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT-1 ; ++i)
+                for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
                 {
                     if ((gt_xd_screen_param[i].f_avg > gt_xd_screen_param[i].f_target_min) && (gt_xd_screen_param[i].f_avg < gt_xd_screen_param[i].f_target_max))
                     {
@@ -1031,7 +984,7 @@ void XD_Trim_Task(void)
                         gt_xd_screen_param[i].f_measured[0], gt_xd_screen_param[i].f_measured[1],
                         gt_xd_screen_param[i].f_measured[2], gt_xd_screen_param[i].f_measured[3]);
                 }
-                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag && gt_xd_screen_param[2].judge_flag)
+                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag)
                 {
                     print(LOG_INFO, "\r\n======== XD SCREEN - PASS ========\r\n");
                     if (gb_xd_otp_write_flag)
