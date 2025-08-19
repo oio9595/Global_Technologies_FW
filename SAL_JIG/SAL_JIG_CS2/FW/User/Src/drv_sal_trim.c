@@ -18,7 +18,7 @@
 #define TRIM_WAFER              (0)
 #define TRIM_PACKAGE            (1)
 #define TRIM_FULL               (2)
-#define TRIM_TYPE               TRIM_WAFER
+#define TRIM_TYPE               TRIM_FULL
 
 #define LED_EP                  (0)
 #define LED_HC                  (1)
@@ -80,7 +80,7 @@ static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
     { 263.0, 291.0, 0.0}, /* ADC_GAIN            277 reg value */
     { 479.0, 530.0, 0.0}, /* ADC_OFFSET          505 reg value */
     { 495.0, 547.0, 0.0}, /* TEMP_TRIM_BGR       521 reg value */
-    { 15.96,  14.5, 5.8}, /* CURRENT_ITRIM mA    check RGB Max current */
+    { 17.78, 15.43, 8.7}, /* CURRENT_ITRIM mA    check RGB Max current */
 };
 
 static uint16_t gn_sal_trim_reg_range[TRIM_MODE_MAX] =
@@ -1935,15 +1935,9 @@ void sal_trimming_procedure(void)
         gt_sal_trim_regs._rF2.pwm_max_g = 0;
         gt_sal_trim_regs._rF3.pwm_max_b = 0;
 #else
-    #if (LED_TYPE == LED_EP)
-            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
-            gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
-            gt_sal_trim_regs._rF3.pwm_max_b = 0x429;
-    #else
-            gt_sal_trim_regs._rF1.pwm_max_r = 0xAA3;
-            gt_sal_trim_regs._rF2.pwm_max_g = 0x933;
-            gt_sal_trim_regs._rF3.pwm_max_b = 0x466;
-    #endif
+        gt_sal_trim_regs._rF1.pwm_max_r = 3685;
+        gt_sal_trim_regs._rF2.pwm_max_g = 3685;
+        gt_sal_trim_regs._rF3.pwm_max_b = 3685;
 #endif
 
         i2c_info.reg_addr = SAL_TRIM_ADDR_OTP2_MIRROR14;
