@@ -1950,11 +1950,6 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "\r\n system reset \r\n");
             NVIC_SystemReset();
         }
-        else if (Command_is_("test"))
-        {
-            JigBD_IF_SyncGen_Command();
-            JigBD_IF_IdGen_Command();
-        }
         else
         {
             print(LOG_INFO, "\r\n What?\n\r");
