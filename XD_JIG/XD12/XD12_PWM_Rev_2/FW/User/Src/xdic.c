@@ -465,7 +465,7 @@ void XDIC_Read_All_Registers(void)
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
 
-    //XDIC_Dump_All_Registers();
+    XDIC_Dump_All_Registers();
 }
 
 void XDIC_Param_Init(void)
@@ -576,7 +576,6 @@ void XDIC_Init(void)
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
-    print(LOG_INFO, "XDIC Dump Register After Initial\r\n");
     XDIC_Read_All_Registers();
 }
 
@@ -593,9 +592,6 @@ void XDIC_Trim_Init(void)
 
     JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
-
-    print(LOG_INFO, "XDIC Dump Register Before Initial\r\n");
-    XDIC_Read_All_Registers();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
@@ -640,8 +636,6 @@ void XDIC_Trim_Init(void)
         }
     }
     XDIC_Set_OTP_Protect(false);
-
-    print(LOG_INFO, "XDIC Dump Register After Initial\r\n");
     XDIC_Read_All_Registers();
 }
 

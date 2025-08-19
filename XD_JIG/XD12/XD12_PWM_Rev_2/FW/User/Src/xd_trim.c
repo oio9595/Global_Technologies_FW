@@ -30,42 +30,22 @@
 #define XDIC_ICTL_H_P2              (1100)
 #define XDIC_ICTL_H_TARGET          (24.0f * (XDIC_ICTL_H_P1 + XDIC_ICTL_H_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
 
-#define XDIC_ICTL_SCREEN_POINT      (6)
+#define XDIC_ICTL_SCREEN_POINT      (4)
 #define XDIC_ICTL_SCREEN_ERR_RATE   (2.0f/100)   /* % */
 
-#define XDIC_ICTL_L_SCREEN_P1       (390)
-#define XDIC_ICTL_L_SCREEN_P2       (1110)
-#define XDIC_ICTL_L_SCREEN_P3       (3390)
+#define XDIC_ICTL_L_SCREEN_P1       (350)
+#define XDIC_ICTL_L_SCREEN_P2       (3100)
 
-#if 1
-    #define XDIC_ICTL_L_SCREEN_TARGET1  (0.78387281f)
-    #define XDIC_ICTL_L_SCREEN_TARGET2  (1.94592544f)
-    #define XDIC_ICTL_L_SCREEN_TARGET3  (7.73764912f)
-#else
-    #define XDIC_ICTL_L_SCREEN_TARGET1  (8.0f * XDIC_ICTL_L_SCREEN_P1 / (XDIC_VREF_MAX))
-    #define XDIC_ICTL_L_SCREEN_TARGET2  (8.0f * XDIC_ICTL_L_SCREEN_P2 / (XDIC_VREF_MAX))
-    #define XDIC_ICTL_L_SCREEN_TARGET3  (8.0f * XDIC_ICTL_L_SCREEN_P3 / (XDIC_VREF_MAX))
-#endif
+#define XDIC_ICTL_L_SCREEN_TARGET1  (0.78387281f)
+#define XDIC_ICTL_L_SCREEN_TARGET2  (1.94592544f)
+#define XDIC_ICTL_L_SCREEN_TARGET3  (7.73764912f)
 
-#define XDIC_ICTL_H_SCREEN_P1       (390)
-#define XDIC_ICTL_H_SCREEN_P2       (1110)
-#define XDIC_ICTL_H_SCREEN_P3       (3390)
+#define XDIC_ICTL_H_SCREEN_P1       (350)
+#define XDIC_ICTL_H_SCREEN_P2       (3100)
 
-#if 1
-    #define XDIC_ICTL_H_SCREEN_TARGET1  (2.37538596f)
-    #define XDIC_ICTL_H_SCREEN_TARGET2  (5.89919737f)
-    #define XDIC_ICTL_H_SCREEN_TARGET3  (23.4327061f)
-#else
-    #define XDIC_ICTL_H_SCREEN_TARGET1  (24.0f * XDIC_ICTL_H_SCREEN_P1 / (XDIC_VREF_MAX))
-    #define XDIC_ICTL_H_SCREEN_TARGET2  (24.0f * XDIC_ICTL_H_SCREEN_P2 / (XDIC_VREF_MAX))
-    #define XDIC_ICTL_H_SCREEN_TARGET3  (24.0f * XDIC_ICTL_H_SCREEN_P3 / (XDIC_VREF_MAX))
-#endif
-
-#define ICTL_L_P1                   (350)
-#define ICTL_L_P2                   (3100)
-
-#define ICTL_H_P1                   (350)
-#define ICTL_H_P2                   (3100)
+#define XDIC_ICTL_H_SCREEN_TARGET1  (2.37538596f)
+#define XDIC_ICTL_H_SCREEN_TARGET2  (5.89919737f)
+#define XDIC_ICTL_H_SCREEN_TARGET3  (23.4327061f)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_RANGE_CNT          (25)
@@ -103,25 +83,15 @@ void XD_Screen_Init(void)
     gt_xd_screen_param[1].vref_point = XDIC_ICTL_L_SCREEN_P2;
     gt_xd_screen_param[1].gain = GAIN_MID;
 
-    gt_xd_screen_param[2].f_target_min = XDIC_ICTL_L_SCREEN_TARGET3 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[2].f_target_max = XDIC_ICTL_L_SCREEN_TARGET3 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[2].vref_point = XDIC_ICTL_L_SCREEN_P3;
-    gt_xd_screen_param[2].gain = GAIN_MID;
+    gt_xd_screen_param[2].f_target_min = XDIC_ICTL_H_SCREEN_TARGET1 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
+    gt_xd_screen_param[2].f_target_max = XDIC_ICTL_H_SCREEN_TARGET1 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
+    gt_xd_screen_param[2].vref_point = XDIC_ICTL_H_SCREEN_P1;
+    gt_xd_screen_param[2].gain = GAIN_HIGH;
 
-    gt_xd_screen_param[3].f_target_min = XDIC_ICTL_H_SCREEN_TARGET1 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[3].f_target_max = XDIC_ICTL_H_SCREEN_TARGET1 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[3].vref_point = XDIC_ICTL_H_SCREEN_P1;
+    gt_xd_screen_param[3].f_target_min = XDIC_ICTL_H_SCREEN_TARGET2 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
+    gt_xd_screen_param[3].f_target_max = XDIC_ICTL_H_SCREEN_TARGET2 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
+    gt_xd_screen_param[3].vref_point = XDIC_ICTL_H_SCREEN_P2;
     gt_xd_screen_param[3].gain = GAIN_HIGH;
-
-    gt_xd_screen_param[4].f_target_min = XDIC_ICTL_H_SCREEN_TARGET2 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[4].f_target_max = XDIC_ICTL_H_SCREEN_TARGET2 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[4].vref_point = XDIC_ICTL_H_SCREEN_P2;
-    gt_xd_screen_param[4].gain = GAIN_HIGH;
-
-    gt_xd_screen_param[5].f_target_min = XDIC_ICTL_H_SCREEN_TARGET3 * (1.0f - XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[5].f_target_max = XDIC_ICTL_H_SCREEN_TARGET3 * (1.0f + XDIC_ICTL_SCREEN_ERR_RATE);
-    gt_xd_screen_param[5].vref_point = XDIC_ICTL_H_SCREEN_P3;
-    gt_xd_screen_param[5].gain = GAIN_HIGH;
 }
 
 static const char* gs_trim_mode[XD_TRIM_MAX] =
@@ -194,12 +164,7 @@ static xd_trim_step_t gt_xd_trim_step;
 static xd_trim_mode_t gt_xd_trim_search_mode;
 static trim_error_code_t gt_trim_error_code;
 
-#define XD_SCREEN_TABLE_SIZE 3
-
 static xd_screen_step_t gt_xd_screen_step;
-static uint8_t gn_xd_screen_phase;
-static uint8_t gn_xd_screen_table_idx;
-static uint16_t gn_xd_screen_table[XD_SCREEN_TABLE_SIZE] = {270, 990, 4095};
 static uint16_t gn_screen_adc[XD_CH_MAX];
 static float gf_screen_current[XD_CH_MAX];
 static current_gain_t gt_screen_gain;
@@ -954,8 +919,8 @@ void XD_Trim_Task(void)
                     channel = XD_CH_01;
                     break;
 
-                case XD_TRIM_ICTL_H_CHS:
                 case XD_TRIM_ICTL_L_CHS:
+                case XD_TRIM_ICTL_H_CHS:
                     channel = gn_xd_adc_channel;
                     break;
                 }
@@ -1003,7 +968,7 @@ void XD_Trim_Task(void)
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
                 {
-                    if (i < 3)
+                    if (i < 2)
                     {
                         XDIC_Trim_Init_ICTL_L_CH();
                     }
@@ -1054,8 +1019,7 @@ void XD_Trim_Task(void)
                         gt_xd_screen_param[i].f_measured[10], gt_xd_screen_param[i].f_measured[11]);
                 }
 
-                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag && gt_xd_screen_param[2].judge_flag &&
-                    gt_xd_screen_param[3].judge_flag && gt_xd_screen_param[4].judge_flag && gt_xd_screen_param[5].judge_flag)
+                if (gt_xd_screen_param[0].judge_flag && gt_xd_screen_param[1].judge_flag && gt_xd_screen_param[2].judge_flag && gt_xd_screen_param[3].judge_flag)
                 {
                     print(LOG_INFO, "\r\n%s======== XD SCREEN - PASS ========%s\r\n", ANSI_FONT_GREEN, ANSI_FONT_NONE);
                     if (gb_xd_otp_write_flag)
@@ -1147,13 +1111,11 @@ void XD_Trim_Task(void)
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
-                #if 0
                 print(LOG_INFO, "======== TRIM END ========\r\n");
                 for (uint8_t i = 0 ; i < 2 + 2 * XD_CH_SIZE ; ++i)
                 {
                     print(LOG_INFO, "%.3f, ", gf_xd_characteristic[i]);
                 }
-                    #endif
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
                 break;
             default:
@@ -1211,29 +1173,29 @@ void XD_Screen_Task(void)
                 {
                     gt_screen_gain = GAIN_MID;
                     XDIC_Trim_Init_ICTL_L_CH();
-                    XDIC_Set_Max_Curr_Vref(ICTL_L_P1);
-                    gn_xd_screen_ana = ICTL_L_P1;
+                    XDIC_Set_Max_Curr_Vref(XDIC_ICTL_L_SCREEN_P1);
+                    gn_xd_screen_ana = XDIC_ICTL_L_SCREEN_P1;
                 }
                 else if (loop_cnt == 1)
                 {
                     gt_screen_gain = GAIN_MID;
                     XDIC_Trim_Init_ICTL_L_CH();
-                    XDIC_Set_Max_Curr_Vref(ICTL_L_P2);
-                    gn_xd_screen_ana = ICTL_L_P2;
+                    XDIC_Set_Max_Curr_Vref(XDIC_ICTL_L_SCREEN_P2);
+                    gn_xd_screen_ana = XDIC_ICTL_L_SCREEN_P2;
                 }
                 else if (loop_cnt == 2)
                 {
                     gt_screen_gain = GAIN_HIGH;
                     XDIC_Trim_Init_ICTL_H_CH();
-                    XDIC_Set_Max_Curr_Vref(ICTL_H_P1);
-                    gn_xd_screen_ana = ICTL_H_P1;
+                    XDIC_Set_Max_Curr_Vref(XDIC_ICTL_H_SCREEN_P1);
+                    gn_xd_screen_ana = XDIC_ICTL_H_SCREEN_P1;
                 }
                 else if (loop_cnt == 3)
                 {
                     gt_screen_gain = GAIN_HIGH;
                     XDIC_Trim_Init_ICTL_H_CH();
-                    XDIC_Set_Max_Curr_Vref(ICTL_H_P2);
-                    gn_xd_screen_ana = ICTL_H_P2;
+                    XDIC_Set_Max_Curr_Vref(XDIC_ICTL_H_SCREEN_P2);
+                    gn_xd_screen_ana = XDIC_ICTL_H_SCREEN_P2;
                 }
                 JigBD_IF_Change_Current_Gain(gt_screen_gain);
             #else

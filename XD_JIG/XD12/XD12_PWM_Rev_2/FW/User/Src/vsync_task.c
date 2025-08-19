@@ -145,7 +145,6 @@ void XDIC_Get_Fault_Status(void)
 
 void XDIC_Vsync_Task(void)
 {
-    static uint32_t vsync_count = 0;
     if (gb_xdic_vsync_flag)
     {
         us_delay(100);

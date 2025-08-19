@@ -21,21 +21,11 @@
 #define XC24_OTP_PROTECT_DISABLE    (0xA5A)
 #define XC24_OTP_PROTECT_ENABLE     (0x5A5)
 
-#define XC24_SPI_EXTENSION_DISABLE  (0)
-#define XC24_SPI_EXTENSION_ENABLE   (1)
-
-#define XC24_SPI_PARITY_ERR_DISABLE (0)
-#define XC24_SPI_PARITY_ERR_ENABLE  (1)
-
 #define XC_USE_FULL_CHANNEL         (1)
 
 static SPI_TypeDef *g_hSPIx;
 
 static bool gb_xc24_support;
-static bool gb_xc24_spi_extension;
-
-bool gb_xc24_spi_parity_manual_flag;
-uint8_t gn_xc24_spi_parity_manual_num;
 
 volatile uint8_t gn_xc_spi_timeout = 0;
 
@@ -173,27 +163,6 @@ static _reg_map_t gt_xc24_mirror_maps[] =
 };
 static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
-static uint8_t count_ones(uint16_t x)
-{
-    uint8_t count = 0;
-    while (x)
-    {
-        count += x & 1;
-        x >>= 1;
-    }
-    return count;
-}
-
-static uint8_t total_ones(uint16_t *arr, int len)
-{
-    uint8_t total = 0;
-    for (int i = 0; i < len; i++)
-    {
-        total += count_ones(arr[i]);
-    }
-    return total;
-}
-
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
     if (gn_xc_spi_timeout == 0)
@@ -312,8 +281,7 @@ static const _reg_map_t* XC24_Find_Register_Map(uint8_t addr)
 void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
 {
     _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[3] = {0,};
-    uint16_t num_of_ones = 0;
+    uint16_t tx_buffer[2] = {0,};
 
     cmd_format.code = CMD_CODE_REG_WRITE;
     cmd_format.addr = in_addr;
@@ -321,24 +289,6 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
 
     tx_buffer[0] = cmd_format.ALL;
     tx_buffer[1] = in_data;
-
-    num_of_ones = total_ones(tx_buffer, 2);
-
-    if (gb_xc24_spi_parity_manual_flag == false)
-    {
-        if (num_of_ones % 2 == 1) //if ODD
-        {
-            tx_buffer[2] = (1 << 2);
-        }
-        else
-        {
-            tx_buffer[2] = (0 << 2);
-        }
-    }
-    else
-    {
-        tx_buffer[2] = gn_xc24_spi_parity_manual_num;
-    }
 
     const _reg_map_t* xc24_map = XC24_Find_Register_Map(in_addr);
     if (xc24_map)
@@ -351,16 +301,7 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
         print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
     }
 
-    if (gb_xc24_spi_extension)
-    {
-        SPI_Write(g_hSPIx, tx_buffer, 3);
-        print(LOG_DEBUG, "0x%02X, 0x%02X, 0x%02X, number of ones: %u\r\n", tx_buffer[0], tx_buffer[1], tx_buffer[2], num_of_ones);
-    }
-    else
-    {
-        SPI_Write(g_hSPIx, tx_buffer, 2);
-        print(LOG_DEBUG, "0x%02X, 0x%02X\r\n", tx_buffer[0], tx_buffer[1]);
-    }
+    SPI_Write(g_hSPIx, tx_buffer, 2);
 }
 
 uint16_t XC24_Read_Register(uint8_t in_addr)
@@ -466,7 +407,6 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
 #endif
                 gt_xc24_general_regs._r1B.osc_spread_en = 0;
-                gt_xc24_general_regs._r1B.ALL = 0x3326;
                 break;
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
@@ -632,33 +572,6 @@ void XC24_Set_OTP_Protect(bool en)
         gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
     }
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
-}
-
-void XC24_Set_SPI_Extension(bool en)
-{
-    if (en == true)
-    {
-        gt_xc24_general_regs._r1A.spi_ext_en = XC24_SPI_EXTENSION_ENABLE;
-    }
-    else
-    {
-        gt_xc24_general_regs._r1A.spi_ext_en = XC24_SPI_EXTENSION_DISABLE;
-    }
-    XC24_Write_Register(XC24_ADDR_SPI_FAULT_STATUS_CONTROL, gt_xc24_general_regs._r1A.ALL);
-    gb_xc24_spi_extension = en;
-}
-
-void XC24_Set_SPI_Parity_Err(bool en)
-{
-    if (en == true)
-    {
-        gt_xc24_general_regs._r15.int_parity_err_en = XC24_SPI_PARITY_ERR_ENABLE;
-    }
-    else
-    {
-        gt_xc24_general_regs._r15.int_parity_err_en = XC24_SPI_PARITY_ERR_DISABLE;
-    }
-    XC24_Write_Register(XC24_ADDR_INTERRUPT_ENABLE, gt_xc24_general_regs._r15.ALL);
 }
 
 void XC24_Trim_Init_VCTL_LDO(void)

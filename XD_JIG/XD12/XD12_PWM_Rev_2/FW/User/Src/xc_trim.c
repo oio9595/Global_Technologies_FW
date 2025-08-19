@@ -35,10 +35,10 @@ _closest_info_t gt_xc_osc_closest;
 _closest_info_t gt_xc_dac_ofs_closest;
 
 dac_gain_tgt_t dac_gain_tgt_buff = {0, };
-float osc_value_buffer[128] = {0, };
-float dac_ofs_value_buffer[128] = {0, };
+float osc_value_buffer[128] = {0.0f, };
+float dac_ofs_value_buffer[128] = {0.0f, };
 float gf_xc_screen_info[6] = {0.0f, };
-uint8_t gn_xc_trim_regs[4] = {0.0f, };
+uint8_t gn_xc_trim_regs[4] = {0, };
 static uint16_t gn_xc_dac_screen_point = 0;
 
 static bool gb_xc_otp_write_flag;
@@ -107,7 +107,6 @@ void XC_Trim_Task(void)
 {
     static uint8_t over_run_cnt = 1;
     uint16_t ext_adc_value = 0;
-    bool xc_compare_result = true;
     bool xc_over_under_flow = false;
 
     if (gt_xc_trim_step != XC_TRIM_STEP_NONE)

@@ -1742,50 +1742,6 @@ static void TaskDebugUart(void)
             uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
-        else if (Command_Param_is_("xc_spi_extension", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                XC24_Set_SPI_Extension(true);
-                print(LOG_INFO, "\r\n SPI Extension Enable \r\n");
-            }
-            else
-            {
-                XC24_Set_SPI_Extension(false);
-                print(LOG_INFO, "\r\n SPI Extension Disable \r\n");
-            }
-        }
-        else if (Command_Param_is_("xc_parity", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                XC24_Set_SPI_Parity_Err(true);
-                print(LOG_INFO, "\r\n SPI Parity Enable \r\n");
-            }
-            else
-            {
-                XC24_Set_SPI_Parity_Err(false);
-                print(LOG_INFO, "\r\n SPI Parity Disable \r\n");
-            }
-        }
-        else if (Command_Param_is_("xc_par_man", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                gb_xc24_spi_parity_manual_flag = true;
-                print(LOG_INFO, "\r\n SPI Parity Manual Enable \r\n");
-            }
-            else
-            {
-                gb_xc24_spi_parity_manual_flag = false;
-                print(LOG_INFO, "\r\n SPI Parity Manual Disable \r\n");
-            }
-        }
-        else if (Command_Param_is_("xc_par_num", "%d", &u32_recv_param[0]))
-        {
-            gn_xc24_spi_parity_manual_num = u32_recv_param[0];
-            print(LOG_INFO, "\r\n SPI Parity Manual Number to %u\r\n", gn_xc24_spi_parity_manual_num);
-        }
         else if (Command_is_("xc_trim_ldo"))
         {
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
