@@ -56,6 +56,7 @@ static double gf_internal_freq_Hz;
 
 bool gb_timer_input_capture_activated;
 volatile bool gb_timer_input_capture_done;
+volatile uint16_t gn_input_capture_timeout;
 static uint32_t gn_input_capture_cnt[FREQ_IN_IC_LENGTH];
 
 static uint8_t gn_xdic_dimming_channel = 0;
