@@ -347,8 +347,6 @@ void XC_Trim_Task(void)
         {
             print(LOG_INFO, "=============XC_TRIM_STEP_OSC_FCTL=============\r\n");
             XC24_Trim_Init_OSC();
-            uint16_t val = XC24_Read_Register(XC24_ADDR_CLK_CONTROL_1);
-            print(LOG_INFO, "0x1B -> %u (0x%04X)\r\n", val, val);
 
             for(uint8_t reg_index = 0 ; reg_index < 128 ; ++reg_index)
             {
