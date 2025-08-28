@@ -116,6 +116,10 @@ void sys_tick_handler(void)
     {
         --gn_xd_rx_timeout;
     }
+    if (gn_input_capture_timeout)
+    {
+        --gn_input_capture_timeout;
+    }
     if (gn_xc_spi_timeout)
     {
         --gn_xc_spi_timeout;
@@ -1766,6 +1770,24 @@ static void TaskDebugUart(void)
         {
             XC24_Trim_Init_OSC();
             HAL_Delay(1);
+            /*
+            for (uint8_t i = 0 ; i < 0x80 ; ++i)
+            {
+                XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, (i << 8 | 0x08));
+                JigBD_IF_Start_Input_Capture();
+
+                while(1)
+                {
+                    if (gb_timer_input_capture_done)
+                    {
+                        break;
+                    }
+                }
+
+                JigBD_IF_Stop_Input_Capture();
+                float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+                print(LOG_INFO, "%u, %.3f\r\n", i, osc_freq);
+            }*/
             JigBD_IF_Start_Input_Capture();
 
             while(1)
@@ -1778,12 +1800,12 @@ static void TaskDebugUart(void)
 
             JigBD_IF_Stop_Input_Capture();
             float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-            print(LOG_INFO, "Screen  OSC : %.3f\r\n", osc_freq);
+            print(LOG_INFO, "%.3f\r\n", osc_freq);
         }
         else if (Command_is_("xc_trim_dac"))
         {
             XC24_Trim_Init_DAC_Gain();
-            for (uint8_t i = 0 ; i < 4 ; ++i)
+            for (uint8_t i = 0 ; i < 5 ; ++i)
             {
                 uint16_t dac_input = 0;
                 if (i == 0)
@@ -1801,6 +1823,10 @@ static void TaskDebugUart(void)
                 else if (i == 3)
                 {
                     dac_input = 3723;
+                }
+                else if (i == 4)
+                {
+                    dac_input = 2048;
                 }
                 XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input);
 
@@ -1842,6 +1868,192 @@ static void TaskDebugUart(void)
             {
                 print(LOG_ERROR, "\r\n Out of xc_use [%u] [0 - %u]\r\n", u32_recv_param[0], 1);
             }
+        }
+        else if (Command_is_("xc_test"))
+        {
+            JigBD_IF_XC_VCC_EN(PWR_ON);
+            LL_mDelay(20);
+            XC_NSCS_HI();
+            // 1. OSC
+            for (uint8_t i = 0 ; i < 7 ; ++i)
+            {
+                switch (i)
+                {
+                case 0 :
+                    XC24_Trim_Init_OSC();
+                    break;
+                case 1 :
+                    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x0007); // reset
+                    XC24_Trim_Init_OSC();
+                    break;
+                case 2 :
+                    XC24_Set_OTP_Protect(false);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x4008); // osc default
+                    break;
+                case 3 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x0008); // osc min
+                    break;
+                case 4 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                case 5 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x7F08); // osc max
+                    break;
+                case 6 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                }
+                LL_mDelay(1);
+
+                JigBD_IF_Start_Input_Capture();
+                gn_input_capture_timeout = 200;
+                while(1)
+                {
+                    if (gb_timer_input_capture_done || (gn_input_capture_timeout == 0))
+                    {
+                        break;
+                    }
+                }
+                JigBD_IF_Stop_Input_Capture();
+                if (gn_input_capture_timeout == 0)
+                {
+                    print(LOG_INFO, "TOUT,");
+                }
+                else
+                {
+                    float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+                    print(LOG_INFO, "%.3f,", osc_freq);
+                }
+            }
+            // power reboot
+            JigBD_IF_XC_VCC_EN(PWR_OFF);
+            XC_NSCS_LO();
+            LL_mDelay(100);
+
+            JigBD_IF_XC_VCC_EN(PWR_ON);
+            LL_mDelay(20);
+            XC_NSCS_HI();
+
+            // 2. LDO
+            for (uint8_t i = 0 ; i < 7 ; ++i)
+            {
+                switch (i)
+                {
+                case 0 :
+                    XC24_Trim_Init_VCTL_LDO();
+                case 1 :
+                    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x0007); // reset
+                    XC24_Trim_Init_VCTL_LDO();
+                    break;
+                case 2 :
+                    XC24_Set_OTP_Protect(false);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x4008); // ldo default
+                    break;
+                case 3 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x4000); // ldo min
+                    break;
+                case 4 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                case 5 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x400F); // ldo max
+                    break;
+                case 6 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                }
+                ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
+                HAL_Delay(1);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
+                float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
+                print(LOG_INFO, "%.3f,", vctl_ldo_level);
+            }
+            // power reboot
+            JigBD_IF_XC_VCC_EN(PWR_OFF);
+            XC_NSCS_LO();
+            LL_mDelay(100);
+
+            JigBD_IF_XC_VCC_EN(PWR_ON);
+            LL_mDelay(20);
+            XC_NSCS_HI();
+
+            // 3. DAC
+            for (uint8_t i = 0 ; i < 7 ; ++i)
+            {
+                switch (i)
+                {
+                case 0 :
+                    XC24_Trim_Init_DAC_Gain();
+                    break;
+                case 1 :
+                    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x0007); // reset
+                    XC24_Trim_Init_DAC_Gain();
+                    break;
+                case 2 :
+                    XC24_Set_OTP_Protect(false);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, 0x2000); // dac default
+                    break;
+                case 3 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, 0x0000); // dac min
+                    break;
+                case 4 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                case 5 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR2, 0x3F7F); // dac max
+                    break;
+                case 6 :
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0002); // otp reload
+                    LL_mDelay(10);
+                    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x0000); // otp reload
+                    break;
+                }
+
+                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, 2048);
+                ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
+                HAL_Delay(1);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+
+                uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
+                float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
+                print(LOG_INFO, "%.3f,", dac_val);
+            }
+        }
+        else if (Command_Param_is_("xc_otp_write", "%d", &u32_recv_param[0]))
+        {
+                XC24_Write_Register(XC24_MIRROR_ADDR_OTP_WRITE, u32_recv_param[0]);
+                XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 0x01);
         }
 /* ----------------- command list - ui ----------------- */
         else if (Command_is_("xd_trim_start") || Command_is_("1"))
@@ -1905,6 +2117,10 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n system reset \r\n");
             NVIC_SystemReset();
+        }
+        else if (Command_is_("osc_stop"))
+        {
+            XC24_Start_MCLK_Oscillation(FALSE);
         }
         else
         {
