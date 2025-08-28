@@ -163,6 +163,18 @@ static _reg_map_t gt_xc24_mirror_maps[] =
 };
 static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
+static uint16_t gn_xc24_default_reg_value[XC24_ADDR_MAX] =
+{
+    0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0111,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
+    0x0000,0x0000,0x0000,0x0000,0x0A14,0x0000,0x0000,0x0000,0x0000,0x0000,0x1A00,0x4228,0x4040,0x0000,0x4444,0x205A,
+    0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
+    0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
+    0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x1101,0x0000,0x0FFF,
+    0x0FFF,0x0FFF,0x40C2,0x0820,0x0400,0x020A,0x1908,0xC07D,0x7D12,0x0000,0x0190,0x0FA0,0x0000,0x0000,0x0000,0x0000,
+    0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,0x0002,
+    0x0000,
+};
+
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
     if (gn_xc_spi_timeout == 0)
@@ -370,6 +382,22 @@ void XC24_Dump_All_Register(void)
 #endif
 }
 
+void XC24_Compare_Default_Register(uint16_t i)
+{
+    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    {
+        const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
+        if (map)
+        {
+            uint16_t current_value = *((uint16_t*)(map->reg_ptr));
+            if (current_value != gn_xc24_default_reg_value[xc_addr])
+            {
+                print(LOG_ERROR, "Try : %u, [%s (0x%02X)] Default(0x%04X) != Current(0x%04X)\r\n", i, map->name, map->address, gn_xc24_default_reg_value[xc_addr], current_value);
+            }
+        }
+    }
+}
+
 void XC24_Init(void)
 {
     g_hSPIx = SPI1;
@@ -386,6 +414,7 @@ void XC24_Init(void)
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
+#if 1
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
@@ -467,38 +496,55 @@ void XC24_Init(void)
     XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
 
-#if (XC_USE_FULL_CHANNEL == 1)
-    //daisy size
-    XC24_Write_Register(0x30, 0x0421);
-    XC24_Write_Register(0x31, 0x0421);
-    XC24_Write_Register(0x32, 0x0421);
-    XC24_Write_Register(0x33, 0x0421);
-    XC24_Write_Register(0x34, 0x0421);
-    XC24_Write_Register(0x35, 0x0421);
-    XC24_Write_Register(0x36, 0x0421);
-    XC24_Write_Register(0x37, 0x0421);
+    #if (XC_USE_FULL_CHANNEL == 1)
+        //daisy size
+        XC24_Write_Register(0x30, 0x0421);
+        XC24_Write_Register(0x31, 0x0421);
+        XC24_Write_Register(0x32, 0x0421);
+        XC24_Write_Register(0x33, 0x0421);
+        XC24_Write_Register(0x34, 0x0421);
+        XC24_Write_Register(0x35, 0x0421);
+        XC24_Write_Register(0x36, 0x0421);
+        XC24_Write_Register(0x37, 0x0421);
 
-    //block size
-    XC24_Write_Register(0x38, 0x0C0C);
-    XC24_Write_Register(0x39, 0x0C0C);
-    XC24_Write_Register(0x3A, 0x0C0C);
-    XC24_Write_Register(0x3B, 0x0C0C);
-    XC24_Write_Register(0x3C, 0x0C0C);
-    XC24_Write_Register(0x3D, 0x0C0C);
-    XC24_Write_Register(0x3E, 0x0C0C);
-    XC24_Write_Register(0x3F, 0x0C0C);
-    XC24_Write_Register(0x40, 0x0C0C);
-    XC24_Write_Register(0x41, 0x0C0C);
-    XC24_Write_Register(0x42, 0x0C0C);
-    XC24_Write_Register(0x43, 0x0C0C);
+        //block size
+        XC24_Write_Register(0x38, 0x0C0C);
+        XC24_Write_Register(0x39, 0x0C0C);
+        XC24_Write_Register(0x3A, 0x0C0C);
+        XC24_Write_Register(0x3B, 0x0C0C);
+        XC24_Write_Register(0x3C, 0x0C0C);
+        XC24_Write_Register(0x3D, 0x0C0C);
+        XC24_Write_Register(0x3E, 0x0C0C);
+        XC24_Write_Register(0x3F, 0x0C0C);
+        XC24_Write_Register(0x40, 0x0C0C);
+        XC24_Write_Register(0x41, 0x0C0C);
+        XC24_Write_Register(0x42, 0x0C0C);
+        XC24_Write_Register(0x43, 0x0C0C);
 
-    //channel enable
-    XC24_Write_Register(0x45, 0xFFFF);
-    XC24_Write_Register(0x46, 0xD8FF);
-#endif
+        //channel enable
+        XC24_Write_Register(0x45, 0xFFFF);
+        XC24_Write_Register(0x46, 0xD8FF);
+    #endif
 
-    print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
+    print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
+#else
+    for (uint16_t i = 0 ; i < 1000 ; ++i)
+    {
+        JigBD_IF_XC_VCC_EN(PWR_ON);
+        LL_mDelay(20);
+        XC_NSCS_HI();
+
+        XC24_Read_Register_All();
+        XC24_Compare_Default_Register(i);
+
+        JigBD_IF_XC_VCC_EN(PWR_OFF);
+        XC_NSCS_LO();
+        LL_mDelay(500);
+    }
+    print(LOG_DEBUG, " ...XC24 Compare Done...\r\n");
+
+#endif
 }
 
 void XC24_Trim_Init(void)
@@ -516,7 +562,7 @@ void XC24_Trim_Init(void)
 #endif
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
-
+#if 0
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
@@ -536,7 +582,7 @@ void XC24_Trim_Init(void)
             us_delay(10);
         }
     }
-
+#endif
     for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
