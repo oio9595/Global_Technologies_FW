@@ -942,6 +942,7 @@ void XD_Trim_Task(void)
                 break;
 
             case XD_TRIM_STEP_SCREEN :
+                XDIC_Save_Trim_Regs();
                 JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
@@ -1076,10 +1077,6 @@ void XD_Trim_Task(void)
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
                 print(LOG_INFO, "======== TRIM END ========\r\n");
-                for (uint8_t i = 0 ; i < 2 + 2 * XD_CH_SIZE ; ++i)
-                {
-                    print(LOG_INFO, "%.3f, ", gf_xd_characteristic[i]);
-                }
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
                 break;
             default:
