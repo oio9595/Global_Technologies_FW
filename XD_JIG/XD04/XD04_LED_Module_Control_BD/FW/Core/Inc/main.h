@@ -78,15 +78,14 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 typedef enum tag_LOG_LV_T
 {
-    LOG_DEBUG = 0,
-    LOG_INFO,
-    LOG_ERROR,
+    LOG_PC = 0,
+    LOG_RS232,
     LOG_MAX,
 } LOG_LV_T;
 
 extern void us_delay(uint16_t us_delay);
 extern void print(LOG_LV_T log_lv, const char *fmt, ...);
-extern void comm_rx_handler(uint8_t rx);
+extern void comm_rx_push(uint8_t rx);
 extern void sys_tick_handler(void);
 
 /* USER CODE END EFP */

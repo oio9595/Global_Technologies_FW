@@ -141,7 +141,7 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
+        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 }
 
@@ -153,11 +153,11 @@ uint16_t XDIC_Read_General_Reg(uint8_t addr)
     {
         xdic_reg_val = XC24_IF_Read_XDIC(addr);
         *((uint16_t*)(map->reg_ptr)) = xdic_reg_val;
-        print(LOG_DEBUG, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
+        print(LOG_PC, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
+        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 
     return xdic_reg_val;
@@ -173,7 +173,7 @@ uint16_t XDIC_Get_General_Reg(uint8_t addr)
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
+        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
         return xdic_reg_val;
     }
 
@@ -188,7 +188,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
+            print(LOG_PC, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
         }
     }
 }
@@ -205,7 +205,7 @@ void XDIC_Read_All_Registers(void)
 
 void XDIC_Update_Max_Current_Vref(float in_current)
 {
-    uint16_t max_curr_vref = (uint16_t)(in_current * 4095 / 128 + 0.5f);
+    uint16_t max_curr_vref = (uint16_t)(in_current * 4095.0f / 128.0f + 0.5f);
     if (max_curr_vref > 4095)
     {
         max_curr_vref = 4095;
@@ -241,6 +241,9 @@ void XDIC_Param_Init(void)
 
 void XDIC_Init(void)
 {
+    XDIC_VCC_ON();
+    LL_mDelay(10);
+
     XDIC_Param_Init();
 
     XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, (1 << 11)); // Reset
@@ -307,7 +310,7 @@ void XDIC_Init(void)
         }
         else
         {
-            print(LOG_ERROR, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
+            print(LOG_PC, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
         }
     }
 }

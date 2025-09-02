@@ -1571,7 +1571,7 @@ extern uint16_t XC24_IF_Fault_Read_Command(void);
 
 extern void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data);
 extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr);
-extern void XC24_IF_Write_LD(uint16_t in_LD_data);
+extern void XC24_IF_Write_LD(void);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus

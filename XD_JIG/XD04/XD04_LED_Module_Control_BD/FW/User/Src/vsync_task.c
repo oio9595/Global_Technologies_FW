@@ -41,12 +41,85 @@ void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        XC24_IF_Write_LD(16383);
+        XC24_IF_Write_LD();
 
         XDIC_Update_Max_Current_Vref(gf_xd_max_current);
 
         gb_xdic_vsync_flag = false;
     }
+}
+
+void LED_BAR_On_Select(uint8_t in_bar_num)
+{
+    if (in_bar_num == 0)
+    {
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        {
+            gb_xd_led_enable_table[i] = true;
+        }
+    }
+    else
+    {
+        uint8_t start_blk = in_bar_num - 1;
+        for (uint8_t blk = 0 ; blk < 8 ; ++blk)
+        {
+            gb_xd_led_enable_table[start_blk + 20 * blk] = true;
+        }
+    }
+}
+
+void LED_BAR_Off_Select(uint8_t in_bar_num)
+{
+    if (in_bar_num == 0)
+    {
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        {
+            gb_xd_led_enable_table[i] = false;
+        }
+    }
+    else
+    {
+        uint8_t start_blk = in_bar_num - 1;
+        for (uint8_t blk = 0 ; blk < 8 ; ++blk)
+        {
+            gb_xd_led_enable_table[start_blk + 20 * blk] = false;
+        }
+    }
+}
+
+void LED_BLK_On_Select(uint8_t in_blk_num)
+{
+    if (in_blk_num == 0)
+    {
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        {
+            gb_xd_led_enable_table[i] = true;
+        }
+    }
+    else if (in_blk_num <= TOTAL_BLOCK_SIZE)
+    {
+        gb_xd_led_enable_table[in_blk_num - 1] = true;
+    }
+}
+
+void LED_BLK_Off_Select(uint8_t in_blk_num)
+{
+    if (in_blk_num == 0)
+    {
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        {
+            gb_xd_led_enable_table[i] = false;
+        }
+    }
+    else if (in_blk_num <= TOTAL_BLOCK_SIZE)
+    {
+        gb_xd_led_enable_table[in_blk_num - 1] = false;
+    }
+}
+
+void LED_Current_Select(float in_current)
+{
+    gf_xd_max_current = in_current;
 }
 
 /*** end of file ***/

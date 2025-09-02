@@ -142,7 +142,7 @@ __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
     if (gn_xc_spi_timeout == 0)
     {
-        print(LOG_ERROR, "SPI Timeout Error\r\n");
+        print(LOG_PC, "SPI Timeout Error\r\n");
         return false;
     }
     return true;
@@ -251,7 +251,7 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
+        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
     }
 
     SPI_Write(g_hSPIx, tx_buffer, 2);
@@ -278,7 +278,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     }
     else
     {
-        print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
+        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
     }
 
     return rx_buffer[1];
@@ -301,7 +301,7 @@ void XC24_Dump_All_Register(void)
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
+            print(LOG_PC, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
 }
@@ -317,7 +317,7 @@ void XC24_Init(void)
     XC_NSCS_HI();
     //XC24_Start_MCLK_Oscillation(false);
 
-    print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
+    print(LOG_PC, " ...XC24 Initial Start...\r\n");
 
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
@@ -476,7 +476,7 @@ void XC24_Init(void)
             us_delay(10);
         }
     }
-    print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
+    print(LOG_PC, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
 }
 
@@ -570,7 +570,7 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
     return u16_XDIC_data;
 }
 
-void XC24_IF_Write_LD(uint16_t in_LD_data)
+void XC24_IF_Write_LD(void)
 {
     _xc24_cmd_t cmd_format = {0, };
     uint16_t tx_buffer[1 + TOTAL_BLOCK_SIZE] = {0,};
@@ -584,7 +584,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     {
         if (gb_xd_led_enable_table[i])
         {
-            tx_buffer[i + 1] = in_LD_data;
+            tx_buffer[i + 1] = 16383;
         }
         else
         {

@@ -37,11 +37,24 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define UART_BACKSPACE          (0x08)
+#define PRINT_BUFF_SIZE     256
+#define RX_BUFF_SIZE        32
+#define RX_PACKET_SIZE      32
 
-#define PRINT_BUFF_SIZE 256
-#define RX_PACKET_SIZE  64
-#define RX_BUFF_SIZE    32
+enum tag_PROTOCOL_LIST
+{
+    SOP = 0xA5,
+    EOP = 0x5A,
+    CMD_INIT = 0x00,
+    CMD_QUIT = 0xFF,
+    CMD_STATUS = 0xF0,
+    CMD_CURRENT = 0x01,
+    CMD_BAR_ON_SELECT = 0x10,
+    CMD_BAR_OFF_SELECT = 0x20,
+    CMD_BLK_ON_SELECT = 0x40,
+    CMD_BLK_OFF_SELECT = 0x80,
+} protocol_list_t;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,22 +65,39 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
-typedef struct
+typedef struct tag_RX_PACKET
 {
-    uint16_t length;
-    char buffer[RX_PACKET_SIZE];
+    uint8_t sop;
+    uint8_t length;
+    uint8_t command;
+    uint8_t data;
+    uint8_t checksum;
+    uint8_t eop;
 } rx_packet_t;
 
-typedef struct
+typedef struct tag_RING_BUFFER
 {
-    uint16_t RxInCnt;
-    uint16_t RxOutCnt;
-    rx_packet_t Rxbuff[RX_BUFF_SIZE];
-} RX_UART_t;
-static RX_UART_t gt_rx_uart;
+    uint8_t head;
+    uint8_t tail;
+    char buffer[RX_BUFF_SIZE];
+} ring_buffer_t;
+static ring_buffer_t gt_ring_buffer; // ring buffer
 
-static LOG_LV_T gt_log_lv = LOG_INFO;
+typedef struct tag_RX_PACKET_BUFFER
+{
+    uint8_t idx;
+    rx_packet_t packet_buffer[RX_PACKET_SIZE];
+} rx_packet_buffer_t;
+static rx_packet_buffer_t gt_rx_packet_buffer;
+
+#if 1
+    static LOG_LV_T gt_log_lv = LOG_PC;
+#else
+    static LOG_LV_T gt_log_lv = LOG_RS232;
+#endif
+
+static uint8_t gn_uart_rx_timeout;
+static bool gb_uart_rx_timeout_enable;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +132,10 @@ void sys_tick_handler(void)
     {
         --gn_xc_spi_timeout;
     }
+    if (gn_uart_rx_timeout)
+    {
+        --gn_uart_rx_timeout;
+    }
 }
 
 void print(LOG_LV_T log_lv, const char *fmt, ...)
@@ -111,7 +145,7 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
         int len = 0;
         char msg_buffer[PRINT_BUFF_SIZE] = {0, };
 
-        if (log_lv > LOG_INFO)
+        if (log_lv > gt_log_lv)
         {
             char temp_buffer[PRINT_BUFF_SIZE] = {0, };
             snprintf(temp_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
@@ -135,12 +169,189 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
 
 void comm_init(void)
 {
-    print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r   [GT LED Module Control BD]");
-    print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
-    print(LOG_INFO, "\n\r - Build : %s", __DATE__);
-    print(LOG_INFO, "\n\r--------------------------------------\r\n");
+    print(LOG_PC, "\n\r--------------------------------------");
+    print(LOG_PC, "\n\r   [GT LED Module Control BD]");
+    print(LOG_PC, "\n\r--------------------------------------");
+    print(LOG_PC, "\n\r - Author: xxx@glbltech.com");
+    print(LOG_PC, "\n\r - Build : %s", __DATE__);
+    print(LOG_PC, "\n\r--------------------------------------\r\n");
+}
+
+__STATIC_INLINE void UART_PutChar(uint8_t data)
+{
+    /* Echo received character on TX */
+    LL_USART_TransmitData8(USART2, (uint8_t)data);
+    /* Loop until the end of transmission */
+    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+}
+
+uint8_t comm_rx_calc_checksum(rx_packet_t* p_packet)
+{
+    return (uint8_t)(p_packet->sop + p_packet->length + p_packet->command + p_packet->data);
+}
+
+void comm_rx_push(uint8_t rx)
+{
+    gt_ring_buffer.buffer[gt_ring_buffer.head++] = rx;
+    gt_ring_buffer.head &= (RX_BUFF_SIZE - 1);
+}
+
+uint8_t comm_rx_pop(void)
+{
+    uint8_t ret = gt_ring_buffer.buffer[gt_ring_buffer.tail++];
+    gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1);
+    return ret;
+}
+
+static uint8_t comm_get_rx_available(void)
+{
+    if (gt_ring_buffer.head > gt_ring_buffer.tail)
+    {
+        return gt_ring_buffer.head - gt_ring_buffer.tail;
+    }
+    else
+    {
+        return (gt_ring_buffer.head + RX_BUFF_SIZE) - gt_ring_buffer.tail;
+    }
+}
+
+static void comm_tx_response(uint8_t status)
+{
+    uint8_t response_ok[6] = { SOP, 0x01, CMD_STATUS, 0xA5, 0x00, 0x5A };
+    uint8_t response_ng[6] = { SOP, 0x01, CMD_STATUS, 0x5A, 0x00, 0x5A };
+
+    response_ok[4] = response_ok[0] + response_ok[1] + response_ok[2] + response_ok[3];
+    response_ng[4] = response_ng[0] + response_ng[1] + response_ng[2] + response_ng[3];
+
+    if (status)
+    {
+        for (int i = 0 ; i < 6 ; ++i)
+        {
+            UART_PutChar(response_ok[i]);
+        }
+    }
+    else
+    {
+        for (int i = 0 ; i < 6 ; ++i)
+        {
+            UART_PutChar(response_ng[i]);
+        }
+    }
+}
+
+static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
+{
+    uint8_t ret = 0;
+    rx_packet_t empty_packet = {0, };
+
+    if (gt_ring_buffer.head != gt_ring_buffer.tail)
+    {
+        if (gt_ring_buffer.buffer[gt_ring_buffer.tail] != SOP)
+        {
+            ++gt_ring_buffer.tail;
+            gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1);
+            ret = 0;
+        }
+        else // If SOP
+        {
+            if (!gb_uart_rx_timeout_enable)
+            {
+                gn_uart_rx_timeout = 5;
+                gb_uart_rx_timeout_enable = true;
+            }
+            if (comm_get_rx_available() >= 6) // Minimum packet size
+            {
+                empty_packet.sop = comm_rx_pop();
+                empty_packet.length = comm_rx_pop();
+                empty_packet.command = comm_rx_pop();
+                empty_packet.data = comm_rx_pop();
+                empty_packet.checksum = comm_rx_pop();
+                empty_packet.eop = comm_rx_pop();
+
+                uint8_t checksum = comm_rx_calc_checksum(&empty_packet);
+                if ((checksum == empty_packet.checksum) && (empty_packet.eop == EOP))
+                {
+                    p_packet->sop = empty_packet.sop;
+                    p_packet->length = empty_packet.length;
+                    p_packet->command = empty_packet.command;
+                    p_packet->data = empty_packet.data;
+                    p_packet->checksum = empty_packet.checksum;
+                    p_packet->eop = empty_packet.eop;
+
+                    comm_tx_response(1);
+                    ret = 1;
+                }
+                else
+                {
+                    comm_tx_response(0);
+                }
+                gb_uart_rx_timeout_enable = false;
+            }
+
+            if (0 == gn_uart_rx_timeout) // Timeout
+            {
+                comm_tx_response(0);
+                gt_ring_buffer.tail = gt_ring_buffer.head;
+                ret = 0;
+                gb_uart_rx_timeout_enable = false;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static void TaskDebugUart(void)
+{
+    rx_packet_t* p_packet = gt_rx_packet_buffer.packet_buffer + gt_rx_packet_buffer.idx;
+
+    if (comm_get_rx_packet(p_packet))
+    {
+        #if 0
+            print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X]}\r\n",
+                p_packet->sop, p_packet->length, p_packet->command, p_packet->data, p_packet->checksum, p_packet->eop);
+        #endif
+
+        switch(p_packet->command)
+        {
+            case CMD_INIT:
+                print(LOG_PC, "CMD_INIT\r\n");
+                XC24_Init();
+                XDIC_Init();
+                Vsync_Timer_Start();
+                break;
+            case CMD_QUIT:
+                print(LOG_PC, "CMD_QUIT\r\n");
+                NVIC_SystemReset();
+                break;
+            case CMD_STATUS:
+                print(LOG_PC, "CMD_STATUS\r\n");
+                break;
+            case CMD_CURRENT:
+                LED_Current_Select((float)(p_packet->data));
+                print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data);
+                break;
+            case CMD_BAR_ON_SELECT:
+                LED_BAR_On_Select(p_packet->data);
+                print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data);
+                break;
+            case CMD_BAR_OFF_SELECT:
+                LED_BAR_Off_Select(p_packet->data);
+                print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data);
+                break;
+            case CMD_BLK_ON_SELECT:
+                LED_BLK_On_Select(p_packet->data);
+                print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data);
+                break;
+            case CMD_BLK_OFF_SELECT:
+                LED_BLK_Off_Select(p_packet->data);
+                print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data);
+                break;
+        }
+
+        ++gt_rx_packet_buffer.idx;
+        gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1);
+    }
 }
 /* USER CODE END 0 */
 
@@ -185,10 +396,6 @@ int main(void)
 
     XC24_Start_MCLK_Oscillation(false);
     comm_init();
-
-    XC24_Init();
-    XDIC_Init();
-    Vsync_Timer_Start();
 
   /* USER CODE END 2 */
 
@@ -657,128 +864,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-static uint8_t comm_get_rx_packet(rx_packet_t** pData)
-{
-    uint8_t ret = 0;
-
-    if (gt_rx_uart.RxInCnt != gt_rx_uart.RxOutCnt)
-    {
-        *pData = gt_rx_uart.Rxbuff + gt_rx_uart.RxOutCnt;
-
-        ++gt_rx_uart.RxOutCnt;
-        gt_rx_uart.RxOutCnt &= (uint16_t)(RX_BUFF_SIZE -1);
-
-        ret = 1;
-    }
-
-    return ret;
-}
-
-static void TaskDebugUart(void)
-{
-    rx_packet_t* p_data = NULL;
-
-    if (comm_get_rx_packet(&p_data))
-    {
-        char str_in[RX_PACKET_SIZE + 1] = {0, };
-
-        memcpy(str_in, p_data->buffer, p_data->length);
-        p_data->length = 0;
-    }
-}
-
-__STATIC_INLINE void UART_PutChar(uint8_t data)
-{
-    /* Echo received character on TX */
-    LL_USART_TransmitData8(USART2, (uint8_t)data);
-
-    /* Loop until the end of transmission */
-    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-}
-
-void comm_rx_handler(uint8_t rx)
-{
-    UART_PutChar(rx);
-
-    if ((rx == '\n') || (rx == '\r'))
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = 0;
-        }
-        else
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
-        }
-
-        ++gt_rx_uart.RxInCnt;
-        gt_rx_uart.RxInCnt &= (uint16_t)(RX_BUFF_SIZE - 1);
-    }
-    else if (rx == UART_BACKSPACE)
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length)
-        {
-            uint8_t temp[2] = {' ', UART_BACKSPACE};
-
-            UART_PutChar(temp[0]);
-            UART_PutChar(temp[1]);
-            --gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
-        }
-    }
-    else
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = rx;
-            ++gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
-
-            if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[0] == 0x1B)
-            {
-                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[1] == 0x5B)
-                {
-                    if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[2] == 0x41)
-                    {
-                        print(LOG_INFO, "\r\n\r\n");
-                        /* copy */
-                        for (uint8_t i = 0 ; i < 64 ; ++i)
-                        {
-                            if (gt_rx_uart.RxInCnt)
-                            {
-                                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i])
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i];
-                                    print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
-                                }
-                                else
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length = i;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                if (gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i])
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i];
-                                    print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
-                                }
-                                else
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length = i;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            //print(LOG_ERROR, "buffer limit...\r\n");
-        }
-    }
-}
 /* USER CODE END 4 */
 
 /**

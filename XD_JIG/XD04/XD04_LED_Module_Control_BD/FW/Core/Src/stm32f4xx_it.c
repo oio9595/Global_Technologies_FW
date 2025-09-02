@@ -237,7 +237,7 @@ void USART2_IRQHandler(void)
     {
         /* Read one byte from the receive data register */
         uint8_t rx_data = LL_USART_ReceiveData8(USART2);
-        comm_rx_handler(rx_data);
+        comm_rx_push(rx_data);
     }
 
   /* USER CODE END USART2_IRQn 0 */
