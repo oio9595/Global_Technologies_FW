@@ -670,6 +670,7 @@ static void XDIC_Set_Delay_CH(void)
     }
 
     XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
 }
 
 void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
