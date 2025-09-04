@@ -37,8 +37,8 @@
 #define XD_MCLK_FLL_ENABLE                  (0)
 #define XD_MCLK_FLL_DISABLE                 (1)
 
-#define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
-#define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
+#define XD_MCLK_LSB_MASK                    (0x00FFF) //LSB 12-bit
+#define XD_MCLK_MSB_MASK                    (0xFF000) //MSB  8-bit
 
 #define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_SIZE) - 1)
 
@@ -49,7 +49,6 @@ static _xdic_mirror_regs_t gt_xdic_mirror_regs;
 
 static _reg_map_t gt_xdic_general_maps[] =
 {
-
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_RESET_ID         , _r00 ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_CONTROL       , _r01 ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_FPWM_DIVIDER     , _r02 ),
@@ -551,10 +550,10 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r26.serial_latency = 60;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
@@ -776,8 +775,8 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 
     // 3. change mclk_lock_cnt
     gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);
-    gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
-    gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+    gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
+    gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
 
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_1, gt_xdic_general_regs._r27.val);
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_2, gt_xdic_general_regs._r28.val);
