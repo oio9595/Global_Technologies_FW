@@ -15,7 +15,7 @@
 #include "JigBd_IF.h"
 #include "ads124s08.h"
 
-/* Trimming spec */
+/* Trim Spec */
 #define XDIC_ERR_RATE               (1.0f / 100)   /* % */
 #define XDIC_VREF_TARGET            (2.2)          /* V */
 #define XDIC_OSC_TARGET             (XD_MCLK / 1000000)   /* MHz */
@@ -30,6 +30,7 @@
 #define XDIC_GAIN_P2                (3000)
 #define XDIC_GAIN_TARGET            (16.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
 
+/* Screen Spec */
 #define XDIC_SCREEN_POINT_SIZE      (4)
 #define XDIC_SCREEN_ERROR_RATE      (2.0f / 100)   /* % */
 

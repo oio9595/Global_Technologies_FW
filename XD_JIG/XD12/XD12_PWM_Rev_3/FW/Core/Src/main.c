@@ -1615,12 +1615,13 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_trim_ofs"))
         {
             uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            current_gain_t current_gain = GAIN_MID;
             XDIC_Trim_Init_OFS_CH();
-            JigBD_IF_Change_Current_Gain(GAIN_MID);
+            JigBD_IF_Change_Current_Gain(current_gain);
             for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
                 JigBD_IF_Select_Output_Ch(i);
-                XDIC_Set_Max_Curr_Vref(300);
+                XDIC_Set_Max_Curr_Vref(300); // XDIC_OFS_P1
                 ADS114S08_Set_Start(1);
                 while(1)
                 {
@@ -1630,7 +1631,7 @@ static void TaskDebugUart(void)
                     }
                 }
                 iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-                XDIC_Set_Max_Curr_Vref(700);
+                XDIC_Set_Max_Curr_Vref(700); // XDIC_OFS_P2
                 ADS114S08_Set_Start(1);
                 while(1)
                 {
@@ -1641,19 +1642,20 @@ static void TaskDebugUart(void)
                 }
                 iout_adc[i][1] = ADS114S08_Get_ADC_Value();
                 uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
-                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_MID);
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
                 print(LOG_INFO, "\r\n OFS CH[%d] : %.3f\r\n", i, iout_avg);
             }
         }
         else if (Command_is_("xd_trim_gain"))
         {
             uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            current_gain_t current_gain = GAIN_HIGH;
             XDIC_Trim_Init_GAIN_CH();
-            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            JigBD_IF_Change_Current_Gain(current_gain);
             for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
                 JigBD_IF_Select_Output_Ch(i);
-                XDIC_Set_Max_Curr_Vref(200);
+                XDIC_Set_Max_Curr_Vref(200); // XDIC_GAIN_P1
                 ADS114S08_Set_Start(1);
                 while(1)
                 {
@@ -1663,7 +1665,7 @@ static void TaskDebugUart(void)
                     }
                 }
                 iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-                XDIC_Set_Max_Curr_Vref(600);
+                XDIC_Set_Max_Curr_Vref(600); // XDIC_GAIN_P2
                 ADS114S08_Set_Start(1);
                 while(1)
                 {
@@ -1674,7 +1676,7 @@ static void TaskDebugUart(void)
                 }
                 iout_adc[i][1] = ADS114S08_Get_ADC_Value();
                 uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
-                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_HIGH);
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
                 print(LOG_INFO, "\r\n GAIN CH[%d] : %.3f\r\n", i, iout_avg);
             }
         }
