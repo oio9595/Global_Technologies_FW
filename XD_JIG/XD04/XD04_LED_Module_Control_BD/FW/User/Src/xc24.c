@@ -315,9 +315,6 @@ void XC24_Init(void)
     LL_mDelay(20);
 
     XC_NSCS_HI();
-    //XC24_Start_MCLK_Oscillation(false);
-
-    print(LOG_PC, " ...XC24 Initial Start...\r\n");
 
     for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
