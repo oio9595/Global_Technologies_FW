@@ -6,7 +6,7 @@ import pyautogui
 import pygetwindow as gw
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox
+    QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox, QMessageBox, QInputDialog
 )
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QTimer, Qt
@@ -28,37 +28,58 @@ class MacroApp(QWidget):
 
         self.init_ui()
         self.init_shortcuts()
-        self.init_serial()
+        # self.init_serial()
 
     def init_serial(self):
         ports = list(serial.tools.list_ports.comports())
         if not ports:
             self.log("⚠️ 연결된 COM 포트가 없습니다.")
+            QMessageBox.warning(self, "COM Port 오류", "연결된 COM 포트가 없습니다.")
+            return
         else:
-            self.log("사용 가능한 COM 포트:")
-            for i, port in enumerate(ports):
-                self.log(f"{i}: {port.device} - {port.description}")
+            # 포트 목록 만들기
+            port_list = [f"{port.device} - {port.description}" for port in ports]
 
-            # 예: 첫 번째 포트를 자동 선택
-            com_port = ports[0].device
-            # com_port = ports[1].device
-            self.log(f"자동 선택된 COM 포트: {com_port}")
+            # 사용자에게 선택창 보여주기
+            item, ok = QInputDialog.getItem(
+                self,
+                "COM Port 선택",
+                "사용할 COM Port를 선택하세요:",
+                port_list,
+                0,  # 기본 선택 index
+                False
+            )
 
-            # 포트 열기
-            self.ser = serial.Serial(com_port, 115200, timeout=1)
-            self.log("UART 포트 열기 성공!")
+            if ok and item:
+                # 선택된 포트에서 device 부분만 추출
+                com_port = item.split(" - ")[0]
+                self.log(f"선택된 COM 포트: {com_port}")
 
-            # 수신 스레드 시작
-            self.thread_running = True
-            self.read_thread = threading.Thread(target=self.read_serial_data, daemon=True)
-            self.read_thread.start()
+                try:
+                    # 포트 열기
+                    self.ser = serial.Serial(com_port, 115200, timeout=1)
+                    self.log("UART 포트 열기 성공!")
+
+                    # 수신 스레드 시작
+                    self.thread_running = True
+                    self.read_thread = threading.Thread(target=self.read_serial_data, daemon=True)
+                    self.read_thread.start()
+
+                except Exception as e:
+                    self.log(f"❌ 포트 열기 실패: {e}")
+                    QMessageBox.critical(self, "포트 열기 실패", str(e))
+            else:
+                self.log("⚠️ 사용자가 COM 포트를 선택하지 않았습니다.")
 
     def init_ui(self):
         layout = QVBoxLayout()
 
         self.gui_version = QLabel(VERSION_INFO)
+        self.ser_con_btn = QPushButton("Connect COM Port")
+        self.ser_con_btn.clicked.connect(self.init_serial)
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.gui_version)
+        info_layout.addWidget(self.ser_con_btn)
 
         # Packet 설정
         packet_layout = QHBoxLayout()
@@ -170,7 +191,7 @@ class MacroApp(QWidget):
             self.checksum_label.setText(f"0x{checksum_val:02X}")
             packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
             self.ser.write(packet)
-            self.log(f"📤 Sent Packet: \t{[f'{b:02X}' for b in packet]}")
+            self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
         except ValueError:
             self.log("⚠️ Invalid Value.")
             return
@@ -187,7 +208,7 @@ class MacroApp(QWidget):
             self.checksum_label.setText(f"0x{checksum_val:02X}")
             packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
             self.ser.write(packet)
-            self.log(f"📤 Sent Wrong Packet: \t{[f'{b:02X}' for b in packet]}")
+            self.log(f"📤 Tx Wrong Packet \t{[f'{b:02X}' for b in packet]}")
         except ValueError:
             self.log("⚠️ Invalid Value.")
             return
@@ -197,10 +218,9 @@ class MacroApp(QWidget):
             sop_val = int(self.sop_cb.currentText(), 16)
             length_val = int(self.length_cb.currentText(), 16)
             command_val = int(self.command_cb.currentText(), 16)
-            # update checksum field
             packet = bytes([sop_val, length_val, command_val])
             self.ser.write(packet)
-            self.log(f"📤 Sent Wrong Packet: \t{[f'{b:02X}' for b in packet]}")
+            self.log(f"📤 Tx Half Packet \t{[f'{b:02X}' for b in packet]}")
         except ValueError:
             self.log("⚠️ Invalid Value.")
             return
@@ -212,9 +232,10 @@ class MacroApp(QWidget):
                 if self.ser.in_waiting > 0:
                     data = self.ser.read(self.ser.in_waiting)  # 들어온 데이터 모두 읽기
                     if data:
-                        hex_str = " ".join([f"{b:02X}" for b in data])
+                        hex_list = [f"{b:02X}" for b in data]
                         text_str = data.decode(errors="ignore")
-                        self.log(f"📥 Received: HEX[{hex_str}] | STR[{text_str}]")
+                        self.log(f"📥 Rx \t\t{hex_list} | STR[{text_str}]")
+
                 time.sleep(0.05)  # CPU 점유율 방지
             except Exception as e:
                 self.log(f"⚠️ 수신 오류: {e}")
