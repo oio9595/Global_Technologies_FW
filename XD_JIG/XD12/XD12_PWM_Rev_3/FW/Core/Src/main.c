@@ -55,33 +55,6 @@
 
 /* USER CODE BEGIN PV */
 
-#define PROTOCOL_SOP 0xA5
-#define PROTOCOL_EOP 0x5A
-
-#define PROTOCOL_CMD_INITIAL        0x00
-#define PROTOCOL_CMD_QUIT           0xFF
-#define PROTOCOL_CMD_CURRENT        0x01
-#define PROTOCOL_CMD_BAR_ON_SEL     0x10
-#define PROTOCOL_CMD_BAR_OFF_SEL    0x20
-#define PROTOCOL_CMD_BLK_ON_SEL     0x40
-#define PROTOCOL_CMD_BLK_OFF_SEL    0x80
-
-typedef struct
-{
-    uint8_t SOP;
-    uint8_t length;
-    uint8_t command;
-    uint8_t data;
-    uint8_t checksum;
-    uint8_t EOP;
-} protocol_packet_t;
-protocol_packet_t packet;
-
-uint8_t PROTOCOL_CHECKSUM(uint8_t sop, uint8_t length, uint8_t command, uint8_t data)
-{
-    return (sop + length + command + data) & 0xFF;
-}
-
 void btn_process(void)
 {
     static uint32_t now_state = 1;
@@ -91,30 +64,6 @@ void btn_process(void)
     {
         if (now_state == 0)
         {
-            packet.SOP = PROTOCOL_SOP;
-            packet.length = 1;
-            packet.command = PROTOCOL_CMD_INITIAL;
-            packet.data = 0;
-            packet.checksum = PROTOCOL_CHECKSUM(packet.SOP, packet.length, packet.command, packet.data);
-            packet.EOP = PROTOCOL_EOP;
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.SOP);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.length);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.command);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.data);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.checksum);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.EOP);
         }
     }
     prev_state = now_state;
@@ -278,7 +227,7 @@ void comm_print_help(void)
 void comm_init(void)
 {
     print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r    [GT-XD12 PWM (ES2) JIG]");
+    print(LOG_INFO, "\n\r    [GT-XD12 PWM (ES3) JIG]");
     print(LOG_INFO, "\n\r--------------------------------------");
     print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
@@ -340,7 +289,7 @@ int main(void)
     JigBD_IF_Link_DMA_With_Buffer();
 
     XD_Trim_Calculate_Spec();
-    //ADS114S08_Init();
+    ADS114S08_Init();
 
     LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
     LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
@@ -1321,10 +1270,6 @@ static void TaskDebugUart(void)
             comm_print_help();
         }
 /* ----------------- command list - jig ----------------- */
-        else if (Command_Param_is_("ccr", "%d", &u32_recv_param[0]))
-        {
-            LL_TIM_OC_SetCompareCH2(TIM8, u32_recv_param[0]);
-        }
         else if (Command_is_("jig_ic_start"))
         {
             print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
@@ -1347,7 +1292,6 @@ static void TaskDebugUart(void)
             LL_mDelay(5);
 
             ADS114S08_Set_Start(1);
-            LL_mDelay(1);
 
             while (1)
             {
@@ -1404,6 +1348,19 @@ static void TaskDebugUart(void)
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
             }
         }
+        else if (Command_Param_is_("jig_xc_vcc_level", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                print(LOG_INFO, "\r\n XC VCC [5.7V]\r\n");
+                JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n XC VCC [5V]\r\n");
+                JigBD_IF_XC_VCC_Level(PWR_ON_5V0);
+            }
+        }
         else if (Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
@@ -1453,26 +1410,6 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "vsync stop\r\n");
             }
             print(LOG_INFO, "supply external VLED\r\n");
-        }
-        else if (Command_Param_is_("vsync", "%lf", &lf_recv_param[0]))
-        {
-            XDIC_Update_Vsync_Frequency((float)lf_recv_param[0]);
-            print(LOG_INFO, "set vsync freq to %.3lfHz\r\n", lf_recv_param[0]);
-        }
-        else if (Command_Param_is_("pwm_freq", "%lf", &lf_recv_param[0]))
-        {
-            uint32_t tim_arr = (uint32_t)(144000/lf_recv_param[0] + 0.5f - 1);
-
-            LL_TIM_CC_DisableChannel(TIM1, LL_TIM_CHANNEL_CH1);
-            LL_TIM_DisableCounter(TIM1);
-            LL_TIM_SetCounter(TIM1, 0);
-            LL_TIM_OC_SetCompareCH1(TIM1, 0);
-
-            LL_TIM_SetAutoReload(TIM1, tim_arr);
-
-            LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
-            LL_TIM_EnableCounter(TIM1);
-            print(LOG_INFO, "set pwm freq to %.3lf kHz\r\n", lf_recv_param[0]);
         }
 /* ----------------- command list - xd ----------------- */
         else if (Command_is_("xd_idgen"))
@@ -1604,10 +1541,10 @@ static void TaskDebugUart(void)
             {
                 if (gb_timer_input_capture_done)
                 {
-                    JigBD_IF_Stop_Input_Capture();
                     break;
                 }
             }
+            JigBD_IF_Stop_Input_Capture();
             uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
             float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
             print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
@@ -1686,7 +1623,7 @@ static void TaskDebugUart(void)
             XDIC_Trim_Init_VREF_CTL();
             for (uint8_t i = 0 ; i < 64 ; ++i)
             {
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, 63 - i);
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, i);
                 LL_mDelay(0);
                 JigBD_IF_Start_MCU_ADC();
                 uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
@@ -1704,11 +1641,17 @@ static void TaskDebugUart(void)
             XDIC_Trim_Init();
             XDIC_Trim_Init_OSC();
 
-            for (uint8_t i = 0 ; i <= REG_LIMIT_OSC ; ++i)
+            for (uint8_t i = 0 ; i < 64 ; ++i)
             {
                 XDIC_Write_Mirror_Reg(0x01, i);
                 JigBD_IF_Start_Input_Capture();
-                LL_mDelay(150);
+                while(1)
+                {
+                    if (gb_timer_input_capture_done)
+                    {
+                        break;
+                    }
+                }
                 JigBD_IF_Stop_Input_Capture();
 
                 print(LOG_INFO, "\r\n reg:%3u:osc:%f:MHz", i, JigBD_IF_Reconvert_XDIC_Original_Freq(JigBD_IF_Get_Input_Capture_Freq()));
@@ -1726,7 +1669,6 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
             }
         }
-
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
@@ -1772,7 +1714,6 @@ static void TaskDebugUart(void)
             XC24_Trim_Init_OSC();
             LL_mDelay(1);
             JigBD_IF_Start_Input_Capture();
-
             while(1)
             {
                 if (gb_timer_input_capture_done)
@@ -1780,7 +1721,6 @@ static void TaskDebugUart(void)
                     break;
                 }
             }
-
             JigBD_IF_Stop_Input_Capture();
             float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
             print(LOG_INFO, "Screen  OSC : %.3f\r\n", osc_freq);
@@ -1788,28 +1728,11 @@ static void TaskDebugUart(void)
         else if (Command_is_("xc_trim_dac"))
         {
             XC24_Trim_Init_DAC_Gain();
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
+            uint16_t dac_input[4] = {248, 1241, 2482, 3723};
             for (uint8_t i = 0 ; i < 4 ; ++i)
             {
-                uint16_t dac_input = 0;
-                if (i == 0)
-                {
-                    dac_input = 248;
-                }
-                else if (i == 1)
-                {
-                    dac_input = 1241;
-                }
-                else if (i == 2)
-                {
-                    dac_input = 2482;
-                }
-                else if (i == 3)
-                {
-                    dac_input = 3723;
-                }
-                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input);
-
-                ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
+                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input[i]);
                 LL_mDelay(1);
                 ADS114S08_Set_Start(1);
                 while(1)
@@ -1822,7 +1745,7 @@ static void TaskDebugUart(void)
 
                 uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
                 float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
-                print(LOG_INFO, "%u, %.4f\r\n", dac_input, dac_val);
+                print(LOG_INFO, "%u, %.4f\r\n", dac_input[i], dac_val);
             }
         }
         else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
@@ -1896,33 +1819,6 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n system reset \r\n");
             NVIC_SystemReset();
-        }
-        else if (Command_is_("initial"))
-        {
-            packet.SOP = PROTOCOL_SOP;
-            packet.length = 1;
-            packet.command = PROTOCOL_CMD_INITIAL;
-            packet.data = 0;
-            packet.checksum = PROTOCOL_CHECKSUM(packet.SOP, packet.length, packet.command, packet.data);
-            packet.EOP = PROTOCOL_EOP;
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.SOP);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.length);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.command);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.data);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.checksum);
-
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, packet.EOP);
         }
         else
         {
