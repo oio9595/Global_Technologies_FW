@@ -378,7 +378,6 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
 
             f_freq = (TIM5_FREQ / delta);
             f_freq_avg += f_freq;
-
             ++n_count;
         }
 
@@ -660,7 +659,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
 
-            for (uint8_t i = 0; i < SERIAL_LD_SIZE; ++i)
+            for (uint8_t i = 0 ; i < SERIAL_LD_SIZE ; ++i)
             {
                 if (write_data)
                 {
