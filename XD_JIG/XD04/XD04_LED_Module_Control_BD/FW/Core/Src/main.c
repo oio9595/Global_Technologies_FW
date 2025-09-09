@@ -90,7 +90,7 @@ typedef struct tag_RX_PACKET_BUFFER
 } rx_packet_buffer_t;
 static rx_packet_buffer_t gt_rx_packet_buffer;
 
-#if 1
+#if 0
     static LOG_LV_T gt_log_lv = LOG_PC;
 #else
     static LOG_LV_T gt_log_lv = LOG_RS232;
@@ -259,6 +259,7 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 gn_uart_rx_timeout = 5;
                 gb_uart_rx_timeout_enable = true;
             }
+
             if (comm_get_rx_available() >= 6) // Minimum packet size
             {
                 empty_packet.sop = comm_rx_pop();
@@ -292,8 +293,8 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
             {
                 comm_tx_response(0);
                 gt_ring_buffer.tail = gt_ring_buffer.head;
-                ret = 0;
                 gb_uart_rx_timeout_enable = false;
+                ret = 0;
             }
         }
     }

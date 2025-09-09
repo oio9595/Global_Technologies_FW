@@ -11,6 +11,8 @@
 #include "vsync_task.h"
 #include "config.h"
 
+#define XDIC_LD_MAX         (16383U)
+
 #define XC24_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xc24_general_regs.reg }
 
 #define XC_SPI_TIMEOUT_MS   (10)
@@ -581,7 +583,7 @@ void XC24_IF_Write_LD(void)
     {
         if (gb_xd_led_enable_table[i])
         {
-            tx_buffer[i + 1] = 16383;
+            tx_buffer[i + 1] = XDIC_LD_MAX;
         }
         else
         {
