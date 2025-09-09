@@ -23,7 +23,8 @@
 #define XDIC_OFS_ERR_RATE           (0.5f / 100)   /* % */
 #define XDIC_OFS_P1                 (250)
 #define XDIC_OFS_P2                 (500)
-#define XDIC_OFS_TARGET             (16.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f))   /* mA */
+#define XDIC_OFS_CAL                (0.0f)
+#define XDIC_OFS_TARGET             (16.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
 
 #define XDIC_GAIN_ERR_RATE          (0.5f / 100)   /* % */
 #define XDIC_GAIN_P1                (1000)
@@ -54,7 +55,6 @@
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
 
 #define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
-#define XD_SCREEN_LD_FIX_GAP        ((0xFFFF + 1) / 256 - 1)
 
 typedef struct tag_XDIC_SCREEN_PARAM_T
 {
@@ -144,7 +144,7 @@ static current_gain_t gt_screen_gain;
 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
     static uint32_t gn_xd_screen_ana;
 #else
-    static uint16_t gn_xd_screen_ld_fix;
+    static uint16_t gn_xd_screen_max_current;
 #endif
 
 static uint8_t gn_xd_adc_channel;
@@ -160,7 +160,7 @@ static xdic_trim_condition_t gt_xdic_trim_condition[XD_TRIM_MAX];
 
 static screen_param_t gt_xd_screen_param[XDIC_SCREEN_POINT_SIZE];
 
-void XD_Screen_Init(void)
+void XD_Screen_Param_Init(void)
 {
     gt_xd_screen_param[0].f_target_min = XDIC_OFS_SCREEN_TARGET1 * (1.0f - XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[0].f_target_max = XDIC_OFS_SCREEN_TARGET1 * (1.0f + XDIC_SCREEN_ERROR_RATE);
@@ -283,10 +283,10 @@ static void XD_Trim_Param_Algorithm_Init(void)
             temp_gain_level = GAIN_LOW; //Don't Care
             break;
         case XD_TRIM_GAIN_CHS:
-            temp_gain_level = GAIN_MID;
+            temp_gain_level = GAIN_HIGH;
             break;
         case XD_TRIM_OFS_CHS:
-            temp_gain_level = GAIN_MID;
+            temp_gain_level = GAIN_HIGH;
             break;
         }
 
@@ -688,7 +688,7 @@ void XD_Trim_Task(void)
                 JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 JigBD_IF_Change_Current_Gain(GAIN_HIGH);
                 XD_Trim_Param_Algorithm_Init();
-                XD_Screen_Init();
+                XD_Screen_Param_Init();
 
                 print(LOG_INFO, "\r\n======== XD TRIM START ========\r\n");
                 gt_xd_trim_step = XD_TRIM_STEP_IC_PWR;
@@ -1115,14 +1115,14 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
-            XDIC_Overwrite_Trim_Regs();
             XDIC_Trim_Init_OFS_CH();
-            gt_screen_gain = GAIN_MID;
-            JigBD_IF_Change_Current_Gain(gt_screen_gain);
-            gn_xd_screen_ana = 0;
+            XDIC_Overwrite_Trim_Regs();
             XDIC_Read_All_Registers();
             //XDIC_Display_Trim_Regs();
+            gt_screen_gain = GAIN_MID;
+            JigBD_IF_Change_Current_Gain(gt_screen_gain);
             JigBD_IF_VLED_9V_EN(PWR_ON);
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
@@ -1135,13 +1135,12 @@ void XD_Screen_Task(void)
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
                 XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
-                XDIC_Set_Max_Current_Level(gn_xd_screen_ld_fix);
+                XDIC_Set_Max_Current_Level(gn_xd_screen_max_current);
             #endif
             gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
             break;
         case XD_SCREEN_STEP_SET_ADC_CH :
             JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
             break;
         case XD_SCREEN_STEP_START_ADC_CONVERSION :
@@ -1179,13 +1178,13 @@ void XD_Screen_Task(void)
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }
                     #else
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
+                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_max_current, \
                             gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
                             gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
                             gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                        gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
-                        if (gn_xd_screen_ld_fix > 0xFFFF)
+                        ++gn_xd_screen_max_current;
+                        if (gn_xd_screen_max_current > 8)
                         {
                             gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                         }

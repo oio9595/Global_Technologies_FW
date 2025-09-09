@@ -490,7 +490,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
     gt_xd_short_level = SHORT_LEVEL_3V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -587,7 +587,7 @@ void XDIC_Trim_Param_Init(void)
 {
     gt_xd_fb_level = FB_LEVEL_0V4;
     gt_xd_short_level = SHORT_LEVEL_36V;
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
 }
 
 void XDIC_Trim_Init(void)
