@@ -16,6 +16,17 @@ import serial.tools.list_ports
 
 VERSION_INFO = "GUI Version 1.0"
 
+commands = {
+    "0x00 (Initial)": 0x00,
+    "0xFF (Quit)": 0xFF,
+    "0xF0 (Status)": 0xF0,
+    "0x01 (Current)": 0x01,
+    "0x10 (Bar On Select)": 0x10,
+    "0x20 (Bar Off Select)": 0x20,
+    "0x40 (Block On Select)": 0x40,
+    "0x80 (Block Off Select)": 0x80,
+}
+
 class MacroApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -93,17 +104,18 @@ class MacroApp(QWidget):
         length_ver_layout = QVBoxLayout()
         length_ver_layout.addWidget(QLabel("LENGTH"))
         self.length_cb = QComboBox()
-        self.length_cb.addItems(["0x00", "0x01", "0x02", "0x03", "0x04", "0x05", "0x06", "0x07", "0x08", "0x09", "0x0A", "0x0B", "0x0C", "0x0D", "0x0E", "0x0F"])
+        self.length_cb.addItems([str(i) for i in range(1, 10)])
         length_ver_layout.addWidget(self.length_cb)
 
         command_ver_layout = QVBoxLayout()
         command_ver_layout.addWidget(QLabel("COMMAND"))
         self.command_cb = QComboBox()
-        self.command_cb.addItems(["0x00", "0xFF", "0xF0", "0x01", "0x10", "0x20", "0x40", "0x80"])
+        self.command_cb.addItems(commands.keys())
+        self.commands = commands
         command_ver_layout.addWidget(self.command_cb)
 
         data_ver_layout = QVBoxLayout()
-        data_ver_layout.addWidget(QLabel("DATA"))
+        data_ver_layout.addWidget(QLabel("DATA [Decimal]"))
         self.data_label = QLineEdit()
         self.data_label.setText("0")
         data_ver_layout.addWidget(self.data_label)
@@ -121,7 +133,7 @@ class MacroApp(QWidget):
 
         self.sop_cb.setFixedWidth(80)
         self.length_cb.setFixedWidth(80)
-        self.command_cb.setFixedWidth(80)
+        self.command_cb.setFixedWidth(200)
         self.data_label.setFixedWidth(80)
         self.checksum_label.setFixedWidth(80)
         self.eop_cb.setFixedWidth(80)
@@ -150,7 +162,7 @@ class MacroApp(QWidget):
         # 레이아웃 설정
         layout.addLayout(info_layout)
         layout.addWidget(self.create_separator())
-        layout.addWidget(QLabel("[Packet 설정]"))
+        layout.addWidget(QLabel("[Tx Packet 설정]"))
         layout.addLayout(packet_layout)
         layout.addWidget(self.create_separator())
         layout.addWidget(QLabel("[Packet 전송]"))
@@ -180,50 +192,65 @@ class MacroApp(QWidget):
         self.log_output.ensureCursorVisible()
 
     def send_normal(self):
-        try:
-            sop_val = int(self.sop_cb.currentText(), 16)
-            length_val = int(self.length_cb.currentText(), 16)
-            command_val = int(self.command_cb.currentText(), 16)
-            data_val = int(self.data_label.text().strip())
-            checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
-            eop_val = int(self.eop_cb.currentText(), 16)
-            # update checksum field
-            self.checksum_label.setText(f"0x{checksum_val:02X}")
-            packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
-            self.ser.write(packet)
-            self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
-        except ValueError:
-            self.log("⚠️ Invalid Value.")
-            return
+        if self.thread_running :
+            try:
+                sop_val = int(self.sop_cb.currentText(), 16)
+                length_val = int(self.length_cb.currentText())
+                # command_val = int(self.command_cb.currentText(), 16)
+                command_text = self.command_cb.currentText()
+                command_val = self.commands[command_text]
+                data_val = int(self.data_label.text().strip())
+                checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
+                eop_val = int(self.eop_cb.currentText(), 16)
+                # update checksum field
+                self.checksum_label.setText(f"0x{checksum_val:02X}")
+                packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                self.ser.write(packet)
+                self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+            except ValueError:
+                self.log("⚠️ Invalid Value.")
+                return
+        else :
+            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
     def send_wrong_checksum(self):
-        try:
-            sop_val = int(self.sop_cb.currentText(), 16)
-            length_val = int(self.length_cb.currentText(), 16)
-            command_val = int(self.command_cb.currentText(), 16)
-            data_val = int(self.data_label.text().strip())
-            checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF) + 1  # Intentionally wrong
-            eop_val = int(self.eop_cb.currentText(), 16)
-            # update checksum field
-            self.checksum_label.setText(f"0x{checksum_val:02X}")
-            packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
-            self.ser.write(packet)
-            self.log(f"📤 Tx Wrong Packet \t{[f'{b:02X}' for b in packet]}")
-        except ValueError:
-            self.log("⚠️ Invalid Value.")
-            return
+        if self.thread_running :
+            try:
+                sop_val = int(self.sop_cb.currentText(), 16)
+                length_val = int(self.length_cb.currentText())
+                # command_val = int(self.command_cb.currentText(), 16)
+                command_text = self.command_cb.currentText()
+                command_val = self.commands[command_text]
+                data_val = int(self.data_label.text().strip())
+                checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF) + 1  # Intentionally wrong
+                eop_val = int(self.eop_cb.currentText(), 16)
+                # update checksum field
+                self.checksum_label.setText(f"0x{checksum_val:02X}")
+                packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                self.ser.write(packet)
+                self.log(f"📤 Tx Wrong Packet \t{[f'{b:02X}' for b in packet]}")
+            except ValueError:
+                self.log("⚠️ Invalid Value.")
+                return
+        else :
+            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
     def send_half_packet(self):
-        try:
-            sop_val = int(self.sop_cb.currentText(), 16)
-            length_val = int(self.length_cb.currentText(), 16)
-            command_val = int(self.command_cb.currentText(), 16)
-            packet = bytes([sop_val, length_val, command_val])
-            self.ser.write(packet)
-            self.log(f"📤 Tx Half Packet \t{[f'{b:02X}' for b in packet]}")
-        except ValueError:
-            self.log("⚠️ Invalid Value.")
-            return
+        if self.thread_running :
+            try:
+                sop_val = int(self.sop_cb.currentText(), 16)
+                length_val = int(self.length_cb.currentText())
+                # command_val = int(self.command_cb.currentText(), 16)
+                command_text = self.command_cb.currentText()
+                command_val = self.commands[command_text]
+                packet = bytes([sop_val, length_val, command_val])
+                self.ser.write(packet)
+                self.log(f"📤 Tx Half Packet \t{[f'{b:02X}' for b in packet]}")
+            except ValueError:
+                self.log("⚠️ Invalid Value.")
+                return
+        else :
+            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
     def read_serial_data(self):
         # MCU → PC UART 데이터 읽기 스레드
@@ -233,8 +260,15 @@ class MacroApp(QWidget):
                     data = self.ser.read(self.ser.in_waiting)  # 들어온 데이터 모두 읽기
                     if data:
                         hex_list = [f"{b:02X}" for b in data]
+                        if len(data) == 6:
+                            calc_checksum = sum(data[:4]) & 0xFF
+                            recv_checksum = data[4]
+                            if calc_checksum == recv_checksum:
+                                result = f"✅ Rx Checksum (0x{recv_checksum:02X})"
+                            else:
+                                result = f"❌ Rx Checksum (0x{recv_checksum:02X} / 0x{calc_checksum:02X})"
                         text_str = data.decode(errors="ignore")
-                        self.log(f"📥 Rx \t\t{hex_list} | STR[{text_str}]")
+                        self.log(f"📥 Rx \t\t{hex_list} | {result}")
 
                 time.sleep(0.05)  # CPU 점유율 방지
             except Exception as e:
