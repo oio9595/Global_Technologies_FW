@@ -87,9 +87,13 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
     }
     else
     {
-        LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
+        if (IS_XC24_Support())
+        {
+            XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE_DATA, 0x00);
+        }
         XC_NSCS_LO();
         XC24_Start_MCLK_Oscillation(FALSE);
+        LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
     }
     LL_mDelay(10);
 }

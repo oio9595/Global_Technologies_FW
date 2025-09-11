@@ -1346,6 +1346,19 @@ static void TaskDebugUart(void)
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
             }
         }
+        else if (Command_Param_is_("jig_xc_vcc_level", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                print(LOG_INFO, "\r\n XC VCC 5.5\r\n");
+                JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n XC VCC 5\r\n");
+                JigBD_IF_XC_VCC_Level(PWR_ON_5V0);
+            }
+        }
         else if (Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
@@ -1513,7 +1526,38 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_debug"))
         {
+            JigBD_IF_Select_Output_Ch(XD_CH_MAX);
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
+            LL_mDelay(10);
+
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            ADS114S08_Select_Input_CH(0);
+            LL_mDelay(5);
+            //JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
+            JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
             JigBD_IF_XD_VCC_EN(PWR_ON);
+
+            while(1)
+            {
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+
+                ADS114S08_Set_Start(1);
+                LL_mDelay(1);
+
+                while (1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                uint16_t adc_value = ADS114S08_Get_ADC_Value();
+                float current = JigBD_IF_Convert_Adc_To_Current(adc_value, GAIN_HIGH);
+                print(LOG_INFO, "\r\n%.3f", current);
+            }
+
             print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
             if (IS_XC24_Support())
@@ -1523,18 +1567,7 @@ static void TaskDebugUart(void)
                 LL_mDelay(10);
             }
 
-            JigBD_IF_Select_Output_Ch(XD_CH_MAX);
-            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
-            LL_mDelay(10);
-
-            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
-            LL_mDelay(10);
-
             XDIC_Init();
-
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
         }
         else if (Command_is_("xd_trim_debug"))
         {
@@ -1564,6 +1597,13 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_trim_vref"))
         {
             XDIC_Trim_Init_VREF_CTL();
+            JigBD_IF_Start_MCU_ADC();
+            uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+            print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+        }
+        else if (Command_is_("xd_trim_ldo"))
+        {
+            XDIC_Trim_Init_LDO_CTL();
             JigBD_IF_Start_MCU_ADC();
             uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
             print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));

@@ -754,6 +754,7 @@ extern void XDIC_Save_Trim_Regs(void);
 extern uint64_t XDIC_Compare_Trim_Regs(void);
 
 extern void XDIC_Trim_Init_VREF_CTL(void);
+extern void XDIC_Trim_Init_LDO_CTL(void);
 extern void XDIC_Trim_Init_OSC(void);
 extern void XDIC_Trim_Init_ICTL_L_CH(void);
 extern void XDIC_Trim_Init_ICTL_H_CH(void);
