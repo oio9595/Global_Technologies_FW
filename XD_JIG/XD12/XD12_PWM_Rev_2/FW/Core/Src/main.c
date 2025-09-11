@@ -1533,30 +1533,8 @@ static void TaskDebugUart(void)
             JigBD_IF_Change_Current_Gain(GAIN_HIGH);
             ADS114S08_Select_Input_CH(0);
             LL_mDelay(5);
-            //JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
             JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
             JigBD_IF_XD_VCC_EN(PWR_ON);
-
-            while(1)
-            {
-                gb_ads114s08_drdy_done = 0;
-                gn_ads114s08_adc_temp = 0;
-                gn_adc_read_count = ADS114S08_READ_COUNT;
-
-                ADS114S08_Set_Start(1);
-                LL_mDelay(1);
-
-                while (1)
-                {
-                    if (gb_ads114s08_drdy_done)
-                    {
-                        break;
-                    }
-                }
-                uint16_t adc_value = ADS114S08_Get_ADC_Value();
-                float current = JigBD_IF_Convert_Adc_To_Current(adc_value, GAIN_HIGH);
-                print(LOG_INFO, "\r\n%.3f", current);
-            }
 
             print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
 
