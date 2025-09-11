@@ -827,6 +827,12 @@ void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl)
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
 }
 
+void XC24_Trim_Write_OTP_WSEL(uint8_t otp_wsel)
+{
+	gt_xc24_mirror_regs._rF2.otp_wsel = otp_wsel;
+	XC24_Write_Register(XC24_MIRROR_ADDR_OTP_WRITE, gt_xc24_mirror_regs._rF2.ALL);
+}
+
 /* END - INTERFACE FUNCTIONS ************************************************************************/
 
 /*** end of file ***/

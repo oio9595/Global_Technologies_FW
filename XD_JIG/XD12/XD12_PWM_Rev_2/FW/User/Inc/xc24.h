@@ -1704,6 +1704,7 @@ extern void XC24_Trim_Write_VCTL_LDO(uint8_t vctl_ldo);
 extern void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl);
 extern void XC24_Trim_Write_DAC_GAIN(uint8_t dac_gain);
 extern void XC24_Trim_Write_DAC_OFS(uint8_t dac_ofs);
+extern void XC24_Trim_Write_OTP_WSEL(uint8_t otp_wsel);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus
