@@ -406,7 +406,6 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
                 gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
 #endif
-                gt_xc24_general_regs._r1B.osc_spread_en = 0;
                 break;
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
