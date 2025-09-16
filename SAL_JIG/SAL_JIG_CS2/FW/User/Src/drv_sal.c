@@ -808,7 +808,6 @@ static uint32_t sal_rx_parser(uint8_t* in, uint8_t size, uint8_t strip_num)
     return payload;
 }
 
-
 void sal_write_reg_single_ended(_sal_single_ended_info_t *p_info)
 {
     _data_frame_format_t _bit_format_ = {0, };
@@ -1590,32 +1589,6 @@ void sal_demo_process(void)
         gb_sal_rw_flag = false;
     }
 }
-/*
-static uint16_t gn_sal_crc_test_fail_count = 0;
-void sal_crc_repeat_test(void)
-{
-    for (uint16_t i = 0 ; i < 1000 ; ++i)
-    {
-        sal_reset();
-        LL_mDelay(10 - 1);
-        sal_make_crc_enable(1);
-        LL_mDelay(10 - 1);
-        sal_initiates();
-        LL_mDelay(10 - 1);
-
-        if (gb_sal_rx_timeout)
-        {
-            ++gn_sal_crc_test_fail_count;
-            //print(LOG_LV_ERROR, "CRC test failed!! \r\n");
-        }
-        else
-        {
-            //print(LOG_LV_ERROR, "CRC test success!! \r\n");
-        }
-    }
-    print(LOG_LV_INFO, "CRC test failed count : %u \r\n", gn_sal_crc_test_fail_count);
-}
-*/
 /* END - INTERFACE FUNCTIONS ************************************************************************/
 
 /*** end of file ***/
