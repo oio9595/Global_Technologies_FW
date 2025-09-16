@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 /* TRIM CONFIG  **********************************/
-#define INIT_ADC_PER_REG_OSC        ( 5)
+#define INIT_ADC_PER_REG_OSC        ( 1)
 #define INIT_ADC_PER_REG_VREF       ( 1)
 #define INIT_ADC_PER_REG_OFS        (10)
 #define INIT_ADC_PER_REG_GAIN       (18)
