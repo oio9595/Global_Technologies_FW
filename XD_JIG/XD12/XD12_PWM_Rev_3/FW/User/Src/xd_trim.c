@@ -23,13 +23,13 @@
 #define XDIC_OFS_ERR_RATE           (0.5f / 100)   /* % */
 #define XDIC_OFS_P1                 (250)
 #define XDIC_OFS_P2                 (500)
-#define XDIC_OFS_CAL                (0.0f)
-#define XDIC_OFS_TARGET             (16.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
+#define XDIC_OFS_CAL                (0.13f)
+#define XDIC_OFS_TARGET             (12.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
 
 #define XDIC_GAIN_ERR_RATE          (0.5f / 100)   /* % */
 #define XDIC_GAIN_P1                (1000)
 #define XDIC_GAIN_P2                (3000)
-#define XDIC_GAIN_TARGET            (16.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
+#define XDIC_GAIN_TARGET            (12.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
 
 /* Screen Spec */
 #define XDIC_SCREEN_POINT_SIZE      (4)
@@ -64,6 +64,7 @@ typedef struct tag_XDIC_SCREEN_PARAM_T
     float f_target_min;
     float f_target_max;
     float f_measured[XD_CH_SIZE];
+    void (*p_func)(void);
 } screen_param_t;
 
 typedef enum tag_TRIM_ADJUST_TYPE_T
@@ -166,21 +167,25 @@ void XD_Screen_Param_Init(void)
     gt_xd_screen_param[0].f_target_max = XDIC_OFS_SCREEN_TARGET1 * (1.0f + XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[0].vref_point = XDIC_OFS_SCREEN_P1;
     gt_xd_screen_param[0].gain = GAIN_MID;
+    gt_xd_screen_param[0].p_func = XDIC_Trim_Init_OFS_CH;
 
     gt_xd_screen_param[1].f_target_min = XDIC_OFS_SCREEN_TARGET2 * (1.0f - XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[1].f_target_max = XDIC_OFS_SCREEN_TARGET2 * (1.0f + XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[1].vref_point = XDIC_OFS_SCREEN_P2;
     gt_xd_screen_param[1].gain = GAIN_MID;
+    gt_xd_screen_param[1].p_func = XDIC_Trim_Init_OFS_CH;
 
     gt_xd_screen_param[2].f_target_min = XDIC_GAIN_SCREEN_TARGET1 * (1.0f - XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[2].f_target_max = XDIC_GAIN_SCREEN_TARGET1 * (1.0f + XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[2].vref_point = XDIC_GAIN_SCREEN_P1;
     gt_xd_screen_param[2].gain = GAIN_HIGH;
+    gt_xd_screen_param[2].p_func = XDIC_Trim_Init_GAIN_CH;
 
     gt_xd_screen_param[3].f_target_min = XDIC_GAIN_SCREEN_TARGET2 * (1.0f - XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[3].f_target_max = XDIC_GAIN_SCREEN_TARGET2 * (1.0f + XDIC_SCREEN_ERROR_RATE);
     gt_xd_screen_param[3].vref_point = XDIC_GAIN_SCREEN_P2;
     gt_xd_screen_param[3].gain = GAIN_HIGH;
+    gt_xd_screen_param[3].p_func = XDIC_Trim_Init_GAIN_CH;
 }
 
 void XD_Trim_IF_Trim_Start(void)
@@ -286,7 +291,7 @@ static void XD_Trim_Param_Algorithm_Init(void)
             temp_gain_level = GAIN_HIGH;
             break;
         case XD_TRIM_OFS_CHS:
-            temp_gain_level = GAIN_HIGH;
+            temp_gain_level = GAIN_MID;
             break;
         }
 
@@ -762,7 +767,7 @@ void XD_Trim_Task(void)
                     break;
                 default:
                     XDIC_Read_All_Registers();
-                    XDIC_Save_Trim_Regs();
+                    XDIC_Save_Mirror_Regs();
                     gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                     break;
                 }
@@ -941,14 +946,7 @@ void XD_Trim_Task(void)
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 for (uint8_t i = 0 ; i < XDIC_SCREEN_POINT_SIZE ; ++i)
                 {
-                    if (i < 2)
-                    {
-                        XDIC_Trim_Init_OFS_CH();
-                    }
-                    else
-                    {
-                        XDIC_Trim_Init_GAIN_CH();
-                    }
+                    gt_xd_screen_param[i].p_func();
                     JigBD_IF_Change_Current_Gain(gt_xd_screen_param[i].gain);
                     XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
                     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
@@ -972,13 +970,13 @@ void XD_Trim_Task(void)
                             gt_xd_screen_param[i].judge_flag[ch] = true;
                         }
                     }
-                    print(LOG_INFO, "%u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n",
-                        gt_xd_screen_param[i].vref_point,
-                        gt_xd_screen_param[i].f_measured[0], gt_xd_screen_param[i].f_measured[1],
-                        gt_xd_screen_param[i].f_measured[2], gt_xd_screen_param[i].f_measured[3],
-                        gt_xd_screen_param[i].f_measured[4], gt_xd_screen_param[i].f_measured[5],
-                        gt_xd_screen_param[i].f_measured[6], gt_xd_screen_param[i].f_measured[7],
-                        gt_xd_screen_param[i].f_measured[8], gt_xd_screen_param[i].f_measured[9],
+                    print(LOG_INFO, "%u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n",\
+                        gt_xd_screen_param[i].vref_point,\
+                        gt_xd_screen_param[i].f_measured[0], gt_xd_screen_param[i].f_measured[1],\
+                        gt_xd_screen_param[i].f_measured[2], gt_xd_screen_param[i].f_measured[3],\
+                        gt_xd_screen_param[i].f_measured[4], gt_xd_screen_param[i].f_measured[5],\
+                        gt_xd_screen_param[i].f_measured[6], gt_xd_screen_param[i].f_measured[7],\
+                        gt_xd_screen_param[i].f_measured[8], gt_xd_screen_param[i].f_measured[9],\
                         gt_xd_screen_param[i].f_measured[10], gt_xd_screen_param[i].f_measured[11]);
                 }
 
@@ -1020,7 +1018,7 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_E2P_PROGRAM:   /* E2P program */
                 if (gb_xd_otp_write_flag)
                 {
-                    XDIC_Save_Trim_Regs();
+                    XDIC_Save_Mirror_Regs();
                     JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
                     print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
                     gn_task_delay = 100;
@@ -1052,6 +1050,25 @@ void XD_Trim_Task(void)
                 gn_task_delay = 100;
                 gt_xd_trim_step = XD_TRIM_STEP_REBOOT;
                 break;
+            case XD_TRIM_STEP_REBOOT:
+                JigBD_IF_Detect_XC24();
+                XDIC_Trim_Init();
+                JigBD_IF_VLED_9V_EN(PWR_ON);
+                gn_task_delay = 100;
+                gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
+                break;
+            case XD_TRIM_STEP_COMPARE:
+                u64_tmp_xd_otp_burn_result = XDIC_Compare_Mirror_Regs();
+                if (u64_tmp_xd_otp_burn_result)
+                {
+                    print(LOG_ERROR, "======== TRIM_OTP_BURN_ERROR[%llu] ========\r\n", u64_tmp_xd_otp_burn_result);
+                }
+                else
+                {
+                    print(LOG_INFO, "%s======== TRIM_OTP_BURN_OK[%llu] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
+                }
+                gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
+                break;
             case XD_TRIM_STEP_RESULT:
                 if (gt_trim_error_code == TRIM_ERROR_OVER_COUNT)
                 {
@@ -1063,27 +1080,8 @@ void XD_Trim_Task(void)
                 }
                 gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 break;
-            case XD_TRIM_STEP_REBOOT:
-                JigBD_IF_Detect_XC24();
-                XDIC_Trim_Init();
-                JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_task_delay = 100;
-                gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
-                break;
-            case XD_TRIM_STEP_COMPARE:
-                u64_tmp_xd_otp_burn_result = XDIC_Compare_Trim_Regs();
-                if (u64_tmp_xd_otp_burn_result)
-                {
-                    print(LOG_ERROR, "======== TRIM_OTP_BURN_ERROR[%llu] ========\r\n", u64_tmp_xd_otp_burn_result);
-                }
-                else
-                {
-                    print(LOG_INFO, "%s======== TRIM_OTP_BURN_OK[%llu] ========%s\r\n", ANSI_FONT_GREEN, u64_tmp_xd_otp_burn_result, ANSI_FONT_NONE);
-                }
-                gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
-                break;
             case XD_TRIM_STEP_PWR_OFF:
-                XDIC_Save_Trim_Regs();
+                XDIC_Save_Mirror_Regs();
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
@@ -1116,10 +1114,15 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
             XDIC_Trim_Init_OFS_CH();
-            XDIC_Overwrite_Trim_Regs();
+            XDIC_Overwrite_Mirror_Regs();
+
+            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+
             XDIC_Read_All_Registers();
-            //XDIC_Display_Trim_Regs();
-            gt_screen_gain = GAIN_MID;
+
+            XDIC_Display_Mirror_Regs();
+
+            gt_screen_gain = GAIN_HIGH;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
             JigBD_IF_VLED_9V_EN(PWR_ON);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);

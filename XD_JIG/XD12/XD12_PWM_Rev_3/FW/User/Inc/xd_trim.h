@@ -13,8 +13,8 @@ extern "C" {
 #endif
 
 #define XDIC_VREF_MAX               (4095)
-#define XDIC_OFS_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_16mA)
-#define XDIC_GAIN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_OFS_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_12mA)
+#define XDIC_GAIN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_12mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
