@@ -17,32 +17,36 @@
 #define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
 #define XDIC_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xdic_mirror_regs.reg }
 
-#define XDIC_REG_GENERAL                    (0)
-#define XDIC_REG_MIRROR                     (1)
+#define XDIC_REG_GENERAL            (0)
+#define XDIC_REG_MIRROR             (1)
 
-#define XDIC_OTP_PROTECT_DISABLE            (0xA5A)
-#define XDIC_OTP_PROTECT_ENABLE             (0x5A5)
+#define XDIC_OTP_PROTECT_DISABLE    (0xA5A)
+#define XDIC_OTP_PROTECT_ENABLE     (0x5A5)
 
-#define XD_LD_DIR_HEAD_SHIFT                (0)
-#define XD_LD_DIR_TAIL_SHIFT                (1)
+#define XD_LD_DIR_HEAD_SHIFT        (0)
+#define XD_LD_DIR_TAIL_SHIFT        (1)
 
-#define XD_PWM_RES_12BIT                    (0)
-#define XD_PWM_RES_14BIT                    (1)
+#define XD_PWM_RES_12BIT            (0)
+#define XD_PWM_RES_14BIT            (1)
 
-#define XD_IO_MODE_NOP                      (0)
-#define XD_IO_MODE_EXT_VSYNC                (1)
-#define XD_IO_MODE_FBO                      (2)
-#define XD_IO_MODE_EXT_VYI_FBO              (3)
+#define XD_IO_MODE_NOP              (0)
+#define XD_IO_MODE_EXT_VSYNC        (1)
+#define XD_IO_MODE_FBO              (2)
+#define XD_IO_MODE_EXT_VYI_FBO      (3)
 
-#define XD_MCLK_FLL_ENABLE                  (0)
-#define XD_MCLK_FLL_DISABLE                 (1)
+#define XD_MCLK_FLL_ENABLE          (0)
+#define XD_MCLK_FLL_DISABLE         (1)
 
-#define XD_MCLK_LSB_MASK                    (0x00FFF) //LSB 12-bit
-#define XD_MCLK_MSB_MASK                    (0xFF000) //MSB  8-bit
+#define XD_MCLK_LSB_MASK            (0x00FFF) //LSB 12-bit
+#define XD_MCLK_MSB_MASK            (0xFF000) //MSB  8-bit
 
-#define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_SIZE) - 1)
+#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XD_CH_SIZE) - 1)
 
-#define XDIC_TRIM_OSC_MANUAL                (32768)
+#define XDIC_TRIM_OSC_MANUAL        (32768)
+
+#define XDIC_BGR_TC                 (0x03)
+#define XDIC_OFS_RNG                (0x03)
+#define XDIC_OSC_RESERVED           ((XDIC_BGR_TC << 2) | (XDIC_OFS_RNG << 0))
 
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
@@ -352,6 +356,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
         }
         else
         {
+            in_reg_val = (in_reg_val | (XDIC_OSC_RESERVED << 6));
             XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OSC, in_reg_val);
         }
         break;
@@ -381,27 +386,32 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
 uint16_t XDIC_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
     uint16_t rtn_val = 0xFFFF;
-    uint8_t xd_trim_addr = 0;
+    uint8_t xd_mirror_addr = 0;
     switch(in_trim_mode)
     {
     case XD_TRIM_VREF_CTL:
-        xd_trim_addr = XDIC_MIRROR_ADDR_VREF_CTL;
+        xd_mirror_addr = XDIC_MIRROR_ADDR_VREF_CTL;
         break;
     case XD_TRIM_OSC_FREQUENCY:
-        xd_trim_addr = XDIC_MIRROR_ADDR_OSC;
+        xd_mirror_addr = XDIC_MIRROR_ADDR_OSC;
         break;
     case XD_TRIM_GAIN_CHS:
-        xd_trim_addr = XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num;
+        xd_mirror_addr = XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num;
         break;
     case XD_TRIM_OFS_CHS:
-        xd_trim_addr = XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num;
+        xd_mirror_addr = XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num;
         break;
     }
 
-    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_trim_addr);
+    const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
     if (map)
     {
         rtn_val = *((uint16_t*)(map->reg_ptr));
+    }
+
+    if (in_trim_mode == XD_TRIM_OSC_FREQUENCY)
+    {
+        rtn_val = (rtn_val & 0x003F);
     }
 
     return rtn_val;
@@ -789,7 +799,7 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 /* Trim Function */
 /* ================================================================================================================================================= */
 
-void XDIC_Overwrite_Trim_Regs(void)
+void XDIC_Overwrite_Mirror_Regs(void)
 {
     uint16_t u16_otp_crc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
     if (u16_otp_crc != 0)
@@ -805,22 +815,22 @@ void XDIC_Overwrite_Trim_Regs(void)
     }
 }
 
-void XDIC_Display_Trim_Regs(void)
+void XDIC_Display_Mirror_Regs(void)
 {
     print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
     print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
 
-    print(LOG_INFO, "ofs,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"
-    , gn_xdic_saved_trim_reg[ 3], gn_xdic_saved_trim_reg[ 4], gn_xdic_saved_trim_reg[ 5] , gn_xdic_saved_trim_reg[ 6], gn_xdic_saved_trim_reg[ 7], gn_xdic_saved_trim_reg[ 8]
-    , gn_xdic_saved_trim_reg[ 9], gn_xdic_saved_trim_reg[10], gn_xdic_saved_trim_reg[11] , gn_xdic_saved_trim_reg[12], gn_xdic_saved_trim_reg[13], gn_xdic_saved_trim_reg[14]
+    print(LOG_INFO, "ofs,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"\
+    , gn_xdic_saved_trim_reg[ 3], gn_xdic_saved_trim_reg[ 4], gn_xdic_saved_trim_reg[ 5] , gn_xdic_saved_trim_reg[ 6], gn_xdic_saved_trim_reg[ 7], gn_xdic_saved_trim_reg[ 8]\
+    , gn_xdic_saved_trim_reg[ 9], gn_xdic_saved_trim_reg[10], gn_xdic_saved_trim_reg[11] , gn_xdic_saved_trim_reg[12], gn_xdic_saved_trim_reg[13], gn_xdic_saved_trim_reg[14]\
     );
-    print(LOG_INFO, "gain,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"
-    , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]
-    , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]
+    print(LOG_INFO, "gain,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"\
+    , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]\
+    , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]\
     );
 }
 
-void XDIC_Save_Trim_Regs(void)
+void XDIC_Save_Mirror_Regs(void)
 {
     for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
     {
@@ -828,25 +838,25 @@ void XDIC_Save_Trim_Regs(void)
     }
 }
 
-uint64_t XDIC_Compare_Trim_Regs(void)
+uint64_t XDIC_Compare_Mirror_Regs(void)
 {
     uint64_t ret = 0;
     uint16_t u16_reg_val = 0;
 
-    for (xdic_mirror_addr_t trim_addr = XDIC_MIRROR_ADDR_OSC ; trim_addr < XDIC_MIRROR_ADDR_MAX ; ++trim_addr)
+    for (xdic_mirror_addr_t mirror_addr = XDIC_MIRROR_ADDR_OSC ; mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++mirror_addr)
     {
-        u16_reg_val = XDIC_Read_Mirror_Reg(trim_addr);
+        u16_reg_val = XDIC_Read_Mirror_Reg(mirror_addr);
 
-        if (gn_xdic_saved_trim_reg[trim_addr] != u16_reg_val)
+        if (gn_xdic_saved_trim_reg[mirror_addr] != u16_reg_val)
         {
-            ret |= ((uint64_t)(1U << trim_addr));
-            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[trim_addr].name);
+            ret |= ((uint64_t)(1U << mirror_addr));
+            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[mirror_addr].name);
         }
         else
         {
-            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gt_xdic_mirror_maps[trim_addr].name);
+            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gt_xdic_mirror_maps[mirror_addr].name);
         }
-        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xdic_saved_trim_reg[trim_addr], u16_reg_val, ANSI_FONT_NONE);
+        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xdic_saved_trim_reg[mirror_addr], u16_reg_val, ANSI_FONT_NONE);
     }
     return ret;
 }

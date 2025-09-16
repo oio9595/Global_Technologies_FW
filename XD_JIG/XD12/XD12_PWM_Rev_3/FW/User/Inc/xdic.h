@@ -753,10 +753,10 @@ extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
 extern bool XDIC_Is_Vsync_Mode_External(void);
 extern void XDIC_Update_Vsync_Frequency(float n_freq);
 
-extern void XDIC_Overwrite_Trim_Regs(void);
-extern void XDIC_Display_Trim_Regs(void);
-extern void XDIC_Save_Trim_Regs(void);
-extern uint64_t XDIC_Compare_Trim_Regs(void);
+extern void XDIC_Overwrite_Mirror_Regs(void);
+extern void XDIC_Display_Mirror_Regs(void);
+extern void XDIC_Save_Mirror_Regs(void);
+extern uint64_t XDIC_Compare_Mirror_Regs(void);
 
 extern void XDIC_Trim_Init_VREF_CTL(void);
 extern void XDIC_Trim_Init_OSC(void);
