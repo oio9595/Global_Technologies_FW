@@ -53,13 +53,11 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
-    gb_xdic_vsync_flag = true;
-#if 0
     if (!XDIC_Is_Vsync_Mode_External())
     {
         JigBD_IF_SyncGen_Command();
     }
-#endif
+    gb_xdic_vsync_flag = true;
 }
 
 void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
