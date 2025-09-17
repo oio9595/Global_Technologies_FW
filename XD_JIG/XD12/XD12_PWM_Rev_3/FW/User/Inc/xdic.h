@@ -46,13 +46,13 @@ typedef enum tag_XDIC_CHANNEL_T
 typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
 {
     DEV_MAX_CURR_LEVEL_4mA = 0, // 3b'000
-    DEV_MAX_CURR_LEVEL_8mA,    // 3b'001
+    DEV_MAX_CURR_LEVEL_8mA,     // 3b'001
     DEV_MAX_CURR_LEVEL_12mA,    // 3b'010
     DEV_MAX_CURR_LEVEL_16mA,    // 3b'011
     DEV_MAX_CURR_LEVEL_24mA,    // 3b'100
     DEV_MAX_CURR_LEVEL_32mA,    // 3b'101
     DEV_MAX_CURR_LEVEL_46mA,    // 3b'110
-    DEV_MAX_CURR_LEVEL_64mA,   // 3b'111
+    DEV_MAX_CURR_LEVEL_64mA,    // 3b'111
     DEV_MAX_CURR_LEVEL_MAX,
 } dev_max_curr_level_t;
 
@@ -60,8 +60,8 @@ typedef enum tag_XDIC_SHORT_LEVEL_T
 {
     SHORT_LEVEL_3V = 0, // 3b'000
     SHORT_LEVEL_4V,     // 3b'001
-    SHORT_LEVEL_6V,    // 3b'010
-    SHORT_LEVEL_8V,    // 3b'011
+    SHORT_LEVEL_6V,     // 3b'010
+    SHORT_LEVEL_8V,     // 3b'011
     SHORT_LEVEL_12V,    // 3b'100
     SHORT_LEVEL_16V,    // 3b'101
     SHORT_LEVEL_24V,    // 3b'110

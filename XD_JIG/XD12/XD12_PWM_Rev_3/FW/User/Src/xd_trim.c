@@ -878,7 +878,7 @@ void XD_Trim_Task(void)
                     print(LOG_INFO, "\t  Next trim_search_mode \r\n");
                     if (t_trim_search_mode_next == XD_TRIM_MAX)
                     {
-                        gt_xd_trim_step = XD_TRIM_STEP_SCREEN;
+                        gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM;
                     }
                     else
                     {
@@ -940,79 +940,6 @@ void XD_Trim_Task(void)
                 else
                 {
                     gt_xd_trim_step = XD_TRIM_STEP_RESULT;
-                }
-                break;
-            case XD_TRIM_STEP_SCREEN:
-                ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-                for (uint8_t i = 0 ; i < XDIC_SCREEN_POINT_SIZE ; ++i)
-                {
-                    gt_xd_screen_param[i].p_func();
-                    JigBD_IF_Change_Current_Gain(gt_xd_screen_param[i].gain);
-                    XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
-                    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
-                    {
-                        JigBD_IF_Select_Output_Ch(ch);
-                        LL_mDelay(0);
-
-                        ADS114S08_Set_Start(1);
-                        while(1)
-                        {
-                            if (gb_ads114s08_drdy_done)
-                            {
-                                gb_ads114s08_drdy_done = 0;
-                                break;
-                            }
-                        }
-                        uint16_t adc = ADS114S08_Get_ADC_Value();
-                        gt_xd_screen_param[i].f_measured[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gt_xd_screen_param[i].gain);
-                        if ((gt_xd_screen_param[i].f_measured[ch] > gt_xd_screen_param[i].f_target_min) && (gt_xd_screen_param[i].f_measured[ch] < gt_xd_screen_param[i].f_target_max))
-                        {
-                            gt_xd_screen_param[i].judge_flag[ch] = true;
-                        }
-                    }
-                    print(LOG_INFO, "%u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n",\
-                        gt_xd_screen_param[i].vref_point,\
-                        gt_xd_screen_param[i].f_measured[0], gt_xd_screen_param[i].f_measured[1],\
-                        gt_xd_screen_param[i].f_measured[2], gt_xd_screen_param[i].f_measured[3],\
-                        gt_xd_screen_param[i].f_measured[4], gt_xd_screen_param[i].f_measured[5],\
-                        gt_xd_screen_param[i].f_measured[6], gt_xd_screen_param[i].f_measured[7],\
-                        gt_xd_screen_param[i].f_measured[8], gt_xd_screen_param[i].f_measured[9],\
-                        gt_xd_screen_param[i].f_measured[10], gt_xd_screen_param[i].f_measured[11]);
-                }
-
-                bool all_pass = true;
-                for (uint8_t i = 0 ; i < XDIC_SCREEN_POINT_SIZE ; ++i)
-                {
-                    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
-                    {
-                        if (!gt_xd_screen_param[i].judge_flag[ch])
-                        {
-                            all_pass = false;
-                            print(LOG_ERROR, "Vref[%u] CH[%u] - FAIL: %.3f\r\n", gt_xd_screen_param[i].vref_point, ch + 1, gt_xd_screen_param[i].f_measured[ch]);
-                        }
-                    }
-                    if (all_pass)
-                    {
-                        print(LOG_INFO, "Vref[%u] - PASS\r\n", gt_xd_screen_param[i].vref_point);
-                    }
-                }
-
-                if (all_pass)
-                {
-                    print(LOG_INFO, "\r\n%s======== XD SCREEN - PASS ========%s\r\n", ANSI_FONT_GREEN, ANSI_FONT_NONE);
-                    if (gb_xd_otp_write_flag)
-                    {
-                        gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM;
-                    }
-                    else
-                    {
-                        gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
-                    }
-                }
-                else
-                {
-                    print(LOG_ERROR, "\r\n======== XD SCREEN - FAIL ========\r\n");
-                    gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 }
                 break;
             case XD_TRIM_STEP_E2P_PROGRAM:   /* E2P program */
