@@ -500,7 +500,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_32mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_12mA;
     gt_xd_short_level = SHORT_LEVEL_24V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -597,7 +597,7 @@ void XDIC_Trim_Param_Init(void)
 {
     gt_xd_fb_level = FB_LEVEL_0V4;
     gt_xd_short_level = SHORT_LEVEL_36V;
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_16mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_12mA;
 }
 
 void XDIC_Trim_Init(void)
@@ -828,6 +828,12 @@ void XDIC_Display_Mirror_Regs(void)
     , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]\
     , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]\
     );
+
+    print(LOG_INFO, "\r\n");
+    for (uint8_t addr = XDIC_MIRROR_ADDR_OSC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
+    {
+        print(LOG_INFO, "%u,", gn_xdic_saved_trim_reg[addr]);
+    }
 }
 
 void XDIC_Save_Mirror_Regs(void)
@@ -849,7 +855,7 @@ uint64_t XDIC_Compare_Mirror_Regs(void)
 
         if (gn_xdic_saved_trim_reg[mirror_addr] != u16_reg_val)
         {
-            ret |= ((uint64_t)(1U << mirror_addr));
+            ret |= ((uint64_t)1UL << mirror_addr);
             print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[mirror_addr].name);
         }
         else
