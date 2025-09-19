@@ -1296,8 +1296,8 @@ static void TaskDebugUart(void)
             while(1)
             {
                 LL_mDelay(1000);
-                //for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
-                for (uint8_t i = 0 ; i < 4 ; ++i)
+                for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+                //for (uint8_t i = 0 ; i < 4 ; ++i)
                 {
                     JigBD_IF_Select_Output_Ch(i);
                     // Point 1
@@ -1330,10 +1330,10 @@ static void TaskDebugUart(void)
                     iout_adc[i][1] = ADS114S08_Get_ADC_Value();
                     iout_float[i] = JigBD_IF_Convert_Adc_To_Current((uint16_t)((float)(iout_adc[i][0] + iout_adc[i][1]) / 2.0f), gain);
                 }
-                //print(LOG_INFO, "%2d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n"\
+                print(LOG_INFO, "%2d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n"\
                     , tick, iout_float[0], iout_float[1], iout_float[2], iout_float[3]\
                     , iout_float[4], iout_float[5], iout_float[6], iout_float[7], iout_float[8], iout_float[9], iout_float[10], iout_float[11]);
-                print(LOG_INFO, "%2d,%.3f,%.3f,%.3f,%.3f\r\n"\
+                //print(LOG_INFO, "%2d,%.3f,%.3f,%.3f,%.3f\r\n"\
                     , tick, iout_float[0], iout_float[1], iout_float[2], iout_float[3]);
                 ++tick;
             }
