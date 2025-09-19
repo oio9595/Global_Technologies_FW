@@ -456,6 +456,7 @@ void XC24_Init(void)
             case XC24_ADDR_COMMAND_LATENCY :
                 gt_xc24_general_regs._r1F.serial_latency = 40;
                 gt_xc24_general_regs._r1F.cmd_latency = 0xFF;
+                break;
             default :
                 continue;
             }
