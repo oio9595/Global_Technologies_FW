@@ -1669,6 +1669,95 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
             }
         }
+        else if (Command_Param_is_("icc", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] < 8)
+            {
+                uint16_t temp_data = (0x0F0 | (u32_recv_param[0] << 8));
+                print(LOG_INFO, "\r\n icc test - [%u] (0x%03X)\r\n", u32_recv_param[0], temp_data);
+                XDIC_Set_Write_Target_Reg(XDIC_ADDR_FAULT_LEVEL, temp_data);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n icc [%u] [0 - 7]\r\n", u32_recv_param[0]);
+            }
+        }
+        else if (Command_Param_is_("xd_ofs", "%d", &u32_recv_param[0]))
+        {
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            uint8_t i = u32_recv_param[0];
+            current_gain_t current_gain = GAIN_MID;
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            LL_mDelay(50);
+            XDIC_Trim_Init_OFS_CH();
+            JigBD_IF_Change_Current_Gain(current_gain);
+            JigBD_IF_Select_Output_Ch(i);
+            for (uint8_t ofs = 0 ; ofs < 64 ; ++ofs)
+            {
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + i, ofs);
+                XDIC_Set_Max_Curr_Vref(250); // XDIC_OFS_P1
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(500); // XDIC_OFS_P2
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
+                print(LOG_INFO, "%u, %.3f\r\n", ofs, iout_avg);
+            }
+        }
+        else if (Command_Param_is_("xd_gain", "%d", &u32_recv_param[0]))
+        {
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            uint8_t i = u32_recv_param[0];
+            current_gain_t current_gain = GAIN_HIGH;
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            LL_mDelay(50);
+            XDIC_Trim_Init_GAIN_CH();
+            JigBD_IF_Change_Current_Gain(current_gain);
+            JigBD_IF_Select_Output_Ch(i);
+            for (uint8_t gain = 0 ; gain < 128 ; ++gain)
+            {
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + i, gain);
+                XDIC_Set_Max_Curr_Vref(3000); // XDIC_gain_P1
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(1000); // XDIC_gain_P2
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] - iout_adc[i][1]);
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
+                print(LOG_INFO, "%u, %.3f\r\n", gain, iout_avg);
+            }
+        }
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
