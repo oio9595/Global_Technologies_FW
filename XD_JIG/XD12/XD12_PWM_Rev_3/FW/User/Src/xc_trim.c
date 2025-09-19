@@ -29,46 +29,45 @@ uint16_t gn_dac_screen_table_idx;
 typedef struct
 {
     uint8_t min_gap_index;
-    float min_gap_freq;
+    float min_gap_value;
 } _closest_info_t;
 _closest_info_t gt_xc_osc_closest;
 _closest_info_t gt_xc_dac_ofs_closest;
 
 dac_gain_tgt_t dac_gain_tgt_buff = {0, };
 float osc_value_buffer[128] = {0.0f, };
-float dac_ofs_value_buffer[128] = {0.0f, };
+float dac_ofs_value_buffer[256] = {0.0f, };
 float gf_xc_screen_info[6] = {0.0f, };
 uint8_t gn_xc_trim_regs[4] = {0, };
-static uint16_t gn_xc_dac_screen_point = 0;
 
 static bool gb_xc_otp_write_flag;
 
 static xc_trim_step_t gt_xc_trim_step;
 
-static void XC_Get_Minimum_DAC_OFS(float* freq_buffer, float target)
+static void XC_Get_Minimum_DAC_OFS(float* dac_ofs_buffer, float target)
 {
     gt_xc_dac_ofs_closest.min_gap_index = 0;
-    gt_xc_dac_ofs_closest.min_gap_freq = freq_buffer[0];
-    float min_diff = fabsf(target - freq_buffer[0]);
+    gt_xc_dac_ofs_closest.min_gap_value = dac_ofs_buffer[0];
+    float min_diff = fabsf(target - dac_ofs_buffer[0]);
 
     for (uint16_t i = 1 ; i < 256 ; ++i)
     {
-        float diff = fabsf(target - freq_buffer[i]);
+        float diff = fabsf(target - dac_ofs_buffer[i]);
         if (diff < min_diff)
         {
             min_diff = diff;
-            gt_xc_dac_ofs_closest.min_gap_freq = freq_buffer[i];
+            gt_xc_dac_ofs_closest.min_gap_value = dac_ofs_buffer[i];
             gt_xc_dac_ofs_closest.min_gap_index = i;
         }
     }
 
-    print(LOG_INFO, "CLOSEST DAC_OFS REG[%u] -> DAC_OFS Level : %f\r\n", gt_xc_dac_ofs_closest.min_gap_index, gt_xc_dac_ofs_closest.min_gap_freq);
+    print(LOG_INFO, "CLOSEST DAC_OFS REG[%u] -> DAC_OFS Level : %f\r\n", gt_xc_dac_ofs_closest.min_gap_index, gt_xc_dac_ofs_closest.min_gap_value);
 }
 
 static void XC_Get_Minimum_OSC_Freq(float* freq_buffer, float target)
 {
     gt_xc_osc_closest.min_gap_index = 0;
-    gt_xc_osc_closest.min_gap_freq = freq_buffer[0];
+    gt_xc_osc_closest.min_gap_value = freq_buffer[0];
     float min_diff = fabsf(target - freq_buffer[0]);
 
     for (uint8_t i = 1 ; i < 128 ; ++i)
@@ -77,12 +76,12 @@ static void XC_Get_Minimum_OSC_Freq(float* freq_buffer, float target)
         if (diff < min_diff)
         {
             min_diff = diff;
-            gt_xc_osc_closest.min_gap_freq = freq_buffer[i];
+            gt_xc_osc_closest.min_gap_value = freq_buffer[i];
             gt_xc_osc_closest.min_gap_index = i;
         }
     }
 
-    print(LOG_INFO, "CLOSEST OSC_FREQ REG[%u] -> OSC_FREQ Level : %f\r\n", gt_xc_osc_closest.min_gap_index, gt_xc_osc_closest.min_gap_freq);
+    print(LOG_INFO, "CLOSEST OSC_FREQ REG[%u] -> OSC_FREQ Level : %f\r\n", gt_xc_osc_closest.min_gap_index, gt_xc_osc_closest.min_gap_value);
 }
 
 void XC_Trim_IF_Trim_Start(void)
@@ -304,7 +303,7 @@ void XC_Trim_Task(void)
         {
             print(LOG_INFO, "=============XC_TRIM_STEP_DAC_OFS=============\r\n");
             XC24_Trim_Init_DAC_OFS();
-            for (uint16_t i = 0 ; i < 0x100 ; ++i)
+            for (uint16_t i = 0 ; i < 256 ; ++i)
             {
                 XC24_Trim_Write_DAC_OFS(i);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
@@ -443,11 +442,7 @@ void XC_Trim_Task(void)
         case XC_TRIM_STEP_SCREEN_DAC:
         {
             XC24_Trim_Init_DAC_Gain();
-#if 0
-            XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, gn_xc_dac_screen_point);
-#else
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, gn_dac_screen_table[gn_dac_screen_table_idx]);
-#endif
 
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
@@ -471,36 +466,6 @@ void XC_Trim_Task(void)
                 gn_dac_screen_table_idx = 0;
                 gt_xc_trim_step = XC_TRIM_STEP_SCREEN_OSC;
             }
-
-#if 0
-            if (gn_xc_dac_screen_point == 0)
-            {
-                print(LOG_INFO, "INPUT, DAC_LEVEL\r\n");
-            }
-            print(LOG_INFO, "%u, %.4f\r\n", gn_xc_dac_screen_point, dac_val);
-            gn_xc_dac_screen_point += XC24_DAC_SCREEN_GAP;
-            if (gn_xc_dac_screen_point > 4095)
-            {
-                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_OFS_TGT);
-
-                ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
-                LL_mDelay(1);
-                ADS114S08_Set_Start(1);
-                while(1)
-                {
-                    if (gb_ads114s08_drdy_done)
-                    {
-                        break;
-                    }
-                }
-                ext_adc_value = ADS114S08_Get_ADC_Value();
-                float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
-                gf_xc_screen_info[1] = dac_val; // Save DAC_GAIN level
-                print(LOG_INFO, "%u, %.4f\r\n", XC24_DAC_OFS_TGT, dac_val);
-
-                gt_xc_trim_step = XC_TRIM_STEP_SCREEN_OSC;
-            }
-#endif
         }
         break;
 
