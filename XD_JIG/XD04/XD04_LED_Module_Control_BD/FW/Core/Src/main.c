@@ -41,6 +41,9 @@
 #define RX_BUFF_SIZE        32
 #define RX_PACKET_SIZE      32
 
+#define PACKET_SIZE_EXCEPT_DATA_FIELD   5   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
+#define PACKET_SIZE_SOP_TO_COMMAND      3   // SOP(1) + LEN(1) + CMD(1)
+
 enum tag_PROTOCOL_LIST
 {
     SOP = 0xA5,
@@ -54,6 +57,14 @@ enum tag_PROTOCOL_LIST
     CMD_BLK_ON_SELECT = 0x40,
     CMD_BLK_OFF_SELECT = 0x80,
 } protocol_list_t;
+
+typedef enum tag_KEY_LIST
+{
+    KEY_1 = 0,
+    KEY_2,
+    KEY_3,
+    KEY_MAX,
+} key_list_t;
 
 /* USER CODE END PD */
 
@@ -70,7 +81,7 @@ typedef struct tag_RX_PACKET
     uint8_t sop;
     uint8_t length;
     uint8_t command;
-    uint8_t data;
+    uint8_t data[5];
     uint8_t checksum;
     uint8_t eop;
 } rx_packet_t;
@@ -90,19 +101,27 @@ typedef struct tag_RX_PACKET_BUFFER
 } rx_packet_buffer_t;
 static rx_packet_buffer_t gt_rx_packet_buffer;
 
-#if 0
-    static LOG_LV_T gt_log_lv = LOG_PC;
-#else
-    static LOG_LV_T gt_log_lv = LOG_RS232;
-#endif
+typedef struct tag_KEY_INFO
+{
+    uint32_t now_state;
+    uint32_t prev_state;
+    uint8_t press_cnt;
+} key_info_t;
+
+//static LOG_LV_T gt_log_lv = LOG_PC;
+static LOG_LV_T gt_log_lv = LOG_RS232;
 
 static uint8_t gn_uart_rx_timeout;
 static bool gb_uart_rx_timeout_enable;
+
+GPIO_TypeDef* key_gpio_port[KEY_MAX] = { KEY_1_GPIO_Port, KEY_2_GPIO_Port, KEY_3_GPIO_Port };
+const uint32_t key_gpio_pin[KEY_MAX] = { KEY_1_Pin, KEY_2_Pin, KEY_3_Pin };
+static key_info_t gt_key_info[KEY_MAX];
+static uint8_t gn_key_task_tick;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
@@ -110,7 +129,9 @@ static void MX_TIM12_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
-static void TaskDebugUart(void);
+static void Uart_Task(void);
+static void Key_Task(void);
+static void Key_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -135,6 +156,10 @@ void sys_tick_handler(void)
     if (gn_uart_rx_timeout)
     {
         --gn_uart_rx_timeout;
+    }
+    if (gn_key_task_tick)
+    {
+        --gn_key_task_tick;
     }
 }
 
@@ -185,9 +210,14 @@ __STATIC_INLINE void UART_PutChar(uint8_t data)
     while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
 }
 
-uint8_t comm_rx_calc_checksum(rx_packet_t* p_packet)
+uint8_t comm_rx_calc_checksum(uint8_t* p_data, uint8_t length)
 {
-    return (uint8_t)(p_packet->sop + p_packet->length + p_packet->command + p_packet->data);
+    uint8_t checksum = 0;
+    for (uint8_t i = 0 ; i < length ; ++i)
+    {
+        checksum += *(p_data + i);
+    }
+    return checksum;
 }
 
 void comm_rx_push(uint8_t rx)
@@ -242,7 +272,7 @@ static void comm_tx_response(uint8_t status)
 static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 {
     uint8_t ret = 0;
-    rx_packet_t empty_packet = {0, };
+    rx_packet_t temp_packet = {0, };
 
     if (gt_ring_buffer.head != gt_ring_buffer.tail)
     {
@@ -259,32 +289,52 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 gn_uart_rx_timeout = 5;
                 gb_uart_rx_timeout_enable = true;
             }
+            uint8_t length = gt_ring_buffer.buffer[(gt_ring_buffer.tail + 1) & (RX_BUFF_SIZE - 1)];
+            if (length < 1) length = 1;
 
-            if (comm_get_rx_available() >= 6) // Minimum packet size
+            if (comm_get_rx_available() >= (PACKET_SIZE_EXCEPT_DATA_FIELD + length)) // Minimum packet size
             {
-                empty_packet.sop = comm_rx_pop();
-                empty_packet.length = comm_rx_pop();
-                empty_packet.command = comm_rx_pop();
-                empty_packet.data = comm_rx_pop();
-                empty_packet.checksum = comm_rx_pop();
-                empty_packet.eop = comm_rx_pop();
-
-                uint8_t checksum = comm_rx_calc_checksum(&empty_packet);
-                if ((checksum == empty_packet.checksum) && (empty_packet.eop == EOP))
+                temp_packet.sop = comm_rx_pop();
+                temp_packet.length = comm_rx_pop();
+                temp_packet.command = comm_rx_pop();
+                for (uint8_t i = 0 ; i < length ; ++i)
                 {
-                    p_packet->sop = empty_packet.sop;
-                    p_packet->length = empty_packet.length;
-                    p_packet->command = empty_packet.command;
-                    p_packet->data = empty_packet.data;
-                    p_packet->checksum = empty_packet.checksum;
-                    p_packet->eop = empty_packet.eop;
+                    temp_packet.data[i] = comm_rx_pop();
+                }
+                temp_packet.checksum = comm_rx_pop();
+                temp_packet.eop = comm_rx_pop();
+
+                uint8_t checksum = comm_rx_calc_checksum(&temp_packet.sop, (PACKET_SIZE_SOP_TO_COMMAND + temp_packet.length));
+                if ((checksum == temp_packet.checksum) && (temp_packet.eop == EOP))
+                {
+                    p_packet->sop = temp_packet.sop;
+                    p_packet->length = temp_packet.length;
+                    p_packet->command = temp_packet.command;
+                    for (uint8_t i = 0 ; i < length ; ++i)
+                    {
+                        p_packet->data[i] = temp_packet.data[i];
+                    }
+                    p_packet->checksum = temp_packet.checksum;
+                    p_packet->eop = temp_packet.eop;
 
                     comm_tx_response(1);
+                    print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
+                        0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
+                        0x%02X, 0x%02X]}\r\n",
+                        temp_packet.sop, temp_packet.length, temp_packet.command, \
+                        temp_packet.data[0], temp_packet.data[1], temp_packet.data[2], temp_packet.data[3], temp_packet.data[4], \
+                        temp_packet.checksum, temp_packet.eop);
                     ret = 1;
                 }
                 else
                 {
                     comm_tx_response(0);
+                    print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
+                        0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
+                        0x%02X, 0x%02X]}\r\n",
+                        temp_packet.sop, temp_packet.length, temp_packet.command, \
+                        temp_packet.data[0], temp_packet.data[1], temp_packet.data[2], temp_packet.data[3], temp_packet.data[4], \
+                        temp_packet.checksum, temp_packet.eop);
                 }
                 gb_uart_rx_timeout_enable = false;
             }
@@ -302,17 +352,12 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
     return ret;
 }
 
-static void TaskDebugUart(void)
+static void Uart_Task(void)
 {
     rx_packet_t* p_packet = gt_rx_packet_buffer.packet_buffer + gt_rx_packet_buffer.idx;
 
     if (comm_get_rx_packet(p_packet))
     {
-        #if 0
-            print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X]}\r\n",
-                p_packet->sop, p_packet->length, p_packet->command, p_packet->data, p_packet->checksum, p_packet->eop);
-        #endif
-
         switch(p_packet->command)
         {
             case CMD_INIT:
@@ -323,35 +368,88 @@ static void TaskDebugUart(void)
                 break;
             case CMD_QUIT:
                 print(LOG_PC, "CMD_QUIT\r\n");
-                NVIC_SystemReset();
+                Vsync_Timer_Stop();
+                XDIC_DeInit();
+                XC24_DeInit();
                 break;
             case CMD_STATUS:
                 print(LOG_PC, "CMD_STATUS\r\n");
                 break;
             case CMD_CURRENT:
-                LED_Current_Select((float)(p_packet->data));
-                print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data);
+                LED_Current_Select((float)(p_packet->data[0]));
+                print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_ON_SELECT:
-                LED_BAR_On_Select(p_packet->data);
-                print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data);
+                LED_BAR_On_Select(p_packet->data[0]);
+                print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_OFF_SELECT:
-                LED_BAR_Off_Select(p_packet->data);
-                print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data);
+                LED_BAR_Off_Select(p_packet->data[0]);
+                print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_ON_SELECT:
-                LED_BLK_On_Select(p_packet->data);
-                print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data);
+                LED_BLK_On_Select(p_packet->data[0]);
+                print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_OFF_SELECT:
-                LED_BLK_Off_Select(p_packet->data);
-                print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data);
+                LED_BLK_Off_Select(p_packet->data[0]);
+                print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
         }
 
         ++gt_rx_packet_buffer.idx;
         gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1);
+    }
+}
+
+static void Key_Init(void)
+{
+    for (key_list_t key_list = KEY_1 ; key_list < KEY_MAX ; ++key_list)
+    {
+        gt_key_info[key_list].now_state = LL_GPIO_IsInputPinSet(key_gpio_port[key_list], key_gpio_pin[key_list]);
+        gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
+        gt_key_info[key_list].press_cnt = 0;
+    }
+}
+
+static void Key_Task(void)
+{
+    if (gn_key_task_tick == 0)
+    {
+        for (key_list_t key_list = KEY_1 ; key_list < KEY_MAX ; ++key_list)
+        {
+            gt_key_info[key_list].now_state = LL_GPIO_IsInputPinSet(key_gpio_port[key_list], key_gpio_pin[key_list]);
+
+            if (gt_key_info[key_list].now_state != gt_key_info[key_list].prev_state)
+            {
+                if (gt_key_info[key_list].now_state == 0)
+                {
+                    print(LOG_PC, "KEY_%u Pressed !!\r\n", key_list + 1);
+                }
+                else
+                {
+                    print(LOG_PC, "KEY_%u Released !!\r\n", key_list + 1);
+                    if (gt_key_info[key_list].press_cnt >= 10) // 100ms at least
+                    {
+                        print(LOG_PC, "KEY_%u Action !!\r\n", key_list + 1);
+                    }
+                    gt_key_info[key_list].press_cnt = 0;
+                }
+                gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
+            }
+            else
+            {
+                if (gt_key_info[key_list].now_state == 0)
+                {
+                    ++gt_key_info[key_list].press_cnt;
+                }
+                else
+                {
+                    // Do nothing
+                }
+            }
+        }
+        gn_key_task_tick = 10; // 10ms
     }
 }
 /* USER CODE END 0 */
@@ -379,9 +477,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Configure the peripherals common clocks */
-  PeriphCommonClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -395,8 +490,16 @@ int main(void)
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
-    XC24_Start_MCLK_Oscillation(false);
+    Key_Init();
     comm_init();
+    for (uint8_t i = 0 ; i < 6 ; ++i)
+    {
+        LED_LO();
+        LL_mDelay(250);
+        LED_HI();
+        LL_mDelay(250);
+    }
+    LED_LO();
 
   /* USER CODE END 2 */
 
@@ -407,7 +510,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    TaskDebugUart();
+    Uart_Task();
+    Key_Task();
     XDIC_Vsync_Task();
   }
   /* USER CODE END 3 */
@@ -432,8 +536,6 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -456,30 +558,6 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_5);
-}
-
-/**
-  * @brief Peripherals Common Clock Configuration
-  * @retval None
-  */
-void PeriphCommonClock_Config(void)
-{
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  /** Initializes the peripherals clock
-  */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 400;
-  PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLI2SP_DIV2;
-  PeriphClkInitStruct.PLLI2S.PLLI2SM = 8;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
-  PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
-  PeriphClkInitStruct.PLLI2SDivQ = 1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
@@ -787,25 +865,30 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, XC24_5V5_Pin|XDIC_5_7V_Pin|XC24_VCC_EN_Pin|XC24_NSCS_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, DEBUG_1_Pin|DEBUG_2_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
+  LL_GPIO_ResetOutputPin(GPIOB, XC24_VCC_EN_Pin|XC24_NSCS_Pin);
+
+  /**/
+  LL_GPIO_SetOutputPin(LED_GPIO_Port, LED_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(XDIC_VCC_EN_GPIO_Port, XDIC_VCC_EN_Pin);
 
   /**/
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
-  LL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_13|LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2
+                          |LL_GPIO_PIN_3|LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6
+                          |LL_GPIO_PIN_9|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_3
-                          |LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6|LL_GPIO_PIN_8
-                          |LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pin = DEBUG_1_Pin|DEBUG_2_Pin|LED_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -818,23 +901,27 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_10|LL_GPIO_PIN_12
-                          |LL_GPIO_PIN_13|LL_GPIO_PIN_15|LL_GPIO_PIN_3|LL_GPIO_PIN_4
-                          |LL_GPIO_PIN_7|LL_GPIO_PIN_8;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_10
+                          |LL_GPIO_PIN_15|LL_GPIO_PIN_3|LL_GPIO_PIN_4|LL_GPIO_PIN_7
+                          |LL_GPIO_PIN_8;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XC24_5V5_Pin|XC24_VCC_EN_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pin = KEY_3_Pin|KEY_2_Pin|KEY_1_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XDIC_5_7V_Pin|XDIC_VCC_EN_Pin|XC24_NSCS_Pin;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_2;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = XDIC_VCC_EN_Pin|XC24_NSCS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -842,21 +929,12 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XC_MCLK_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = DEBUG_Pin;
+  GPIO_InitStruct.Pin = XC24_VCC_EN_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(XC24_VCC_EN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
     LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);

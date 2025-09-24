@@ -91,8 +91,10 @@ extern void sys_tick_handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin LL_GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
+#define DEBUG_1_Pin LL_GPIO_PIN_14
+#define DEBUG_1_GPIO_Port GPIOC
+#define DEBUG_2_Pin LL_GPIO_PIN_15
+#define DEBUG_2_GPIO_Port GPIOC
 #define USART_TX_Pin LL_GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin LL_GPIO_PIN_3
@@ -103,20 +105,20 @@ extern void sys_tick_handler(void);
 #define XC_SPI_MISO_GPIO_Port GPIOA
 #define XC_SPI_MOSI_Pin LL_GPIO_PIN_7
 #define XC_SPI_MOSI_GPIO_Port GPIOA
-#define XC24_5V5_Pin LL_GPIO_PIN_2
-#define XC24_5V5_GPIO_Port GPIOB
-#define XDIC_5_7V_Pin LL_GPIO_PIN_14
-#define XDIC_5_7V_GPIO_Port GPIOB
+#define KEY_3_Pin LL_GPIO_PIN_12
+#define KEY_3_GPIO_Port GPIOB
+#define KEY_2_Pin LL_GPIO_PIN_13
+#define KEY_2_GPIO_Port GPIOB
+#define KEY_1_Pin LL_GPIO_PIN_14
+#define KEY_1_GPIO_Port GPIOB
 #define VSYNC_Pin LL_GPIO_PIN_7
 #define VSYNC_GPIO_Port GPIOC
-#define XC_MCLK_Pin LL_GPIO_PIN_9
-#define XC_MCLK_GPIO_Port GPIOC
+#define LED_Pin LL_GPIO_PIN_8
+#define LED_GPIO_Port GPIOC
 #define TMS_Pin LL_GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin LL_GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define DEBUG_Pin LL_GPIO_PIN_2
-#define DEBUG_GPIO_Port GPIOD
 #define XDIC_VCC_EN_Pin LL_GPIO_PIN_5
 #define XDIC_VCC_EN_GPIO_Port GPIOB
 #define XC24_VCC_EN_Pin LL_GPIO_PIN_6
@@ -137,6 +139,9 @@ extern void sys_tick_handler(void);
 
 #define XDIC_VCC_ON()           XDIC_VCC_EN_GPIO_Port->BSRR = XDIC_VCC_EN_Pin << 16U
 #define XDIC_VCC_OFF()          XDIC_VCC_EN_GPIO_Port->BSRR = XDIC_VCC_EN_Pin <<  0U
+
+#define LED_HI()                LED_GPIO_Port->BSRR = LED_Pin <<  0U
+#define LED_LO()                LED_GPIO_Port->BSRR = LED_Pin << 16U
 
 /* USER CODE END Private defines */
 
