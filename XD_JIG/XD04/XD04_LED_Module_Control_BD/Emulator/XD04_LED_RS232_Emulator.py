@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox, QMessageBox, QInputDialog
 )
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 
 import serial
 import serial.tools.list_ports
@@ -28,6 +28,7 @@ commands = {
 }
 
 class MacroApp(QWidget):
+    log_signal = pyqtSignal(str)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("XD04 LED RS232 Emulator")
@@ -39,6 +40,7 @@ class MacroApp(QWidget):
 
         self.init_ui()
         # self.init_serial()
+        self.log_signal.connect(self.log)
 
     def init_serial(self):
         ports = list(serial.tools.list_ports.comports())
@@ -216,7 +218,6 @@ class MacroApp(QWidget):
                     self.checksum_label.setText(f"0x{checksum_val:02X}")
                     packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, checksum_val, eop_val])
 
-                # update checksum field
                 self.ser.write(packet)
                 self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
             except ValueError:
@@ -299,15 +300,17 @@ class MacroApp(QWidget):
                             calc_checksum = sum(data[:4]) & 0xFF
                             recv_checksum = data[4]
                             if calc_checksum == recv_checksum:
-                                result = f"✅ Rx Checksum (0x{recv_checksum:02X})"
+                                result = f"✅ Rx Checksum (0x{recv_checksum:02X})\r\n"
                             else:
-                                result = f"❌ Rx Checksum (0x{recv_checksum:02X} / 0x{calc_checksum:02X})"
+                                result = f"❌ Rx Checksum (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
                         text_str = data.decode(errors="ignore")
-                        self.log(f"📥 Rx \t\t{hex_list} | {result}")
+                        # self.log(f"📥 Rx \t\t{hex_list} | {result}")
+                        self.log_signal.emit(f"📥 Rx \t\t{hex_list} | {result}")
 
                 time.sleep(0.05)  # CPU 점유율 방지
             except Exception as e:
-                self.log(f"⚠️ 수신 오류: {e}")
+                # self.log(f"⚠️ 수신 오류: {e}")
+                self.log_signal.emit(f"⚠️ 수신 오류: {e}")
                 break
 
 if __name__ == "__main__":
