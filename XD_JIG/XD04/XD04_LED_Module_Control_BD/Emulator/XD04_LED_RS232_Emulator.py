@@ -38,7 +38,6 @@ class MacroApp(QWidget):
         self.thread_running = False
 
         self.init_ui()
-        self.init_shortcuts()
         # self.init_serial()
 
     def init_serial(self):
@@ -145,14 +144,17 @@ class MacroApp(QWidget):
         packet_layout.addLayout(checksum_ver_layout)
         packet_layout.addLayout(eop_ver_layout)
 
-        self.run_button = QPushButton("Send Normal Packet")
-        self.run_button.clicked.connect(self.send_normal)
+        self.normal_button = QPushButton("Send Normal Packet")
+        self.normal_button.clicked.connect(self.send_normal)
+        self.byte2_button = QPushButton("Send 2-byte Packet for Test")
+        self.byte2_button.clicked.connect(self.send_byte2_normal)
         self.wrong_checksum = QPushButton("Abnormal - Checksum Error")
         self.wrong_checksum.clicked.connect(self.send_wrong_checksum)
         self.half_packet = QPushButton("Abnormal - Half Packet")
         self.half_packet.clicked.connect(self.send_half_packet)
         btn_layout = QHBoxLayout()
-        btn_layout.addWidget(self.run_button)
+        btn_layout.addWidget(self.normal_button)
+        btn_layout.addWidget(self.byte2_button)
         btn_layout.addWidget(self.wrong_checksum)
         btn_layout.addWidget(self.half_packet)
 
@@ -179,11 +181,6 @@ class MacroApp(QWidget):
         line.setFrameShadow(QFrame.Sunken)
         return line
 
-    def init_shortcuts(self):
-        # Ctrl+R을 누르면 매크로 시작
-        start_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
-        start_shortcut.activated.connect(self.send_normal)
-
     def log(self, message):
         self.log_output.append(message)
         cursor = self.log_output.textCursor()
@@ -199,12 +196,50 @@ class MacroApp(QWidget):
                 # command_val = int(self.command_cb.currentText(), 16)
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
-                data_val = int(self.data_label.text().strip())
-                checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
+                eop_val = int(self.eop_cb.currentText(), 16)
+                if length_val == 1:
+                    data_val = int(self.data_label.text().strip())
+                    checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                elif length_val == 2:
+                    data_val_1 = int(self.data_label.text().strip())
+                    data_val_2 = data_val_1 + 1
+                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2) & 0xFF
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
+                elif length_val == 3:
+                    data_val_1 = int(self.data_label.text().strip())
+                    data_val_2 = data_val_1 + 1
+                    data_val_3 = data_val_2 + 1
+                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3) & 0xFF
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, checksum_val, eop_val])
+
+                # update checksum field
+                self.ser.write(packet)
+                self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+            except ValueError:
+                self.log("⚠️ Invalid Value.")
+                return
+        else :
+            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
+
+    def send_byte2_normal(self):
+        if self.thread_running :
+            try:
+                sop_val = int(self.sop_cb.currentText(), 16)
+                length_val = 2
+                # command_val = int(self.command_cb.currentText(), 16)
+                command_text = self.command_cb.currentText()
+                command_val = self.commands[command_text]
+                data_val_1 = int(self.data_label.text().strip())
+                data_val_2 = data_val_1 + 1
+                checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2) & 0xFF
                 eop_val = int(self.eop_cb.currentText(), 16)
                 # update checksum field
                 self.checksum_label.setText(f"0x{checksum_val:02X}")
-                packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
                 self.ser.write(packet)
                 self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
             except ValueError:
