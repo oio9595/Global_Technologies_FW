@@ -23,13 +23,13 @@
 #define XDIC_OFS_ERR_RATE           (0.5f / 100)   /* % */
 #define XDIC_OFS_P1                 (250)
 #define XDIC_OFS_P2                 (500)
-#define XDIC_OFS_CAL                (0.13f)
-#define XDIC_OFS_TARGET             (12.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
+#define XDIC_OFS_CAL                (0.13f * 8.0f / 12.0f)
+#define XDIC_OFS_TARGET             (8.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
 
 #define XDIC_GAIN_ERR_RATE          (0.5f / 100)   /* % */
 #define XDIC_GAIN_P1                (1000)
 #define XDIC_GAIN_P2                (3000)
-#define XDIC_GAIN_TARGET            (12.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
+#define XDIC_GAIN_TARGET            (8.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
 
 /* Screen Spec */
 #define XDIC_SCREEN_POINT_SIZE      (9)
@@ -38,9 +38,9 @@
 #define XDIC_SCREEN_VREF2           (1000)
 #define XDIC_SCREEN_VREF3           (4000)
 
-#define XDIC_SCREEN_MAX_CURR1       (DEV_MAX_CURR_LEVEL_8mA)
-#define XDIC_SCREEN_MAX_CURR2       (DEV_MAX_CURR_LEVEL_12mA)
-#define XDIC_SCREEN_MAX_CURR3       (DEV_MAX_CURR_LEVEL_32mA)
+#define XDIC_SCREEN_MAX_CURR1       (DEV_MAX_CURR_LEVEL_4mA)
+#define XDIC_SCREEN_MAX_CURR2       (DEV_MAX_CURR_LEVEL_8mA)
+#define XDIC_SCREEN_MAX_CURR3       (DEV_MAX_CURR_LEVEL_24mA)
 
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_OF_RANGE_CNT       (25)

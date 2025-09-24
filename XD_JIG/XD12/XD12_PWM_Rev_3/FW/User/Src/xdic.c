@@ -500,7 +500,7 @@ void XDIC_Param_Init(void)
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_12mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
     gt_xd_short_level = SHORT_LEVEL_24V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -842,6 +842,10 @@ void XDIC_Save_Mirror_Regs(void)
     {
         gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
     }
+#if 0
+    gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_OSC] |= 0x800;
+    XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OSC, gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_OSC]);
+#endif
 }
 
 uint64_t XDIC_Compare_Mirror_Regs(void)

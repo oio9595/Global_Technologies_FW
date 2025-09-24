@@ -333,7 +333,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
 
 void XC24_Read_Register_All(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         XC24_Read_Register(xc_addr);
         us_delay(10);
@@ -350,7 +350,7 @@ void XC24_Read_Register_All(void)
 
 void XC24_Dump_All_Register(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
@@ -386,7 +386,7 @@ void XC24_Init(void)
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
@@ -517,7 +517,7 @@ void XC24_Trim_Init(void)
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
