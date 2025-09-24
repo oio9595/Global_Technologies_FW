@@ -957,11 +957,11 @@ void XD_Trim_Task(void)
                 for (uint8_t i = 0 ; i < XDIC_SCREEN_POINT_SIZE ; ++i)
                 {
                     JigBD_IF_Change_Current_Gain(gt_xd_screen_param[i].gain);
-                    XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
                     XDIC_Set_Max_Current_Level(gt_xd_screen_param[i].max_curr_lvl);
                     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
                     {
                         JigBD_IF_Select_Output_Ch(ch);
+                        XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
                         gb_ads114s08_drdy_done = 0;
                         gn_ads114s08_adc_temp = 0;
                         gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -976,6 +976,7 @@ void XD_Trim_Task(void)
                                 break;
                             }
                         }
+                        XDIC_Set_Max_Curr_Vref(0);
                         uint16_t adc = ADS114S08_Get_ADC_Value();
                         gt_xd_screen_param[i].f_measured[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gt_xd_screen_param[i].gain);
                     }
