@@ -314,3 +314,11 @@ void XDIC_Init(void)
         }
     }
 }
+
+void XDIC_DeInit(void)
+{
+    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, (1 << 11)); // Reset
+    XDIC_VCC_OFF();
+
+    gf_xd_max_current = 0.0f;
+}

@@ -159,6 +159,20 @@ typedef enum tag_XC24_ADDR_T
     XC24_ADDR_MAX                           = 0x71, // 0x71
 }xc24_addr_t;
 
+typedef enum tag_XC24_MIRROR_ADDR_T
+{
+    XC24_MIRROR_ADDR_START                  = 0xF0, // 0xF0
+    XC24_MIRROR_ADDR_TEST_CONTROL           = 0xF0, // 0xF0
+    XC24_MIRROR_ADDR_OTP_PG_ACCESS          = 0xF1, // 0xF1
+    XC24_MIRROR_ADDR_OTP_WRITE              = 0xF2, // 0xF2
+    XC24_MIRROR_ADDR_OTP_RD_PROG            = 0xF3, // 0xF3
+    XC24_MIRROR_ADDR_OTP_PROTECT            = 0xF4, // 0xF4
+    XC24_MIRROR_ADDR_MIRROR1                = 0xF5, // 0xF5
+    XC24_MIRROR_ADDR_MIRROR2                = 0xF6, // 0xF6
+    XC24_MIRROR_ADDR_MIRROR3                = 0xF7, // 0xF7
+    XC24_MIRROR_ADDR_MAX                    = 0xF8, // 0xF8
+}xc24_mirror_addr_t;
+
 /*
 typedef enum _xc24_data_addr_
 {
@@ -1425,6 +1439,95 @@ typedef union tag_PORT_LOCAL_RW_DATA
     };
 }_v_port_local_rw_data_t;
 
+typedef union tag_TEST_CONTROL
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t mclk32_o    : 1;
+        uint16_t             : 3;
+        uint16_t mclk1_o     : 1;
+        uint16_t             : 3;
+        uint16_t daco_direct : 1;
+        uint16_t             : 6;
+        uint16_t test_en     : 1;
+    };
+}_v_test_control_t;
+
+typedef union tag_OTP_PG_ACCESS
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_pg_acc_cycle : 16;
+    };
+}_v_otp_pg_access_t;
+
+typedef union tag_OTP_WRITE
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_wsel :  4;
+        uint16_t          : 12;
+    };
+}_v_otp_write_t;
+
+typedef union tag_OTP_RD_PROG
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_pg_s :  1;
+        uint16_t otp_rd_s :  1;
+        uint16_t          : 14;
+    };
+}_v_otp_rd_prog_t;
+
+typedef union tag_OTP_PROTECT
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t protect : 12;
+        uint16_t         :  4;
+    };
+}_v_otp_protect_t;
+
+typedef union tag_MIRROR1
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t vctl_ldo : 4;
+        uint16_t          : 4;
+        uint16_t osc_fctl : 7;
+        uint16_t          : 1;
+    };
+}_v_mirror1_t;
+
+typedef union tag_MIRROR2
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t dac_ofs_val    : 7;
+        uint16_t dac_ofs_sign   : 1;
+        uint16_t dac_gain       : 6;
+        uint16_t                : 2;
+    };
+}_v_mirror2_t;
+
+typedef union tag_MIRROR3
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t otp_checksum :  6;
+        uint16_t              : 10;
+    };
+}_v_mirror3_t;
+
 typedef union _xc24_regs
 {
     uint16_t ALL[XC24_ADDR_MAX];
@@ -1553,6 +1656,22 @@ typedef union _xc24_regs
     };
 }_xc24_general_regs_t;
 
+typedef union _xc24_mirror_regs
+{
+    uint16_t ALL[XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START];
+    struct
+    {
+        _v_test_control_t                   _rF0;
+        _v_otp_pg_access_t 		   		    _rF1;
+        _v_otp_write_t 		   			    _rF2;
+        _v_otp_rd_prog_t 		   		    _rF3;
+        _v_otp_protect_t 		   		    _rF4;
+        _v_mirror1_t 		   			    _rF5;
+        _v_mirror2_t 		   			    _rF6;
+        _v_mirror3_t 		   			    _rF7;
+    };
+}_xc24_mirror_regs_t;
+
 /* BEGIN - INTERFACE FUNCTIONS */
 
 extern volatile uint8_t gn_xc_spi_timeout;
@@ -1562,8 +1681,7 @@ extern uint16_t XC24_Read_Register(uint8_t in_addr);
 extern void XC24_Read_Register_All(void);
 extern void XC24_Dump_All_Register(void);
 extern void XC24_Init(void);
-
-extern void XC24_Start_MCLK_Oscillation(bool en);
+extern void XC24_DeInit(void);
 
 extern void XC24_IF_IdGen_Command(void);
 extern void XC24_IF_SyncGen_Command(void);

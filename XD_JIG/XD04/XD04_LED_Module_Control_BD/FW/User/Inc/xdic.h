@@ -540,6 +540,7 @@ void XDIC_Update_Max_Current_Vref(float in_current);
 
 extern void XDIC_Param_Init(void);
 extern void XDIC_Init(void);
+extern void XDIC_DeInit(void);
 
 #ifdef __cplusplus
 }

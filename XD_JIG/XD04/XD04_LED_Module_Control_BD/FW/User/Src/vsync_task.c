@@ -13,6 +13,7 @@
 #include "config.h"
 
 static bool gb_xdic_vsync_flag;
+volatile static bool gb_system_active;
 
 bool gb_xd_led_enable_table[TOTAL_BLOCK_SIZE] = {false, };
 
@@ -21,6 +22,7 @@ void Vsync_Timer_Start(void)
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
+    gb_system_active = true;
 }
 
 void Vsync_Timer_Stop(void)
@@ -29,6 +31,12 @@ void Vsync_Timer_Stop(void)
     LL_TIM_SetCounter(TIM8, 0);
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableIT_UPDATE(TIM8);
+
+    for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+    {
+        gb_xd_led_enable_table[i] = false;
+    }
+    gb_system_active = false;
 }
 
 void Vsync_Update_Handler(void)

@@ -14,13 +14,18 @@
 #define XDIC_LD_MAX         (16383U)
 
 #define XC24_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xc24_general_regs.reg }
+#define XC24_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xc24_mirror_regs.reg }
 
-#define XC_SPI_TIMEOUT_MS   (10)
+#define XC24_OSC_REG_DEFAULT        (64)
+#define XC_SPI_TIMEOUT_MS           (10)
+#define XC24_OTP_PROTECT_DISABLE    (0xA5A)
+#define XC24_OTP_PROTECT_ENABLE     (0x5A5)
 
 static SPI_TypeDef *g_hSPIx;
 volatile uint8_t gn_xc_spi_timeout;
 
 static _xc24_general_regs_t gt_xc24_general_regs;
+static _xc24_mirror_regs_t gt_xc24_mirror_regs;
 
 static _reg_map_t gt_xc24_general_maps[] =
 {
@@ -140,6 +145,19 @@ static _reg_map_t gt_xc24_general_maps[] =
 };
 static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t)), "XC24 General Address map mismatch!");
 
+static _reg_map_t gt_xc24_mirror_maps[] =
+{
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_TEST_CONTROL , _rF0 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_PG_ACCESS, _rF1 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_WRITE    , _rF2 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_RD_PROG  , _rF3 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_OTP_PROTECT  , _rF4 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR1      , _rF5 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR2      , _rF6 ),
+    XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR3      , _rF7 ),
+};
+static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
+
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
     if (gn_xc_spi_timeout == 0)
@@ -228,9 +246,26 @@ static const _reg_map_t* XC24_Get_General_Map_Pointer(uint8_t addr)
     return NULL;
 }
 
+static const _reg_map_t* XC24_Get_Mirror_Map_Pointer(uint8_t addr)
+{
+    for (uint8_t i = 0; i < sizeof(gt_xc24_mirror_maps) / sizeof(gt_xc24_mirror_maps[0]); ++i)
+    {
+        if (gt_xc24_mirror_maps[i].address == addr)
+        {
+            return &gt_xc24_mirror_maps[i];
+        }
+    }
+    return NULL;
+}
+
 static const _reg_map_t* XC24_Find_Register_Map(uint8_t addr)
 {
     const _reg_map_t* map = XC24_Get_General_Map_Pointer(addr);
+    if (!map)
+    {
+        map = XC24_Get_Mirror_Map_Pointer(addr);
+    }
+
     return map;
 }
 
@@ -288,7 +323,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
 
 void XC24_Read_Register_All(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         XC24_Read_Register(xc_addr);
         us_delay(10);
@@ -298,7 +333,7 @@ void XC24_Read_Register_All(void)
 
 void XC24_Dump_All_Register(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
@@ -306,6 +341,34 @@ void XC24_Dump_All_Register(void)
             print(LOG_PC, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
+}
+
+void XC24_Set_OTP_Protect(bool en)
+{
+    if (en == true)
+    {
+        gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_ENABLE;
+    }
+    else
+    {
+        gt_xc24_mirror_regs._rF4.protect = XC24_OTP_PROTECT_DISABLE;
+    }
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
+}
+
+void XC24_Test_Init_OSC(void)
+{
+	gt_xc24_mirror_regs._rF0.test_en = 1;
+    gt_xc24_mirror_regs._rF0.mclk32_o = 1;
+	gt_xc24_mirror_regs._rF0.mclk1_o = 0;
+	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
+
+	gt_xc24_general_regs._r1B.spread_range_a = 4;
+	gt_xc24_general_regs._r1B.osc_spread_en = 0;
+	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_1, gt_xc24_general_regs._r1B.ALL);
+
+	gt_xc24_general_regs._r1C.osc_force_static = XC24_OSC_REG_DEFAULT;
+	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_2, gt_xc24_general_regs._r1C.ALL);
 }
 
 void XC24_Init(void)
@@ -318,7 +381,7 @@ void XC24_Init(void)
 
     XC_NSCS_HI();
 
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
@@ -475,34 +538,97 @@ void XC24_Init(void)
             us_delay(10);
         }
     }
+    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+
     print(LOG_PC, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
 }
 
-void XC24_Start_MCLK_Oscillation(bool en)
+void XC24_DeInit(void)
 {
-    LL_GPIO_InitTypeDef GPIO_InitStruct = {0, };
+    g_hSPIx = SPI1;
 
-    if (en)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
-        GPIO_InitStruct.Pin = XC_MCLK_Pin;
-        GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-        GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-        GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-        LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
+        const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
+        if (map)
+        {
+            switch (xc_addr)
+            {
+            case XC24_ADDR_SOFT_RESET:
+                gt_xc24_general_regs._r00.rst1 = 1;
+                gt_xc24_general_regs._r00.rst2 = 1;
+                gt_xc24_general_regs._r00.rst3 = 1;
+                break;
+            case XC24_ADDR_GLOBAL_WRITE_DATA :
+                gt_xc24_general_regs._r60.ALL = 0; // To reset SPI CLK, MOSI
+                break;
+            default :
+                continue;
+            }
+            XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
+            us_delay(10);
+        }
+    }
 
-        LL_mDelay(10);
-    }
-    else
+    XC_NSCS_LO();
+    XC_VCC_OFF();
+}
+
+void XC24_Test_Init(void)
+{
+    g_hSPIx = SPI1;
+
+    XC_VCC_ON();
+
+    LL_mDelay(20);
+
+    XC_NSCS_HI();
+
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
-        GPIO_InitStruct.Pin = XC_MCLK_Pin;
-        GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-        LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
+        const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
+        if (map)
+        {
+            switch (xc_addr)
+            {
+            case XC24_ADDR_SOFT_RESET:
+                gt_xc24_general_regs._r00.rst1 = 1;
+                gt_xc24_general_regs._r00.rst2 = 1;
+                gt_xc24_general_regs._r00.rst3 = 1;
+                break;
+                break;
+            default :
+                continue;
+            }
+            XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
+            us_delay(10);
+        }
     }
+
+    for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
+    {
+        const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
+        if (map)
+        {
+            switch (xc_addr)
+            {
+            case XC24_MIRROR_ADDR_TEST_CONTROL:
+                gt_xc24_mirror_regs._rF0.test_en = 1;
+                break;
+            default :
+                continue;
+            }
+            XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
+            us_delay(10);
+        }
+    }
+    XC24_Set_OTP_Protect(false);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+    XC24_Test_Init_OSC();
+    XC24_Read_Register_All();
+    print(LOG_PC, " ...XC24 Test Initial Done...\r\n");
 }
 
 /* BEGIN - INTERFACE FUNCTIONS ******************************************************************/
