@@ -1276,7 +1276,7 @@ static void TaskDebugUart(void)
             print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
             LL_mDelay(10);
 
-            uint8_t gain = GAIN_HIGH;
+            uint8_t gain = GAIN_MID;
 
             JigBD_IF_Change_Current_Gain(gain);
             print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
@@ -1301,7 +1301,7 @@ static void TaskDebugUart(void)
                 {
                     JigBD_IF_Select_Output_Ch(i);
                     // Point 1
-                    XDIC_Set_Max_Curr_Vref(500);
+                    XDIC_Set_Max_Curr_Vref(250);
                     gb_ads114s08_drdy_done = 0;
                     gn_ads114s08_adc_temp = 0;
                     gn_adc_read_count = ADS114S08_READ_COUNT;
@@ -1315,7 +1315,7 @@ static void TaskDebugUart(void)
                     }
                     iout_adc[i][0] = ADS114S08_Get_ADC_Value();
                     // Point 2
-                    XDIC_Set_Max_Curr_Vref(900);
+                    XDIC_Set_Max_Curr_Vref(500);
                     gb_ads114s08_drdy_done = 0;
                     gn_ads114s08_adc_temp = 0;
                     gn_adc_read_count = ADS114S08_READ_COUNT;

@@ -896,8 +896,7 @@ void XDIC_Trim_Init_ICTL_L_CH(void)
     gt_xdic_general_regs._r3F.vref_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    //XDIC_Set_Max_Current_Level(XDIC_ICTL_L_MAX_CURRENT_LVL);
-    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_64mA);
+    XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
 }
 
 void XDIC_Trim_Init_ICTL_H_CH(void)
