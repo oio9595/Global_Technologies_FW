@@ -26,6 +26,9 @@ extern void LED_BLK_On_Select(uint8_t in_blk_num);
 extern void LED_BLK_Off_Select(uint8_t in_blk_num);
 extern void LED_Current_Select(float in_current);
 
+extern void LED_System_Init(void);
+extern void LED_System_DeInit(void);
+
 #ifdef __cplusplus
 }
 #endif

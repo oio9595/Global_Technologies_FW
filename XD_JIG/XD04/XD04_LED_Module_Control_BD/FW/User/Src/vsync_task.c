@@ -130,4 +130,17 @@ void LED_Current_Select(float in_current)
     gf_xd_max_current = in_current;
 }
 
+void LED_System_Init(void)
+{
+    XC24_Init();
+    XDIC_Init();
+    Vsync_Timer_Start();
+}
+
+void LED_System_DeInit(void)
+{
+    Vsync_Timer_Stop();
+    XDIC_DeInit();
+    XC24_DeInit();
+}
 /*** end of file ***/

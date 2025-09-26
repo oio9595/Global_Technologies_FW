@@ -1682,6 +1682,7 @@ extern void XC24_Read_Register_All(void);
 extern void XC24_Dump_All_Register(void);
 extern void XC24_Init(void);
 extern void XC24_DeInit(void);
+extern void XC24_Test_Init(void);
 
 extern void XC24_IF_IdGen_Command(void);
 extern void XC24_IF_SyncGen_Command(void);
