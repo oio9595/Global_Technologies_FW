@@ -1758,6 +1758,22 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "%u, %.3f\r\n", gain, iout_avg);
             }
         }
+        else if (Command_is_("xd_tc"))
+        {
+            for (uint8_t tc = 0 ; tc < 8 ; ++tc)
+            {
+                uint16_t temp_osc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OSC);
+                temp_osc &= 0x00FF;
+                temp_osc |= (tc << 8);
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OSC, temp_osc);
+                LL_mDelay(1);
+
+                XDIC_Trim_Init_VREF_CTL();
+                JigBD_IF_Start_MCU_ADC();
+                uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+                print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+            }
+        }
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
