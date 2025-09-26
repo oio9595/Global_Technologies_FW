@@ -103,11 +103,15 @@ typedef struct tag_RX_PACKET_BUFFER
 } rx_packet_buffer_t;
 static rx_packet_buffer_t gt_rx_packet_buffer;
 
+typedef void (*func_t)(void);
+
 typedef struct tag_KEY_INFO
 {
     uint32_t now_state;
     uint32_t prev_state;
     uint8_t press_cnt;
+    uint8_t odd_even;
+    func_t function[2];
 } key_info_t;
 
 //static LOG_LV_T gt_log_lv = LOG_PC;
@@ -363,16 +367,12 @@ static void Uart_Task(void)
         switch(p_packet->command)
         {
             case CMD_INIT:
+                LED_System_Init();
                 print(LOG_PC, "CMD_INIT\r\n");
-                XC24_Init();
-                XDIC_Init();
-                Vsync_Timer_Start();
                 break;
             case CMD_QUIT:
+                LED_System_DeInit();
                 print(LOG_PC, "CMD_QUIT\r\n");
-                Vsync_Timer_Stop();
-                XDIC_DeInit();
-                XC24_DeInit();
                 break;
             case CMD_STATUS:
                 print(LOG_PC, "CMD_STATUS\r\n");
@@ -411,7 +411,17 @@ static void Key_Init(void)
         gt_key_info[key_list].now_state = LL_GPIO_IsInputPinSet(key_gpio_port[key_list], key_gpio_pin[key_list]);
         gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
         gt_key_info[key_list].press_cnt = 0;
+        gt_key_info[key_list].odd_even = 0;
     }
+
+    gt_key_info[KEY_1].function[0] = LED_System_Init;
+    gt_key_info[KEY_1].function[1] = LED_System_DeInit;
+
+    gt_key_info[KEY_2].function[0] = XC24_Test_Init;
+    gt_key_info[KEY_2].function[1] = NULL;
+
+    gt_key_info[KEY_3].function[0] = NULL;
+    gt_key_info[KEY_3].function[1] = NULL;
 }
 
 static void Key_Task(void)
@@ -434,6 +444,8 @@ static void Key_Task(void)
                     if (gt_key_info[key_list].press_cnt >= 10) // 100ms at least
                     {
                         print(LOG_PC, "KEY_%u Action !!\r\n", key_list + 1);
+                        gt_key_info[key_list].function[gt_key_info[key_list].odd_even]();
+                        gt_key_info[key_list].odd_even ^= 1;
                     }
                     gt_key_info[key_list].press_cnt = 0;
                 }
