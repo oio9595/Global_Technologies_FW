@@ -8,6 +8,7 @@
 #define __XC24_C__
 #include "main.h"
 #include "xc24.h"
+#include "xdic.h"
 #include "vsync_task.h"
 #include "config.h"
 
@@ -377,7 +378,7 @@ void XC24_Init(void)
 
     XC_VCC_ON();
 
-    LL_mDelay(20);
+    LL_mDelay(100);
 
     XC_NSCS_HI();
 
@@ -427,6 +428,10 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
                 gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
                 gt_xc24_general_regs._r1B.osc_spread_en = 0;
+                break;
+            case XC24_ADDR_COMMAND_LATENCY:
+                gt_xc24_general_regs._r1F.serial_latency = 0x20;
+                gt_xc24_general_regs._r1F.cmd_latency = 0x40;
                 break;
             case XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 :
                 gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
@@ -705,20 +710,41 @@ void XC24_IF_Write_LD(void)
     cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+
+    if (gf_xd_max_current == 0)
     {
-        if (gb_xd_led_enable_table[i])
-        {
-            tx_buffer[i + 1] = XDIC_LD_MAX;
-        }
-        else
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             tx_buffer[i + 1] = 0;
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        {
+            if (gb_xd_led_enable_table[i])
+            {
+                tx_buffer[i + 1] = XDIC_LD_MAX;
+            }
+            else
+            {
+                tx_buffer[i + 1] = 0;
+            }
         }
     }
 
     SPI_Write(g_hSPIx, tx_buffer, 1 + TOTAL_BLOCK_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
+}
+
+void XC24_IF_Turn_Off_Sync_Auto(void)
+{
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x100);
+}
+
+void XC24_IF_Turn_On_Sync_Auto(void)
+{
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x111);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/

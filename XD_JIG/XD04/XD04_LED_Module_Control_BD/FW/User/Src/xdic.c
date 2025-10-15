@@ -31,6 +31,7 @@
 #define MCLK_LSB_MASK               (0x00FFF) //LSB 12-bit
 #define MCLK_MSB_MASK               (0xFF000) //MSB  8-bit
 
+#define XDIC_RESET_VALUE            (1U << 11)
 #define XDIC_CHANNEL_ENABLE_MAX     ((1U << XD_CH_SIZE) - 1)
 
 static _xdic_general_regs_t gt_xdic_general_regs;
@@ -242,11 +243,11 @@ void XDIC_Param_Init(void)
 void XDIC_Init(void)
 {
     XDIC_VCC_ON();
-    LL_mDelay(10);
+    LL_mDelay(100);
 
     XDIC_Param_Init();
 
-    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, (1 << 11)); // Reset
+    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, XDIC_RESET_VALUE); // Reset
     XC24_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
@@ -261,7 +262,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER :
@@ -277,8 +278,6 @@ void XDIC_Init(void)
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
                 gt_xdic_general_regs._r07.timeout_en = 1;
-                gt_xdic_general_regs._r07.s_det_e = 1;
-                gt_xdic_general_regs._r07.o_det_e = 1;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
                 gt_xdic_general_regs._r08.max_curr_vref = 0x00;

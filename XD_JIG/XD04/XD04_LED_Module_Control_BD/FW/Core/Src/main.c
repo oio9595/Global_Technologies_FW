@@ -38,8 +38,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define PRINT_BUFF_SIZE     256
-#define RX_BUFF_SIZE        32
-#define RX_PACKET_SIZE      32
+#define RX_BUFF_SIZE        32 // must be 2^n
+#define RX_PACKET_SIZE      32 // must be 2^n
 
 #define RX_TIMEOUT_MS      5
 
@@ -414,14 +414,14 @@ static void Key_Init(void)
         gt_key_info[key_list].odd_even = 0;
     }
 
-    gt_key_info[KEY_1].function[0] = LED_System_Init;
+    gt_key_info[KEY_1].function[0] = LED_System_Manual_Init;
     gt_key_info[KEY_1].function[1] = LED_System_DeInit;
 
     gt_key_info[KEY_2].function[0] = XC24_Test_Init;
-    gt_key_info[KEY_2].function[1] = NULL;
+    gt_key_info[KEY_2].function[1] = LED_System_DeInit;
 
-    gt_key_info[KEY_3].function[0] = NULL;
-    gt_key_info[KEY_3].function[1] = NULL;
+    gt_key_info[KEY_3].function[0] = LED_Current_Increase;
+    gt_key_info[KEY_3].function[1] = LED_Current_Increase;
 }
 
 static void Key_Task(void)
@@ -444,7 +444,10 @@ static void Key_Task(void)
                     if (gt_key_info[key_list].press_cnt >= 10) // 100ms at least
                     {
                         print(LOG_PC, "KEY_%u Action !!\r\n", key_list + 1);
-                        gt_key_info[key_list].function[gt_key_info[key_list].odd_even]();
+                        if (gt_key_info[key_list].function[gt_key_info[key_list].odd_even] != NULL)
+                        {
+                            gt_key_info[key_list].function[gt_key_info[key_list].odd_even]();
+                        }
                         gt_key_info[key_list].odd_even ^= 1;
                     }
                     gt_key_info[key_list].press_cnt = 0;
@@ -506,7 +509,7 @@ int main(void)
 
     Key_Init();
     comm_init();
-    for (uint8_t i = 0 ; i < 6 ; ++i)
+    for (uint8_t i = 0 ; i < 3 ; ++i)
     {
         LED_LO();
         LL_mDelay(250);
@@ -674,7 +677,7 @@ static void MX_TIM8_Init(void)
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-  TIM_OC_InitStruct.CompareValue = 5;
+  TIM_OC_InitStruct.CompareValue = 500;
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
