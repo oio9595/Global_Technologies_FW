@@ -15,6 +15,7 @@ import serial
 import serial.tools.list_ports
 
 VERSION_INFO = "GUI Version 1.0"
+WINDOW_TITLE = "XD04 LED Control B'D RS232 Emulator"
 
 commands = {
     "0x00 (Initial)": 0x00,
@@ -31,7 +32,7 @@ class MacroApp(QWidget):
     log_signal = pyqtSignal(str)
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("XD04 LED RS232 Emulator")
+        self.setWindowTitle(WINDOW_TITLE)
         self.setGeometry(100, 100, 700, 700)
 
         self.ser = None
@@ -105,7 +106,7 @@ class MacroApp(QWidget):
         length_ver_layout = QVBoxLayout()
         length_ver_layout.addWidget(QLabel("LENGTH"))
         self.length_cb = QComboBox()
-        self.length_cb.addItems([str(i) for i in range(1, 10)])
+        self.length_cb.addItems([str(i) for i in range(1, 2)])
         length_ver_layout.addWidget(self.length_cb)
 
         command_ver_layout = QVBoxLayout()
@@ -148,15 +149,12 @@ class MacroApp(QWidget):
 
         self.normal_button = QPushButton("Send Normal Packet")
         self.normal_button.clicked.connect(self.send_normal)
-        self.byte2_button = QPushButton("Send 2-byte Packet for Test")
-        self.byte2_button.clicked.connect(self.send_byte2_normal)
         self.wrong_checksum = QPushButton("Abnormal - Checksum Error")
         self.wrong_checksum.clicked.connect(self.send_wrong_checksum)
         self.half_packet = QPushButton("Abnormal - Half Packet")
         self.half_packet.clicked.connect(self.send_half_packet)
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.normal_button)
-        btn_layout.addWidget(self.byte2_button)
         btn_layout.addWidget(self.wrong_checksum)
         btn_layout.addWidget(self.half_packet)
 
@@ -166,7 +164,7 @@ class MacroApp(QWidget):
         # 레이아웃 설정
         layout.addLayout(info_layout)
         layout.addWidget(self.create_separator())
-        layout.addWidget(QLabel("[Tx Packet 설정]"))
+        layout.addWidget(QLabel("[Packet 구성]"))
         layout.addLayout(packet_layout)
         layout.addWidget(self.create_separator())
         layout.addWidget(QLabel("[Packet 전송]"))
@@ -226,29 +224,6 @@ class MacroApp(QWidget):
         else :
             self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
-    def send_byte2_normal(self):
-        if self.thread_running :
-            try:
-                sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = 2
-                # command_val = int(self.command_cb.currentText(), 16)
-                command_text = self.command_cb.currentText()
-                command_val = self.commands[command_text]
-                data_val_1 = int(self.data_label.text().strip())
-                data_val_2 = data_val_1 + 1
-                checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2) & 0xFF
-                eop_val = int(self.eop_cb.currentText(), 16)
-                # update checksum field
-                self.checksum_label.setText(f"0x{checksum_val:02X}")
-                packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
-                self.ser.write(packet)
-                self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
-            except ValueError:
-                self.log("⚠️ Invalid Value.")
-                return
-        else :
-            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
-
     def send_wrong_checksum(self):
         if self.thread_running :
             try:
@@ -300,12 +275,13 @@ class MacroApp(QWidget):
                             calc_checksum = sum(data[:4]) & 0xFF
                             recv_checksum = data[4]
                             if calc_checksum == recv_checksum:
-                                result = f"✅ Rx Checksum (0x{recv_checksum:02X})\r\n"
+                                result = f"✅\r\n"
                             else:
-                                result = f"❌ Rx Checksum (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
-                        text_str = data.decode(errors="ignore")
-                        # self.log(f"📥 Rx \t\t{hex_list} | {result}")
-                        self.log_signal.emit(f"📥 Rx \t\t{hex_list} | {result}")
+                                result = f"❌ Rx Checksum Error (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
+                            text_str = data.decode(errors="ignore")
+                            self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | {result}")
+                        else:
+                            self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | (Length Error)")
 
                 time.sleep(0.05)  # CPU 점유율 방지
             except Exception as e:
