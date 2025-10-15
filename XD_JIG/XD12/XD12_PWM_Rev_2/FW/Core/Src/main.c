@@ -1677,7 +1677,129 @@ static void TaskDebugUart(void)
                 iout_adc[i][1] = ADS114S08_Get_ADC_Value();
                 uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
                 float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_HIGH);
-                print(LOG_INFO, "\r\n ICTL_L CH[%d] : %.3f\r\n", i, iout_avg);
+                print(LOG_INFO, "\r\n ICTL_H CH[%d] : %.3f\r\n", i, iout_avg);
+            }
+        }
+        else if (Command_is_("5"))
+        {
+            // xd_trim_debug
+            JigBD_IF_XD_VCC_EN(PWR_ON);
+            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
+
+            if (IS_XC24_Support())
+            {
+                XC24_Init();
+                print(LOG_INFO, "\r\n xc_init\r\n");
+                LL_mDelay(10);
+            }
+
+            JigBD_IF_Select_Output_Ch(0);
+            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
+            LL_mDelay(10);
+
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
+            LL_mDelay(10);
+
+            XDIC_Trim_Init();
+
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
+
+            // xd_trim_vref
+            XDIC_Trim_Init_VREF_CTL();
+            JigBD_IF_Start_MCU_ADC();
+            uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+            print(LOG_INFO, "VREF, %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+
+            // xd_trim_osc
+            XDIC_Trim_Init_OSC();
+            JigBD_IF_Start_Input_Capture();
+            while(1)
+            {
+                if (gb_timer_input_capture_done)
+                {
+                    JigBD_IF_Stop_Input_Capture();
+                    break;
+                }
+            }
+            uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
+            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+            print(LOG_INFO, "OSC Freq, %.3f\r\n", osc_freq);
+
+            // xd_trim_ictl_l
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            XDIC_Trim_Init_ICTL_L_CH();
+            JigBD_IF_Change_Current_Gain(GAIN_MID);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+                XDIC_Set_Max_Curr_Vref(300);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(700);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_MID);
+                print(LOG_INFO, "ICTL_L CH[%d], %.3f\r\n", i, iout_avg);
+            }
+
+            // xd_trim_ictl_h
+            XDIC_Trim_Init_ICTL_H_CH();
+            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+                XDIC_Set_Max_Curr_Vref(200);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                XDIC_Set_Max_Curr_Vref(600);
+                gb_ads114s08_drdy_done = 0;
+                gn_ads114s08_adc_temp = 0;
+                gn_adc_read_count = ADS114S08_READ_COUNT;
+                ADS114S08_Set_Start(1);
+                while(1)
+                {
+                    if (gb_ads114s08_drdy_done)
+                    {
+                        break;
+                    }
+                }
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2;
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, GAIN_HIGH);
+                print(LOG_INFO, "ICTL_H CH[%d], %.3f\r\n", i, iout_avg);
             }
         }
         else if (Command_is_("xd_vref_debug"))
