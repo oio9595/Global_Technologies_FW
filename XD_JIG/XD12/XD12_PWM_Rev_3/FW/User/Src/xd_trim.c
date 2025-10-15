@@ -1095,7 +1095,7 @@ void XD_Screen_Task(void)
             XDIC_Trim_Init_OFS_CH();
             XDIC_Overwrite_Mirror_Regs();
 
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
 
             XDIC_Read_All_Registers();
 

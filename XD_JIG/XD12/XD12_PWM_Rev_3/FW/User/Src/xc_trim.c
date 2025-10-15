@@ -281,7 +281,7 @@ void XC_Trim_Task(void)
                 print(LOG_INFO, "DAC_GAIN Trim done\r\n");
                 over_run_cnt = 1;
                 XC24_Trim_Write_DAC_GAIN(dac_gain_reg);
-                gn_xc_trim_regs [1] = dac_gain_reg;
+                gn_xc_trim_regs[1] = dac_gain_reg;
                 gt_xc_trim_step = XC_TRIM_STEP_DAC_OFS;
                 break;
             }
@@ -387,6 +387,7 @@ void XC_Trim_Task(void)
             //set 5.7v & 50mS delay & otp write = 1 & 1Sec delay
             JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
             LL_mDelay(50);
+
             XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 1);
             LL_mDelay(1000);
 
@@ -502,6 +503,8 @@ void XC_Trim_Task(void)
         {
             print(LOG_INFO, "=============XC_TRIM_STEP_PWR_OFF=============\r\n");
             print(LOG_INFO, "%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gf_xc_screen_info[0], gf_xc_screen_info[1], gf_xc_screen_info[2], gf_xc_screen_info[3], gf_xc_screen_info[4], gf_xc_screen_info[5]);
+            print(LOG_INFO, "LDO, %u, GAIN, %u, OFS, %u, osc, %u\r\n", gn_xc_trim_regs[0], gn_xc_trim_regs[1], gn_xc_trim_regs[2], gn_xc_trim_regs[3]);
+
             if (gf_xc_screen_info[1] < 0.195f || gf_xc_screen_info[1] > 0.205f)
             {
                 print(LOG_ERROR, "NG\r\n");
