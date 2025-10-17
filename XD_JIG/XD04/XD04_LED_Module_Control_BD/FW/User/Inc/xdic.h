@@ -534,7 +534,6 @@ extern float gf_xd_max_current;
 
 extern void XDIC_Write_General_Reg(uint8_t addr, uint16_t data);
 extern uint16_t XDIC_Read_General_Reg(uint8_t addr);
-extern uint16_t XDIC_Get_General_Reg(uint8_t addr);
 extern void XDIC_Read_All_Registers(void);
 extern void XDIC_Update_Max_Current_Vref(float in_current);
 

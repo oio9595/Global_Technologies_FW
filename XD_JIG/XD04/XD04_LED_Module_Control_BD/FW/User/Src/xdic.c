@@ -164,23 +164,6 @@ uint16_t XDIC_Read_General_Reg(uint8_t addr)
     return xdic_reg_val;
 }
 
-uint16_t XDIC_Get_General_Reg(uint8_t addr)
-{
-    uint16_t xdic_reg_val = 0xFFFF;
-    const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
-    if (map)
-    {
-        xdic_reg_val = *((uint16_t*)(map->reg_ptr));
-    }
-    else
-    {
-        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
-        return xdic_reg_val;
-    }
-
-    return xdic_reg_val;
-}
-
 static void XDIC_Dump_All_Registers(void)
 {
     for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)

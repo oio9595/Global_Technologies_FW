@@ -397,7 +397,7 @@ void XC24_Init(void)
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
                 gt_xc24_general_regs._r08.sync_auto_en = 1;
-                gt_xc24_general_regs._r08.fault_auto_en = 1;
+                gt_xc24_general_regs._r08.fault_auto_en = 0;
                 break;
             case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
                 gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4;
@@ -744,7 +744,7 @@ void XC24_IF_Turn_Off_Sync_Auto(void)
 
 void XC24_IF_Turn_On_Sync_Auto(void)
 {
-    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x111);
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x101);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/

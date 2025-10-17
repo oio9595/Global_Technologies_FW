@@ -41,7 +41,7 @@
 #define RX_BUFF_SIZE        32 // must be 2^n
 #define RX_PACKET_SIZE      32 // must be 2^n
 
-#define RX_TIMEOUT_MS      5
+#define RX_TIMEOUT_MS       5
 
 #define PACKET_SIZE_EXCEPT_DATA_FIELD   5   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
 #define PACKET_SIZE_SOP_TO_COMMAND      3   // SOP(1) + LEN(1) + CMD(1)
@@ -94,7 +94,7 @@ typedef struct tag_RING_BUFFER
     uint8_t tail;
     char buffer[RX_BUFF_SIZE];
 } ring_buffer_t;
-static ring_buffer_t gt_ring_buffer; // ring buffer
+static ring_buffer_t gt_ring_buffer;
 
 typedef struct tag_RX_PACKET_BUFFER
 {
@@ -121,7 +121,7 @@ static uint8_t gn_uart_rx_timeout;
 static bool gb_uart_rx_timeout_enable;
 
 GPIO_TypeDef* key_gpio_port[KEY_MAX] = { KEY_1_GPIO_Port, KEY_2_GPIO_Port, KEY_3_GPIO_Port };
-const uint32_t key_gpio_pin[KEY_MAX] = { KEY_1_Pin, KEY_2_Pin, KEY_3_Pin };
+const uint32_t key_gpio_pin[KEY_MAX] = { KEY_1_Pin,       KEY_2_Pin,       KEY_3_Pin       };
 static key_info_t gt_key_info[KEY_MAX];
 static uint8_t gn_key_task_tick;
 /* USER CODE END PV */
@@ -296,9 +296,9 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 gb_uart_rx_timeout_enable = true;
             }
             uint8_t length = gt_ring_buffer.buffer[(gt_ring_buffer.tail + 1) & (RX_BUFF_SIZE - 1)];
-            if (length < 1) length = 1;
+            if (length < 1) length = 1; // Minimum data field length
 
-            if (comm_get_rx_available() >= (PACKET_SIZE_EXCEPT_DATA_FIELD + length)) // Minimum packet size
+            if (comm_get_rx_available() >= (PACKET_SIZE_EXCEPT_DATA_FIELD + length))
             {
                 temp_packet.sop = comm_rx_pop();
                 temp_packet.length = comm_rx_pop();
