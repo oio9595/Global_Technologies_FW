@@ -517,7 +517,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
-                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_EXT_VSYNC;
+                gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER :

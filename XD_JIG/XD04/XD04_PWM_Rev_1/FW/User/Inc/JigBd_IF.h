@@ -38,6 +38,7 @@ typedef enum tag_CURRENT_GAIN_T
 	GAIN_MAX,
 } current_gain_t;
 
+extern volatile bool gb_pwm_dma_tx_flag;
 extern volatile uint16_t gn_xd_rx_timeout;
 
 extern bool gb_timer_input_capture_activated;

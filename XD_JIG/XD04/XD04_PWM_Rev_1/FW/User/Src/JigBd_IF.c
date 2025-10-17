@@ -685,7 +685,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
 
-            for (uint8_t i = 0; i < SERIAL_LD_SIZE; ++i)
+            for (uint8_t i = 0 ; i < SERIAL_LD_SIZE ; ++i)
             {
                 if (write_data)
                 {
@@ -719,10 +719,13 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    gn_serialize_tx_buffer[pwm_length++] = bit_1;
-    gn_serialize_tx_buffer[pwm_length++] = bit_0;
-    gn_serialize_tx_buffer[pwm_length++] = bit_1;
-    gn_serialize_tx_buffer[pwm_length++] = bit_0;
+    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    {
+        gn_serialize_tx_buffer[pwm_length++] = bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+    }
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 

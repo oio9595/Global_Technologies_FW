@@ -52,6 +52,10 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
+    if (!XDIC_Is_Vsync_Mode_External())
+    {
+        JigBD_IF_SyncGen_Command();
+    }
     gb_xdic_vsync_flag = true;
 }
 
@@ -140,14 +144,10 @@ void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        if (!XDIC_Is_Vsync_Mode_External())
-        {
-            JigBD_IF_SyncGen_Command();
-        }
-        JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
-
         // fault read if needed
         XDIC_Get_Fault_Status();
+
+        JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
 
         if (gb_xdic_write_flag)
         {

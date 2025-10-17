@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "JigBd_IF.h"
+#include "vsync_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +51,6 @@
 /* USER CODE BEGIN PFP */
 
 extern void ADC_DRDY_INT_Handler(void);
-extern void Vsync_Update_Handler(void);
 
 /* USER CODE END PFP */
 
@@ -62,8 +62,6 @@ extern void Vsync_Update_Handler(void);
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-
-extern volatile bool gb_pwm_dma_tx_flag;
 
 /* USER CODE END EV */
 
@@ -289,7 +287,7 @@ void USART2_IRQHandler(void)
 void TIM8_UP_TIM13_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
-  Vsync_Update_Handler();
+    Vsync_Update_Handler();
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
 
