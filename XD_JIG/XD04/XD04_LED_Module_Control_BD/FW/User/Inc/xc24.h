@@ -1692,8 +1692,8 @@ extern void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data);
 extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr);
 extern void XC24_IF_Write_LD(void);
 
-extern void XC24_IF_Turn_Off_Sync_Auto(void);
-extern void XC24_IF_Turn_On_Sync_Auto(void);
+extern void XC24_Turn_Off_Sync_Auto(void);
+extern void XC24_Turn_On_Sync_Auto(void);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus

@@ -63,10 +63,10 @@ void XDIC_Vsync_Task(void)
     if (gb_xdic_vsync_flag)
     {
         us_delay(10);
-        XC24_IF_Turn_Off_Sync_Auto();
+        XC24_Turn_Off_Sync_Auto();
 
         us_delay(100);
-        XC24_IF_Turn_On_Sync_Auto();
+        XC24_Turn_On_Sync_Auto();
 
         us_delay(1500);
         XC24_IF_Write_LD();

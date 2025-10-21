@@ -26,8 +26,8 @@ extern "C" {
 #define XC_CH_ENABLE_SIZE           (20)
 #define TOTAL_BLOCK_SIZE            (XD_CH_SIZE * XD_DAISY_SIZE * XC_CH_ENABLE_SIZE)
 
-#define XC_SERIAL_CLK_CNT_LOW       (6)
-#define XC_SERIAL_CLK_CNT_HIGH      (10)
+#define XC_SERIAL_CLK_CNT_LOW       (8)
+#define XC_SERIAL_CLK_CNT_HIGH      (17)
 
 #define XD_SERIAL_CLK_CNT_LOW       (13)
 #define XD_SERIAL_CLK_CNT_HIGH      (26)
