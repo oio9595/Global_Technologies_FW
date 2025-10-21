@@ -739,12 +739,18 @@ void XC24_IF_Write_LD(void)
 
 void XC24_IF_Turn_Off_Sync_Auto(void)
 {
-    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x100);
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 0;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
 void XC24_IF_Turn_On_Sync_Auto(void)
 {
-    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, 0x101);
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 1;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/
