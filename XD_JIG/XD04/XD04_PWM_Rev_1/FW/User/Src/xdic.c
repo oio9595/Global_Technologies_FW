@@ -451,6 +451,18 @@ static void XDIC_Dump_All_Registers(void)
         }
     }
 }
+void XDIC_Dump_Trim_Regs_OneLine(void)
+{
+    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
+    {
+        const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
+        if (map)
+        {
+            uint16_t value = *((uint16_t*)(map->reg_ptr));
+            print(LOG_INFO, "0x%02X, ", value);
+        }
+    }
+}
 
 void XDIC_Read_All_Registers(void)
 {
@@ -856,6 +868,20 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
     gt_xdic_general_regs._r3F.test_ana_en = 3;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk32_o = 0;
+    gt_xdic_general_regs._r3F.vref_o = 1;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_MAX;
+    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
+}
+
+void XDIC_Trim_Init_LDO_CTL(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.ddio_dis = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 2;
     gt_xdic_general_regs._r3F.pwm_full_o = 0;
     gt_xdic_general_regs._r3F.mclk32_o = 0;
     gt_xdic_general_regs._r3F.vref_o = 1;
