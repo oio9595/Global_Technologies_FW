@@ -131,8 +131,8 @@ extern void sys_tick_handler(void);
 #define XC_NSCS_HI()            XC24_NSCS_GPIO_Port->BSRR = XC24_NSCS_Pin <<  0U
 #define XC_NSCS_LO()            XC24_NSCS_GPIO_Port->BSRR = XC24_NSCS_Pin << 16U
 
-#define DEBUG_HI()              DEBUG_GPIO_Port->BSRR = DEBUG_Pin <<  0U
-#define DEBUG_LO()              DEBUG_GPIO_Port->BSRR = DEBUG_Pin << 16U
+#define DEBUG1_HI()              DEBUG_1_GPIO_Port->BSRR = DEBUG_1_Pin <<  0U
+#define DEBUG1_LO()              DEBUG_1_GPIO_Port->BSRR = DEBUG_1_Pin << 16U
 
 #define XC_VCC_ON()             XC24_VCC_EN_GPIO_Port->BSRR = XC24_VCC_EN_Pin << 16U
 #define XC_VCC_OFF()            XC24_VCC_EN_GPIO_Port->BSRR = XC24_VCC_EN_Pin <<  0U
