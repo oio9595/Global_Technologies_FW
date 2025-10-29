@@ -230,7 +230,7 @@ void XDIC_Init(void)
 
     XDIC_Param_Init();
 
-    //XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, XDIC_RESET_VALUE);
+    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, XDIC_RESET_VALUE);
     XC24_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
