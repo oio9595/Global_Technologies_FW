@@ -482,7 +482,6 @@ typedef union
     };
 }_sal_cmd_tempst_t;
 
-
 #define CMD_SAL_RESET               0xB1
 #define CMD_SAL_INITBIDIR           0xB2
 #define CMD_SAL_CLRERROR            0xB3
