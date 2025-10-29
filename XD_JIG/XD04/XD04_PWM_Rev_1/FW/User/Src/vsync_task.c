@@ -10,8 +10,9 @@
 #include "main.h"
 #include "JigBd_IF.h"
 #include "xdic.h"
+#include "xc24.h"
 
-#define LD_WIDTH_MAX            (0xFFFF)
+#define LD_WIDTH_MAX            (0x3FFF)
 
 #define FAULT_MASK_FB           (1 << 0)
 #define FAULT_MASK_OPEN         (1 << 1)
@@ -52,7 +53,7 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
-    if (!XDIC_Is_Vsync_Mode_External())
+    if (!XDIC_Is_Vsync_Mode_External() && !IS_XC24_Support())
     {
         JigBD_IF_SyncGen_Command();
     }
@@ -128,25 +129,20 @@ void XDIC_Get_Fault_Status(void)
         prev_fault_status = now_fault_status;
     }
     ++vsync_tick;
-#if 0
-    if (vsync_tick % 120 == 0)
-    {
-        print(LOG_INFO, "\r\n %u sec\r\n", vsync_tick / 120);
-        if (vsync_tick / 120 == 10)
-        {
-            NVIC_SystemReset();
-        }
-    }
-#endif
 }
 
 void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        // fault read if needed
-        XDIC_Get_Fault_Status();
+        if (IS_XC24_Support())
+        {
+            XC24_Turn_Off_Sync_Auto();
+            us_delay(100);
+            XC24_Turn_On_Sync_Auto();
+        }
 
+        us_delay(1500);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
 
         if (gb_xdic_write_flag)
@@ -160,7 +156,6 @@ void XDIC_Vsync_Task(void)
             print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
             gb_xdic_read_flag = false;
         }
-
         gb_xdic_vsync_flag = false;
     }
 }

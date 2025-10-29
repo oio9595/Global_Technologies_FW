@@ -151,13 +151,7 @@ void XC_Trim_Task(void)
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             LL_mDelay(1);
             ADS114S08_Set_Start(1);
-            while(1)
-            {
-                if (gb_ads114s08_drdy_done)
-                {
-                    break;
-                }
-            }
+            ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
             float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
@@ -223,13 +217,7 @@ void XC_Trim_Task(void)
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
             ADS114S08_Set_Start(1);
-            while(1)
-            {
-                if (gb_ads114s08_drdy_done)
-                {
-                    break;
-                }
-            }
+            ADS114S08_Wait_Done();
             ext_adc_value = ADS114S08_Get_ADC_Value();
             dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
@@ -238,13 +226,7 @@ void XC_Trim_Task(void)
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
             ADS114S08_Set_Start(1);
-            while(1)
-            {
-                if (gb_ads114s08_drdy_done)
-                {
-                    break;
-                }
-            }
+            ADS114S08_Wait_Done();
             ext_adc_value = ADS114S08_Get_ADC_Value();
             dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
 
@@ -309,13 +291,7 @@ void XC_Trim_Task(void)
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
                 LL_mDelay(1);
                 ADS114S08_Set_Start(1);
-                while(1)
-                {
-                    if (gb_ads114s08_drdy_done)
-                    {
-                        break;
-                    }
-                }
+                ADS114S08_Wait_Done();
 
                 ext_adc_value = ADS114S08_Get_ADC_Value();
                 float dac_ofs = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
@@ -341,15 +317,7 @@ void XC_Trim_Task(void)
                 XC24_Trim_Write_OSC_FCTL(reg_index);
                 LL_mDelay(1);
                 JigBD_IF_Start_Input_Capture();
-
-                while(1)
-                {
-                    if (gb_timer_input_capture_done)
-                    {
-                        break;
-                    }
-                }
-
+                JigBD_IF_Wait_Input_Capture_Done();
                 JigBD_IF_Stop_Input_Capture();
                 float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
                 osc_value_buffer[reg_index] = osc_freq;
@@ -424,13 +392,7 @@ void XC_Trim_Task(void)
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             LL_mDelay(1);
             ADS114S08_Set_Start(1);
-            while(1)
-            {
-                if (gb_ads114s08_drdy_done)
-                {
-                    break;
-                }
-            }
+            ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
             float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
@@ -448,13 +410,7 @@ void XC_Trim_Task(void)
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
             ADS114S08_Set_Start(1);
-            while(1)
-            {
-                if (gb_ads114s08_drdy_done)
-                {
-                    break;
-                }
-            }
+            ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
             float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
@@ -475,15 +431,7 @@ void XC_Trim_Task(void)
             XC24_Trim_Init_OSC();
             LL_mDelay(1);
             JigBD_IF_Start_Input_Capture();
-
-            while(1)
-            {
-                if (gb_timer_input_capture_done)
-                {
-                    break;
-                }
-            }
-
+            JigBD_IF_Wait_Input_Capture_Done();
             JigBD_IF_Stop_Input_Capture();
             float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
             gf_xc_screen_info[5] = osc_freq; // Save OSC_FCTL level

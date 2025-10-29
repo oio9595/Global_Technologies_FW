@@ -166,7 +166,6 @@ static uint16_t gn_slope_adc[XD_CH_MAX][2];
 static trim_algo_param_t gt_trim_algorithm;
 
 static xdic_trim_condition_t gt_xdic_trim_condition[XD_TRIM_MAX];
-static float gf_xd_characteristic[2 + 2 * XD_CH_MAX] = {0.0f, };
 
 void XD_Trim_IF_Trim_Start(void)
 {
@@ -593,7 +592,6 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
         {
             print(LOG_INFO, "   %7.3f",ptr_Param->value[i]);
-            gf_xd_characteristic[save_index_start + i] = ptr_Param->value[i];
         }
         print(LOG_INFO, "\r\n[Reg]");
         for (uint8_t i = 0 ; i < u8_CH_MAX ; ++i)
@@ -759,7 +757,7 @@ void XD_Trim_Task(void)
                     break;
                 default:
                     XDIC_Read_All_Registers();
-                    XDIC_Save_Trim_Regs();
+                    XDIC_Save_Mirror_Regs();
                     gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                     break;
                 }
@@ -772,11 +770,9 @@ void XD_Trim_Task(void)
                     gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 case XD_TRIM_OSC_FREQUENCY:
-                    if (gb_timer_input_capture_done)
-                    {
-                        JigBD_IF_Stop_Input_Capture();
-                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                    }
+                    JigBD_IF_Wait_Input_Capture_Done();
+                    JigBD_IF_Stop_Input_Capture();
+                    gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 }
                 break;
@@ -786,34 +782,27 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_START_ADC_CONVERSION;
                 break;
             case XD_TRIM_STEP_START_ADC_CONVERSION:
-                gb_ads114s08_drdy_done = 0;
-                gn_ads114s08_adc_temp = 0;
-                gn_adc_read_count = ADS114S08_READ_COUNT;
                 ADS114S08_Set_Start(1);
                 gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
                 break;
             case XD_TRIM_STEP_GET_ADC_CH:
-                if (gb_ads114s08_drdy_done == 1)
+                ADS114S08_Wait_Done();
+                switch(gt_xd_trim_search_mode)
                 {
-                    switch(gt_xd_trim_search_mode)
+                case XD_TRIM_ICTL_L_CHS:
+                case XD_TRIM_ICTL_H_CHS:
+                    gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
+                    ++gn_slope_cnt;
+                    if (gn_slope_cnt >= 2)
                     {
-                    case XD_TRIM_ICTL_L_CHS:
-                    case XD_TRIM_ICTL_H_CHS:
-                        gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
-                        ++gn_slope_cnt;
-                        if (gn_slope_cnt >= 2)
-                        {
-                            gn_slope_cnt = 0;
-                            gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                        }
-                        else
-                        {
-                            gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
-                        }
-                        break;
+                        gn_slope_cnt = 0;
+                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     }
-                    gn_task_delay = 0;
-                    gb_ads114s08_drdy_done = 0;
+                    else
+                    {
+                        gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                    }
+                    break;
                 }
                 break;
             case XD_TRIM_STEP_CHECK:
@@ -942,7 +931,7 @@ void XD_Trim_Task(void)
                 break;
 
             case XD_TRIM_STEP_SCREEN :
-                XDIC_Save_Trim_Regs();
+                XDIC_Save_Mirror_Regs();
                 JigBD_IF_Select_Output_Ch(XD_CH_MAX);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 for (uint8_t i = 0 ; i < XDIC_ICTL_SCREEN_POINT ; ++i)
@@ -954,20 +943,9 @@ void XD_Trim_Task(void)
                     for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
                     {
                         JigBD_IF_Select_Output_Ch(ch);
-                        gb_ads114s08_drdy_done = 0;
-                        gn_ads114s08_adc_temp = 0;
-                        gn_adc_read_count = ADS114S08_READ_COUNT;
                         LL_mDelay(0);
-
                         ADS114S08_Set_Start(1);
-                        while(1)
-                        {
-                            if (gb_ads114s08_drdy_done == 1)
-                            {
-                                gb_ads114s08_drdy_done = 0;
-                                break;
-                            }
-                        }
+                        ADS114S08_Wait_Done();
                         uint16_t adc = ADS114S08_Get_ADC_Value();
                         gt_xd_screen_param[i].f_measured[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gt_xd_screen_param[i].gain);
                         gt_xd_screen_param[i].f_avg += (gt_xd_screen_param[i].f_measured[ch] / (float)XD_CH_SIZE);
@@ -1006,7 +984,7 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_E2P_PROGRAM:   /* E2P program */
                 if (gb_xd_otp_write_flag)
                 {
-                    XDIC_Save_Trim_Regs();
+                    XDIC_Save_Mirror_Regs();
                     JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
                     print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
                     gn_task_delay = 100;
@@ -1061,7 +1039,7 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
                 break;
             case XD_TRIM_STEP_COMPARE:
-                u64_tmp_xd_otp_burn_result = XDIC_Compare_Trim_Regs();
+                u64_tmp_xd_otp_burn_result = XDIC_Compare_Mirror_Regs();
                 if (u64_tmp_xd_otp_burn_result)
                 {
                     print(LOG_ERROR, "======== TRIM_OTP_BURN_ERROR[%llu] ========\r\n", u64_tmp_xd_otp_burn_result);
@@ -1112,10 +1090,10 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
-            XDIC_Write_Trim_Regs();
+            //XDIC_Overwrite_Mirror_Regs();
             XDIC_Trim_Init_ICTL_H_CH();
             XDIC_Read_All_Registers();
-            XDIC_Display_Trim_Regs();
+            XDIC_Display_Mirror_Regs();
             JigBD_IF_VLED_9V_EN(PWR_ON);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
     #if 1
@@ -1142,54 +1120,46 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
             break;
         case XD_SCREEN_STEP_START_ADC_CONVERSION :
-            gb_ads114s08_drdy_done = 0;
-            gn_ads114s08_adc_temp = 0;
-
-            gn_adc_read_count = ADS114S08_READ_COUNT;
             ADS114S08_Set_Start(1);
             gt_xd_screen_step = XD_SCREEN_STEP_GET_ADC_CH;
             break;
         case XD_SCREEN_STEP_GET_ADC_CH :
-            if (gb_ads114s08_drdy_done == 1)
+            ADS114S08_Wait_Done();
+            gn_screen_adc[gn_xd_adc_channel] = ADS114S08_Get_ADC_Value();
+            ++gn_xd_adc_channel;
+            if (gn_xd_adc_channel < XD_CH_MAX)
             {
-                gn_screen_adc[gn_xd_adc_channel] = ADS114S08_Get_ADC_Value();
-                ++gn_xd_adc_channel;
-                if (gn_xd_adc_channel < XD_CH_MAX)
-                {
-                    gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
-                }
-                else
-                {
-                    gn_xd_adc_channel = 0;
-                    gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
+                gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
+            }
+            else
+            {
+                gn_xd_adc_channel = 0;
+                gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
 
-                    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+                for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+                {
+                    gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
+                }
+
+                #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
+                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
+
+                    gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
+                    if (gn_xd_screen_ana > 0xFFF)
                     {
-                        gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
+                        gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                     }
+                #else
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
+                    gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
 
-                    #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
-                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
-
-                        gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
-                        if (gn_xd_screen_ana > 0xFFF)
-                        {
-                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
-                        }
-                    #else
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ld_fix, \
-                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3]);
-
-                        gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
-                        if (gn_xd_screen_ld_fix > 0xFFFF)
-                        {
-                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
-                        }
-                    #endif
-                }
-                gn_task_delay = 0;
-                gb_ads114s08_drdy_done = 0;
+                    gn_xd_screen_ld_fix += XD_SCREEN_LD_FIX_GAP;
+                    if (gn_xd_screen_ld_fix > 0xFFFF)
+                    {
+                        gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                    }
+                #endif
             }
             break;
         case XD_SCREEN_STEP_STOP :

@@ -684,14 +684,12 @@ typedef union tag_SPI_FAULT_STATUS_CONTROL
     uint16_t ALL;
     struct
     {
-        uint16_t parity_err_det_en  : 1;
-        uint16_t acc_cnt_err_det_en : 1;
-        uint16_t parity_err_mode    : 1;
-        uint16_t                    : 1;
-        uint16_t parity_err         : 1;
-        uint16_t acc_cnt_err        : 1;
-        uint16_t                    : 2;
-        uint16_t acc_counter        : 8;
+        uint16_t spi_ext_en  : 1;
+        uint16_t             : 3;
+        uint16_t parity_err  : 1;
+        uint16_t acc_cnt_err : 1;
+        uint16_t             : 2;
+        uint16_t acc_counter : 8;
     };
 }_v_spi_fault_status_control_t;
 
@@ -1706,6 +1704,9 @@ extern void XC24_Trim_Write_VCTL_LDO(uint8_t vctl_ldo);
 extern void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl);
 extern void XC24_Trim_Write_DAC_GAIN(uint8_t dac_gain);
 extern void XC24_Trim_Write_DAC_OFS(uint8_t dac_ofs);
+
+extern void XC24_Turn_Off_Sync_Auto(void);
+extern void XC24_Turn_On_Sync_Auto(void);
 
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus

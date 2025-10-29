@@ -736,11 +736,13 @@ void XD_Trim_Task(void)
                 case XD_TRIM_GAIN_CHS:
                     XDIC_Trim_Init_GAIN_CH();
                     JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
+                    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     break;
                 case XD_TRIM_OFS_CHS:
                     XDIC_Trim_Init_OFS_CH();
                     JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
+                    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     break;
                 }
@@ -795,11 +797,9 @@ void XD_Trim_Task(void)
                     gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 case XD_TRIM_OSC_FREQUENCY:
-                    if (gb_timer_input_capture_done)
-                    {
-                        JigBD_IF_Stop_Input_Capture();
-                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                    }
+                    JigBD_IF_Wait_Input_Capture_Done();
+                    JigBD_IF_Stop_Input_Capture();
+                    gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     break;
                 }
                 break;
@@ -812,26 +812,23 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
                 break;
             case XD_TRIM_STEP_GET_ADC_CH:
-                if (gb_ads114s08_drdy_done)
+                ADS114S08_Wait_Done();
+                switch(gt_xd_trim_search_mode)
                 {
-                    switch(gt_xd_trim_search_mode)
+                case XD_TRIM_GAIN_CHS:
+                case XD_TRIM_OFS_CHS:
+                    gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
+                    ++gn_slope_cnt;
+                    if (gn_slope_cnt >= 2)
                     {
-                    case XD_TRIM_GAIN_CHS:
-                    case XD_TRIM_OFS_CHS:
-                        gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
-                        ++gn_slope_cnt;
-                        if (gn_slope_cnt >= 2)
-                        {
-                            gn_slope_cnt = 0;
-                            gt_xd_trim_step = XD_TRIM_STEP_CHECK;
-                        }
-                        else
-                        {
-                            gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
-                        }
-                        break;
+                        gn_slope_cnt = 0;
+                        gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     }
-                    gb_ads114s08_drdy_done = 0;
+                    else
+                    {
+                        gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+                    }
+                    break;
                 }
                 break;
             case XD_TRIM_STEP_CHECK:
@@ -962,20 +959,8 @@ void XD_Trim_Task(void)
                     {
                         JigBD_IF_Select_Output_Ch(ch);
                         XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
-                        gb_ads114s08_drdy_done = 0;
-                        gn_ads114s08_adc_temp = 0;
-                        gn_adc_read_count = ADS114S08_READ_COUNT;
-                        LL_mDelay(0);
-
                         ADS114S08_Set_Start(1);
-                        while(1)
-                        {
-                            if (gb_ads114s08_drdy_done == 1)
-                            {
-                                gb_ads114s08_drdy_done = 0;
-                                break;
-                            }
-                        }
+                        ADS114S08_Wait_Done();
                         XDIC_Set_Max_Curr_Vref(0);
                         uint16_t adc = ADS114S08_Get_ADC_Value();
                         gt_xd_screen_param[i].f_measured[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gt_xd_screen_param[i].gain);
@@ -1093,7 +1078,7 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_SETUP :
             XDIC_Trim_Init();
             XDIC_Trim_Init_OFS_CH();
-            XDIC_Overwrite_Mirror_Regs();
+            // XDIC_Overwrite_Mirror_Regs();
 
             XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
 
@@ -1130,49 +1115,46 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_GET_ADC_CH;
             break;
         case XD_SCREEN_STEP_GET_ADC_CH :
-            if (gb_ads114s08_drdy_done)
+            ADS114S08_Wait_Done();
+            gn_screen_adc[gn_xd_adc_channel] = ADS114S08_Get_ADC_Value();
+            ++gn_xd_adc_channel;
+            if (gn_xd_adc_channel < XD_CH_MAX)
             {
-                gn_screen_adc[gn_xd_adc_channel] = ADS114S08_Get_ADC_Value();
-                ++gn_xd_adc_channel;
-                if (gn_xd_adc_channel < XD_CH_MAX)
-                {
-                    gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
-                }
-                else
-                {
-                    gn_xd_adc_channel = 0;
-                    gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
+                gt_xd_screen_step = XD_SCREEN_STEP_SET_ADC_CH;
+            }
+            else
+            {
+                gn_xd_adc_channel = 0;
+                gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
 
-                    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+                for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+                {
+                    gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
+                }
+
+                #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
+                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
+                        gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
+                        gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
+
+                    gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
+                    if (gn_xd_screen_ana > 0xFFF)
                     {
-                        gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
+                        gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                     }
+                #else
+                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_max_current, \
+                        gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
+                        gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
+                        gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                    #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
-                            gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
-                            gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
-                            gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
-
-                        gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
-                        if (gn_xd_screen_ana > 0xFFF)
-                        {
-                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
-                        }
-                    #else
-                        print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_max_current, \
-                            gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
-                            gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
-                            gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
-
-                        ++gn_xd_screen_max_current;
-                        if (gn_xd_screen_max_current > 8)
-                        {
-                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
-                        }
-                    #endif
-                }
-                gb_ads114s08_drdy_done = 0;
+                    ++gn_xd_screen_max_current;
+                    if (gn_xd_screen_max_current > 8)
+                    {
+                        gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                    }
+                #endif
             }
             break;
         case XD_SCREEN_STEP_STOP :

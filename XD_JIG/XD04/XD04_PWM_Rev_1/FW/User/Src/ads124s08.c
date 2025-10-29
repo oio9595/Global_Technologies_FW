@@ -67,10 +67,11 @@ static SPI_TypeDef* gp_SPI = SPI2;
 static ads114s08_regs_t gt_ads114s08_regs;
 
 static uint8_t gn_ads114s08_init_flag;
-volatile bool gb_ads114s08_drdy_done;
-uint64_t gn_ads114s08_adc_temp;
-uint16_t gn_adc_read_count;
-uint16_t gn_ads114s08_offset[12];
+static volatile bool gb_ads114s08_drdy_done;
+
+static uint64_t gn_ads114s08_adc_temp;
+static uint16_t gn_adc_read_count;
+static uint16_t gn_ads114s08_offset[12];
 
 #ifdef USE_DISPLAY_DEVICE_REGS
 static void ADS114S08_Dump_Registers(void)
@@ -245,11 +246,25 @@ void ADS114S08_Set_Start(uint8_t b_set)
 {
     if (b_set)
     {
+        gb_ads114s08_drdy_done = 0;
+        gn_ads114s08_adc_temp = 0;
+        gn_adc_read_count = ADS114S08_READ_COUNT;
         ADS114S08_Set_CMD(CMD_START);
     }
     else
     {
         ADS114S08_Set_CMD(CMD_STOP);
+    }
+}
+
+void ADS114S08_Wait_Done(void)
+{
+    while(1)
+    {
+        if (gb_ads114s08_drdy_done)
+        {
+            break;
+        }
     }
 }
 
@@ -262,32 +277,14 @@ static void ADS114S08_Get_ADC_Offset()
 
     for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
     {
-        gb_ads114s08_drdy_done = 0;
-        gn_ads114s08_adc_temp = 0;
-        gn_adc_read_count = ADS114S08_READ_OFS_COUNT;
-
         JigBD_IF_Select_Output_Ch(ch);
         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
         LL_mDelay(10);
 
         ADS114S08_Set_Start(1);
-        LL_mDelay(1);
-
-        while(1)
-        {
-            // print(LOG_DEBUG, "\r\n drdy_done - [%u]\r\n", gb_ads114s08_drdy_done);
-            if (gb_ads114s08_drdy_done)
-            {
-                break;
-            }
-        }
+        ADS114S08_Wait_Done();
         gn_ads114s08_offset[ch] = ADS114S08_Get_ADC_Value();
     }
-
-    gb_ads114s08_drdy_done = 0;
-    gn_ads114s08_adc_temp = 0;
-    gn_adc_read_count = ADS114S08_READ_COUNT;
-
     JigBD_IF_VLED_9V_EN(PWR_OFF);
     JigBD_IF_Select_Output_Ch(XD_CH_MAX);
     print(LOG_DEBUG, "\r\n ...Get ADC Offset Done...\r\n");
@@ -319,7 +316,7 @@ void ADS114S08_Init(void)
 #ifdef USE_DISPLAY_DEVICE_REGS
     ADS114S08_Dump_Registers();
 #endif
-    print(LOG_INFO, "\r\n %s Done\r\n", __func__);
+    print(LOG_DEBUG, "\r\n %s Done\r\n", __func__);
 }
 
 void ADC_DRDY_INT_Handler(void)

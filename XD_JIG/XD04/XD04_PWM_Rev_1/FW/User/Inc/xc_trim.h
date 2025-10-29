@@ -17,21 +17,21 @@ extern "C" {
 #define XC24_OSC_TARGET                 (25.0f)   	/* MHz */
 #define XC24_OSC_REG_DEFAULT            (64)
 
-#define XC24_VCTL_LDO_ERR_RATE          (1.0f/100)   /* % */
+#define XC24_VCTL_LDO_ERR_RATE          (2.0f/100)   /* % */
 #define XC24_VCTL_LDO_TARGET            (1.5f)       /* V */
 #define VCTL_LDO_UPPER_LIMIT            (XC24_VCTL_LDO_TARGET * (1.0f + XC24_VCTL_LDO_ERR_RATE))		/* V */
 #define VCTL_LDO_LOWER_LIMIT            (XC24_VCTL_LDO_TARGET * (1.0f - XC24_VCTL_LDO_ERR_RATE))		/* V */
 
 #define XC24_DAC_GAIN_ERR_RATE          (0.5f/100) /* % */
-#define XC24_DAC_GAIN_TARGET            (1.65f)     /* V */
 #define XC24_DAC_GAIN_P1                (1024)
 #define XC24_DAC_GAIN_P2                (3072)
+#define XC24_DAC_GAIN_TARGET            (3.3f * (XC24_DAC_GAIN_P2 - XC24_DAC_GAIN_P1) / 4095)     /* V */
 #define DAC_GAIN_UPPER_LIMIT            (XC24_DAC_GAIN_TARGET * (1.0f + XC24_DAC_GAIN_ERR_RATE))	/* V */
 #define DAC_GAIN_LOWER_LIMIT            (XC24_DAC_GAIN_TARGET * (1.0f - XC24_DAC_GAIN_ERR_RATE))	/* V */
 
 #define XC24_DAC_OFS_ERR_RATE           (0.5f/100)   /* % */
-#define XC24_DAC_OFS_TARGET             (1.65f)      /* V */
-#define XC24_DAC_OFS_TGT                (2048)
+#define XC24_DAC_OFS_TGT                (400)
+#define XC24_DAC_OFS_TARGET             (3.3f * XC24_DAC_OFS_TGT / 4095)      /* V */
 #define DAC_OFS_UPPER_LIMIT             (XC24_DAC_OFS_TARGET * (1.0f + XC24_DAC_OFS_ERR_RATE))	/* V */
 #define DAC_OFS_LOWER_LIMIT             (XC24_DAC_OFS_TARGET * (1.0f - XC24_DAC_OFS_ERR_RATE))	/* V */
 
@@ -64,7 +64,11 @@ typedef enum
     XC_TRIM_STEP_E2P_PROGRAM_START,
     XC_TRIM_STEP_E2P_PROGRAM_END,
     XC_TRIM_STEP_REBOOT,
-    XC_TRIM_STEP_COMPARE,
+
+    XC_TRIM_STEP_SCREEN_LDO,
+    XC_TRIM_STEP_SCREEN_DAC,
+    XC_TRIM_STEP_SCREEN_OSC,
+
     XC_TRIM_STEP_STOP,
     XC_TRIM_STEP_PWR_OFF,
     XC_TRIM_STEP_MAX,

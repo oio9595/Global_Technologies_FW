@@ -1705,6 +1705,9 @@ extern void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl);
 extern void XC24_Trim_Write_DAC_GAIN(uint8_t dac_gain);
 extern void XC24_Trim_Write_DAC_OFS(uint8_t dac_ofs);
 
+extern void XC24_Turn_Off_Sync_Auto(void);
+extern void XC24_Turn_On_Sync_Auto(void);
+
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus
 }

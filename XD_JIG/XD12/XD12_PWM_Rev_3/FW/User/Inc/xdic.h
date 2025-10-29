@@ -759,6 +759,7 @@ extern void XDIC_Save_Mirror_Regs(void);
 extern uint64_t XDIC_Compare_Mirror_Regs(void);
 
 extern void XDIC_Trim_Init_VREF_CTL(void);
+extern void XDIC_Trim_Init_LDO_CTL(void);
 extern void XDIC_Trim_Init_OSC(void);
 extern void XDIC_Trim_Init_OFS_CH(void);
 extern void XDIC_Trim_Init_GAIN_CH(void);

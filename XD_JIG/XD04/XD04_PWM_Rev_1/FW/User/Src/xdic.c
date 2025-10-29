@@ -37,8 +37,8 @@
 #define XD_MCLK_FLL_ENABLE                  (0)
 #define XD_MCLK_FLL_DISABLE                 (1)
 
-#define MCLK_LSB_MASK                       (0x00FFF) //LSB 12-bit
-#define MCLK_MSB_MASK                       (0xFF000) //MSB  8-bit
+#define XD_MCLK_LSB_MASK                    (0x00FFF) //LSB 12-bit
+#define XD_MCLK_MSB_MASK                    (0xFF000) //MSB  8-bit
 
 #define XDIC_CHANNEL_ENABLE_MAX             ((1U << XD_CH_SIZE) - 1)
 
@@ -558,18 +558,20 @@ void XDIC_Init(void)
             case XDIC_ADDR_SERIAL_LATENCY :
                 gt_xdic_general_regs._r26.serial_latency = 60;
                 break;
+                #if 0
             case XDIC_ADDR_MCLK_LOCK_1 :
-                //gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                //gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
                 gt_xdic_general_regs._r27.mclk_lock_cnt = 0x0F8;
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                //gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                //gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt = 0x50;
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
                 gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
                 break;
+                #endif
             case XDIC_ADDR_WR_PROTECT :
                 gt_xdic_general_regs._r2D.val = 0x155;
                 break;
@@ -789,8 +791,8 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 
     // 3. change mclk_lock_cnt
     gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);
-    gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
-    gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+    gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
+    gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
 
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_1, gt_xdic_general_regs._r27.val);
     XDIC_Write_General_Reg(XDIC_ADDR_MCLK_LOCK_2, gt_xdic_general_regs._r28.val);
@@ -803,7 +805,7 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 /* Trim Function */
 /* ================================================================================================================================================= */
 
-void XDIC_Write_Trim_Regs(void)
+void XDIC_Overwrite_Mirror_Regs(void)
 {
     uint16_t u16_otp_crc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
     if (u16_otp_crc != 0)
@@ -819,7 +821,7 @@ void XDIC_Write_Trim_Regs(void)
     }
 }
 
-void XDIC_Display_Trim_Regs(void)
+void XDIC_Display_Mirror_Regs(void)
 {
     print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
     print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
@@ -830,36 +832,38 @@ void XDIC_Display_Trim_Regs(void)
     , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30]);
 }
 
-void XDIC_Save_Trim_Regs(void)
+void XDIC_Save_Mirror_Regs(void)
 {
     for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
     {
         gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
     }
-    XDIC_Display_Trim_Regs();
+#if 0
+    gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_OSC] |= 0x800;
+    XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OSC, gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_OSC]);
+#endif
 }
 
-uint64_t XDIC_Compare_Trim_Regs(void)
+uint64_t XDIC_Compare_Mirror_Regs(void)
 {
     uint64_t ret = 0;
     uint16_t u16_reg_val = 0;
 
-    for (xdic_mirror_addr_t trim_addr = XDIC_MIRROR_ADDR_OSC ; trim_addr < XDIC_MIRROR_ADDR_MAX ; ++trim_addr)
+    for (xdic_mirror_addr_t mirror_addr = XDIC_MIRROR_ADDR_OSC ; mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++mirror_addr)
     {
-        u16_reg_val = XDIC_Read_Mirror_Reg(trim_addr);
+        u16_reg_val = XDIC_Read_Mirror_Reg(mirror_addr);
 
-        if (gn_xdic_saved_trim_reg[trim_addr] != u16_reg_val)
+        if (gn_xdic_saved_trim_reg[mirror_addr] != u16_reg_val)
         {
-            ret |= ((uint64_t)1 << trim_addr);
-            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[trim_addr].name);
+            ret |= ((uint64_t)1UL << mirror_addr);
+            print(LOG_ERROR, "%s %17s - NG", ANSI_FONT_RED, gt_xdic_mirror_maps[mirror_addr].name);
         }
         else
         {
-            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gt_xdic_mirror_maps[trim_addr].name);
+            print(LOG_INFO, "%s %17s - OK", ANSI_FONT_GREEN, gt_xdic_mirror_maps[mirror_addr].name);
         }
-        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xdic_saved_trim_reg[trim_addr], u16_reg_val, ANSI_FONT_NONE);
+        print(LOG_INFO, "   [0x%03X] - [0x%03X] %s\r\n", gn_xdic_saved_trim_reg[mirror_addr], u16_reg_val, ANSI_FONT_NONE);
     }
-
     return ret;
 }
 

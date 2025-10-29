@@ -13,6 +13,7 @@
 #include "xc24.h"
 #include "types.h"
 #include "JigBd_IF.h"
+#include "ads124s08.h"
 
 #define MCU_ADC_MEASURE_COUNT       (20)
 #define MCU_ADC_VREF                (3.3f)
@@ -86,9 +87,13 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
     }
     else
     {
-        LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
+        if (IS_XC24_Support())
+        {
+            XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE_DATA, 0x00);
+        }
         XC_NSCS_LO();
         XC24_Start_MCLK_Oscillation(FALSE);
+        LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
     }
     LL_mDelay(10);
 }
@@ -151,6 +156,62 @@ void JigBD_IF_VLED_9V_EN(uint8_t on)
         LL_GPIO_SetOutputPin(VLED_CTR_9V_GPIO_Port, VLED_CTR_9V_Pin);
     }
     LL_mDelay(10);
+}
+
+float JigBD_IF_XD_ICC(void)
+{
+    float icc = 0;
+    uint16_t icc_adc[2] = {0, };
+
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P);
+    ADS114S08_Set_Start(1);
+    ADS114S08_Wait_Done();
+    icc_adc[0] = ADS114S08_Get_ADC_Value();
+
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_N);
+    ADS114S08_Set_Start(1);
+    ADS114S08_Wait_Done();
+    icc_adc[1] = ADS114S08_Get_ADC_Value();
+
+    if (icc_adc[0] > icc_adc[1])
+    {
+        icc = ((icc_adc[0] - icc_adc[1]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
+    }
+    else
+    {
+        icc = ((icc_adc[1] - icc_adc[0]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
+    }
+    print(LOG_INFO, "\r\n XD ICC Current : %.3f [mA]\r\n", icc);
+
+    // XD12 : 2.7mA / XD04 : 1.7mA
+    return icc;
+}
+
+float JigBD_IF_XC_ICC(void)
+{
+    float icc = 0;
+    uint16_t icc_adc[2] = {0, };
+
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_P);
+    ADS114S08_Set_Start(1);
+    ADS114S08_Wait_Done();
+    icc_adc[0] = ADS114S08_Get_ADC_Value();
+
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_N);
+    ADS114S08_Set_Start(1);
+    ADS114S08_Wait_Done();
+    icc_adc[1] = ADS114S08_Get_ADC_Value();
+
+    if (icc_adc[0] > icc_adc[1])
+    {
+        icc = ((icc_adc[0] - icc_adc[1]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
+    }
+    else
+    {
+        icc = ((icc_adc[1] - icc_adc[0]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
+    }
+    print(LOG_INFO, "\r\n XC ICC Current : %.3f [mA]\r\n", icc);
+    return icc;
 }
 
 /*
@@ -368,6 +429,17 @@ void JigBD_IF_Start_Input_Capture(void)
     gb_timer_input_capture_done = 0;
 }
 
+void JigBD_IF_Wait_Input_Capture_Done(void)
+{
+    while(1)
+    {
+        if (gb_timer_input_capture_done)
+        {
+            break;
+        }
+    }
+}
+
 void JigBD_IF_Stop_Input_Capture(void)
 {
     gb_timer_input_capture_activated = 0;
@@ -404,7 +476,6 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
 
             f_freq = (TIM5_FREQ / delta);
             f_freq_avg += f_freq;
-
             ++n_count;
         }
 

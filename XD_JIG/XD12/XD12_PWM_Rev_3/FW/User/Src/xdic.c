@@ -441,25 +441,27 @@ uint16_t XDIC_Get_Mirror_Register_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mod
 
 static void XDIC_Dump_All_Registers(void)
 {
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
     for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
         const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xd_general_addr);
         if (map)
         {
-            uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[ %-40s 0x%02X | 0x%04X | %-6u ]\r\n", map->name, map->address, *((uint16_t*)(map->reg_ptr)), *((uint16_t*)(map->reg_ptr)));
         }
     }
-
+#if 1
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
     for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
     {
         const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
         if (map)
         {
-            uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
+            print(LOG_INFO, "[ %-40s 0x%02X | 0x%04X | %-6u ]\r\n", map->name, map->address, *((uint16_t*)(map->reg_ptr)), *((uint16_t*)(map->reg_ptr)));
         }
     }
+#endif
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
 }
 
 void XDIC_Read_All_Registers(void)
@@ -496,11 +498,11 @@ void XDIC_Param_Init(void)
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
-    gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);;
+    gn_xd_mclk_lock_cnt = (uint32_t)(gf_xd_mclk / gf_vsync_out + 0.5f);
 
     gn_xd_ch_size = XD_CH_SIZE;
 
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_24mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
     gt_xd_short_level = SHORT_LEVEL_24V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 }
@@ -511,6 +513,8 @@ void XDIC_Init(void)
     JigBD_IF_Change_Current_Gain(GAIN_HIGH);
     JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
     JigBD_IF_XD_VCC_EN(PWR_ON);
+
+    LL_mDelay(100);
 
     XDIC_Param_Init();
 
@@ -673,7 +677,7 @@ static void XDIC_Set_Delay_CH(void)
 
         delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
 
-        print(LOG_INFO, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
+        print(LOG_DEBUG, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
 
         XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
     }
@@ -876,6 +880,20 @@ void XDIC_Trim_Init_VREF_CTL(void)
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.ddio_dis = 1;
     gt_xdic_general_regs._r3F.test_ana_en = 3;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk32_o = 0;
+    gt_xdic_general_regs._r3F.vref_o = 1;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    gt_xdic_general_regs._r08.max_curr_vref = XDIC_VREF_MAX;
+    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, gt_xdic_general_regs._r08.val);
+}
+
+void XDIC_Trim_Init_LDO_CTL(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.ddio_dis = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 2;
     gt_xdic_general_regs._r3F.pwm_full_o = 0;
     gt_xdic_general_regs._r3F.mclk32_o = 0;
     gt_xdic_general_regs._r3F.vref_o = 1;

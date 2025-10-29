@@ -21,7 +21,7 @@
 #define XC24_OTP_PROTECT_DISABLE    (0xA5A)
 #define XC24_OTP_PROTECT_ENABLE     (0x5A5)
 
-#define XC_USE_FULL_CHANNEL         (1)
+#define XC_USE_FULL_CHANNEL         (0)
 
 static SPI_TypeDef *g_hSPIx;
 
@@ -183,16 +183,13 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     {
         LL_SPI_Enable(SPIx);
     }
-    for (uint8_t daisy = 0 ; daisy < XC_DAISY_SIZE ; daisy++)
+    for (volatile uint16_t i = 0 ; i < len ; i++)
     {
-        for (volatile uint16_t i = 0 ; i < len ; i++)
+        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
         {
-            while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
-            {
-                if (!SPI_Timeout_Handler()) return;
-            }
-            LL_SPI_TransmitData16(SPIx, p_buffer[i]);
+            if (!SPI_Timeout_Handler()) return;
         }
+        LL_SPI_TransmitData16(SPIx, p_buffer[i]);
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx))
@@ -294,7 +291,6 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     if (xc24_map)
     {
         *((uint16_t*)(xc24_map->reg_ptr)) = in_data;
-        //print(LOG_DEBUG, "(0x%02X) - (0x%04X)\r\n", in_addr, in_data);
     }
     else
     {
@@ -350,12 +346,13 @@ void XC24_Read_Register_All(void)
 
 void XC24_Dump_All_Register(void)
 {
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
     for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
+            print(LOG_INFO, "[ %-40s 0x%02X | 0x%04X | %-6u ]\r\n", map->name, map->address, *((uint16_t*)(map->reg_ptr)), *((uint16_t*)(map->reg_ptr)));
         }
     }
 #if 0
@@ -368,6 +365,7 @@ void XC24_Dump_All_Register(void)
         }
     }
 #endif
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
 }
 
 void XC24_Init(void)
@@ -410,7 +408,7 @@ void XC24_Init(void)
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
                 gt_xc24_general_regs._r08.sync_auto_en = 1;
-                gt_xc24_general_regs._r08.fault_auto_en = 1;
+                gt_xc24_general_regs._r08.fault_auto_en = 0;
                 break;
             case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
                 gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4;
@@ -780,6 +778,22 @@ void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl)
 {
 	gt_xc24_mirror_regs._rF5.osc_fctl = osc_fctl;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
+}
+
+void XC24_Turn_Off_Sync_Auto(void)
+{
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 0;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
+}
+
+void XC24_Turn_On_Sync_Auto(void)
+{
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 1;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/

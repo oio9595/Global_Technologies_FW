@@ -31,7 +31,6 @@ extern "C" {
 #define VSYNC                       (120.0f)
 #define XD_MCLK                     (39319200.0f)
 
-#define XC_DAISY_SIZE               (1)
 #define XD_DAISY_SIZE               (1)
 #define XD_CH_SIZE                  (12)
 

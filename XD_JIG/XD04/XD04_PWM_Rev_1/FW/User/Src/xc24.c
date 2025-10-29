@@ -21,6 +21,8 @@
 #define XC24_OTP_PROTECT_DISABLE    (0xA5A)
 #define XC24_OTP_PROTECT_ENABLE     (0x5A5)
 
+#define XC_USE_FULL_CHANNEL         (0)
+
 static SPI_TypeDef *g_hSPIx;
 
 static bool gb_xc24_support;
@@ -175,12 +177,12 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
 {
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
+    us_delay(1);
 
     if (LL_SPI_IsEnabled(SPIx) != 1)
     {
         LL_SPI_Enable(SPIx);
     }
-
     for (volatile uint16_t i = 0 ; i < len ; i++)
     {
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
@@ -194,8 +196,8 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     {
         if (!SPI_Timeout_Handler()) return;
     };
-    us_delay(1);
 
+    us_delay(1);
     XC_NSCS_HI();
 }
 
@@ -203,6 +205,7 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
 {
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
+    us_delay(1);
 
     if (LL_SPI_IsEnabled(SPIx) != 1)
     {
@@ -232,8 +235,8 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
     {
         if (!SPI_Timeout_Handler()) return;
     }
-    us_delay(1);
 
+    us_delay(1);
     XC_NSCS_HI();
 }
 
@@ -305,7 +308,7 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
 
     cmd_format.code = CMD_CODE_REG_READ;
     cmd_format.addr = in_addr;
-    cmd_format.size = 1;
+    cmd_format.size = 0;
 
     tx_buffer[0] = cmd_format.ALL;
 
@@ -326,31 +329,33 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
 
 void XC24_Read_Register_All(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         XC24_Read_Register(xc_addr);
         us_delay(10);
     }
-
+#if 0
     for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         XC24_Read_Register(xc_addr);
         us_delay(10);
     }
+#endif
     XC24_Dump_All_Register();
 }
 
 void XC24_Dump_All_Register(void)
 {
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
+            print(LOG_INFO, "[ %-40s 0x%02X | 0x%04X | %-6u ]\r\n", map->name, map->address, *((uint16_t*)(map->reg_ptr)), *((uint16_t*)(map->reg_ptr)));
         }
     }
-
+#if 0
     for (uint8_t xc_addr = XC24_MIRROR_ADDR_START ; xc_addr < XC24_MIRROR_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Get_Mirror_Map_Pointer(xc_addr);
@@ -359,6 +364,8 @@ void XC24_Dump_All_Register(void)
             print(LOG_INFO, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
+#endif
+    print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
 }
 
 void XC24_Init(void)
@@ -370,11 +377,14 @@ void XC24_Init(void)
     LL_mDelay(20);
 
     XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
     XC24_Start_MCLK_Oscillation(TRUE);
+#endif
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
@@ -386,9 +396,18 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r00.rst2 = 1;
                 gt_xc24_general_regs._r00.rst3 = 1;
                 break;
+            case XC24_ADDR_CLK_CONTROL_1:
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+                gt_xc24_general_regs._r1B.serializer_clk_sel = 1;
+                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 1;
+#else
+                gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
+                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
+#endif
+                break;
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
-                gt_xc24_general_regs._r08.sync_auto_en = 0;
+                gt_xc24_general_regs._r08.sync_auto_en = 1;
                 gt_xc24_general_regs._r08.fault_auto_en = 0;
                 break;
             case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
@@ -432,6 +451,10 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r46.ld_size = 1;
                 gt_xc24_general_regs._r46.ld_width = 3;
                 break;
+            case XC24_ADDR_COMMAND_LATENCY :
+                gt_xc24_general_regs._r1F.serial_latency = 40;
+                gt_xc24_general_regs._r1F.cmd_latency = 0xFF;
+                break;
             default :
                 continue;
             }
@@ -439,6 +462,39 @@ void XC24_Init(void)
             us_delay(10);
         }
     }
+    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+
+#if (XC_USE_FULL_CHANNEL == 1)
+    //daisy size
+    XC24_Write_Register(0x30, 0x0421);
+    XC24_Write_Register(0x31, 0x0421);
+    XC24_Write_Register(0x32, 0x0421);
+    XC24_Write_Register(0x33, 0x0421);
+    XC24_Write_Register(0x34, 0x0421);
+    XC24_Write_Register(0x35, 0x0421);
+    XC24_Write_Register(0x36, 0x0421);
+    XC24_Write_Register(0x37, 0x0421);
+
+    //block size
+    XC24_Write_Register(0x38, 0x0C0C);
+    XC24_Write_Register(0x39, 0x0C0C);
+    XC24_Write_Register(0x3A, 0x0C0C);
+    XC24_Write_Register(0x3B, 0x0C0C);
+    XC24_Write_Register(0x3C, 0x0C0C);
+    XC24_Write_Register(0x3D, 0x0C0C);
+    XC24_Write_Register(0x3E, 0x0C0C);
+    XC24_Write_Register(0x3F, 0x0C0C);
+    XC24_Write_Register(0x40, 0x0C0C);
+    XC24_Write_Register(0x41, 0x0C0C);
+    XC24_Write_Register(0x42, 0x0C0C);
+    XC24_Write_Register(0x43, 0x0C0C);
+
+    //channel enable
+    XC24_Write_Register(0x45, 0xFFFF);
+    XC24_Write_Register(0x46, 0xD8FF);
+#endif
+
     print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
 }
@@ -452,11 +508,14 @@ void XC24_Trim_Init(void)
     LL_mDelay(20);
 
     XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
     XC24_Start_MCLK_Oscillation(TRUE);
+#endif
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
 
-    for (uint8_t xc_addr = 0 ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
         const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
         if (map)
@@ -493,7 +552,9 @@ void XC24_Trim_Init(void)
             us_delay(10);
         }
     }
+
     XC24_Set_OTP_Protect(false);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
 
     print(LOG_DEBUG, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
@@ -514,12 +575,12 @@ void XC24_Set_OTP_Protect(bool en)
 
 void XC24_Trim_Init_VCTL_LDO(void)
 {
-    print(LOG_DEBUG, " ...XC24 VCTL LDO Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", VCTL_LDO_LOWER_LIMIT, VCTL_LDO_UPPER_LIMIT, XC24_VCTL_LDO_TARGET);
+    //print(LOG_DEBUG, " ...XC24 VCTL LDO Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", VCTL_LDO_LOWER_LIMIT, VCTL_LDO_UPPER_LIMIT, XC24_VCTL_LDO_TARGET);
 }
 
 void XC24_Trim_Init_DAC_Gain(void)
 {
-    print(LOG_DEBUG, " ...XC24 DAC Gain Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_GAIN_LOWER_LIMIT, DAC_GAIN_UPPER_LIMIT, XC24_DAC_GAIN_TARGET);
+    //print(LOG_DEBUG, " ...XC24 DAC Gain Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_GAIN_LOWER_LIMIT, DAC_GAIN_UPPER_LIMIT, XC24_DAC_GAIN_TARGET);
 
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
@@ -528,7 +589,7 @@ void XC24_Trim_Init_DAC_Gain(void)
 
 void XC24_Trim_Init_DAC_OFS(void)
 {
-    print(LOG_DEBUG, " ...XC24 DAC Ofs Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_OFS_LOWER_LIMIT, DAC_OFS_UPPER_LIMIT, XC24_DAC_OFS_TARGET);
+    //print(LOG_DEBUG, " ...XC24 DAC Ofs Min[%.3f] Max[%.3f] Target[%.3f]...\r\n", DAC_OFS_LOWER_LIMIT, DAC_OFS_UPPER_LIMIT, XC24_DAC_OFS_TARGET);
 
 	gt_xc24_mirror_regs._rF0.test_en = 1;
 	gt_xc24_mirror_regs._rF0.daco_direct = 1;
@@ -541,9 +602,8 @@ void XC24_Trim_Init_DAC_OFS(void)
 void XC24_Trim_Init_OSC(void)
 {
 	gt_xc24_mirror_regs._rF0.test_en = 1;
-	gt_xc24_mirror_regs._rF0.mclk32_o = 1;
+    gt_xc24_mirror_regs._rF0.mclk32_o = 1;
 	gt_xc24_mirror_regs._rF0.mclk1_o = 0;
-	//gt_xc24_mirror_regs._rF0.daco_direct = 1;
 	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
 
 	gt_xc24_general_regs._r1B.spread_range_a = 4;
@@ -573,10 +633,11 @@ void XC24_Start_MCLK_Oscillation(bool en)
     else
     {
         GPIO_InitStruct.Pin = XC_MCLK_Pin;
-        GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+        GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
         LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
+        LL_GPIO_ResetOutputPin(XC_MCLK_GPIO_Port, XC_MCLK_Pin);
     }
 }
 
@@ -654,6 +715,26 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
     return u16_XDIC_data;
 }
 
+#if (XC_USE_FULL_CHANNEL == 1)
+void XC24_IF_Write_LD(uint16_t in_LD_data)
+{
+    _xc24_cmd_t cmd_format = {0, };
+    uint16_t tx_buffer[1 + XD_DAISY_SIZE * XD_CH_SIZE * 24] = {0,};
+
+    cmd_format.code = CMD_CODE_LD_TRANS;
+    cmd_format.addr = 0;
+    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
+
+    tx_buffer[0] = cmd_format.ALL;
+    for (uint16_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE * 24) ; ++i)
+    {
+        tx_buffer[i + 1] = in_LD_data;
+    }
+
+    SPI_Write(g_hSPIx, tx_buffer, 1 + XD_DAISY_SIZE * XD_CH_SIZE * 24);
+    us_delay(XDIC_LD_TRANS_DELAY);
+}
+#else
 void XC24_IF_Write_LD(uint16_t in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
@@ -664,7 +745,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint8_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
+    for (uint16_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
     {
         tx_buffer[i + 1] = in_LD_data;
     }
@@ -672,6 +753,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     SPI_Write(g_hSPIx, tx_buffer, 1 + XD_DAISY_SIZE * XD_CH_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
+#endif
 
 void XC24_Trim_Write_VCTL_LDO(uint8_t vctl_ldo)
 {
@@ -696,6 +778,22 @@ void XC24_Trim_Write_OSC_FCTL(uint8_t osc_fctl)
 {
 	gt_xc24_mirror_regs._rF5.osc_fctl = osc_fctl;
 	XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, gt_xc24_mirror_regs._rF5.ALL);
+}
+
+void XC24_Turn_Off_Sync_Auto(void)
+{
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 0;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
+}
+
+void XC24_Turn_On_Sync_Auto(void)
+{
+    gt_xc24_general_regs._r08.timeout_en = 1;
+    gt_xc24_general_regs._r08.sync_auto_en = 1;
+    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/

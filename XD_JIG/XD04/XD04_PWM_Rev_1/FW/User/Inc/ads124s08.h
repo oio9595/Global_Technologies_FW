@@ -45,6 +45,10 @@ extern "C" {
 #define ADS114S08_CH_XD_IOUT    (0)
 #define ADS114S08_CH_XC_LDO     (1)
 #define ADS114S08_CH_XC_DAC     (2)
+#define ADS114S08_CH_XD_ICC_P   (3)
+#define ADS114S08_CH_XD_ICC_N   (4)
+#define ADS114S08_CH_XC_ICC_P   (8)
+#define ADS114S08_CH_XC_ICC_N   (9)
 
 #define ADS114S08_READ_COUNT    (16) /* must be power of 2 */
 
@@ -331,16 +335,12 @@ typedef struct
     ads114s08_gpiocon_t gpiocon;
 }ads114s08_regs_t;
 
-extern volatile bool gb_ads114s08_drdy_done;
-extern uint64_t gn_ads114s08_adc_temp;
-extern uint16_t gn_adc_read_count;
-extern uint16_t gn_ads114s08_offset[12];
-
 // Device command prototypes
 extern void ADS114S08_Init(void);
 
 extern void ADS114S08_Select_Input_CH(uint8_t input);
 extern void ADS114S08_Set_Start(uint8_t b_set);
+extern void ADS114S08_Wait_Done(void);
 
 extern void ADC_DRDY_INT_Handler(void);
 extern uint16_t ADS114S08_Get_ADC_Value(void);

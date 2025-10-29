@@ -19,6 +19,7 @@ extern "C" {
 #define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
 #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
 #define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
+#define CURRENT_SENSE_R_ICC         (22.1f)   /* ohm */
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
@@ -53,6 +54,9 @@ extern void JigBD_IF_XD_VCC_Level(power_volt_t pwr);
 extern void JigBD_IF_XC_VCC_Level(power_volt_t pwr);
 extern void JigBD_IF_VLED_9V_EN(uint8_t on);
 
+extern float JigBD_IF_XD_ICC(void);
+extern float JigBD_IF_XC_ICC(void);
+
 extern void JigBD_IF_Change_Current_Gain(current_gain_t gain);
 extern void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch);
 
@@ -68,6 +72,7 @@ extern uint16_t JigBD_IF_Fault_Read_Command(void);
 //Read Frequency Hz
 extern void JigBD_IF_Link_DMA_With_Buffer(void);
 extern void JigBD_IF_Start_Input_Capture(void);
+extern void JigBD_IF_Wait_Input_Capture_Done(void);
 extern void JigBD_IF_Stop_Input_Capture(void);
 extern double JigBD_IF_Get_Input_Capture_Freq(void);
 extern void JigBD_IF_Calculate_Input_Capture_Freq(void);

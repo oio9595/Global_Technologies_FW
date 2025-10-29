@@ -165,6 +165,8 @@ extern void sys_tick_handler(void);
 #define XDIC_VCC_EN_GPIO_Port GPIOB
 #define XC24_VCC_EN_Pin LL_GPIO_PIN_6
 #define XC24_VCC_EN_GPIO_Port GPIOB
+#define XD_SELECT_Pin LL_GPIO_PIN_7
+#define XD_SELECT_GPIO_Port GPIOB
 #define ADC_RESET_Pin LL_GPIO_PIN_8
 #define ADC_RESET_GPIO_Port GPIOB
 #define XC24_NSCS_Pin LL_GPIO_PIN_9
