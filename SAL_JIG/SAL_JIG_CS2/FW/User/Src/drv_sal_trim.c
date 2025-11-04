@@ -70,7 +70,7 @@ static uint8_t gn_trim_delay;
 
 static float gf_sal_trim_condition[TRIM_MODE_MAX][TRIM_PARAM_MAX] =
 {
-    { 1.045, 1.155, 0.0}, /* V_TRIM_BGR         1.2 V */
+    { 1.045, 1.155, 0.0}, /* V_TRIM_BGR          1.2 V */
     {  1.14,  1.26, 0.0}, /* V_R1_R2             1.2 V */
     {  0.95,  1.05, 0.0}, /* I_TRIM_BGR          1 uA */
     { 1.425, 1.575, 0.0}, /* LDO_CTL             1.5 V */

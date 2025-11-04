@@ -775,7 +775,7 @@ void comm_debugging_process(void)
             decode_mode_set(DECODE_LTC_DRIVER_A);
 
             sal_trim_read_all_registers();
-#if 0
+#if 1
             sal_trim_set_max_curr();
             sal_trim_t_ana_sel(TRIM_MODE_CURRENT_ITRIM);
             decode_mode_set(DECODE_LTC_DRIVER_A);
