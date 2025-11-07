@@ -720,7 +720,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     if (gb_xd_timeout_event)
     {
-        print(LOG_ERROR, "Rx Timeout!!!\r\n");
+        print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
     }
     else
     {

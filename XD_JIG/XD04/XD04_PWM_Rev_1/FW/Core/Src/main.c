@@ -71,25 +71,8 @@ void key_func_1(void)
     if (IS_XC24_Support())
     {
         XC24_Init();
-        print(LOG_DEBUG, "\r\n xc_init\r\n");
-        LL_mDelay(10);
     }
     XDIC_Init();
-
-    JigBD_IF_VLED_9V_EN(PWR_ON);
-    print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
-
-    Vsync_Timer_Start();
-    print(LOG_DEBUG, "vsync start\r\n");
-
-    XDIC_Set_LD_Data(100);
-
-    if (IS_XC24_Support())
-    {
-        LL_mDelay(50);
-        XC24_Read_Register(XC24_ADDR_INTERRUPT_STATUS);
-        XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA1);
-    }
 }
 
 void key_func_2(void)
@@ -448,7 +431,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_5);
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_4);
 }
 
 /**
@@ -465,7 +448,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 400;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLI2SP_DIV2;
   PeriphClkInitStruct.PLLI2S.PLLI2SM = 8;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 4;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
   PeriphClkInitStruct.PLLI2SDivQ = 1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -982,7 +965,7 @@ static void MX_TIM8_Init(void)
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-  TIM_OC_InitStruct.CompareValue = 5;
+  TIM_OC_InitStruct.CompareValue = 40;
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
   TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
@@ -1218,10 +1201,10 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XDIC_FB_OUT_Pin;
+  GPIO_InitStruct.Pin = XDIC_FB_OUT_Pin|XD_SELECT_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(XDIC_FB_OUT_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_6|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
@@ -1251,12 +1234,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE4);
@@ -1652,29 +1629,15 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("5"))
         {
-            JigBD_IF_XD_VCC_EN(PWR_ON);
-            print(LOG_DEBUG, "\r\n xd_vcc_on\r\n");
-
             if (IS_XC24_Support())
             {
                 XC24_Init();
-                print(LOG_INFO, "\r\n xc_init\r\n");
-                LL_mDelay(10);
             }
-
-            JigBD_IF_Select_Output_Ch(0);
-            print(LOG_DEBUG, "\r\n jig_ch_sel_0\r\n");
-            LL_mDelay(10);
-
-            JigBD_IF_Change_Current_Gain(GAIN_HIGH);
-            print(LOG_DEBUG, "\r\n jig_gain_high\r\n");
-            LL_mDelay(10);
 
             XDIC_Trim_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
-
 
             XDIC_Trim_Init_VREF_CTL();
             JigBD_IF_Start_MCU_ADC();

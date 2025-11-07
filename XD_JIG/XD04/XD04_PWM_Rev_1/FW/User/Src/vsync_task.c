@@ -141,6 +141,7 @@ void XDIC_Vsync_Task(void)
             us_delay(100);
             XC24_Turn_On_Sync_Auto();
         }
+        XDIC_Get_Fault_Status();
 
         us_delay(1500);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
