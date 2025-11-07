@@ -40,8 +40,6 @@
 #define SERIAL_DECODE_MASK_ID       (0x1F)
 #define SERIAL_DECODE_MASK_DATA     (0xFFF)
 
-#define XD_TIMEOUT_MS               (2)
-
 static uint16_t gn_mcu_adc_value;
 
 uint16_t gn_serialize_tx_buffer[400] = {0, };
@@ -49,9 +47,10 @@ uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
 uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 
 volatile uint16_t gn_xd_rx_timeout;
-static volatile bool gb_xd_timeout_event;
+volatile bool gb_xd_timeout_event;
 
 volatile bool gb_pwm_dma_tx_flag;
+volatile bool gb_pwm_is_rx_flag;
 
 static double gf_internal_freq_Hz;
 
@@ -485,77 +484,6 @@ static uint16_t Get_Nth_Bit(uint16_t x, int n)
     return ((x & (1 << (n - 1))) >> (n - 1));
 }
 
-static void Serialize_Tx_Start(uint32_t len)
-{
-    gb_pwm_dma_tx_flag = TRUE;
-
-    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, len);
-    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
-    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
-    LL_TIM_EnableCounter(TIM1);
-}
-
-static void Serialize_Tx_Done(void)
-{
-    LL_TIM_DisableCounter(TIM1);
-    LL_DMA_ClearFlag_TC1(DMA2);
-    LL_DMA_DisableIT_TC(DMA2, LL_DMA_STREAM_1);
-    LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
-}
-
-static void Serialize_Rx_Start(uint32_t len)
-{
-    gn_xd_rx_timeout = XD_TIMEOUT_MS;
-    gb_xd_timeout_event = false;
-
-    /* output enable set HIGH */
-    PWM_SWITCH_HI();
-
-    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, len);
-    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, len);
-    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
-    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
-
-    LL_TIM_EnableDMAReq_CC1(TIM2);
-    LL_TIM_EnableDMAReq_CC2(TIM2);
-
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-
-    while(LL_DMA_IsActiveFlag_TC6(DMA1) == 0)
-    {
-        if (gn_xd_rx_timeout == 0)
-        {
-            gb_xd_timeout_event = true;
-            break;
-        }
-    }
-    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
-    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, 0);
-    LL_DMA_ClearFlag_TC6(DMA1);
-
-    while(LL_DMA_IsActiveFlag_TC5(DMA1) == 0)
-    {
-        if (gn_xd_rx_timeout == 0)
-        {
-            gb_xd_timeout_event = true;
-            break;
-        }
-    }
-    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_5);
-    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, 0);
-    LL_DMA_ClearFlag_TC5(DMA1);
-
-    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-
-    LL_TIM_DisableDMAReq_CC1(TIM2);
-    LL_TIM_DisableDMAReq_CC2(TIM2);
-
-    /* output enable set LOW */
-    PWM_SWITCH_LO();
-}
-
 static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 {
     uint32_t freq_count_sum = 0;
@@ -648,11 +576,12 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
+    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Tx_Done();
+    //Serialize_Tx_Done();
     us_delay(XDIC_RESET_DELAY);
 }
 
@@ -681,22 +610,17 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gb_pwm_is_rx_flag = true;
 
-    DEBUG_HI();
     Serialize_Tx_Start(pwm_length);
-
     while (gb_pwm_dma_tx_flag) {}
-
-    Serialize_Tx_Done();
-    DEBUG_LO();
-
-    Serialize_Rx_Start(XDIC_READ_RECV_BITS);
 
     uint32_t n_response = 0;
 
     if (gb_xd_timeout_event)
     {
-        print(LOG_ERROR, "Rx Timeout!!! [addr - %02X]\r\n", in_addr);
+        DEBUG_LO();
+        print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
     }
     else
     {
@@ -705,6 +629,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
             ((n_response >> 17) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12) & SERIAL_DECODE_MASK_ID), ((n_response >> 0) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
+    DEBUG_LO();
     us_delay(XDIC_READ_DELAY);
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
@@ -748,11 +673,12 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
+    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Tx_Done();
+    //Serialize_Tx_Done();
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 
@@ -776,13 +702,14 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
+    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Tx_Done();
+    //Serialize_Tx_Done();
 
-    Serialize_Rx_Start(XDIC_FAULT_RECV_BITS);
+    //Serialize_Rx_Start(XDIC_FAULT_RECV_BITS);
 
     uint32_t n_response = 0;
 
@@ -823,11 +750,12 @@ static void MCU_IF_IdGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
+    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Tx_Done();
+    //Serialize_Tx_Done();
     us_delay(XDIC_IDGEN_DELAY);
 }
 
@@ -851,11 +779,12 @@ static void MCU_IF_SyncGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
+    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Tx_Done();
+    //Serialize_Tx_Done();
     us_delay(XDIC_SYNCGEN_DELAY);
 }
 

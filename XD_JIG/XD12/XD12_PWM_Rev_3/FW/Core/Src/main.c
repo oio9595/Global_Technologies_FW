@@ -362,11 +362,9 @@ int main(void)
     LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
     LL_TIM_EnableCounter(TIM5); /* for Freq Input */
 
-#if 0
     /* DMA2_Stream2_IRQn interrupt configuration */
-    NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
+    NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-#endif
 
     comm_init();
 
@@ -727,6 +725,7 @@ static void MX_TIM1_Init(void)
 
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableDMAReq_CC1(TIM1);
+    LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
 
     LL_DMA_ClearFlag_FE1(DMA2);
     LL_DMA_ClearFlag_HT1(DMA2);
@@ -1109,7 +1108,7 @@ static void MX_DMA_Init(void)
   NVIC_SetPriority(DMA1_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
   NVIC_EnableIRQ(DMA1_Stream2_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
   NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   NVIC_SetPriority(DMA2_Stream1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));

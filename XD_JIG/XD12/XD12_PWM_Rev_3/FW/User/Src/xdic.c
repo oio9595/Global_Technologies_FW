@@ -464,6 +464,18 @@ static void XDIC_Dump_All_Registers(void)
     print(LOG_INFO, "\r\n-------------------------------------------------------------------\r\n");
 }
 
+void XDIC_Dump_Trim_Regs_OneLine(void)
+{
+    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
+    {
+        const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(xd_mirror_addr);
+        if (map)
+        {
+            print(LOG_INFO, "0x%02X, ", *((uint16_t*)(map->reg_ptr)));
+        }
+    }
+}
+
 void XDIC_Read_All_Registers(void)
 {
     for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
@@ -476,7 +488,7 @@ void XDIC_Read_All_Registers(void)
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
 
-    XDIC_Dump_All_Registers();
+    //XDIC_Dump_All_Registers();
 }
 
 void XDIC_Param_Init(void)
@@ -518,7 +530,7 @@ void XDIC_Init(void)
 
     XDIC_Param_Init();
 
-    JigBD_IF_Reset_Command();
+    //JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
@@ -561,7 +573,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
             case XDIC_ADDR_SERIAL_LATENCY :
-                gt_xdic_general_regs._r26.serial_latency = 60;
+                gt_xdic_general_regs._r26.serial_latency = 200;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
                 gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
@@ -601,7 +613,7 @@ void XDIC_Trim_Param_Init(void)
 {
     gt_xd_fb_level = FB_LEVEL_0V4;
     gt_xd_short_level = SHORT_LEVEL_36V;
-    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_12mA;
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_8mA;
 }
 
 void XDIC_Trim_Init(void)
@@ -610,9 +622,12 @@ void XDIC_Trim_Init(void)
     JigBD_IF_Change_Current_Gain(GAIN_HIGH);
     JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
     JigBD_IF_XD_VCC_EN(PWR_ON);
+
+    LL_mDelay(100);
+
     XDIC_Trim_Param_Init();
 
-    JigBD_IF_Reset_Command();
+    //JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
@@ -805,7 +820,7 @@ void XDIC_Update_Vsync_Frequency(float n_freq)
 
 void XDIC_Overwrite_Mirror_Regs(void)
 {
-    uint16_t u16_otp_crc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
+    uint16_t u16_otp_crc = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
     if (u16_otp_crc != 0)
     {
         print(LOG_INFO, "XDIC Already Trimmed!!!!\r\n");
@@ -821,30 +836,24 @@ void XDIC_Overwrite_Mirror_Regs(void)
 
 void XDIC_Display_Mirror_Regs(void)
 {
-    print(LOG_INFO, "osc,%3u\r\n", gn_xdic_saved_trim_reg[1]);
-    print(LOG_INFO, "vref,%3u\r\n", gn_xdic_saved_trim_reg[2]);
+    print(LOG_INFO, "osc,%3u\r\n", gt_xdic_mirror_regs._r01.val & 0x3F);
+    print(LOG_INFO, "vref,%3u\r\n", gt_xdic_mirror_regs._r02.val);
 
-    print(LOG_INFO, "ofs,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"\
-    , gn_xdic_saved_trim_reg[ 3], gn_xdic_saved_trim_reg[ 4], gn_xdic_saved_trim_reg[ 5] , gn_xdic_saved_trim_reg[ 6], gn_xdic_saved_trim_reg[ 7], gn_xdic_saved_trim_reg[ 8]\
-    , gn_xdic_saved_trim_reg[ 9], gn_xdic_saved_trim_reg[10], gn_xdic_saved_trim_reg[11] , gn_xdic_saved_trim_reg[12], gn_xdic_saved_trim_reg[13], gn_xdic_saved_trim_reg[14]\
-    );
-    print(LOG_INFO, "gain,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n"\
-    , gn_xdic_saved_trim_reg[27], gn_xdic_saved_trim_reg[28], gn_xdic_saved_trim_reg[29] , gn_xdic_saved_trim_reg[30], gn_xdic_saved_trim_reg[31], gn_xdic_saved_trim_reg[32]\
-    , gn_xdic_saved_trim_reg[33], gn_xdic_saved_trim_reg[34], gn_xdic_saved_trim_reg[35] , gn_xdic_saved_trim_reg[36], gn_xdic_saved_trim_reg[37], gn_xdic_saved_trim_reg[38]\
-    );
-
-    print(LOG_INFO, "\r\n");
-    for (uint8_t addr = XDIC_MIRROR_ADDR_OSC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
-    {
-        print(LOG_INFO, "%u,", gn_xdic_saved_trim_reg[addr]);
-    }
+    print(LOG_INFO, "ofs,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n",\
+        gt_xdic_mirror_regs._r03.val, gt_xdic_mirror_regs._r04.val, gt_xdic_mirror_regs._r05.val, gt_xdic_mirror_regs._r06.val,\
+        gt_xdic_mirror_regs._r07.val, gt_xdic_mirror_regs._r08.val, gt_xdic_mirror_regs._r09.val, gt_xdic_mirror_regs._r0A.val,\
+        gt_xdic_mirror_regs._r0B.val, gt_xdic_mirror_regs._r0C.val, gt_xdic_mirror_regs._r0D.val, gt_xdic_mirror_regs._r0E.val);
+    print(LOG_INFO, "gain,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u,%3u\r\n",\
+        gt_xdic_mirror_regs._r1B.val, gt_xdic_mirror_regs._r1C.val, gt_xdic_mirror_regs._r1D.val, gt_xdic_mirror_regs._r1E.val,\
+        gt_xdic_mirror_regs._r1F.val, gt_xdic_mirror_regs._r20.val, gt_xdic_mirror_regs._r21.val, gt_xdic_mirror_regs._r22.val,\
+        gt_xdic_mirror_regs._r23.val, gt_xdic_mirror_regs._r24.val, gt_xdic_mirror_regs._r25.val, gt_xdic_mirror_regs._r26.val);
 }
 
 void XDIC_Save_Mirror_Regs(void)
 {
     for (uint8_t addr = XDIC_MIRROR_ADDR_OTP_CRC ; addr < XDIC_MIRROR_ADDR_MAX ; ++addr)
     {
-        gn_xdic_saved_trim_reg[addr] = XDIC_Read_Mirror_Reg(addr);
+        gn_xdic_saved_trim_reg[addr] = XDIC_Get_Mirror_Reg(addr);
     }
 #if 0
     gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_OSC] |= 0x800;
@@ -859,7 +868,7 @@ uint64_t XDIC_Compare_Mirror_Regs(void)
 
     for (xdic_mirror_addr_t mirror_addr = XDIC_MIRROR_ADDR_OSC ; mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++mirror_addr)
     {
-        u16_reg_val = XDIC_Read_Mirror_Reg(mirror_addr);
+        u16_reg_val = XDIC_Get_Mirror_Reg(mirror_addr);
 
         if (gn_xdic_saved_trim_reg[mirror_addr] != u16_reg_val)
         {

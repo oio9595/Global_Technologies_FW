@@ -15,7 +15,11 @@
 #include "JigBd_IF.h"
 #include "ads124s08.h"
 
-/* Trim Spec */
+/* ---------------------------------------------------------------------------------------------------------------------- */
+/* Trim Parameter */
+#define TRIM_REGISTER_SAVED_CNT     (5)
+#define TRIM_OUT_OF_RANGE_CNT       (25)
+
 #define XDIC_ERR_RATE               (1.0f / 100)   /* % */
 #define XDIC_VREF_TARGET            (2.2)          /* V */
 #define XDIC_OSC_TARGET             (XD_MCLK / 1000000)   /* MHz */
@@ -30,8 +34,10 @@
 #define XDIC_GAIN_P1                (1000)
 #define XDIC_GAIN_P2                (3000)
 #define XDIC_GAIN_TARGET            (8.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))   /* mA */
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
-/* Screen Spec */
+/* ---------------------------------------------------------------------------------------------------------------------- */
+/* Trim Screen Parameter */
 #define XDIC_SCREEN_POINT_SIZE      (9)
 
 #define XDIC_SCREEN_VREF1           (350)
@@ -41,15 +47,19 @@
 #define XDIC_SCREEN_MAX_CURR1       (DEV_MAX_CURR_LEVEL_4mA)
 #define XDIC_SCREEN_MAX_CURR2       (DEV_MAX_CURR_LEVEL_8mA)
 #define XDIC_SCREEN_MAX_CURR3       (DEV_MAX_CURR_LEVEL_24mA)
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
-#define TRIM_REGISTER_SAVED_CNT     (5)
-#define TRIM_OUT_OF_RANGE_CNT       (25)
-
+/* ---------------------------------------------------------------------------------------------------------------------- */
+/* Screen Parameter */
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_MAX_CURRENT       (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
-
 #define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
+
+//Point 1
+#define COMP_A (0.998164f)
+#define COMP_B (-46.3f)
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 typedef struct tag_XDIC_SCREEN_PARAM_T
 {
@@ -57,7 +67,6 @@ typedef struct tag_XDIC_SCREEN_PARAM_T
     dev_max_curr_level_t max_curr_lvl;
     current_gain_t gain;
     float f_measured[XD_CH_SIZE];
-    void (*p_func)(void);
 } screen_param_t;
 
 typedef enum tag_TRIM_ADJUST_TYPE_T
@@ -882,13 +891,14 @@ void XD_Trim_Task(void)
                 }
                 else if (trim_algorithm_result == TRIM_ALGORITHM_DONE_MODE)
                 {
-                    print(LOG_INFO, "\t  Next trim_search_mode \r\n");
                     if (t_trim_search_mode_next == XD_TRIM_MAX)
                     {
+                        print(LOG_INFO, "\t  Screen Start \r\n");
                         gt_xd_trim_step = XD_TRIM_STEP_SCREEN;
                     }
                     else
                     {
+                        print(LOG_INFO, "\t  Next trim_search_mode \r\n");
                         gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                     }
                     gn_xd_adc_channel = 0;
@@ -950,6 +960,7 @@ void XD_Trim_Task(void)
                 }
                 break;
             case XD_TRIM_STEP_SCREEN:
+                XDIC_Save_Mirror_Regs();
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                 for (uint8_t i = 0 ; i < XDIC_SCREEN_POINT_SIZE ; ++i)
                 {
@@ -966,6 +977,7 @@ void XD_Trim_Task(void)
                         gt_xd_screen_param[i].f_measured[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gt_xd_screen_param[i].gain);
                     }
                 }
+                XD_Display_Screen_Result();
 
                 if (gb_xd_otp_write_flag)
                 {
@@ -979,7 +991,6 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_E2P_PROGRAM:   /* E2P program */
                 if (gb_xd_otp_write_flag)
                 {
-                    XDIC_Save_Mirror_Regs();
                     JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
                     print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
                     gn_task_delay = 100;
@@ -1042,13 +1053,11 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_PWR_OFF;
                 break;
             case XD_TRIM_STEP_PWR_OFF:
-                XDIC_Save_Mirror_Regs();
-                XDIC_Display_Mirror_Regs();
-                XD_Display_Screen_Result();
-
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
+
+                XDIC_Display_Mirror_Regs();
                 print(LOG_INFO, "======== TRIM END ========\r\n");
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
                 break;
@@ -1061,6 +1070,7 @@ void XD_Trim_Task(void)
 /* END - TRIM_PROCEDURE_RUN   *****************************************/
 void XD_Screen_Task(void)
 {
+    float comp_ana = 0;
     if (gn_task_delay)
     {
         --gn_task_delay;
@@ -1071,23 +1081,29 @@ void XD_Screen_Task(void)
         {
         case XD_SCREEN_STEP_PWR_ON :
             JigBD_IF_Detect_XC24();
+            XDIC_Trim_Init();
+
+            gt_screen_gain = GAIN_HIGH;
+            JigBD_IF_Change_Current_Gain(gt_screen_gain);
+
             gn_xd_adc_channel = 0;
             gn_task_delay = 10;
             gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
             break;
         case XD_SCREEN_STEP_SETUP :
-            XDIC_Trim_Init();
-            XDIC_Trim_Init_OFS_CH();
-            // XDIC_Overwrite_Mirror_Regs();
-
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
-
-            XDIC_Read_All_Registers();
-
+            XDIC_Overwrite_Mirror_Regs();
             XDIC_Display_Mirror_Regs();
 
-            gt_screen_gain = GAIN_HIGH;
-            JigBD_IF_Change_Current_Gain(gt_screen_gain);
+            XDIC_Trim_Init_OFS_CH();
+
+            //Point 2
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_4mA);
+            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_12mA);
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_16mA);
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
+
             JigBD_IF_VLED_9V_EN(PWR_ON);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
@@ -1096,11 +1112,21 @@ void XD_Screen_Task(void)
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
-            print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
+            print(LOG_INFO, "data,  comp,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
+                comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
+                if (comp_ana < 0)
+                {
+                    comp_ana = 0;
+                }
+                else if (comp_ana > 4095)
+                {
+                    comp_ana = 4095;
+                }
+                //XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
+                XDIC_Set_Max_Curr_Vref((uint16_t)comp_ana);
             #else
                 XDIC_Set_Max_Current_Level(gn_xd_screen_max_current);
             #endif
@@ -1132,8 +1158,18 @@ void XD_Screen_Task(void)
                     gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
                 }
 
+                comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
+                if (comp_ana < 0)
+                {
+                    comp_ana = 0;
+                }
+                else if (comp_ana > 4095)
+                {
+                    comp_ana = 4095;
+                }
+
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, \
+                    print(LOG_INFO, "%4u, %4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, ((uint16_t)comp_ana),\
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
                         gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
                         gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);

@@ -31,6 +31,8 @@ extern "C" {
 #define XDIC_CONST_FREQ_DIVIDE      (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 #define XC24_CONST_FREQ_DIVIDE      (XC24_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 
+#define XD_TIMEOUT_MS               (2)
+
 typedef enum tag_CURRENT_GAIN_T
 {
 	GAIN_LOW = 0,   /* Max 0.5mA */
@@ -40,7 +42,9 @@ typedef enum tag_CURRENT_GAIN_T
 } current_gain_t;
 
 extern volatile bool gb_pwm_dma_tx_flag;
+extern volatile bool gb_pwm_is_rx_flag;
 extern volatile uint16_t gn_xd_rx_timeout;
+extern volatile bool gb_xd_timeout_event;
 
 extern bool gb_timer_input_capture_activated;
 extern volatile bool gb_timer_input_capture_done;
@@ -86,6 +90,81 @@ extern void JigBD_IF_Start_MCU_ADC(void);
 extern uint16_t JigBD_IF_Get_MCU_ADC(void);
 
 extern void MCU_IF_Set_XDIC_Channel(uint8_t in_channel);
+
+static inline void Serialize_Tx_Start(uint32_t len)
+{
+    gb_pwm_dma_tx_flag = TRUE;
+
+    LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, len);
+    //LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
+    LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
+    LL_TIM_EnableCounter(TIM1);
+}
+
+static inline void Serialize_Tx_Done(void)
+{
+    while (LL_TIM_IsActiveFlag_UPDATE(TIM1) == 0);  // ensure the update event occurred
+    LL_TIM_ClearFlag_UPDATE(TIM1);
+
+    LL_TIM_DisableCounter(TIM1);
+    LL_DMA_ClearFlag_TC1(DMA2);
+    //LL_DMA_DisableIT_TC(DMA2, LL_DMA_STREAM_1);
+    LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
+}
+
+static inline void Serialize_Rx_Start(uint32_t len)
+{
+    gn_xd_rx_timeout = XD_TIMEOUT_MS;
+    gb_xd_timeout_event = false;
+
+    /* output enable set HIGH */
+    PWM_SWITCH_HI();
+
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, len);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, len);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
+
+    LL_TIM_EnableDMAReq_CC1(TIM2);
+    LL_TIM_EnableDMAReq_CC2(TIM2);
+
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+
+    while(LL_DMA_IsActiveFlag_TC6(DMA1) == 0)
+    {
+        if (gn_xd_rx_timeout == 0)
+        {
+            gb_xd_timeout_event = true;
+            break;
+        }
+    }
+    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, 0);
+    LL_DMA_ClearFlag_TC6(DMA1);
+
+    while(LL_DMA_IsActiveFlag_TC5(DMA1) == 0)
+    {
+        if (gn_xd_rx_timeout == 0)
+        {
+            gb_xd_timeout_event = true;
+            break;
+        }
+    }
+    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_5);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, 0);
+    LL_DMA_ClearFlag_TC5(DMA1);
+
+    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+
+    LL_TIM_DisableDMAReq_CC1(TIM2);
+    LL_TIM_DisableDMAReq_CC2(TIM2);
+
+    /* output enable set LOW */
+    PWM_SWITCH_LO();
+    gb_pwm_is_rx_flag = false;
+}
 
 /* END   - INTERFACE FUNCTIONS */
 
