@@ -21,15 +21,15 @@ void XDIC_Detect_Type(void)
     uint32_t xd_type = LL_GPIO_IsInputPinSet(XD_SELECT_GPIO_Port, XD_SELECT_Pin);
     if (xd_type == 0)
     {
-        gb_xdic_type_is_xd04 = true; // XD04
-        gn_xdic_channel_size = (XDIC_CH_04 + 1);
-        print(LOG_INFO, "XDIC Type Detected : XD04\r\n");
-    }
-    else
-    {
         gb_xdic_type_is_xd04 = false; // XD12
         gn_xdic_channel_size = (XDIC_CH_12 + 1);
         print(LOG_INFO, "XDIC Type Detected : XD12\r\n");
+    }
+    else
+    {
+        gb_xdic_type_is_xd04 = true; // XD04
+        gn_xdic_channel_size = (XDIC_CH_04 + 1);
+        print(LOG_INFO, "XDIC Type Detected : XD04\r\n");
     }
 }
 
