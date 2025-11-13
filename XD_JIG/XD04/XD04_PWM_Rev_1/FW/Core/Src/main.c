@@ -1635,14 +1635,20 @@ static void TaskDebugUart(void)
             }
             XDIC_Trim_Init();
 
-            XDIC_Trim_Init_VREF_CTL();
+            XDIC_Trim_Init_LDO_CTL();
             for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
             {
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
-                LL_mDelay(10);
+                us_delay(50);
                 JigBD_IF_Start_MCU_ADC();
                 uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
-                print(LOG_INFO, "%2u, %.3f\r\n", vref, JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+                float vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
+                print(LOG_INFO, "%d, %.3f\r\n", vref, vref_volt);
+
+                if (vref_volt > 1.65f)
+                {
+                    break;
+                }
             }
         }
         else if (Command_is_("5"))
