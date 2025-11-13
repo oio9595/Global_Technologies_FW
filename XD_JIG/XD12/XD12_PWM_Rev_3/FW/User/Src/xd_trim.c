@@ -1158,17 +1158,17 @@ void XD_Screen_Task(void)
                     gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
                 }
 
-                comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
-                if (comp_ana < 0)
-                {
-                    comp_ana = 0;
-                }
-                else if (comp_ana > 4095)
-                {
-                    comp_ana = 4095;
-                }
-
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                    comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
+                    if (comp_ana < 0)
+                    {
+                        comp_ana = 0;
+                    }
+                    else if (comp_ana > 4095)
+                    {
+                        comp_ana = 4095;
+                    }
+
                     print(LOG_INFO, "%4u, %4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, ((uint16_t)comp_ana),\
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
                         gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],

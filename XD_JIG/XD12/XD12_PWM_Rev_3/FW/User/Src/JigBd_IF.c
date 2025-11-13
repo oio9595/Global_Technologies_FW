@@ -581,7 +581,7 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
     while (gb_pwm_dma_tx_flag) {}
 
-    //Serialize_Tx_Done();
+    Serialize_Tx_Done();
     us_delay(XDIC_RESET_DELAY);
 }
 
@@ -614,6 +614,9 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
+
+    Serialize_Tx_Done();
+    Serialize_Rx_Start(XDIC_READ_RECV_BITS);
 
     uint32_t n_response = 0;
 
@@ -678,7 +681,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
 
     while (gb_pwm_dma_tx_flag) {}
 
-    //Serialize_Tx_Done();
+    Serialize_Tx_Done();
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 
@@ -707,9 +710,9 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     while (gb_pwm_dma_tx_flag) {}
 
-    //Serialize_Tx_Done();
+    Serialize_Tx_Done();
 
-    //Serialize_Rx_Start(XDIC_FAULT_RECV_BITS);
+    Serialize_Rx_Start(XDIC_FAULT_RECV_BITS);
 
     uint32_t n_response = 0;
 
@@ -755,7 +758,7 @@ static void MCU_IF_IdGen_Command()
 
     while (gb_pwm_dma_tx_flag) {}
 
-    //Serialize_Tx_Done();
+    Serialize_Tx_Done();
     us_delay(XDIC_IDGEN_DELAY);
 }
 
@@ -784,7 +787,7 @@ static void MCU_IF_SyncGen_Command()
 
     while (gb_pwm_dma_tx_flag) {}
 
-    //Serialize_Tx_Done();
+    Serialize_Tx_Done();
     us_delay(XDIC_SYNCGEN_DELAY);
 }
 
