@@ -1627,6 +1627,24 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n ICTL_L CH[%d] : %.3f\r\n", i, iout_avg);
             }
         }
+        else if (Command_is_("xd_sweep_vref"))
+        {
+            if (IS_XC24_Support())
+            {
+                XC24_Init();
+            }
+            XDIC_Trim_Init();
+
+            XDIC_Trim_Init_VREF_CTL();
+            for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
+            {
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
+                LL_mDelay(10);
+                JigBD_IF_Start_MCU_ADC();
+                uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+                print(LOG_INFO, "%2u, %.3f\r\n", vref, JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+            }
+        }
         else if (Command_is_("5"))
         {
             if (IS_XC24_Support())
