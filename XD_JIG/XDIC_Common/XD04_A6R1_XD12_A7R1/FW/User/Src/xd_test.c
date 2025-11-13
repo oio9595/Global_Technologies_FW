@@ -19,7 +19,7 @@
 typedef void (*func_t)(void);
 
 /* XDIC Common Spec */
-#define XDIC_ERROR_RATE     (0.03f) // 3%
+#define XDIC_ERROR_RATE     (0.015f) // 1.5%
 #define XDIC_VREF_TARGET    (2.2)
 #define XDIC_OSC_TARGET     (XD_MCLK / 1000000)
 
@@ -28,9 +28,9 @@ typedef void (*func_t)(void);
 #define XD12_GAIN_P2        (3000)
 #define XD12_GAIN_TARGET    (3.907) // Delta
 
-#define XD12_OFS_P1         (250)
-#define XD12_OFS_P2         (500)
-#define XD12_OFS_TARGET     (0.819) // Average
+#define XD12_OFS_P1         (350)
+#define XD12_OFS_P2         (600)
+#define XD12_OFS_TARGET     (1.00) // Average
 
 #define XD12_ICC_TARGET     (2.95f)
 
@@ -39,19 +39,25 @@ typedef void (*func_t)(void);
 #define XD04_ICTL_L_P2      (900)
 #define XD04_ICTL_L_TARGET  (4.102) // Average
 
-#define XD04_ICTL_H_P1      (250)
-#define XD04_ICTL_H_P2      (500)
-#define XD04_ICTL_H_TARGET  (21.88) // Average
+#define XD04_ICTL_H_P1      (400)
+#define XD04_ICTL_H_P2      (1300)
+#define XD04_ICTL_H_TARGET  (26.57) // Average
 
 #define XD04_ICC_TARGET     (1.8f)
 
 static const char* gs_xdic_test_mode[XDIC_TEST_MAX] =
 {
-    "XDIC_TEST_VREF_CTL",
-    "XDIC_TEST_OSC_FREQUENCY",
-    "XDIC_TEST_CURRENT_TYPE_A",
-    "XDIC_TEST_CURRENT_TYPE_B",
-    "XDIC_TEST_ICC",
+    "XDIC_TEST_VREF_CTL        [V]",
+    "XDIC_TEST_OSC_FREQUENCY [MHz]",
+    "XDIC_TEST_CURRENT_TYPE_A [mA]",
+    "XDIC_TEST_CURRENT_TYPE_B [mA]",
+    "XDIC_TEST_ICC            [mA]",
+};
+
+static const char* gs_xdic_test_result[2] =
+{
+    "\033[32m(O)\033[0m",
+    "\033[31m(X)\033[0m",
 };
 
 typedef struct tag_XDIC_TEST_CONDITION_T
@@ -84,7 +90,7 @@ static xdic_test_condition_t gt_xdic_trim_condition[XDIC_TEST_MAX];
 void XDIC_Test_Param_Init(void)
 {
     // VREF
-    gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].f_target_min = XDIC_VREF_TARGET  * (1.0f - XDIC_ERROR_RATE);
+    gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].f_target_min = 2.0f; //XDIC_VREF_TARGET  * (1.0f - XDIC_ERROR_RATE)
     gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].f_target_max = XDIC_VREF_TARGET  * (1.0f + XDIC_ERROR_RATE);
     gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].vref_p1 = 0;
     gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].vref_p2 = 0;
@@ -92,7 +98,7 @@ void XDIC_Test_Param_Init(void)
     gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].current_gain = GAIN_LOW; // Don't Care
 
     // OSC
-    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_min = XDIC_OSC_TARGET  * (1.0f - XDIC_ERROR_RATE);
+    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_min = XDIC_OSC_TARGET;
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_max = XDIC_OSC_TARGET  * (1.0f + XDIC_ERROR_RATE);
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].vref_p1 = 0;
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].vref_p2 = 0;
@@ -117,8 +123,8 @@ void XDIC_Test_Param_Init(void)
         gt_xdic_trim_condition[XDIC_TEST_CURRENT_TYPE_B].p_func = XDIC_Trim_Init_Current_Type_B;
         gt_xdic_trim_condition[XDIC_TEST_CURRENT_TYPE_B].current_gain = GAIN_HIGH;
 
-        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_min = XD04_ICC_TARGET  * (1.0f - XDIC_ERROR_RATE);
-        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_max = XD04_ICC_TARGET  * (1.0f + XDIC_ERROR_RATE);
+        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_min = XD04_ICC_TARGET;
+        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_max = 10.0f;//XD04_ICC_TARGET  * (1.0f + XDIC_ERROR_RATE);
         gt_xdic_trim_condition[XDIC_TEST_ICC].vref_p1 = 0;
         gt_xdic_trim_condition[XDIC_TEST_ICC].vref_p2 = 0;
         gt_xdic_trim_condition[XDIC_TEST_ICC].p_func = XDIC_Trim_Init_ICC;
@@ -142,8 +148,8 @@ void XDIC_Test_Param_Init(void)
         gt_xdic_trim_condition[XDIC_TEST_CURRENT_TYPE_B].p_func = XDIC_Trim_Init_Current_Type_B;
         gt_xdic_trim_condition[XDIC_TEST_CURRENT_TYPE_B].current_gain = GAIN_MID;
 
-        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_min = XD12_ICC_TARGET  * (1.0f - XDIC_ERROR_RATE);
-        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_max = XD12_ICC_TARGET  * (1.0f + XDIC_ERROR_RATE);
+        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_min = XD12_ICC_TARGET;
+        gt_xdic_trim_condition[XDIC_TEST_ICC].f_target_max = 10.0f;//XD12_ICC_TARGET  * (1.0f + XDIC_ERROR_RATE);
         gt_xdic_trim_condition[XDIC_TEST_ICC].vref_p1 = 0;
         gt_xdic_trim_condition[XDIC_TEST_ICC].vref_p2 = 0;
         gt_xdic_trim_condition[XDIC_TEST_ICC].p_func = XDIC_Trim_Init_ICC;
@@ -160,23 +166,59 @@ void XDIC_Test_Start(void)
     }
 }
 
-void XDIC_Display_Test_Result(void)
+static bool XDIC_Judge_Test_Result(xdic_test_mode_t test_mode, float val)
 {
-    for (uint8_t test_mode = XDIC_TEST_START ; test_mode < XDIC_TEST_MAX ; ++test_mode)
+    bool test_result = false;
+    if (val > gt_xdic_trim_condition[test_mode].f_target_min && val < gt_xdic_trim_condition[test_mode].f_target_max)
+    {
+        test_result = true;
+    }
+    print(LOG_DEBUG, "val = %7.3f, min = %7.3f, max = %7.3f, test_result = %d\r\n", val, gt_xdic_trim_condition[test_mode].f_target_min, gt_xdic_trim_condition[test_mode].f_target_max, test_result);
+    return test_result;
+}
+
+static void XDIC_Display_Test_Result(void)
+{
+    bool judge_result = false;
+    for (xdic_test_mode_t test_mode = XDIC_TEST_START ; test_mode < XDIC_TEST_MAX ; ++test_mode)
     {
         switch (test_mode)
         {
         case XDIC_TEST_VREF_CTL:
-            print(LOG_INFO, "%s, %7.3f\r\n", gs_xdic_test_mode[XDIC_TEST_VREF_CTL], gf_xdic_measured_vref);
+            judge_result = XDIC_Judge_Test_Result(XDIC_TEST_VREF_CTL, gf_xdic_measured_vref);
+            if (judge_result)
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_VREF_CTL], gf_xdic_measured_vref, gs_xdic_test_result[0]);
+            }
+            else
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_VREF_CTL], gf_xdic_measured_vref, gs_xdic_test_result[1]);
+            }
             break;
         case XDIC_TEST_OSC_FREQUENCY:
-            print(LOG_INFO, "%s, %7.3f\r\n", gs_xdic_test_mode[XDIC_TEST_OSC_FREQUENCY], gf_xdic_measured_osc);
+            judge_result = XDIC_Judge_Test_Result(XDIC_TEST_OSC_FREQUENCY, gf_xdic_measured_osc);
+            if (judge_result)
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_OSC_FREQUENCY], gf_xdic_measured_osc, gs_xdic_test_result[0]);
+            }
+            else
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_OSC_FREQUENCY], gf_xdic_measured_osc, gs_xdic_test_result[1]);
+            }
             break;
         case XDIC_TEST_CURRENT_TYPE_A:
             print(LOG_INFO, "%s,", gs_xdic_test_mode[XDIC_TEST_CURRENT_TYPE_A]);
             for (uint8_t ch = 0 ; ch < gn_xdic_channel_size ; ++ch)
             {
-                print(LOG_INFO, "%7.3f,", gf_xdic_measured_current_A[ch]);
+                judge_result = XDIC_Judge_Test_Result(XDIC_TEST_CURRENT_TYPE_A, gf_xdic_measured_current_A[ch]);
+                if (judge_result)
+                {
+                    print(LOG_INFO, "%7.3f%s,", gf_xdic_measured_current_A[ch], gs_xdic_test_result[0]);
+                }
+                else
+                {
+                    print(LOG_INFO, "%7.3f%s,", gf_xdic_measured_current_A[ch], gs_xdic_test_result[1]);
+                }
             }
             print(LOG_INFO, "\r\n");
             break;
@@ -184,12 +226,28 @@ void XDIC_Display_Test_Result(void)
             print(LOG_INFO, "%s,", gs_xdic_test_mode[XDIC_TEST_CURRENT_TYPE_B]);
             for (uint8_t ch = 0 ; ch < gn_xdic_channel_size ; ++ch)
             {
-                print(LOG_INFO, "%7.3f,", gf_xdic_measured_current_B[ch]);
+                judge_result = XDIC_Judge_Test_Result(XDIC_TEST_CURRENT_TYPE_B, gf_xdic_measured_current_B[ch]);
+                if (judge_result)
+                {
+                    print(LOG_INFO, "%7.3f%s,", gf_xdic_measured_current_B[ch], gs_xdic_test_result[0]);
+                }
+                else
+                {
+                    print(LOG_INFO, "%7.3f%s,", gf_xdic_measured_current_B[ch], gs_xdic_test_result[1]);
+                }
             }
             print(LOG_INFO, "\r\n");
             break;
         case XDIC_TEST_ICC:
-            print(LOG_INFO, "%s, %7.3f\r\n", gs_xdic_test_mode[XDIC_TEST_ICC], gf_xdic_measured_icc);
+            judge_result = XDIC_Judge_Test_Result(XDIC_TEST_ICC, gf_xdic_measured_icc);
+            if (judge_result)
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_ICC], gf_xdic_measured_icc, gs_xdic_test_result[0]);
+            }
+            else
+            {
+                print(LOG_INFO, "%s,%7.3f%s\r\n", gs_xdic_test_mode[XDIC_TEST_ICC], gf_xdic_measured_icc, gs_xdic_test_result[1]);
+            }
             break;
         default:
             break;

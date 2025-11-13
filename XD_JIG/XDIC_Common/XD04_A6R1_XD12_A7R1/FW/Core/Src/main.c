@@ -99,11 +99,17 @@ void btn_process(void)
                 // Button Released
                 if (gt_key_info.press_cnt >= 30)
                 {
+                    #if 0
                     if (gt_key_info.function[gt_key_info.odd_even] != NULL)
                     {
                         gt_key_info.function[gt_key_info.odd_even]();
                     }
                     gt_key_info.odd_even ^= 1;
+                    #endif
+                    if (gt_key_info.function[0] != NULL)
+                    {
+                        gt_key_info.function[0]();
+                    }
                 }
                 gt_key_info.press_cnt = 0;
             }
