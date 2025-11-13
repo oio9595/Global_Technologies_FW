@@ -676,7 +676,7 @@ void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
     us_delay(1);
 
     XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE, gt_xc24_general_regs._r01.ALL);
-    us_delay(XDIC_WRITE_DELAY);
+    us_delay(XDIC_WRITE_DELAY + 20);
 }
 
 uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)

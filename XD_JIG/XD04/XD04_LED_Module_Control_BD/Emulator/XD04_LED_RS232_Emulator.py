@@ -106,7 +106,7 @@ class MacroApp(QWidget):
         length_ver_layout = QVBoxLayout()
         length_ver_layout.addWidget(QLabel("LENGTH"))
         self.length_cb = QComboBox()
-        self.length_cb.addItems([str(i) for i in range(1, 2)])
+        self.length_cb.addItems([str(i) for i in range(1, 4)])
         length_ver_layout.addWidget(self.length_cb)
 
         command_ver_layout = QVBoxLayout()
@@ -210,8 +210,8 @@ class MacroApp(QWidget):
                     packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
                 elif length_val == 3:
                     data_val_1 = int(self.data_label.text().strip())
-                    data_val_2 = data_val_1 + 1
-                    data_val_3 = data_val_2 + 1
+                    data_val_2 = data_val_1 + 20
+                    data_val_3 = data_val_1 + 80
                     checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3) & 0xFF
                     self.checksum_label.setText(f"0x{checksum_val:02X}")
                     packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, checksum_val, eop_val])

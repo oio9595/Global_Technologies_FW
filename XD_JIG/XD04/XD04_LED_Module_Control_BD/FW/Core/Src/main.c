@@ -83,7 +83,7 @@ typedef struct tag_RX_PACKET
     uint8_t sop;
     uint8_t length;
     uint8_t command;
-    uint8_t data[5];
+    uint8_t data[255];
     uint8_t checksum;
     uint8_t eop;
 } rx_packet_t;
@@ -382,19 +382,31 @@ static void Uart_Task(void)
                 print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_ON_SELECT:
-                LED_BAR_On_Select(p_packet->data[0]);
+                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                {
+                    LED_BAR_On_Select(p_packet->data[i]);
+                }
                 print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_OFF_SELECT:
-                LED_BAR_Off_Select(p_packet->data[0]);
+                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                {
+                    LED_BAR_Off_Select(p_packet->data[i]);
+                }
                 print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_ON_SELECT:
-                LED_BLK_On_Select(p_packet->data[0]);
+                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                {
+                    LED_BLK_On_Select(p_packet->data[i]);
+                }
                 print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_OFF_SELECT:
-                LED_BLK_Off_Select(p_packet->data[0]);
+                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                {
+                    LED_BLK_Off_Select(p_packet->data[i]);
+                }
                 print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
         }

@@ -68,7 +68,7 @@ void XDIC_Vsync_Task(void)
         us_delay(100);
         XC24_Turn_On_Sync_Auto();
 
-        us_delay(1500);
+        us_delay(3500);
         XC24_IF_Write_LD();
 
         XDIC_Update_Max_Current_Vref(gf_xd_max_current);
