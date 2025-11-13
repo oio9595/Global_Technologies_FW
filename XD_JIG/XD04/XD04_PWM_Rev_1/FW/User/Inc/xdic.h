@@ -730,6 +730,8 @@ extern void XDIC_Trim_Init_ICTL_H_CH(void);
 extern void XDIC_Set_OTP_Protect(bool en);
 extern void XDIC_Set_OTP_PG_Start(bool en);
 
+extern void XDIC_Sweep_LDO(void);
+
 #ifdef __cplusplus
 }
 #endif

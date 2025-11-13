@@ -67,12 +67,7 @@ typedef struct tag_KEY_INFO
 /* USER CODE BEGIN PV */
 void key_func_1(void)
 {
-    // On LED
-    if (IS_XC24_Support())
-    {
-        XC24_Init();
-    }
-    XDIC_Init();
+    XDIC_Sweep_LDO();
 }
 
 void key_func_2(void)
@@ -1629,27 +1624,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_sweep_vref"))
         {
-            if (IS_XC24_Support())
-            {
-                XC24_Init();
-            }
-            XDIC_Trim_Init();
-
-            XDIC_Trim_Init_LDO_CTL();
-            for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
-            {
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
-                us_delay(50);
-                JigBD_IF_Start_MCU_ADC();
-                uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
-                float vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
-                print(LOG_INFO, "%d, %.3f\r\n", vref, vref_volt);
-
-                if (vref_volt > 1.65f)
-                {
-                    break;
-                }
-            }
+            XDIC_Sweep_LDO();
         }
         else if (Command_is_("5"))
         {

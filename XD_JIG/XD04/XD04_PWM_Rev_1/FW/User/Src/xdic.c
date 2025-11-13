@@ -967,3 +967,29 @@ void XDIC_Set_OTP_PG_Start(bool en)
     }
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_RD_PROG, gt_xdic_general_regs._r3D.val);
 }
+
+void XDIC_Sweep_LDO(void)
+{
+    if (IS_XC24_Support())
+    {
+        XC24_Init();
+    }
+    XDIC_Trim_Init();
+
+    XDIC_Trim_Init_LDO_CTL();
+    for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
+    {
+        XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
+        //us_delay(2000);
+        us_delay(5000);
+        JigBD_IF_Start_MCU_ADC();
+        uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+        float vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
+        print(LOG_INFO, "%d, %.3f\r\n", vref, vref_volt);
+
+        if (vref_volt > 1.65f)
+        {
+            break;
+        }
+    }
+}
