@@ -72,7 +72,8 @@ void key_func_1(void)
     {
         XC24_Init();
     }
-    XDIC_Init();
+    XDIC_Trim_Init();
+    XDIC_Sweep_Vref();
 }
 
 void key_func_2(void)
@@ -1654,27 +1655,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_sweep_vref"))
         {
-            if (IS_XC24_Support())
-            {
-                XC24_Init();
-            }
-            XDIC_Trim_Init();
-
-            XDIC_Trim_Init_LDO_CTL();
-            for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
-            {
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
-                LL_mDelay(10);
-                JigBD_IF_Start_MCU_ADC();
-                uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
-                float vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
-                print(LOG_INFO, "\r\n %d, %.3f\r\n", vref, vref_volt);
-
-                if (vref_volt > 1.65f)
-                {
-                    break;
-                }
-            }
+            XDIC_Sweep_Vref();
         }
         else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
         {
@@ -1812,6 +1793,18 @@ static void TaskDebugUart(void)
             else
             {
                 print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
+            }
+        }
+        else if (Command_Param_is_("delay", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 100)
+            {
+                XDIC_Set_Sweep_Delay(u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set Delay to - [%u ms]\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of delay [%u] [0 - %u]\r\n", u32_recv_param[0], 100);
             }
         }
         else if (Command_is_("reset"))

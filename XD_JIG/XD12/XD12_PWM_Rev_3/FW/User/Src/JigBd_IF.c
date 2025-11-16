@@ -624,6 +624,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     {
         DEBUG_LO();
         print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
+        gb_xdic_initial_failed = true;
     }
     else
     {

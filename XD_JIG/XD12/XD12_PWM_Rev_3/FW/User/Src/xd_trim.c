@@ -15,6 +15,7 @@
 #include "JigBd_IF.h"
 #include "ads124s08.h"
 
+#include "math.h"
 /* ---------------------------------------------------------------------------------------------------------------------- */
 /* Trim Parameter */
 #define TRIM_REGISTER_SAVED_CNT     (5)
@@ -54,11 +55,12 @@
 #define XD_SCREEN_ANA               (0)
 #define XD_SCREEN_MAX_CURRENT       (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
-#define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
+//#define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
+#define XD_SCREEN_ANA_GAP           (1)
 
 //Point 1
-#define COMP_A (0.998164f)
-#define COMP_B (-46.3f)
+#define COMP_A (1.0143f)
+#define COMP_B (-49.1f)
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 typedef struct tag_XDIC_SCREEN_PARAM_T
@@ -1070,7 +1072,6 @@ void XD_Trim_Task(void)
 /* END - TRIM_PROCEDURE_RUN   *****************************************/
 void XD_Screen_Task(void)
 {
-    float comp_ana = 0;
     if (gn_task_delay)
     {
         --gn_task_delay;
@@ -1083,7 +1084,7 @@ void XD_Screen_Task(void)
             JigBD_IF_Detect_XC24();
             XDIC_Trim_Init();
 
-            gt_screen_gain = GAIN_HIGH;
+            gt_screen_gain = GAIN_MID;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
             gn_xd_adc_channel = 0;
@@ -1098,8 +1099,8 @@ void XD_Screen_Task(void)
 
             //Point 2
             //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_4mA);
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_12mA);
+            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
+            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_12mA);
             //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_16mA);
             //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
             //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
@@ -1112,21 +1113,21 @@ void XD_Screen_Task(void)
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
-            print(LOG_INFO, "data,  comp,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
+            print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
+#if 0
+            if (gn_xd_screen_ana == 329)
+            {
+                gn_xd_screen_ana = 283;
+            }
+            else
+            {
+                gn_xd_screen_ana = 329;
+            }
+#endif
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
-                if (comp_ana < 0)
-                {
-                    comp_ana = 0;
-                }
-                else if (comp_ana > 4095)
-                {
-                    comp_ana = 4095;
-                }
-                //XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
-                XDIC_Set_Max_Curr_Vref((uint16_t)comp_ana);
+                XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
                 XDIC_Set_Max_Current_Level(gn_xd_screen_max_current);
             #endif
@@ -1159,28 +1160,23 @@ void XD_Screen_Task(void)
                 }
 
                 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                    comp_ana = (COMP_A * gn_xd_screen_ana + COMP_B) + 0.5f;
-                    if (comp_ana < 0)
-                    {
-                        comp_ana = 0;
-                    }
-                    else if (comp_ana > 4095)
-                    {
-                        comp_ana = 4095;
-                    }
-
-                    print(LOG_INFO, "%4u, %4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_ana, ((uint16_t)comp_ana),\
+                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_ana, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
                         gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
                         gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                    gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
-                    if (gn_xd_screen_ana > 0xFFF)
+                    if (gn_xd_screen_ana == 4095)
                     {
                         gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                     }
+
+                    gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
+                    if (gn_xd_screen_ana > 0xFFF)
+                    {
+                        gn_xd_screen_ana = 4095;
+                    }
                 #else
-                    print(LOG_INFO, "%4u, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\r\n", gn_xd_screen_max_current, \
+                    print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_max_current, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],
                         gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
                         gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);

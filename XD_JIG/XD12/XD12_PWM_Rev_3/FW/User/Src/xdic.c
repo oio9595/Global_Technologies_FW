@@ -48,6 +48,8 @@
 #define XDIC_OFS_RNG                (0x03)
 #define XDIC_OSC_RESERVED           ((XDIC_BGR_TC << 2) | (XDIC_OFS_RNG << 0))
 
+volatile bool gb_xdic_initial_failed;
+
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
 
@@ -192,6 +194,8 @@ static short_level_t gt_xd_short_level;
 static fb_level_t gt_xd_fb_level;
 
 static uint16_t gn_xd_delay_ch[XD_CH_SIZE] = {0, };
+
+uint32_t gn_xd_vref_sweep_delay = 5000;
 
 static void XDIC_Set_Delay_CH(void);
 
@@ -488,7 +492,7 @@ void XDIC_Read_All_Registers(void)
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
 
-    //XDIC_Dump_All_Registers();
+    XDIC_Dump_All_Registers();
 }
 
 void XDIC_Param_Init(void)
@@ -530,7 +534,7 @@ void XDIC_Init(void)
 
     XDIC_Param_Init();
 
-    //JigBD_IF_Reset_Command();
+    JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
@@ -607,6 +611,18 @@ void XDIC_Init(void)
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
     XDIC_Read_All_Registers();
+
+
+    print(LOG_INFO, "\r\n\r\n\r\n\r\n\r\n\r\n\r\n==================== XDIC Initialization Result ====================\r\n");
+
+    if (gb_xdic_initial_failed == true)
+    {
+        print(LOG_INFO, "XDIC Initial Failed !!\r\n");
+    }
+    else
+    {
+        print(LOG_INFO, "XDIC Initial Success !!\r\n");
+    }
 }
 
 void XDIC_Trim_Param_Init(void)
@@ -627,7 +643,7 @@ void XDIC_Trim_Init(void)
 
     XDIC_Trim_Param_Init();
 
-    //JigBD_IF_Reset_Command();
+    JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
@@ -976,4 +992,32 @@ void XDIC_Set_OTP_PG_Start(bool en)
         gt_xdic_general_regs._r3D.otp_pg_start = 0;
     }
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_RD_PROG, gt_xdic_general_regs._r3D.val);
+}
+
+void XDIC_Sweep_Vref(void)
+{
+    uint16_t vref_adc = 0;
+    float vref_volt = 0.0f;
+
+    XDIC_Trim_Init_LDO_CTL();
+
+    for (uint16_t vref = 0 ; vref < 0x40 ; ++vref)
+    {
+        XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
+        us_delay(gn_xd_vref_sweep_delay);
+        JigBD_IF_Start_MCU_ADC();
+        vref_adc =  JigBD_IF_Get_MCU_ADC();
+        vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
+        print(LOG_INFO, "%d, %.3f\r\n", vref, vref_volt);
+
+        if (vref_volt > 1.65f)
+        {
+            break;
+        }
+    }
+}
+
+void XDIC_Set_Sweep_Delay(uint16_t delay_ms)
+{
+    gn_xd_vref_sweep_delay = delay_ms * 1000;
 }

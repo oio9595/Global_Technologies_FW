@@ -19,6 +19,9 @@ extern "C" {
 #define REG_LIMIT_OFS   ( 63) /* 6-bit */
 #define REG_LIMIT_GAIN  (127) /* 7-bit */
 
+extern volatile bool gb_xdic_initial_failed;
+extern uint32_t gn_xd_vref_sweep_delay;
+
 typedef enum tag_XDIC_REG_TYPE_T
 {
     XDIC_REG_TYPE_NON_TRIM = 0,
@@ -767,6 +770,8 @@ extern void XDIC_Trim_Init_GAIN_CH(void);
 
 extern void XDIC_Set_OTP_Protect(bool en);
 extern void XDIC_Set_OTP_PG_Start(bool en);
+extern void XDIC_Sweep_Vref(void);
+extern void XDIC_Set_Sweep_Delay(uint16_t delay_ms);
 
 #ifdef __cplusplus
 }
