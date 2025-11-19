@@ -56,7 +56,7 @@
 #define XD_SCREEN_MAX_CURRENT       (1)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
 //#define XD_SCREEN_ANA_GAP           ((0x0FFF + 1) / 256 - 1)
-#define XD_SCREEN_ANA_GAP           (1)
+#define XD_SCREEN_ANA_GAP           (100)
 
 //Point 1
 #define COMP_A (1.0143f)
@@ -147,6 +147,8 @@ static current_gain_t gt_screen_gain;
 
 #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
     static uint32_t gn_xd_screen_ana;
+    static uint16_t gn_xd_ana_table[3] = { 300, 1000, 4095 };
+    static uint8_t gn_xd_ana_table_idx;
 #else
     static uint16_t gn_xd_screen_max_current;
 #endif
@@ -163,6 +165,8 @@ static trim_algo_param_t gt_trim_algorithm;
 static xdic_trim_condition_t gt_xdic_trim_condition[XD_TRIM_MAX];
 
 static screen_param_t gt_xd_screen_param[XDIC_SCREEN_POINT_SIZE];
+
+static uint8_t gn_xd_max_curr_lvl_cnt;
 
 void XD_Screen_Param_Init(void)
 {
@@ -1097,36 +1101,25 @@ void XD_Screen_Task(void)
 
             XDIC_Trim_Init_OFS_CH();
 
-            //Point 2
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_4mA);
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_8mA);
-            XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_12mA);
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_16mA);
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_24mA);
-            //XDIC_Set_Max_Current_Level(DEV_MAX_CURR_LEVEL_32mA);
-
             JigBD_IF_VLED_9V_EN(PWR_ON);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-            gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
+            gt_xd_screen_step = XD_SCREEN_STEP_SET_MAX_CURR_LVL;
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
-                print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
             #endif
-            print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
+                print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
+            break;
+        case XD_SCREEN_STEP_SET_MAX_CURR_LVL :
+            gn_xd_screen_ana = 0;
+            gn_xd_ana_table_idx = 0;
+            XDIC_Set_Max_Current_Level(((dev_max_curr_level_t)(DEV_MAX_CURR_LEVEL_4mA + gn_xd_max_curr_lvl_cnt)));
+            print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
+            gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
             break;
         case XD_SCREEN_STEP_CHANGE_OUTPUT :
-#if 0
-            if (gn_xd_screen_ana == 329)
-            {
-                gn_xd_screen_ana = 283;
-            }
-            else
-            {
-                gn_xd_screen_ana = 329;
-            }
-#endif
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
+                gn_xd_screen_ana = gn_xd_ana_table[gn_xd_ana_table_idx];
                 XDIC_Set_Max_Curr_Vref(gn_xd_screen_ana);
             #else
                 XDIC_Set_Max_Current_Level(gn_xd_screen_max_current);
@@ -1167,7 +1160,15 @@ void XD_Screen_Task(void)
 
                     if (gn_xd_screen_ana == 4095)
                     {
-                        gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                        ++gn_xd_max_curr_lvl_cnt;
+                        if (gn_xd_max_curr_lvl_cnt > 5)
+                        {
+                            gt_xd_screen_step = XD_SCREEN_STEP_STOP;
+                        }
+                        else
+                        {
+                            gt_xd_screen_step = XD_SCREEN_STEP_SET_MAX_CURR_LVL;
+                        }
                     }
 
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
@@ -1175,6 +1176,7 @@ void XD_Screen_Task(void)
                     {
                         gn_xd_screen_ana = 4095;
                     }
+                    ++gn_xd_ana_table_idx;
                 #else
                     print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_max_current, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],

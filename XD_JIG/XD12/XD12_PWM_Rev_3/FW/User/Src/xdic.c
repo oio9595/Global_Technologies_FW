@@ -612,7 +612,6 @@ void XDIC_Init(void)
 
     XDIC_Read_All_Registers();
 
-
     print(LOG_INFO, "\r\n\r\n\r\n\r\n\r\n\r\n\r\n==================== XDIC Initialization Result ====================\r\n");
 
     if (gb_xdic_initial_failed == true)
@@ -690,6 +689,17 @@ void XDIC_Trim_Init(void)
     }
     XDIC_Set_OTP_Protect(false);
     XDIC_Read_All_Registers();
+
+    print(LOG_INFO, "\r\n\r\n\r\n\r\n\r\n\r\n\r\n==================== XDIC Initialization Result ====================\r\n");
+
+    if (gb_xdic_initial_failed == true)
+    {
+        print(LOG_INFO, "XDIC Initial Failed !!\r\n");
+    }
+    else
+    {
+        print(LOG_INFO, "XDIC Initial Success !!\r\n");
+    }
 }
 
 /* ================================================================================================================================================= */
