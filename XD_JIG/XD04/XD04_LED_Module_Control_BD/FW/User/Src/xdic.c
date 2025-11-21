@@ -187,12 +187,20 @@ void XDIC_Read_All_Registers(void)
     XDIC_Dump_All_Registers();
 }
 
-void XDIC_Update_Max_Current_Vref(float in_current)
+void XDIC_Update_Max_Current_Vref(float in_current, bool low_current_mode)
 {
-    uint16_t max_curr_vref = (uint16_t)(in_current * 4095.0f / 128.0f + 0.5f);
-    if (max_curr_vref > 4095)
+    uint16_t max_curr_vref = 0;
+    if (low_current_mode)
     {
-        max_curr_vref = 4095;
+        max_curr_vref = 1;
+    }
+    else
+    {
+        max_curr_vref = (uint16_t)(in_current * 4095.0f / 128.0f + 0.5f);
+        if (max_curr_vref > 4095)
+        {
+            max_curr_vref = 4095;
+        }
     }
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, max_curr_vref);
 }

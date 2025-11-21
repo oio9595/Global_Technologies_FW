@@ -19,6 +19,8 @@ bool gb_xd_led_enable_table[TOTAL_BLOCK_SIZE] = {false, };
 
 static uint8_t gn_led_current_increase_cnt;
 
+static bool gb_led_low_current_mode;
+
 void Vsync_Timer_Start(void)
 {
     LL_TIM_EnableIT_UPDATE(TIM8);
@@ -71,7 +73,7 @@ void XDIC_Vsync_Task(void)
         us_delay(3500);
         XC24_IF_Write_LD();
 
-        XDIC_Update_Max_Current_Vref(gf_xd_max_current);
+        XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
 
         #if 0
             uint16_t fault_data[6] = {0, };
@@ -186,6 +188,18 @@ void LED_Current_Increase(void)
     if (gn_led_current_increase_cnt > 8)
     {
         gn_led_current_increase_cnt = 0;
+    }
+}
+
+void LED_Low_Current_Mode(uint8_t on_off)
+{
+    if (on_off)
+    {
+        gb_led_low_current_mode = true;
+    }
+    else
+    {
+        gb_led_low_current_mode = false;
     }
 }
 

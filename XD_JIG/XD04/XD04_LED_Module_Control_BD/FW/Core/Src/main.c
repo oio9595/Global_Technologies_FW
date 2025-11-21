@@ -38,26 +38,27 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define PRINT_BUFF_SIZE     256
-#define RX_BUFF_SIZE        32 // must be 2^n
-#define RX_PACKET_SIZE      32 // must be 2^n
+#define RX_BUFF_SIZE        256 // must be 2^n
+#define RX_PACKET_SIZE      32  // must be 2^n
 
-#define RX_TIMEOUT_MS       5
+#define RX_TIMEOUT_MS       20
 
 #define PACKET_SIZE_EXCEPT_DATA_FIELD   5   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
 #define PACKET_SIZE_SOP_TO_COMMAND      3   // SOP(1) + LEN(1) + CMD(1)
 
 enum tag_PROTOCOL_LIST
 {
-    SOP                 = 0xA5, // 0xA5
-    EOP                 = 0x5A, // 0x5A
-    CMD_INIT            = 0x00, // 0x00
-    CMD_QUIT            = 0xFF, // 0xFF
-    CMD_STATUS          = 0xF0, // 0xF0
-    CMD_CURRENT         = 0x01, // 0x01
-    CMD_BAR_ON_SELECT   = 0x10, // 0x10
-    CMD_BAR_OFF_SELECT  = 0x20, // 0x20
-    CMD_BLK_ON_SELECT   = 0x40, // 0x40
-    CMD_BLK_OFF_SELECT  = 0x80, // 0x80
+    SOP                     = 0xA5, // 0xA5
+    EOP                     = 0x5A, // 0x5A
+    CMD_INIT                = 0x00, // 0x00
+    CMD_QUIT                = 0xFF, // 0xFF
+    CMD_STATUS              = 0xF0, // 0xF0
+    CMD_CURRENT             = 0x01, // 0x01
+    CMD_BAR_ON_SELECT       = 0x10, // 0x10
+    CMD_BAR_OFF_SELECT      = 0x20, // 0x20
+    CMD_BLK_ON_SELECT       = 0x40, // 0x40
+    CMD_BLK_OFF_SELECT      = 0x80, // 0x80
+    CMD_LOW_CURRENT_MODE    = 0x02, // 0x02
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
@@ -323,6 +324,8 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                     p_packet->checksum = temp_packet.checksum;
                     p_packet->eop = temp_packet.eop;
 
+                    print(LOG_PC, "\r\n\r\n%u\r\n\r\n", length);
+
                     comm_tx_response(1);
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
@@ -408,6 +411,10 @@ static void Uart_Task(void)
                     LED_BLK_Off_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data[0]);
+                break;
+            case CMD_LOW_CURRENT_MODE:
+                LED_Low_Current_Mode(p_packet->data[0]);
+                print(LOG_PC, "CMD_LOW_CURRENT_MODE: %u\r\n", p_packet->data[0]);
                 break;
         }
 
