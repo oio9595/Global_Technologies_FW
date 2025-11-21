@@ -305,13 +305,6 @@ void DMA2_Stream1_IRQHandler(void)
         LL_DMA_ClearFlag_TC1(DMA2);
         LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
 
-        Serialize_Tx_Done();
-        if (gb_pwm_is_rx_flag)
-        {
-            DEBUG_HI();
-            Serialize_Rx_Start(XDIC_READ_RECV_BITS);
-        }
-
         gb_pwm_dma_tx_flag = false;
     }
     else if (LL_DMA_IsActiveFlag_TE1(DMA2) == 1)

@@ -14,12 +14,30 @@ extern "C" {
 
 #include "types.h"
 
-#define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
-#define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
-#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
-#define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
-#define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
-#define CURRENT_SENSE_R_ICC         (22.1f)   /* ohm */
+#define BOARD_NUM   1 // Rumens 1
+
+#if (BOARD_NUM == 1)
+    #define CURRENT_SENSE_R_LOW         (3914.0f)   /* ohm */
+    #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
+    #define CURRENT_SENSE_R_HIGH        (13.2f)     /* ohm */
+    #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
+    #define CURRENT_SENSE_RO            (3307.0f)   /* ohm */
+    #define CURRENT_SENSE_R_ICC         (22.15f)    /* ohm */
+#elif (BOARD_NUM == 2)
+    #define CURRENT_SENSE_R_LOW         (3908.0f)   /* ohm */
+    #define CURRENT_SENSE_R_MID         (200.8f)    /* ohm */
+    #define CURRENT_SENSE_R_HIGH        (13.1f)     /* ohm */
+    #define CURRENT_SENSE_RIN           (2203.0f)   /* ohm */
+    #define CURRENT_SENSE_RO            (3295.0f)   /* ohm */
+    #define CURRENT_SENSE_R_ICC         (22.14f)    /* ohm */
+#else
+    #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
+    #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
+    #define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
+    #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
+    #define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
+    #define CURRENT_SENSE_R_ICC         (22.0f)    /* ohm */
+#endif
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
@@ -42,7 +60,6 @@ typedef enum tag_CURRENT_GAIN_T
 } current_gain_t;
 
 extern volatile bool gb_pwm_dma_tx_flag;
-extern volatile bool gb_pwm_is_rx_flag;
 extern volatile uint16_t gn_xd_rx_timeout;
 extern volatile bool gb_xd_timeout_event;
 
@@ -159,7 +176,6 @@ static inline void Serialize_Rx_Start(uint32_t len)
 
     /* output enable set LOW */
     PWM_SWITCH_LO();
-    gb_pwm_is_rx_flag = false;
 }
 
 /* END   - INTERFACE FUNCTIONS */

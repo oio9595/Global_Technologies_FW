@@ -203,7 +203,7 @@ void XD04_Init(void)
 
     XD04_Param_Init();
 
-    //JigBD_IF_Reset_Command();
+    JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xd04_addr_t xd04_addr = XD04_ADDR_RESET_ID ; xd04_addr < XD04_ADDR_MAX ; ++xd04_addr)

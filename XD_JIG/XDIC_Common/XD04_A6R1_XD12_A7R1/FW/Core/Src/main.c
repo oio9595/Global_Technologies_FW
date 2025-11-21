@@ -350,6 +350,7 @@ int main(void)
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
     comm_init();
+    XDIC_Detect_Type();
 
   /* USER CODE END 2 */
 

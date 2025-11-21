@@ -19,9 +19,10 @@
 typedef void (*func_t)(void);
 
 /* XDIC Common Spec */
-#define XDIC_ERROR_RATE     (0.015f) // 1.5%
+#define XDIC_ERROR_RATE     (0.026f) // 2.6%
 #define XDIC_VREF_TARGET    (2.2)
-#define XDIC_OSC_TARGET     (XD_MCLK / 1000000)
+#define XDIC_OSC_TARGET     (39.36f)
+#define XDIC_OSC_ERROR_RATE (0.02f) // 2.0%
 
 /* XD12 Current Spec */
 #define XD12_GAIN_P1        (1000)
@@ -98,8 +99,8 @@ void XDIC_Test_Param_Init(void)
     gt_xdic_trim_condition[XDIC_TEST_VREF_CTL].current_gain = GAIN_LOW; // Don't Care
 
     // OSC
-    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_min = XDIC_OSC_TARGET;
-    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_max = XDIC_OSC_TARGET  * (1.0f + XDIC_ERROR_RATE);
+    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_min = XDIC_OSC_TARGET  * (1.0f - XDIC_OSC_ERROR_RATE);
+    gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].f_target_max = XDIC_OSC_TARGET  * (1.0f + XDIC_OSC_ERROR_RATE);
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].vref_p1 = 0;
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].vref_p2 = 0;
     gt_xdic_trim_condition[XDIC_TEST_OSC_FREQUENCY].p_func = XDIC_Trim_Init_OSC;
@@ -275,6 +276,7 @@ void XDIC_Test_Task(void)
                     XC24_Init();
                 }
                 XDIC_Init();
+                gt_xdic_test_mode = XDIC_TEST_VREF_CTL;
                 gt_xdic_test_step = XDIC_TEST_STEP_MODE_INIT;
                 break;
             case XDIC_TEST_STEP_MODE_INIT:
@@ -367,18 +369,23 @@ void XDIC_Test_Task(void)
                 {
                 case XDIC_TEST_VREF_CTL:
                     JigBD_IF_Start_MCU_ADC();
+                    gn_task_delay = 2;
                     break;
                 case XDIC_TEST_OSC_FREQUENCY:
                     JigBD_IF_Start_Input_Capture();
+                    gn_task_delay = 110;
                     break;
                 case XDIC_TEST_CURRENT_TYPE_A:
                     ADS114S08_Set_Start(1);
+                    gn_task_delay = 2;
                     break;
                 case XDIC_TEST_CURRENT_TYPE_B:
                     ADS114S08_Set_Start(1);
+                    gn_task_delay = 2;
                     break;
                 case XDIC_TEST_ICC:
                     ADS114S08_Set_Start(1);
+                    gn_task_delay = 2;
                     break;
                 default:
                     break;
@@ -393,7 +400,7 @@ void XDIC_Test_Task(void)
                     gt_xdic_test_step = XDIC_TEST_STEP_CONVERSION_ADC_TO_VALUE;
                     break;
                 case XDIC_TEST_OSC_FREQUENCY:
-                    JigBD_IF_Wait_Input_Capture_Done();
+                    //JigBD_IF_Wait_Input_Capture_Done();
                     JigBD_IF_Stop_Input_Capture();
                     gn_xdic_temp_adc[0] = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
                     gt_xdic_test_step = XDIC_TEST_STEP_CONVERSION_ADC_TO_VALUE;
@@ -411,6 +418,7 @@ void XDIC_Test_Task(void)
                     {
                         gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                     }
+                    XDIC_Set_Max_Curr_Vref(0);
                     break;
                 case XDIC_TEST_CURRENT_TYPE_B:
                     ADS114S08_Wait_Done();
@@ -425,6 +433,7 @@ void XDIC_Test_Task(void)
                     {
                         gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                     }
+                    XDIC_Set_Max_Curr_Vref(0);
                     break;
                 case XDIC_TEST_ICC:
                     ADS114S08_Wait_Done();

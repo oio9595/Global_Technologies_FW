@@ -203,7 +203,7 @@ void XD12_Init(void)
 
     XD12_Param_Init();
 
-    //JigBD_IF_Reset_Command();
+    JigBD_IF_Reset_Command();
     JigBD_IF_IdGen_Command();
 
     for (xd12_addr_t xd12_addr = XD12_ADDR_RESET_ID ; xd12_addr < XD12_ADDR_MAX ; ++xd12_addr)

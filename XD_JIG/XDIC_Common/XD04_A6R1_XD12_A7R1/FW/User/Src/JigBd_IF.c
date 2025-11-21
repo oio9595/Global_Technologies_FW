@@ -50,7 +50,6 @@ volatile uint16_t gn_xd_rx_timeout;
 volatile bool gb_xd_timeout_event;
 
 volatile bool gb_pwm_dma_tx_flag;
-volatile bool gb_pwm_is_rx_flag;
 
 static double gf_internal_freq_Hz;
 
@@ -248,93 +247,139 @@ void JigBD_IF_Change_Current_Gain(current_gain_t gain)
 
 void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 {
-    switch (in_output_ch)
+    if (gb_xdic_type_is_xd04)
     {
-    case XDIC_CH_01 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_02 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_03 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_04 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_05 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_06 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_07 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_08 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_LO();
-        break;
-    case XDIC_CH_09 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_HI();
-        break;
-    case XDIC_CH_10 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_HI();
-        break;
-    case XDIC_CH_11 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_HI();
-        break;
-    case XDIC_CH_12 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_LO();
-        ENABLE_SELECT4_HI();
-        break;
-    case XDIC_CH_MAX :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_HI();
-        break;
-    default :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_HI();
-        ENABLE_SELECT3_HI();
-        ENABLE_SELECT4_HI();
-        print(LOG_ERROR, "\r\nERROR:JigBD_IF_Select_Output_Ch(%d)-INPUT WRONG!!\r\n", in_output_ch);
-        break;
+        switch (in_output_ch)
+        {
+            case XDIC_CH_01 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_02 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_03 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_04 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_MAX :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_HI();
+                break;
+            default :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_HI();
+                print(LOG_ERROR, "\r\nERROR:JigBD_IF_Select_Output_Ch(%d)-INPUT WRONG!!\r\n", in_output_ch);
+                break;
+        }
+    }
+    else
+    {
+        switch (in_output_ch)
+        {
+            case XDIC_CH_01 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_02 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_03 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_04 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_05 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_06 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_07 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_08 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_LO();
+                break;
+            case XDIC_CH_09 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_10 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_LO();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_11 :
+                ENABLE_SELECT1_LO();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_12 :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_LO();
+                ENABLE_SELECT4_HI();
+                break;
+            case XDIC_CH_MAX :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_HI();
+                break;
+            default :
+                ENABLE_SELECT1_HI();
+                ENABLE_SELECT2_HI();
+                ENABLE_SELECT3_HI();
+                ENABLE_SELECT4_HI();
+                print(LOG_ERROR, "\r\nERROR:JigBD_IF_Select_Output_Ch(%d)-INPUT WRONG!!\r\n", in_output_ch);
+                break;
+        }
     }
 }
 
@@ -562,7 +607,6 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
@@ -596,7 +640,6 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
-    gb_pwm_is_rx_flag = true;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
@@ -644,7 +687,6 @@ static void MCU_IF_IdGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
@@ -673,7 +715,6 @@ static void MCU_IF_SyncGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
 
     while (gb_pwm_dma_tx_flag) {}
