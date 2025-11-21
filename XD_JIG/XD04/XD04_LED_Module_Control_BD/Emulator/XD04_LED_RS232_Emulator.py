@@ -26,6 +26,7 @@ commands = {
     "0x20 (Bar Off Select)": 0x20,
     "0x40 (Block On Select)": 0x40,
     "0x80 (Block Off Select)": 0x80,
+    "0x02 (Low Current Mode)": 0x02,
 }
 
 class MacroApp(QWidget):
@@ -105,9 +106,9 @@ class MacroApp(QWidget):
 
         length_ver_layout = QVBoxLayout()
         length_ver_layout.addWidget(QLabel("LENGTH"))
-        self.length_cb = QComboBox()
-        self.length_cb.addItems([str(i) for i in range(1, 4)])
-        length_ver_layout.addWidget(self.length_cb)
+        self.length_label = QLineEdit()
+        self.length_label.setText("1")
+        length_ver_layout.addWidget(self.length_label)
 
         command_ver_layout = QVBoxLayout()
         command_ver_layout.addWidget(QLabel("COMMAND"))
@@ -134,7 +135,7 @@ class MacroApp(QWidget):
         eop_ver_layout.addWidget(self.eop_cb)
 
         self.sop_cb.setFixedWidth(80)
-        self.length_cb.setFixedWidth(80)
+        self.length_label.setFixedWidth(80)
         self.command_cb.setFixedWidth(200)
         self.data_label.setFixedWidth(80)
         self.checksum_label.setFixedWidth(80)
@@ -192,11 +193,12 @@ class MacroApp(QWidget):
         if self.thread_running :
             try:
                 sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = int(self.length_cb.currentText())
+                length_val = int(self.length_label.text().strip())
                 # command_val = int(self.command_cb.currentText(), 16)
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
                 eop_val = int(self.eop_cb.currentText(), 16)
+                """
                 if length_val == 1:
                     data_val = int(self.data_label.text().strip())
                     checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
@@ -210,12 +212,31 @@ class MacroApp(QWidget):
                     packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
                 elif length_val == 3:
                     data_val_1 = int(self.data_label.text().strip())
-                    data_val_2 = data_val_1 + 20
-                    data_val_3 = data_val_1 + 80
+                    data_val_2 = data_val_1 + 1
+                    data_val_3 = data_val_1 + 2
                     checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3) & 0xFF
                     self.checksum_label.setText(f"0x{checksum_val:02X}")
                     packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, checksum_val, eop_val])
+                elif length_val == 4:
+                    data_val_1 = int(self.data_label.text().strip())
+                    data_val_2 = data_val_1 + 1
+                    data_val_3 = data_val_1 + 2
+                    data_val_4 = data_val_1 + 3
+                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3 + data_val_4) & 0xFF
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, data_val_4, checksum_val, eop_val])
+                """
+                data_val_1 = int(self.data_label.text().strip())
 
+                # length 만큼 data 값 생성 (data_val_1, data_val_1+1, data_val_1+2, ...)
+                data_list = [data_val_1 + i for i in range(length_val)]
+
+                # 체크섬 계산
+                checksum_val = (sop_val + length_val + command_val + sum(data_list)) & 0xFF
+                self.checksum_label.setText(f"0x{checksum_val:02X}")
+
+                # 패킷 생성
+                packet = bytes([sop_val, length_val, command_val] + data_list + [checksum_val, eop_val])
                 self.ser.write(packet)
                 self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
             except ValueError:
@@ -228,7 +249,7 @@ class MacroApp(QWidget):
         if self.thread_running :
             try:
                 sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = int(self.length_cb.currentText())
+                length_val = int(self.length_label.text().strip())
                 # command_val = int(self.command_cb.currentText(), 16)
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
@@ -250,7 +271,7 @@ class MacroApp(QWidget):
         if self.thread_running :
             try:
                 sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = int(self.length_cb.currentText())
+                length_val = int(self.length_label.text().strip())
                 # command_val = int(self.command_cb.currentText(), 16)
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
