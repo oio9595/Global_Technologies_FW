@@ -674,7 +674,7 @@ void sal_init(void)
     uint32_t* p_buffer = sal_get_rgb_buffer();
     for (uint8_t idx = 0 ; idx < 100 ; ++idx)
     {
-        *(p_buffer + idx) = ((10 << 16) | (10 << 8) | (10 << 0));
+        *(p_buffer + idx) = ((255 << 16) | (255 << 8) | (255 << 0));
     }
 
     gb_demo_start_flag = true;
@@ -1564,14 +1564,80 @@ static void sal_set_dimming_buffer()
     }
 }
 
+void sal_temperature_compensation(void)
+{
+    static uint16_t prev_curr_max_lvl = 0;
+    _sal_single_ended_info_t _info_ = {0, };
+    uint32_t temp_adc[10] = {0, };
+    uint32_t avg_temp_adc = 0;
+    float temp_c = 0.0f;
+    for (uint8_t id = 0 ; id < 10 ; ++id)
+    {
+        _info_.dev_id = (id + 2);
+        _info_.command = CMD_SAL_READ_TEMP;
+        _info_.data = 0;
+        _info_.data_size = 12;
+        temp_adc[id] = sal_read_reg_single_ended(&_info_);
+        avg_temp_adc += temp_adc[id];
+    }
+    avg_temp_adc = avg_temp_adc / 10;
+    temp_c = 30.0f + (((int)avg_temp_adc - 512) / 4.05f);
+
+    gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = SAL_R_MAX_CURR;
+    gt_sal_cmd_data.curr_max_lvl.g_curr_max_lvl = SAL_G_MAX_CURR;
+    gt_sal_cmd_data.curr_max_lvl.b_curr_max_lvl = SAL_B_MAX_CURR;
+
+    if (temp_c < 50.0f)
+    {
+        gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = (SAL_R_MAX_CURR + 0); //B
+    }
+    else if (temp_c < 60)
+    {
+        gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = (SAL_R_MAX_CURR + 1); //C
+    }
+    else if (temp_c < 80)
+    {
+        gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = (SAL_R_MAX_CURR + 2); //D
+    }
+    else if (temp_c < 100)
+    {
+        gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = (SAL_R_MAX_CURR + 3); //E
+    }
+    else
+    {
+        gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl = (SAL_R_MAX_CURR + 4); //F
+    }
+
+    //if (prev_curr_max_lvl != gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl)
+    {
+        _sal_single_ended_info_t _sal_info_ = {0, };
+        _sal_info_.dev_id = BROADCAST;
+        _sal_info_.command = CMD_SAL_SET_CURR_MAX_LVL;
+        _sal_info_.data_size = 12;
+        _sal_info_.data = gt_sal_cmd_data.curr_max_lvl.val;
+        sal_write_reg_single_ended(&_sal_info_);
+        print(LOG_LV_INFO, "Change Max level to : %X\r\n", gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl);
+        prev_curr_max_lvl = gt_sal_cmd_data.curr_max_lvl.r_curr_max_lvl;
+    }
+    print(LOG_LV_INFO, "Temp ADC AVG : %u, Temp C : %.2f\r\n\r\n\r\n", avg_temp_adc, temp_c);
+}
+
 void sal_demo_process(void)
 {
+    static uint8_t tick = 0;
     if (gb_sal_sync_flag == true)
     {
         LED_HI();
         sal_set_dimming_buffer();
         gb_sal_sync_flag = false;
         gb_sal_parsing_flag = true;
+
+        ++tick;
+        if (tick >= 100)
+        {
+            tick = 0;
+            sal_temperature_compensation();
+        }
     }
 
     if (gb_sal_parsing_flag == true)
