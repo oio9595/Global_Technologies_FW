@@ -282,11 +282,10 @@ void comm_print_help(void)
 void comm_init(void)
 {
     print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r    [GT-XD12 PWM (ES3) JIG]");
+    print(LOG_INFO, "\n\r    [GT-XD04P IQC Test Jig]");
     print(LOG_INFO, "\n\r--------------------------------------");
     print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     print(LOG_INFO, "\n\r--------------------------------------\r\n");
 }
 /* USER CODE END 0 */
@@ -350,7 +349,7 @@ int main(void)
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
     comm_init();
-    XDIC_Detect_Type();
+    //XDIC_Detect_Type();
 
   /* USER CODE END 2 */
 
