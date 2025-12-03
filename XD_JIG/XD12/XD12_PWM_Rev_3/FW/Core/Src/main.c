@@ -1580,6 +1580,7 @@ static void TaskDebugUart(void)
                 XC24_Init();
             }
             XDIC_Trim_Init();
+            XDIC_Trim_Init_OFS_CH();
         }
         else if (Command_is_("xd_trim_vref"))
         {
@@ -1640,14 +1641,17 @@ static void TaskDebugUart(void)
             for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
                 JigBD_IF_Select_Output_Ch(i);
+
                 XDIC_Set_Max_Curr_Vref(3000); // XDIC_GAIN_P1
                 ADS114S08_Set_Start(1);
                 ADS114S08_Wait_Done();
                 iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+
                 XDIC_Set_Max_Curr_Vref(1000); // XDIC_GAIN_P2
                 ADS114S08_Set_Start(1);
                 ADS114S08_Wait_Done();
                 iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+
                 uint16_t adc_average = iout_adc[i][0] - iout_adc[i][1]; //delta
                 float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
                 print(LOG_INFO, "GAIN CH[%d] : %.3f\r\n", (i + 1), iout_avg);
@@ -1667,6 +1671,33 @@ static void TaskDebugUart(void)
             else
             {
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
+            }
+        }
+        else if (Command_is_("xd_trim_curr"))
+        {
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            uint16_t iout_adc[XD_CH_SIZE] = {0, };
+            uint16_t now_vref = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF);
+            print(LOG_INFO, "\r\nVREF : %u\r\n", now_vref);
+
+            current_gain_t current_gain = GAIN_HIGH;
+            JigBD_IF_Change_Current_Gain(current_gain);
+
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+
+                XDIC_Set_Max_Curr_Vref(now_vref);
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc[i] = ADS114S08_Get_ADC_Value();
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(iout_adc[i], current_gain);
+
+                XDIC_Set_Max_Curr_Vref(0);
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+
+                print(LOG_INFO, "CURRENT CH[%d] : %.3f\r\n", (i + 1), iout_avg);
             }
         }
 /* ----------------- command list - xc ----------------- */
