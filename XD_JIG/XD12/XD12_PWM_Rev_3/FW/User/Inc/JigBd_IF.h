@@ -15,12 +15,11 @@ extern "C" {
 #include "types.h"
 
 #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
-//#define CURRENT_SENSE_R_MID         (200.3f)    /* ohm */
-#define CURRENT_SENSE_R_MID         (56.3f)    /* ohm */
-#define CURRENT_SENSE_R_HIGH        (13.3f)     /* ohm */
+#define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
+#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
 #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
-#define CURRENT_SENSE_RO            (3293.0f)   /* ohm */
-#define CURRENT_SENSE_R_ICC         (22.1f)     /* ohm */
+#define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
+#define CURRENT_SENSE_R_ICC         (22.0f)     /* ohm */
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
