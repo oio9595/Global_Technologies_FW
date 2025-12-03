@@ -980,8 +980,7 @@ void XDIC_Sweep_LDO(void)
     for (uint8_t vref = 0 ; vref < 0x40 ; ++vref)
     {
         XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_VREF_CTL, vref);
-        //us_delay(2000);
-        us_delay(5000);
+        us_delay(2000);
         JigBD_IF_Start_MCU_ADC();
         uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
         float vref_volt = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
