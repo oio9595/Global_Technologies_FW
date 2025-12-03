@@ -195,7 +195,7 @@ static fb_level_t gt_xd_fb_level;
 
 static uint16_t gn_xd_delay_ch[XD_CH_SIZE] = {0, };
 
-uint32_t gn_xd_vref_sweep_delay = 5000;
+uint32_t gn_xd_vref_sweep_delay = 1000;
 
 static void XDIC_Set_Delay_CH(void);
 
