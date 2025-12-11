@@ -19,10 +19,11 @@
 typedef void (*func_t)(void);
 
 /* XDIC Common Spec */
-#define XDIC_ERROR_RATE     (0.026f) // 2.6%
-#define XDIC_VREF_TARGET    (2.2)
-#define XDIC_OSC_TARGET     (39.36f)
-#define XDIC_OSC_ERROR_RATE (0.02f) // 2.0%
+#define XDIC_ERROR_RATE         (0.026f) // 2.6%
+#define XDIC_VREF_TARGET        (2.2)
+#define XDIC_OSC_TARGET         (39.36f)
+#define XDIC_OSC_ERROR_RATE     (0.02f) // 2.0%
+#define XDIC_LDO_SWEEP_TARGET   (0.005f) // 5mV
 
 /* XD12 Current Spec */
 #define XD12_GAIN_P1        (1000)
@@ -53,12 +54,19 @@ static const char* gs_xdic_test_mode[XDIC_TEST_MAX] =
     "XDIC_TEST_CURRENT_TYPE_A [mA]",
     "XDIC_TEST_CURRENT_TYPE_B [mA]",
     "XDIC_TEST_ICC            [mA]",
+    "XDIC_TEST_LDO_SWEEP       [V]",
 };
 
 static const char* gs_xdic_test_result[2] =
 {
     "\033[32m(O)\033[0m",
     "\033[31m(X)\033[0m",
+};
+
+static const char* gs_xdic_red[2] =
+{
+    "\033[31m",
+    "\033[0m",
 };
 
 typedef struct tag_XDIC_TEST_CONDITION_T
@@ -86,6 +94,8 @@ static float gf_xdic_measured_icc;
 static float gf_xdic_measured_current_A[XDIC_CH_MAX];
 static float gf_xdic_measured_current_B[XDIC_CH_MAX];
 
+
+static float gf_xdic_measured_ldo_sweep[64];
 static xdic_test_condition_t gt_xdic_trim_condition[XDIC_TEST_MAX];
 
 void XDIC_Test_Param_Init(void)
@@ -156,6 +166,13 @@ void XDIC_Test_Param_Init(void)
         gt_xdic_trim_condition[XDIC_TEST_ICC].p_func = XDIC_Trim_Init_ICC;
         gt_xdic_trim_condition[XDIC_TEST_ICC].current_gain = GAIN_LOW; // Don't Care
     }
+
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].f_target_min = XDIC_LDO_SWEEP_TARGET;
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].f_target_max = 10.0f;
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].vref_p1 = 0;
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].vref_p2 = 0;
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].p_func = XDIC_Trim_Init_LDO_CTL;
+    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].current_gain = GAIN_LOW; // Don't Care
 }
 
 void XDIC_Test_Start(void)
@@ -256,6 +273,28 @@ static void XDIC_Display_Test_Result(void)
                     gt_xdic_trim_condition[test_mode].f_target_min, gt_xdic_trim_condition[test_mode].f_target_max, gf_xdic_measured_icc, gs_xdic_test_result[1]);
             }
             break;
+        case XDIC_TEST_LDO_SWEEP:
+            print(LOG_INFO, "%s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP]);
+            for (uint8_t i = 0 ; i < 63 ; ++i)
+            {
+                if (i == 62)
+                {
+                    break;
+                }
+                if (gf_xdic_measured_ldo_sweep[i+2] - gf_xdic_measured_ldo_sweep[i+1] > XDIC_LDO_SWEEP_TARGET)
+                {
+                    print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[1], gf_xdic_measured_ldo_sweep[i+1], gs_xdic_red[1]);
+                }
+                else
+                {
+                    print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[0], gf_xdic_measured_ldo_sweep[i+1], gs_xdic_red[1]);
+                }
+                if ((i+1) % 16 == 0)
+                {
+                    print(LOG_INFO, "\r\n");
+                }
+            }
+            break;
         default:
             break;
         }
@@ -308,11 +347,16 @@ void XDIC_Test_Task(void)
                     gt_xdic_trim_condition[XDIC_TEST_ICC].p_func();
                     JigBD_IF_Change_Current_Gain(gt_xdic_trim_condition[XDIC_TEST_ICC].current_gain);
                     break;
+                case XDIC_TEST_LDO_SWEEP:
+                    gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].p_func();
+                    JigBD_IF_Change_Current_Gain(gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].current_gain);
+                    break;
                 default:
                     break;
                 }
                 gn_xdic_temp_adc[0] = 0;
                 gn_xdic_temp_adc[1] = 0;
+                gn_xdic_measure_count = 0;
                 gn_xdic_channel = XDIC_CH_01;
                 gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                 break;
@@ -346,6 +390,9 @@ void XDIC_Test_Task(void)
                     }
                     break;
                 case XDIC_TEST_ICC:
+                    break;
+                case XDIC_TEST_LDO_SWEEP:
+                    XDIC_Set_VREF_CTL(gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].vref_p1 + gn_xdic_measure_count);
                     break;
                 default:
                     break;
@@ -391,6 +438,10 @@ void XDIC_Test_Task(void)
                     break;
                 case XDIC_TEST_ICC:
                     ADS114S08_Set_Start(1);
+                    gn_task_delay = 2;
+                    break;
+                case XDIC_TEST_LDO_SWEEP:
+                    JigBD_IF_Start_MCU_ADC();
                     gn_task_delay = 2;
                     break;
                 default:
@@ -455,6 +506,10 @@ void XDIC_Test_Task(void)
                         gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                     }
                     break;
+                case XDIC_TEST_LDO_SWEEP:
+                    gn_xdic_temp_adc[0] = JigBD_IF_Get_MCU_ADC();
+                    gt_xdic_test_step = XDIC_TEST_STEP_CONVERSION_ADC_TO_VALUE;
+                    break;
                 default:
                     break;
                 }
@@ -516,8 +571,23 @@ void XDIC_Test_Task(void)
                 case XDIC_TEST_ICC:
                     gf_xdic_measured_icc = (JigBD_IF_Convert_Adc_To_milli_Voltage((gn_xdic_temp_adc[0] - gn_xdic_temp_adc[1])) / CURRENT_SENSE_R_ICC);
                     gn_xdic_channel = XDIC_CH_01;
-                    gt_xdic_test_mode = XDIC_TEST_MAX;
-                    gt_xdic_test_step = XDIC_TEST_STEP_RESULT;
+                    gt_xdic_test_mode = XDIC_TEST_LDO_SWEEP;
+                    gt_xdic_test_step = XDIC_TEST_STEP_MODE_INIT;
+                    break;
+                case XDIC_TEST_LDO_SWEEP:
+                    gf_xdic_measured_ldo_sweep[gn_xdic_measure_count] = JigBD_IF_Convert_MCU_ADC_To_Volt(gn_xdic_temp_adc[0]);
+                    if (gn_xdic_measure_count < 63)
+                    {
+                        ++gn_xdic_measure_count;
+                        gt_xdic_test_mode = XDIC_TEST_LDO_SWEEP;
+                        gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
+                    }
+                    else
+                    {
+                        gn_xdic_measure_count = 0;
+                        gt_xdic_test_mode = XDIC_TEST_MAX;
+                        gt_xdic_test_step = XDIC_TEST_STEP_RESULT;
+                    }
                     break;
                 default:
                     break;

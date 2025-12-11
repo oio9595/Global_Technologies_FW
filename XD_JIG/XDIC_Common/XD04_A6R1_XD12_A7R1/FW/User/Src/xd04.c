@@ -265,6 +265,20 @@ void XD04_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
     XD04_Write_General_Reg(XD04_ADDR_MAX_CURRENT_VREF, gt_xd04_general_regs._r08.val);
 }
 
+void XD04_Set_VREF_CTL(uint16_t in_vref_ctl)
+{
+    gt_xd04_general_regs._r3F.test_en = 1;
+    gt_xd04_general_regs._r3F.ddio_dis = 1;
+    gt_xd04_general_regs._r3F.test_ana_en = 2;
+    gt_xd04_general_regs._r3F.pwm_full_o = 0;
+    gt_xd04_general_regs._r3F.mclk32_o = 0;
+    gt_xd04_general_regs._r3F.vref_o = 1;
+    gt_xd04_general_regs._r3F.addr_ext = 1;
+    XD04_Write_General_Reg(XD04_ADDR_OTP_OP_MODE, gt_xd04_general_regs._r3F.val);
+
+    JigBD_IF_Write_Command(0x02, in_vref_ctl);
+}
+
 static void XD04_Set_OSC_Manual_Enable(bool en)
 {
     if (en == true)
@@ -356,4 +370,18 @@ void XD04_Trim_Init_ICC(void)
     gt_xd04_general_regs._r3F.mclk32_o = 0;
     gt_xd04_general_regs._r3F.vref_o = 0;
     XD04_Write_General_Reg(XD04_ADDR_OTP_OP_MODE, gt_xd04_general_regs._r3F.val);
+}
+
+void XD04_Trim_Init_LDO_CTL(void)
+{
+    gt_xd04_general_regs._r3F.test_en = 1;
+    gt_xd04_general_regs._r3F.ddio_dis = 1;
+    gt_xd04_general_regs._r3F.test_ana_en = 2;
+    gt_xd04_general_regs._r3F.pwm_full_o = 0;
+    gt_xd04_general_regs._r3F.mclk32_o = 0;
+    gt_xd04_general_regs._r3F.vref_o = 1;
+    gt_xd04_general_regs._r3F.addr_ext = 1;
+    XD04_Write_General_Reg(XD04_ADDR_OTP_OP_MODE, gt_xd04_general_regs._r3F.val);
+
+    XD04_Write_General_Reg(XD04_ADDR_OTP_PROTECT, 0xA5A);
 }

@@ -561,12 +561,14 @@ extern void XD12_Init(void);
 
 extern void XD12_Set_Max_Current_Level(xd12_dev_max_curr_level_t in_dev_max_curr);
 extern void XD12_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
+extern void XD12_Set_VREF_CTL(uint16_t in_vref_ctl);
 
 extern void XD12_Trim_Init_VREF_CTL(void);
 extern void XD12_Trim_Init_OSC(void);
 extern void XD12_Trim_Init_OFS_CH(void);
 extern void XD12_Trim_Init_GAIN_CH(void);
 extern void XD12_Trim_Init_ICC(void);
+extern void XD12_Trim_Init_LDO_CTL(void);
 
 #ifdef __cplusplus
 }

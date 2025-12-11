@@ -136,6 +136,18 @@ void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
         XD12_Set_Max_Curr_Vref(in_max_curr_vref);
     }
 }
+
+void XDIC_Set_VREF_CTL(uint16_t in_vref_ctl)
+{
+    if (gb_xdic_type_is_xd04)
+    {
+        XD04_Set_VREF_CTL(in_vref_ctl);
+    }
+    else
+    {
+        XD12_Set_VREF_CTL(in_vref_ctl);
+    }
+}
 /* ================================================================================================================================================= */
 /* Trim Function */
 /* ================================================================================================================================================= */
@@ -197,5 +209,17 @@ void XDIC_Trim_Init_ICC(void)
     else
     {
         XD12_Trim_Init_ICC();
+    }
+}
+
+void XDIC_Trim_Init_LDO_CTL(void)
+{
+    if (gb_xdic_type_is_xd04)
+    {
+        XD04_Trim_Init_LDO_CTL();
+    }
+    else
+    {
+        XD12_Trim_Init_LDO_CTL();
     }
 }

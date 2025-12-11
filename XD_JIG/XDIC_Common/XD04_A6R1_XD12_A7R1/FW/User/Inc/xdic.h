@@ -26,12 +26,14 @@ extern void XDIC_Init(void);
 
 extern void XDIC_Set_Max_Current_Level(uint8_t in_dev_max_curr);
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
+extern void XDIC_Set_VREF_CTL(uint16_t in_vref_ctl);
 
 extern void XDIC_Trim_Init_VREF_CTL(void);
 extern void XDIC_Trim_Init_OSC(void);
 extern void XDIC_Trim_Init_Current_Type_A(void);
 extern void XDIC_Trim_Init_Current_Type_B(void);
 extern void XDIC_Trim_Init_ICC(void);
+extern void XDIC_Trim_Init_LDO_CTL(void);
 
 #ifdef __cplusplus
 }

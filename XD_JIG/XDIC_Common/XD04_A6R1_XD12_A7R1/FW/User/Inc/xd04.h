@@ -533,6 +533,7 @@ extern void XD04_Init(void);
 
 extern void XD04_Set_Max_Current_Level(xd04_dev_max_curr_level_t in_dev_max_curr);
 extern void XD04_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
+extern void XD04_Set_VREF_CTL(uint16_t in_vref_ctl);
 
 extern void XD04_Trim_Init_VREF_CTL(void);
 extern void XD04_Trim_Init_LDO_CTL(void);
@@ -540,6 +541,7 @@ extern void XD04_Trim_Init_OSC(void);
 extern void XD04_Trim_Init_ICTL_L_CH(void);
 extern void XD04_Trim_Init_ICTL_H_CH(void);
 extern void XD04_Trim_Init_ICC(void);
+extern void XD04_Trim_Init_LDO_CTL(void);
 
 #ifdef __cplusplus
 }

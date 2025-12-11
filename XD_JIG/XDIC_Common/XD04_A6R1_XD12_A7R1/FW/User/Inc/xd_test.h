@@ -35,6 +35,7 @@ typedef enum tag_XDIC_TEST_MODE_T
     XDIC_TEST_CURRENT_TYPE_A, //XD12 Gain / XD04 ICTL_L
     XDIC_TEST_CURRENT_TYPE_B, //XD12 OFS  / XD04 ICTL_H
     XDIC_TEST_ICC,
+    XDIC_TEST_LDO_SWEEP,
     XDIC_TEST_MAX
 } xdic_test_mode_t;
 
