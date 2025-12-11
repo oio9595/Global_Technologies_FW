@@ -702,9 +702,11 @@ typedef union tag_CLK_CONTROL_1
         uint16_t serializer_skew_en     : 1;
         uint16_t osc_spread_en          : 1;
         uint16_t serializer_clk_sel     : 1;
+
         uint16_t spread_dir		        : 2;
         uint16_t spread_speed	        : 2;
-        uint16_t spread_range	        : 2;
+
+        uint16_t spread_range_d	        : 2;
         uint16_t serialize_clk_status   : 1;
         uint16_t ld_b_rd_clk_sel	    : 1;
         uint16_t spread_range_a         : 3;
