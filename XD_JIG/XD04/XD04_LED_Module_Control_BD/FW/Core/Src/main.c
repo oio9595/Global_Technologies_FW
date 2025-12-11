@@ -199,7 +199,7 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     }
 }
 
-void comm_init(void)
+void Comm_Init(void)
 {
     print(LOG_PC, "\n\r--------------------------------------");
     print(LOG_PC, "\n\r   [GT LED Module Control BD]");
@@ -527,7 +527,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     Key_Init();
-    comm_init();
+    Comm_Init();
     for (uint8_t i = 0 ; i < 3 ; ++i)
     {
         LED_LO();
