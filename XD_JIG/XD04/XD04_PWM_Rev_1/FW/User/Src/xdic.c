@@ -554,7 +554,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r07.o_det_e = 1;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
-                gt_xdic_general_regs._r08.max_curr_vref = 0x1E0;
+                gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
@@ -563,20 +563,16 @@ void XDIC_Init(void)
             case XDIC_ADDR_SERIAL_LATENCY :
                 gt_xdic_general_regs._r26.serial_latency = 60;
                 break;
-                #if 0
             case XDIC_ADDR_MCLK_LOCK_1 :
-                //gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
-                gt_xdic_general_regs._r27.mclk_lock_cnt = 0x0F8;
+                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                //gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
-                gt_xdic_general_regs._r28.mclk_lock_cnt = 0x50;
+                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
                 gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
                 break;
-                #endif
             case XDIC_ADDR_WR_PROTECT :
                 gt_xdic_general_regs._r2D.val = 0x155;
                 break;
