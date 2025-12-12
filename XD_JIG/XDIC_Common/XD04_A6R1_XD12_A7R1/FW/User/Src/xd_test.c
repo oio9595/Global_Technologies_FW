@@ -274,25 +274,46 @@ static void XDIC_Display_Test_Result(void)
             }
             break;
         case XDIC_TEST_LDO_SWEEP:
-            print(LOG_INFO, "%s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP]);
-            for (uint8_t i = 0 ; i < 63 ; ++i)
+            print(LOG_INFO, "LDO Sweep Raw Data============================================================================================================\r\n");
+            judge_result = true;
+            for (uint8_t i = 0 ; i < 64 ; ++i)
             {
-                if (i == 62)
+                bool compare = true;
+                if (i == 0 || i == 1)
                 {
-                    break;
+                    compare = false;
                 }
-                if (gf_xdic_measured_ldo_sweep[i+2] - gf_xdic_measured_ldo_sweep[i+1] > XDIC_LDO_SWEEP_TARGET)
+
+                if (compare)
                 {
-                    print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[1], gf_xdic_measured_ldo_sweep[i+1], gs_xdic_red[1]);
+                    if (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i-1] > XDIC_LDO_SWEEP_TARGET)
+                    {
+                        print(LOG_INFO, "%5.3f\t", gf_xdic_measured_ldo_sweep[i]);
+                    }
+                    else
+                    {
+                        print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[0], gf_xdic_measured_ldo_sweep[i], gs_xdic_red[1]);
+                        judge_result = false;
+                    }
                 }
                 else
                 {
-                    print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[0], gf_xdic_measured_ldo_sweep[i+1], gs_xdic_red[1]);
+                    print(LOG_INFO, "%5.3f\t", gf_xdic_measured_ldo_sweep[i]);
                 }
+
                 if ((i+1) % 16 == 0)
                 {
                     print(LOG_INFO, "\r\n");
                 }
+            }
+            print(LOG_INFO, "==============================================================================================================================\r\n");
+            if (judge_result)
+            {
+                print(LOG_INFO, "%s %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], gs_xdic_test_result[0]);
+            }
+            else
+            {
+                print(LOG_INFO, "%s %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], gs_xdic_test_result[1]);
             }
             break;
         default:
