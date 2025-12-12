@@ -290,10 +290,6 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
     tx_buffer[1] = in_data;
 
     SPI_Write(g_hSPIx, tx_buffer, 2);
-    for (volatile uint32_t i = 0 ; i < 13 ; ++i)
-    {
-        __NOP();
-    }
 }
 
 uint16_t XC24_Read_Register(uint8_t in_addr)
@@ -568,6 +564,144 @@ void XC24_Init(void)
 #endif
 }
 
+void XC24_Trim_Init_1(void)
+{
+    g_hSPIx = SPI1;
+
+    JigBD_IF_XC_VCC_EN(PWR_ON);
+
+    LL_mDelay(20);
+
+    XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+    XC24_Start_MCLK_Oscillation(TRUE);
+#endif
+
+    while(1)
+    {
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 1);
+#if 0
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, 0x0A5A);
+        XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x6404);
+#endif
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        LL_mDelay(500);
+    }
+}
+
+void XC24_Trim_Init_2(void)
+{
+    g_hSPIx = SPI1;
+
+    JigBD_IF_XC_VCC_EN(PWR_ON);
+
+    LL_mDelay(20);
+
+    XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+    XC24_Start_MCLK_Oscillation(TRUE);
+#endif
+
+    while(1)
+    {
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 1);
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, 0x0A5A);
+        XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x6404);
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        LL_mDelay(500);
+    }
+}
+
+void XC24_Trim_Init_3(void)
+{
+    g_hSPIx = SPI1;
+
+    JigBD_IF_XC_VCC_EN(PWR_ON);
+
+    LL_mDelay(20);
+
+    XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+    XC24_Start_MCLK_Oscillation(TRUE);
+#endif
+
+    while(1)
+    {
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 1);
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+        us_delay(20);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        LL_mDelay(500);
+    }
+}
+
+void XC24_Trim_Init_4(void)
+{
+    g_hSPIx = SPI1;
+
+    JigBD_IF_XC_VCC_EN(PWR_ON);
+
+    LL_mDelay(20);
+
+    XC_NSCS_HI();
+
+#if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+    XC24_Start_MCLK_Oscillation(TRUE);
+#endif
+
+    while(1)
+    {
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 1);
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, 0x0A5A);
+        XC24_Write_Register(XC24_MIRROR_ADDR_MIRROR1, 0x280A);
+        XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        LL_mDelay(500);
+    }
+}
+
+void XC24_Trim_Init_5(void)
+{
+    while(1)
+    {
+        g_hSPIx = SPI1;
+
+        JigBD_IF_XC_VCC_EN(PWR_ON);
+
+        LL_mDelay(20);
+
+        XC_NSCS_HI();
+
+    #if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
+        XC24_Start_MCLK_Oscillation(TRUE);
+    #endif
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8010);
+        LL_mDelay(500);
+
+        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8000);
+        JigBD_IF_XC_VCC_EN(PWR_OFF);
+
+        LL_mDelay(100);
+    }
+}
+
 void XC24_Trim_Init(void)
 {
     g_hSPIx = SPI1;
@@ -586,10 +720,7 @@ void XC24_Trim_Init(void)
     {
         XC24_Write_Register(XC24_ADDR_SOFT_RESET, 1);
         XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
-        XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
-        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8001);
-        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8001);
-        XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8001);
+        us_delay(20);
         XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, 0x8001);
         LL_mDelay(500);
     }

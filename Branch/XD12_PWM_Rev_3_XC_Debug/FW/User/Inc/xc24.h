@@ -1682,6 +1682,11 @@ extern void XC24_Read_Register_All(void);
 extern void XC24_Dump_All_Register(void);
 extern void XC24_Init(void);
 extern void XC24_Trim_Init(void);
+extern void XC24_Trim_Init_1(void);
+extern void XC24_Trim_Init_2(void);
+extern void XC24_Trim_Init_3(void);
+extern void XC24_Trim_Init_4(void);
+extern void XC24_Trim_Init_5(void);
 
 extern void XC24_Set_OTP_Protect(bool en);
 

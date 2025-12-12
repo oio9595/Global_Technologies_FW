@@ -1706,9 +1706,37 @@ static void TaskDebugUart(void)
         {
             XC24_Init();
         }
-        else if (Command_is_("xc_trim_debug"))
+        else if (Command_Param_is_("xc_trim_debug", "%u", &u32_recv_param[0]))
         {
-            XC24_Trim_Init();
+            if (u32_recv_param[0] == 1)
+            {
+                print(LOG_INFO, "Ver Yoon\r\n");
+                XC24_Trim_Init_1();
+            }
+            else if (u32_recv_param[0] == 2)
+            {
+                print(LOG_INFO, "Ver Kim\r\n");
+                XC24_Trim_Init_2();
+            }
+            else if (u32_recv_param[0] == 3)
+            {
+                print(LOG_INFO, "Ver Only Reload\r\n");
+                XC24_Trim_Init_3();
+            }
+            else if (u32_recv_param[0] == 4)
+            {
+                print(LOG_INFO, "Ver Kim\r\n");
+                XC24_Trim_Init_4();
+            }
+            else if (u32_recv_param[0] == 5)
+            {
+                print(LOG_INFO, "Power On/Off\r\n");
+                XC24_Trim_Init_5();
+            }
+            else
+            {
+                print(LOG_INFO, "Invalid Input [%u] [1, 2, 3, 4, 5]\r\n", u32_recv_param[0]);
+            }
         }
         else if (Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
