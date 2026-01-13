@@ -34,6 +34,8 @@
 #define XDIC_RESET_VALUE            (1U << 11)
 #define XDIC_CHANNEL_ENABLE_MAX     ((1U << XD_CH_SIZE) - 1)
 
+#define XDIC_VREF_LOW_CURR_MODE     (800U)
+
 static _xdic_general_regs_t gt_xdic_general_regs;
 
 static _reg_map_t gt_xdic_general_maps[] =
@@ -172,7 +174,7 @@ static void XDIC_Dump_All_Registers(void)
         if (map)
         {
             uint16_t value = *((uint16_t*)(map->reg_ptr));
-            print(LOG_PC, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X / %u)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, value, ANSI_FONT_NONE);
+            print(LOG_PC, "[%s (0x%02X)]\t VALUE : %s(0x%04X)%s\r\n", map->name, map->address, ANSI_FONT_MAGENTA, value, ANSI_FONT_NONE);
         }
     }
 }
@@ -181,7 +183,7 @@ void XDIC_Read_All_Registers(void)
 {
     for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
-        XDIC_Read_General_Reg(xd_general_addr);
+        //XDIC_Read_General_Reg(xd_general_addr);
     }
 
     XDIC_Dump_All_Registers();
@@ -192,7 +194,7 @@ void XDIC_Update_Max_Current_Vref(float in_current, bool low_current_mode)
     uint16_t max_curr_vref = 0;
     if (low_current_mode)
     {
-        max_curr_vref = 1;
+        max_curr_vref = XDIC_VREF_LOW_CURR_MODE;
     }
     else
     {
@@ -249,7 +251,7 @@ void XDIC_Init(void)
             switch (xdic_addr)
             {
             case XDIC_ADDR_LD_CONTROL :
-                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
+                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
                 gt_xdic_general_regs._r01.over_to_e = 1;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
@@ -303,6 +305,7 @@ void XDIC_Init(void)
             print(LOG_PC, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
         }
     }
+    XDIC_Read_All_Registers();
 }
 
 void XDIC_DeInit(void)

@@ -12,6 +12,9 @@
 #include "xc24.h"
 #include "config.h"
 
+#define XDIC_LD_MAX             (16383U)
+#define XDIC_LD_LOW_CURR_MODE   (20U)
+
 static bool gb_xdic_vsync_flag;
 volatile static bool gb_system_active;
 
@@ -71,8 +74,14 @@ void XDIC_Vsync_Task(void)
         XC24_Turn_On_Sync_Auto();
 
         us_delay(3500);
-        XC24_IF_Write_LD();
-
+        if (gb_led_low_current_mode)
+        {
+            XC24_IF_Write_LD(XDIC_LD_LOW_CURR_MODE);
+        }
+        else
+        {
+            XC24_IF_Write_LD(XDIC_LD_MAX);
+        }
         XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
 
         #if 0

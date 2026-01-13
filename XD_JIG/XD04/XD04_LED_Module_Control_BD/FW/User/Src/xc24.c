@@ -12,8 +12,6 @@
 #include "vsync_task.h"
 #include "config.h"
 
-#define XDIC_LD_MAX         (16383U)
-
 #define XC24_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xc24_general_regs.reg }
 #define XC24_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xc24_mirror_regs.reg }
 
@@ -339,7 +337,7 @@ void XC24_Dump_All_Register(void)
         const _reg_map_t* map = XC24_Get_General_Map_Pointer(xc_addr);
         if (map)
         {
-            print(LOG_PC, "[%s (0x%02X)]\r\n\t VALUE : %s(0x%04X)%s\r\n\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
+            print(LOG_PC, "[%s (0x%02X)]\t VALUE : %s(0x%04X)%s\r\n", map->name, map->address, ANSI_FONT_MAGENTA, *((uint16_t*)(map->reg_ptr)), ANSI_FONT_NONE);
         }
     }
 }
@@ -700,7 +698,7 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
     return u16_XDIC_data;
 }
 
-void XC24_IF_Write_LD(void)
+void XC24_IF_Write_LD(uint16_t ld_duty)
 {
     _xc24_cmd_t cmd_format = {0, };
     uint16_t tx_buffer[1 + TOTAL_BLOCK_SIZE] = {0,};
@@ -724,7 +722,7 @@ void XC24_IF_Write_LD(void)
         {
             if (gb_xd_led_enable_table[i])
             {
-                tx_buffer[i + 1] = XDIC_LD_MAX;
+                tx_buffer[i + 1] = ld_duty;
             }
             else
             {
