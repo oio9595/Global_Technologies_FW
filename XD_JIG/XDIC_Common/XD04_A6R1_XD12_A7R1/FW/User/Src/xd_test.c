@@ -274,46 +274,42 @@ static void XDIC_Display_Test_Result(void)
             }
             break;
         case XDIC_TEST_LDO_SWEEP:
-            print(LOG_INFO, "LDO Sweep Raw Data============================================================================================================\r\n");
             judge_result = true;
-            for (uint8_t i = 0 ; i < 64 ; ++i)
+            for (uint8_t i = 2 ; i < 64 ; ++i)
             {
-                bool compare = true;
-                if (i == 0 || i == 1)
+                if (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i-1] <= XDIC_LDO_SWEEP_TARGET)
                 {
-                    compare = false;
+                    judge_result = false;
+                    break;
                 }
+            }
 
-                if (compare)
+            if (judge_result)
+            {
+                print(LOG_INFO, "%s [%7.4f ~ %7.4f] %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], \
+                    gt_xdic_trim_condition[test_mode].f_target_min, gt_xdic_trim_condition[test_mode].f_target_max, gs_xdic_test_result[0]);
+            }
+            else
+            {
+                print(LOG_INFO, "%s [%7.4f ~ %7.4f] %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], \
+                    gt_xdic_trim_condition[test_mode].f_target_min, gt_xdic_trim_condition[test_mode].f_target_max, gs_xdic_test_result[1]);
+            }
+
+            for (uint8_t i = 0; i < 64; ++i)
+            {
+                bool compare = (i >= 2);
+                if (compare && (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i - 1] <= XDIC_LDO_SWEEP_TARGET))
                 {
-                    if (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i-1] > XDIC_LDO_SWEEP_TARGET)
-                    {
-                        print(LOG_INFO, "%5.3f\t", gf_xdic_measured_ldo_sweep[i]);
-                    }
-                    else
-                    {
-                        print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[0], gf_xdic_measured_ldo_sweep[i], gs_xdic_red[1]);
-                        judge_result = false;
-                    }
+                    print(LOG_INFO, "%s%5.3f%s\t", gs_xdic_red[0], gf_xdic_measured_ldo_sweep[i], gs_xdic_red[1]);
                 }
                 else
                 {
                     print(LOG_INFO, "%5.3f\t", gf_xdic_measured_ldo_sweep[i]);
                 }
-
-                if ((i+1) % 16 == 0)
+                if ((i + 1) % 16 == 0)
                 {
                     print(LOG_INFO, "\r\n");
                 }
-            }
-            print(LOG_INFO, "==============================================================================================================================\r\n");
-            if (judge_result)
-            {
-                print(LOG_INFO, "%s %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], gs_xdic_test_result[0]);
-            }
-            else
-            {
-                print(LOG_INFO, "%s %s\r\n", gs_xdic_test_mode[XDIC_TEST_LDO_SWEEP], gs_xdic_test_result[1]);
             }
             break;
         default:
