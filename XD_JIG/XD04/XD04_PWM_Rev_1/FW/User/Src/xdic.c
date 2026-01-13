@@ -564,10 +564,10 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r26.serial_latency = 60;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
