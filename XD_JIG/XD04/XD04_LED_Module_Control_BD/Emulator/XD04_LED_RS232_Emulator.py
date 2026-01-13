@@ -17,6 +17,12 @@ import serial.tools.list_ports
 VERSION_INFO = "GUI Version 1.0"
 WINDOW_TITLE = "XD04 LED Control B'D RS232 Emulator"
 
+CMD_BAR_ON = 0x10
+CMD_BAR_OFF = 0x20
+
+CMD_BLOCK_ON = 0x40
+CMD_BLOCK_OFF = 0x80
+
 commands = {
     "0x00 (Initial)": 0x00,
     "0xFF (Quit)": 0xFF,
@@ -150,13 +156,13 @@ class MacroApp(QWidget):
 
         self.normal_button = QPushButton("Send Normal Packet")
         self.normal_button.clicked.connect(self.send_normal)
-        self.wrong_checksum = QPushButton("Abnormal - Checksum Error")
-        self.wrong_checksum.clicked.connect(self.send_wrong_checksum)
+        self.sequence_test = QPushButton("Sequence Test")
+        self.sequence_test.clicked.connect(self.send_sequence_test)
         self.half_packet = QPushButton("Abnormal - Half Packet")
         self.half_packet.clicked.connect(self.send_half_packet)
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.normal_button)
-        btn_layout.addWidget(self.wrong_checksum)
+        btn_layout.addWidget(self.sequence_test)
         btn_layout.addWidget(self.half_packet)
 
         self.log_output = QTextEdit()
@@ -245,22 +251,108 @@ class MacroApp(QWidget):
         else :
             self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
-    def send_wrong_checksum(self):
+    def send_sequence_test(self):
         if self.thread_running :
             try:
-                sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = int(self.length_label.text().strip())
-                # command_val = int(self.command_cb.currentText(), 16)
-                command_text = self.command_cb.currentText()
-                command_val = self.commands[command_text]
-                data_val = int(self.data_label.text().strip())
-                checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF) + 1  # Intentionally wrong
-                eop_val = int(self.eop_cb.currentText(), 16)
-                # update checksum field
-                self.checksum_label.setText(f"0x{checksum_val:02X}")
-                packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
-                self.ser.write(packet)
-                self.log(f"📤 Tx Wrong Packet \t{[f'{b:02X}' for b in packet]}")
+                self.log("Repeat Start!!!")
+                self.log("Bar On")
+                for i in range(20):
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BAR_ON
+                    data_val = (i+1)
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+                self.log("Bar Off")
+                for i in range(20):
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BAR_OFF
+                    data_val = (i+1)
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+                self.log("Block On")
+                for i in range(160):
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BLOCK_ON
+                    data_val = (i+1)
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+                self.log("Block Off")
+                for i in range(160):
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BLOCK_OFF
+                    data_val = (i+1)
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+
+                self.log("Block Off")
+                for i in range(10):
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BAR_ON
+                    data_val = 0
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+                    sop_val = int(self.sop_cb.currentText(), 16)
+                    length_val = int(self.length_label.text().strip())
+                    command_val = CMD_BAR_OFF
+                    data_val = 0
+                    checksum_val = ((sop_val + length_val + command_val + data_val) & 0xFF)
+                    eop_val = int(self.eop_cb.currentText(), 16)
+                    self.checksum_label.setText(f"0x{checksum_val:02X}")
+                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
+                    self.ser.write(packet)
+                    self.log(f"📤 Tx Normal Packet \t{[f'{b:02X}' for b in packet]}")
+
+                    QApplication.processEvents()
+                    time.sleep(0.2)
+
+
+
+                self.log("Repeat Done!!!")
             except ValueError:
                 self.log("⚠️ Invalid Value.")
                 return
