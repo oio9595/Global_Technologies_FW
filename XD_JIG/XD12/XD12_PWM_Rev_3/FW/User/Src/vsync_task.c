@@ -144,6 +144,7 @@ void XDIC_Vsync_Task(void)
 
         us_delay(1500);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
+        XDIC_Get_Fault_Status();
 
         if (gb_xdic_write_flag)
         {
