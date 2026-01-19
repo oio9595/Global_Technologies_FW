@@ -121,6 +121,7 @@ static short_level_t gt_xd_short_level;
 static fb_level_t gt_xd_fb_level;
 
 float gf_xd_max_current;
+bool gb_led_low_current_mode;
 
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
 {
@@ -314,4 +315,17 @@ void XDIC_DeInit(void)
     XDIC_VCC_OFF();
 
     gf_xd_max_current = 0.0f;
+    gb_led_low_current_mode = false;
+}
+
+void LED_Low_Current_Mode(uint8_t on_off)
+{
+    if (on_off)
+    {
+        gb_led_low_current_mode = true;
+    }
+    else
+    {
+        gb_led_low_current_mode = false;
+    }
 }
