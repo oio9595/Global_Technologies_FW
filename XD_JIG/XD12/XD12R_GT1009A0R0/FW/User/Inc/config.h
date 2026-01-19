@@ -32,13 +32,13 @@ extern "C" {
 #define CONST_mV_TO_V               (1000.0f)
 
 #define VSYNC                       (120.0f)
-#define XD_MCLK                     (39319200.0f)
+#define XD_MCLK                     (50000000.0f)
 
-#define XD_DAISY_SIZE               (1)
-#define XD_CH_SIZE                  (12)
+#define XDIC_DAISY_SIZE             (1)
+#define XDIC_CH_SIZE                (12)
 
 #define XD_SERIAL_CLK_CNT_LOW       (13)
-#define XD_SERIAL_CLK_CNT_HIGH      (26)
+#define XD_SERIAL_CLK_CNT_HIGH      (27)
 
 #define XC24_MCLK_INTERNAL          (0x00)
 #define XC24_MCLK_EXTERNAL          (0x01)
@@ -62,7 +62,7 @@ extern "C" {
 #define XDIC_WRITE_BITS             (SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE + SERIAL_DATA_SIZE)
 #define XDIC_READ_BITS              (SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE)
 #define XDIC_READ_RECV_BITS         (SERIAL_CMD_SIZE + SERIAL_ID_SIZE + SERIAL_DATA_SIZE)
-#define XDIC_LD_TRANS_BITS          (SERIAL_CMD_SIZE + SERIAL_LD_SIZE * XD_CH_SIZE)
+#define XDIC_LD_TRANS_BITS          (SERIAL_CMD_SIZE + SERIAL_LD_SIZE * XDIC_CH_SIZE)
 #define XDIC_FAULT_READ_BITS        (SERIAL_CMD_SIZE)
 #define XDIC_FAULT_RECV_BITS        (SERIAL_CMD_SIZE + SERIAL_FAULT_DATA_SIZE)
 #define XDIC_SYNCGEN_BITS           (SERIAL_CMD_SIZE)
@@ -70,16 +70,14 @@ extern "C" {
 
 #define XDIC_SERIALIZER_TIME        ((((CONST_MHz_TO_Hz / XD_MCLK) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW))) * 2.0f)
 #define XDIC_RESET_DELAY            (100)
-#define XDIC_WRITE_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_WRITE_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_READ_RECV_DELAY        ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_RECV_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_LD_TRANS_DELAY         ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_LD_TRANS_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_FAULT_READ_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_READ_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_FAULT_RECV_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_RECV_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS * XD_DAISY_SIZE) + 0.5f))
-#define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS * XD_DAISY_SIZE) + 0.5f))
-
-#pragma message ("XDIC_LD_TRANS_DELAY = " STR(XDIC_LD_TRANS_DELAY))
+#define XDIC_WRITE_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_WRITE_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_READ_RECV_DELAY        ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_RECV_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_LD_TRANS_DELAY         ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_LD_TRANS_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_FAULT_READ_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_READ_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_FAULT_RECV_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_RECV_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS * XDIC_DAISY_SIZE) + 0.5f))
+#define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS * XDIC_DAISY_SIZE) + 0.5f))
 
 /********************************************************/
 

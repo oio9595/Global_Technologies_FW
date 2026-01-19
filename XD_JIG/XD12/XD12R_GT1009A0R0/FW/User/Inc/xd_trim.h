@@ -12,9 +12,8 @@
 extern "C" {
 #endif
 
-#define XDIC_VREF_MAX               (4095)
-#define XDIC_OFS_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_8mA)
-#define XDIC_GAIN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_8mA)
+#define XDIC_GAIN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_OFS_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_16mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
@@ -67,10 +66,15 @@ typedef enum tag_TRIM_ERROR_CODE_T
 typedef enum tag_XD_TRIM_MODE_T
 {
     XD_TRIM_START = 0,
-    XD_TRIM_VREF_CTL = 0,
-    XD_TRIM_OSC_FREQUENCY,
-    XD_TRIM_GAIN_CHS,
-    XD_TRIM_OFS_CHS,
+    XD_TRIM_IBN_2uA = 0,
+    XD_TRIM_DAC_LDO_1V5,
+    XD_TRIM_DIG_LDO_1V5,
+    XD_TRIM_DAC_A_OFS,
+    XD_TRIM_DAC_B_OFS,
+    XD_TRIM_FLL_LDO_1V5,
+    XD_TRIM_OSC,
+    XD_TRIM_CH_GAIN,
+    XD_TRIM_CH_OFS,
     XD_TRIM_MAX
 } xd_trim_mode_t;
 

@@ -67,13 +67,7 @@ typedef struct tag_KEY_INFO
 /* USER CODE BEGIN PV */
 void key_func_1(void)
 {
-    // On LED
-    if (IS_XC24_Support())
-    {
-        XC24_Init();
-    }
     XDIC_Trim_Init();
-    XDIC_Sweep_Vref();
 }
 
 void key_func_2(void)
@@ -1147,7 +1141,7 @@ static void MX_GPIO_Init(void)
                           |XDIC_VCC_EN_Pin|ADC_RESET_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, PWM_SWITCH_Pin|XDIC_FB_IN_Pin);
+  LL_GPIO_ResetOutputPin(PWM_SWITCH_GPIO_Port, PWM_SWITCH_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOB, XC24_5V5_Pin|XDIC_5_7V_Pin|XC24_VCC_EN_Pin|XC24_NSCS_Pin);
@@ -1178,12 +1172,11 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_5|LL_GPIO_PIN_6|LL_GPIO_PIN_10|LL_GPIO_PIN_11
+                          |LL_GPIO_PIN_12;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = ENABLE_SELECT4_Pin|ENABLE_SELECT3_Pin|XDIC_5_7V_Pin|VLED_CTR_9V_Pin
@@ -1203,16 +1196,10 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XDIC_FB_OUT_Pin|XD_SELECT_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_6|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = XC_MCLK_Pin;
@@ -1238,6 +1225,12 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
 
   /**/
+  GPIO_InitStruct.Pin = XD_SELECT_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(XD_SELECT_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE4);
 
   /**/
@@ -1260,11 +1253,6 @@ static void MX_GPIO_Init(void)
   /* USER CODE BEGIN MX_GPIO_Init_2 */
     PWM_SWITCH_LO();
     LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
-
-	GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = XC_MCLK_Pin;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -1476,18 +1464,11 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n XD Reset\r\n");
             JigBD_IF_Reset_Command();
-            us_delay(5);
         }
         else if (Command_is_("xd_syncgen"))
         {
             print(LOG_INFO, "\r\n XD Syncgen\r\n");
             JigBD_IF_SyncGen_Command();
-            us_delay(5);
-        }
-        else if (Command_is_("xd_test_en"))
-        {
-            print(LOG_INFO, "\r\n XD TEST_EN\r\n");
-            XDIC_Trim_Init_VREF_CTL();
         }
         else if (Command_is_("xd_icc"))
         {
@@ -1549,117 +1530,49 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n ldim - [%u]\r\n", XDIC_Get_LD_Data());
         }
-        else if (Command_Param_is_("xd_fbi", "%x", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                XD_FBI_HI();
-            }
-            else
-            {
-                XD_FBI_LO();
-            }
-            print(LOG_INFO, "\r\n XD FBI %s\r\n", (u32_recv_param[0] ? "HI" : "LO"));
-        }
-        else if (Command_is_("xd_fbo"))
-        {
-            print(LOG_INFO, "\r\n XD FBO %s\r\n", (XD_FBO_READ() ? "HI" : "LO"));
-        }
         else if (Command_is_("xd_debug"))
         {
-            if (IS_XC24_Support())
-            {
-                XC24_Init();
-            }
             XDIC_Init();
         }
         else if (Command_is_("xd_trim_debug"))
         {
-            if (IS_XC24_Support())
-            {
-                XC24_Init();
-            }
             XDIC_Trim_Init();
-            XDIC_Trim_Init_OFS_CH();
         }
-        else if (Command_is_("xd_trim_vref"))
+        else if (Command_is_("xd_trim_ibn_2uA"))
         {
-            XDIC_Trim_Init_VREF_CTL();
-            JigBD_IF_Start_MCU_ADC();
-            uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
-            print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+            XDIC_Trim_Partial_IBN_2uA();
         }
-        else if (Command_is_("xd_trim_ldo"))
+        else if (Command_is_("xd_trim_dac_ldo_1v5"))
         {
-            XDIC_Trim_Init_LDO_CTL();
-            JigBD_IF_Start_MCU_ADC();
-            uint16_t ldo_adc =  JigBD_IF_Get_MCU_ADC();
-            print(LOG_INFO, "\r\n LDO  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc));
+            XDIC_Trim_Partial_DAC_LDO_1V5();
+        }
+        else if (Command_is_("xd_trim_dig_ldo_1v5"))
+        {
+            XDIC_Trim_Partial_DIG_LDO_1V5();
+        }
+        else if (Command_is_("xd_trim_dac_a_ofs"))
+        {
+            XDIC_Trim_Partial_DAC_A_OFS();
+        }
+        else if (Command_is_("xd_trim_dac_b_ofs"))
+        {
+            XDIC_Trim_Partial_DAC_B_OFS();
+        }
+        else if (Command_is_("xd_trim_fll_ldo_1v5"))
+        {
+            XDIC_Trim_Partial_FLL_LDO_1V5();
         }
         else if (Command_is_("xd_trim_osc"))
         {
-            XDIC_Trim_Init_OSC();
-            JigBD_IF_Start_Input_Capture();
-            JigBD_IF_Wait_Input_Capture_Done();
-            JigBD_IF_Stop_Input_Capture();
-            uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
-            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-            print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
-        }
-        else if (Command_is_("xd_trim_ofs"))
-        {
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
-            current_gain_t current_gain = GAIN_MID;
-            XDIC_Trim_Init_OFS_CH();
-            JigBD_IF_Change_Current_Gain(current_gain);
-            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
-            {
-                JigBD_IF_Select_Output_Ch(i);
-                //XDIC_Set_Max_Curr_Vref(250); // XDIC_OFS_P1
-                XDIC_Set_Max_Curr_Vref(350); // XDIC_OFS_P1
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-                //XDIC_Set_Max_Curr_Vref(500); // XDIC_OFS_P2
-                XDIC_Set_Max_Curr_Vref(600); // XDIC_OFS_P2
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
-                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2; //avg
-                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
-                print(LOG_INFO, "OFS CH[%d] : %.3f\r\n", (i + 1), iout_avg);
-            }
+            XDIC_Trim_Partial_OSC();
         }
         else if (Command_is_("xd_trim_gain"))
         {
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
-            current_gain_t current_gain = GAIN_HIGH;
-            XDIC_Trim_Init_GAIN_CH();
-            JigBD_IF_Change_Current_Gain(current_gain);
-            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
-            {
-                JigBD_IF_Select_Output_Ch(i);
-
-                XDIC_Set_Max_Curr_Vref(3000); // XDIC_GAIN_P1
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
-
-                XDIC_Set_Max_Curr_Vref(1000); // XDIC_GAIN_P2
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
-
-                uint16_t adc_average = iout_adc[i][0] - iout_adc[i][1]; //delta
-                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
-                print(LOG_INFO, "GAIN CH[%d] : %.3f\r\n", (i + 1), iout_avg);
-            }
+            XDIC_Trim_Partial_CH_GAIN();
         }
-        else if (Command_is_("xd_sweep_vref"))
+        else if (Command_is_("xd_trim_ofs"))
         {
-            XDIC_Sweep_Vref();
+            XDIC_Trim_Partial_CH_OFS();
         }
         else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
         {
@@ -1671,33 +1584,6 @@ static void TaskDebugUart(void)
             else
             {
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
-            }
-        }
-        else if (Command_is_("xd_trim_curr"))
-        {
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            uint16_t iout_adc[XD_CH_SIZE] = {0, };
-            uint16_t now_vref = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF);
-            print(LOG_INFO, "\r\nVREF : %u\r\n", now_vref);
-
-            current_gain_t current_gain = GAIN_HIGH;
-            JigBD_IF_Change_Current_Gain(current_gain);
-
-            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
-            {
-                JigBD_IF_Select_Output_Ch(i);
-
-                XDIC_Set_Max_Curr_Vref(now_vref);
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-                iout_adc[i] = ADS114S08_Get_ADC_Value();
-                float iout_avg = JigBD_IF_Convert_Adc_To_Current(iout_adc[i], current_gain);
-
-                XDIC_Set_Max_Curr_Vref(0);
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-
-                print(LOG_INFO, "CURRENT CH[%d] : %.3f\r\n", (i + 1), iout_avg);
             }
         }
 /* ----------------- command list - xc ----------------- */
@@ -1794,11 +1680,6 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_dimming_start") || Command_is_("3"))
         {
-            if (IS_XC24_Support())
-            {
-                XC24_Init();
-            }
-
             XDIC_Init();
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
@@ -1824,18 +1705,6 @@ static void TaskDebugUart(void)
             else
             {
                 print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
-            }
-        }
-        else if (Command_Param_is_("delay", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 100)
-            {
-                XDIC_Set_Sweep_Delay(u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set Delay to - [%u ms]\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of delay [%u] [0 - %u]\r\n", u32_recv_param[0], 100);
             }
         }
         else if (Command_is_("reset"))

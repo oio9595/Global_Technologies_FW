@@ -2,7 +2,7 @@
 <project>
   <fileVersion>3</fileVersion>
   <configuration>
-    <name>XD12_PWM_Rev_3</name>
+    <name>XD12R_GT1009A0R0</name>
     <toolchain>
       <name>ARM</name>
     </toolchain>
@@ -16,19 +16,19 @@
         <debug>1</debug>
         <option>
           <name>BrowseInfoPath</name>
-          <state>XD12_PWM_Rev_3\BrowseInfo</state>
+          <state>XD12R_GT1009A0R0\BrowseInfo</state>
         </option>
         <option>
           <name>ExePath</name>
-          <state>XD12_PWM_Rev_3/Exe</state>
+          <state>XD12R_GT1009A0R0/Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>XD12_PWM_Rev_3/Obj</state>
+          <state>XD12R_GT1009A0R0/Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>XD12_PWM_Rev_3/List</state>
+          <state>XD12R_GT1009A0R0/List</state>
         </option>
         <option>
           <name>GEndianMode</name>
@@ -341,7 +341,7 @@
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</state>
           <state>$PROJ_DIR$/../Drivers/CMSIS/Device/ST/STM32F4xx/Include</state>
-          <state>$PROJ_DIR$/../Drivers/CMSIS/Include</state>
+          <state>$PROJ_DIR$\..\Drivers\CMSIS\Include</state>
           <state>$PROJ_DIR$\..\User\Inc</state>
         </option>
         <option>
@@ -640,7 +640,7 @@
         </option>
         <option>
           <name>OOCOutputFile</name>
-          <state>XD12_PWM_Rev_3.hex</state>
+          <state>XD12R_GT1009A0R0.hex</state>
         </option>
         <option>
           <name>OOCCommandLineProducer</name>
@@ -679,7 +679,7 @@
         <debug>1</debug>
         <option>
           <name>IlinkOutputFile</name>
-          <state>XD12_PWM_Rev_3.out</state>
+          <state>XD12R_GT1009A0R0.out</state>
         </option>
         <option>
           <name>IlinkLibIOConfig</name>
@@ -984,7 +984,7 @@
         </option>
         <option>
           <name>IlinkTrustzoneImportLibraryOut</name>
-          <state></state>
+          <state>XD12R_GT1009A0R0_import_lib.o</state>
         </option>
         <option>
           <name>OILinkExtraOption</name>

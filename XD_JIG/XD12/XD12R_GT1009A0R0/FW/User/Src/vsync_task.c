@@ -53,7 +53,7 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
-    if (!XDIC_Is_Vsync_Mode_External() && !IS_XC24_Support())
+    if (!IS_XC24_Support())
     {
         JigBD_IF_SyncGen_Command();
     }

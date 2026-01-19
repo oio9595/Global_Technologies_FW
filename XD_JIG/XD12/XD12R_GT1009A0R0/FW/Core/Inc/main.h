@@ -121,8 +121,6 @@ extern void sys_tick_handler(void);
 #define ADC_DRDY_Pin LL_GPIO_PIN_4
 #define ADC_DRDY_GPIO_Port GPIOC
 #define ADC_DRDY_EXTI_IRQn EXTI4_IRQn
-#define XDIC_FB_IN_Pin LL_GPIO_PIN_5
-#define XDIC_FB_IN_GPIO_Port GPIOC
 #define XDIC_ADO_Pin LL_GPIO_PIN_0
 #define XDIC_ADO_GPIO_Port GPIOB
 #define ENABLE_SELECT4_Pin LL_GPIO_PIN_1
@@ -133,8 +131,6 @@ extern void sys_tick_handler(void);
 #define ADC_SPI_CLK_GPIO_Port GPIOB
 #define ENABLE_SELECT3_Pin LL_GPIO_PIN_12
 #define ENABLE_SELECT3_GPIO_Port GPIOB
-#define XDIC_FB_OUT_Pin LL_GPIO_PIN_13
-#define XDIC_FB_OUT_GPIO_Port GPIOB
 #define XDIC_5_7V_Pin LL_GPIO_PIN_14
 #define XDIC_5_7V_GPIO_Port GPIOB
 #define CNT_MR_Pin LL_GPIO_PIN_15
@@ -195,9 +191,6 @@ extern void sys_tick_handler(void);
 #define XC_NSCS_HI()            XC24_NSCS_GPIO_Port->BSRR = XC24_NSCS_Pin <<  0U
 #define XC_NSCS_LO()            XC24_NSCS_GPIO_Port->BSRR = XC24_NSCS_Pin << 16U
 
-#define XD_FBI_HI()             XDIC_FB_IN_GPIO_Port->BSRR = XDIC_FB_IN_Pin <<  0U
-#define XD_FBI_LO()             XDIC_FB_IN_GPIO_Port->BSRR = XDIC_FB_IN_Pin << 16U
-
 #define DEBUG_HI()              DEBUG_GPIO_Port->BSRR = DEBUG_Pin <<  0U
 #define DEBUG_LO()              DEBUG_GPIO_Port->BSRR = DEBUG_Pin << 16U
 
@@ -206,8 +199,6 @@ extern void sys_tick_handler(void);
 
 #define ADS_CS_HI()             ADC_CS_GPIO_Port->BSRR = ADC_CS_Pin <<  0U
 #define ADS_CS_LO()             ADC_CS_GPIO_Port->BSRR = ADC_CS_Pin << 16U
-
-#define XD_FBO_READ()           ((XDIC_FB_OUT_GPIO_Port->IDR) & (XDIC_FB_OUT_Pin))
 
 /* USER CODE END Private defines */
 

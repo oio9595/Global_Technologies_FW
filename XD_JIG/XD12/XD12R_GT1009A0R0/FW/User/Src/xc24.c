@@ -439,13 +439,13 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r15.int_thermal_en = 1;
                 break;*/
             case XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 :
-                gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
+                gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XDIC_CH_SIZE;
                 break;
             case XC24_ADDR_DAISY_SIZE1 :
-                gt_xc24_general_regs._r30.daisy_size_ch1 = XD_DAISY_SIZE;
+                gt_xc24_general_regs._r30.daisy_size_ch1 = XDIC_DAISY_SIZE;
                 break;
             case XC24_ADDR_BLOCK_SIZE1 :
-                gt_xc24_general_regs._r38.block_size_ch1 = XD_DAISY_SIZE * XD_CH_SIZE;
+                gt_xc24_general_regs._r38.block_size_ch1 = XDIC_DAISY_SIZE * XDIC_CH_SIZE;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE1 :
                 gt_xc24_general_regs._r45.ch1_en = 1;
@@ -722,39 +722,39 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 void XC24_IF_Write_LD(uint16_t in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[1 + XD_DAISY_SIZE * XD_CH_SIZE * 24] = {0,};
+    uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24] = {0,};
 
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
-    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
+    cmd_format.size = XDIC_DAISY_SIZE * XDIC_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint16_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE * 24) ; ++i)
+    for (uint16_t i = 0 ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24) ; ++i)
     {
         tx_buffer[i + 1] = in_LD_data;
     }
 
-    SPI_Write(g_hSPIx, tx_buffer, 1 + XD_DAISY_SIZE * XD_CH_SIZE * 24);
+    SPI_Write(g_hSPIx, tx_buffer, 1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 #else
 void XC24_IF_Write_LD(uint16_t in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[1 + XD_DAISY_SIZE * XD_CH_SIZE] = {0,};
+    uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE] = {0,};
 
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
-    cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
+    cmd_format.size = XDIC_DAISY_SIZE * XDIC_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint16_t i = 0 ; i < (XD_DAISY_SIZE * XD_CH_SIZE) ; ++i)
+    for (uint16_t i = 0 ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE) ; ++i)
     {
         //tx_buffer[i + 1] = in_LD_data;
         tx_buffer[i + 1] = ((i + 1) << 12) | ((i + 1) << 8) | ((i + 1) << 4) | ((i + 1) << 0);
     }
 
-    SPI_Write(g_hSPIx, tx_buffer, 1 + XD_DAISY_SIZE * XD_CH_SIZE);
+    SPI_Write(g_hSPIx, tx_buffer, 1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 #endif

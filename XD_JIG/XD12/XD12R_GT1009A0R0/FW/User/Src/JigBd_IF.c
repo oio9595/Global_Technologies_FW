@@ -536,7 +536,7 @@ static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 
 void MCU_IF_Set_XDIC_Channel(uint8_t in_channel)
 {
-    if (in_channel < (XD_CH_SIZE + 1))
+    if (in_channel < (XDIC_CH_SIZE + 1))
     {
         gn_xdic_dimming_channel = in_channel;
     }
@@ -556,7 +556,7 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
@@ -595,7 +595,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
@@ -649,7 +649,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
@@ -657,7 +657,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
 
         //LD[15:0]
-        for (uint8_t j = 0 ; j < XD_CH_SIZE ; ++j)
+        for (uint8_t j = 0 ; j < XDIC_CH_SIZE ; ++j)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
 
@@ -696,7 +696,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
@@ -744,7 +744,7 @@ static void MCU_IF_IdGen_Command()
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
@@ -773,7 +773,7 @@ static void MCU_IF_SyncGen_Command()
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
     uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
-    for (uint8_t i = 0 ; i < XD_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
