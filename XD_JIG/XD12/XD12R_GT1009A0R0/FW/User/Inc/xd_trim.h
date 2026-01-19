@@ -12,8 +12,18 @@
 extern "C" {
 #endif
 
-#define XDIC_GAIN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_16mA)
-#define XDIC_OFS_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_IBN_2uA_DEFAULT_VALUE      (0x10)  /* 5-bit */
+#define XDIC_DAC_LDO_1V5_DEFAULT_VALUE  (0x10)  /* 5-bit */
+#define XDIC_DIG_LDO_1V5_DEFAULT_VALUE  (0x08)  /* 4-bit */
+#define XDIC_DAC_A_OFS_DEFAULT_VALUE    (0x40)  /* 7-bit */
+#define XDIC_DAC_B_OFS_DEFAULT_VALUE    (0x40)  /* 7-bit */
+#define XDIC_FLL_LDO_1V5_DEFAULT_VALUE  (0x08)  /* 4-bit */
+#define XDIC_OSC_DEFAULT_VALUE          (0x08)  /* 4-bit */
+#define XDIC_GAIN_CH_DEFAULT_VALUE      (0x20)  /* 6-bit */
+#define XDIC_OFS_CH_DEFAULT_VALUE       (0x80)  /* 8-bit */
+
+#define XDIC_GAIN_MAX_CURRENT_LVL       (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_OFS_MAX_CURRENT_LVL        (DEV_MAX_CURR_LEVEL_16mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
@@ -66,15 +76,15 @@ typedef enum tag_TRIM_ERROR_CODE_T
 typedef enum tag_XD_TRIM_MODE_T
 {
     XD_TRIM_START = 0,
-    XD_TRIM_IBN_2uA = 0,
-    XD_TRIM_DAC_LDO_1V5,
-    XD_TRIM_DIG_LDO_1V5,
-    XD_TRIM_DAC_A_OFS,
-    XD_TRIM_DAC_B_OFS,
-    XD_TRIM_FLL_LDO_1V5,
-    XD_TRIM_OSC,
-    XD_TRIM_CH_GAIN,
-    XD_TRIM_CH_OFS,
+    XD_TRIM_IBN_2uA = 0,    /* non-signed */
+    XD_TRIM_DAC_LDO_1V5,    /* non-signed */
+    XD_TRIM_DIG_LDO_1V5,    /*   signed   */
+    XD_TRIM_DAC_A_OFS,      /*   signed   */
+    XD_TRIM_DAC_B_OFS,      /*   signed   */
+    XD_TRIM_FLL_LDO_1V5,    /* non-signed */
+    XD_TRIM_OSC,            /* non-signed */
+    XD_TRIM_CH_GAIN,        /* non-signed */
+    XD_TRIM_CH_OFS,         /* non-signed */
     XD_TRIM_MAX
 } xd_trim_mode_t;
 

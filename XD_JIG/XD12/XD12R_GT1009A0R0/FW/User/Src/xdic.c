@@ -85,6 +85,42 @@
 #define XDIC_R04_LDO_DAC_CTL_SHIFT  (8)
 #define XDIC_R04_LDO_DAC_CTL_MASK   (0x0F << XDIC_R04_LDO_DAC_CTL_SHIFT)
 
+typedef enum tag_XDIC_SUBSTITUTE_VALUE_ORDER_T
+{
+    XDIC_SUBSTITUTE_VALUE_ORDER_IBN_2uA,
+    XDIC_SUBSTITUTE_VALUE_ORDER_DAC_LDO_1V5,
+    XDIC_SUBSTITUTE_VALUE_ORDER_DIG_LDO_1V5,
+    XDIC_SUBSTITUTE_VALUE_ORDER_DAC_A_OFS,
+    XDIC_SUBSTITUTE_VALUE_ORDER_DAC_B_OFS,
+    XDIC_SUBSTITUTE_VALUE_ORDER_FLL_LDO_1V5,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OSC,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH03,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH04,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH05,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH06,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH07,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH08,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH09,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH10,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH11,
+    XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH12,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH03,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH04,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH05,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH06,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH07,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH08,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH09,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH10,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH11,
+    XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH12,
+    XDIC_SUBSTITUTE_VALUE_ORDER_MAX,
+} xdic_substitute_value_order_t;
+
 volatile bool gb_xdic_initial_failed;
 
 static _xdic_general_regs_t gt_xdic_general_regs;
@@ -201,6 +237,26 @@ static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX] =
     // 10     11     12     13     14     15     16     17     18     19     1A     1B     1C
     0x080, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020, 0x020
 };
+
+static uint16_t gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_MAX] =
+{
+    XDIC_IBN_2uA_DEFAULT_VALUE,
+    XDIC_DAC_LDO_1V5_DEFAULT_VALUE,
+    XDIC_DIG_LDO_1V5_DEFAULT_VALUE,
+    XDIC_DAC_A_OFS_DEFAULT_VALUE,
+    XDIC_DAC_B_OFS_DEFAULT_VALUE,
+    XDIC_FLL_LDO_1V5_DEFAULT_VALUE,
+    XDIC_OSC_DEFAULT_VALUE,
+    XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE,
+    XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE,
+    XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE,
+    XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE, XDIC_OFS_CH_DEFAULT_VALUE,
+    XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,
+    XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,
+    XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,
+    XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,XDIC_GAIN_CH_DEFAULT_VALUE,
+};
+
 
 /* Variable for XD Registers */
 static float gf_xd_mclk;
@@ -361,72 +417,99 @@ uint16_t XDIC_Get_Mirror_Reg(uint8_t addr)
     return xdic_reg_val;
 }
 
-void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_reg_val)
+void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val)
 {
     uint16_t reg_val = 0;
+    uint16_t reg_form_value = 0;
     switch(in_trim_mode)
     {
         case XD_TRIM_IBN_2uA:
-            if (in_reg_val > XDIC_REG_LIMIT_IBN_2uA)
+            if (in_sub_val > XDIC_REG_LIMIT_IBN_2uA)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_IBN_2uA- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_IBN_2uA- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                reg_form_value = in_sub_val;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_IREF_CTL_BGR_TC);
                 reg_val &= ~XDIC_R02_IREF_CTL_MASK;
-                reg_val |= (in_reg_val << XDIC_R02_IREF_CTL_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R02_IREF_CTL_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_IREF_CTL_BGR_TC, reg_val);
             }
             break;
         case XD_TRIM_DAC_LDO_1V5:
-            if (in_reg_val > XDIC_REG_LIMIT_DAC_LDO_1V5)
+            if (in_sub_val > XDIC_REG_LIMIT_DAC_LDO_1V5)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_LDO_1V5- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_LDO_1V5- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                reg_form_value = in_sub_val;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
                 reg_val &= ~XDIC_R04_LDO_DAC_CTL_MASK;
-                reg_val |= (in_reg_val << XDIC_R04_LDO_DAC_CTL_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R04_LDO_DAC_CTL_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL, reg_val);
             }
             break;
         case XD_TRIM_DIG_LDO_1V5:
-            if (in_reg_val > XDIC_REG_LIMIT_DIG_LDO_1V5)
+            if (in_sub_val > XDIC_REG_LIMIT_DIG_LDO_1V5)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_DIG_LDO_1V5- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_DIG_LDO_1V5- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                if (in_sub_val < 8)
+                {
+                    reg_form_value = in_sub_val ^ 7;
+                }
+                else
+                {
+                    reg_form_value = in_sub_val;
+                }
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
                 reg_val &= ~XDIC_R04_LDO_CTL_MASK;
-                reg_val |= (in_reg_val << XDIC_R04_LDO_CTL_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R04_LDO_CTL_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL, reg_val);
             }
             break;
         case XD_TRIM_DAC_A_OFS:
-            if (in_reg_val > XDIC_REG_LIMIT_DAC_A_OFS)
+            if (in_sub_val > XDIC_REG_LIMIT_DAC_A_OFS)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_A_OFS- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_A_OFS- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                if (in_sub_val < 64)
+                {
+                    reg_form_value = in_sub_val ^ 63;
+                }
+                else
+                {
+                    reg_form_value = in_sub_val;
+                }
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
                 reg_val &= ~XDIC_R01_DAC_A_OFS_MASK;
-                reg_val |= (in_reg_val << XDIC_R01_DAC_A_OFS_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R01_DAC_A_OFS_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS, reg_val);
             }
             break;
         case XD_TRIM_DAC_B_OFS:
-            if (in_reg_val > XDIC_REG_LIMIT_DAC_B_OFS)
+            if (in_sub_val > XDIC_REG_LIMIT_DAC_B_OFS)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_B_OFS- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_DAC_B_OFS- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
-                uint16_t dac_b_ofs_lsb = ((in_reg_val & 0x1F) >> 0);
-                uint16_t dac_b_ofs_msb = ((in_reg_val & 0x60) >> 5);
+                if (in_sub_val < 64)
+                {
+                    reg_form_value = in_sub_val ^ 63;
+                }
+                else
+                {
+                    reg_form_value = in_sub_val;
+                }
+                uint16_t dac_b_ofs_lsb = ((reg_form_value & 0x1F) >> 0);
+                uint16_t dac_b_ofs_msb = ((reg_form_value & 0x60) >> 5);
 
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
                 reg_val &= ~XDIC_R01_DAC_B_OFS_MASK;
@@ -440,102 +523,94 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             }
             break;
         case XD_TRIM_FLL_LDO_1V5:
-            if (in_reg_val > XDIC_REG_LIMIT_FLL_LDO_1V5)
+            if (in_sub_val > XDIC_REG_LIMIT_FLL_LDO_1V5)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_FLL_LDO_1V5- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_FLL_LDO_1V5- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                reg_form_value = in_sub_val;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
                 reg_val &= ~XDIC_R04_LDO_OSC_CTL_MASK;
-                reg_val |= (in_reg_val << XDIC_R04_LDO_OSC_CTL_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R04_LDO_OSC_CTL_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL, reg_val);
             }
             break;
         case XD_TRIM_OSC:
-            if (in_reg_val > XDIC_REG_LIMIT_OSC)
+            if (in_sub_val > XDIC_REG_LIMIT_OSC)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_OSC- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_OSC- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
+                reg_form_value = in_sub_val;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL);
                 reg_val &= ~XDIC_R03_OSC_RCTL_MASK;
-                reg_val |= (in_reg_val << XDIC_R03_OSC_RCTL_SHIFT);
+                reg_val |= (reg_form_value << XDIC_R03_OSC_RCTL_SHIFT);
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL, reg_val);
             }
             break;
         case XD_TRIM_CH_GAIN:
-            if (in_reg_val > XDIC_REG_LIMIT_CH_GAIN)
+            if (in_sub_val > XDIC_REG_LIMIT_CH_GAIN)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_GAIN- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_GAIN- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num, in_reg_val);
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num, in_sub_val);
             }
             break;
         case XD_TRIM_CH_OFS:
-            if (in_reg_val > XDIC_REG_LIMIT_CH_OFS)
+            if (in_sub_val > XDIC_REG_LIMIT_CH_OFS)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_OFS- in_reg_val(%d) Over !!\r\n", __func__, in_reg_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_OFS- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num, in_reg_val);
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num, in_sub_val);
             }
             break;
     }
 }
 
-uint16_t XDIC_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
+uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
     uint16_t rtn_val = 0xFFFF;
-    uint16_t reg_val[2] = {0xFFFF, 0xFFFF};
     switch(in_trim_mode)
     {
         case XD_TRIM_IBN_2uA:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_IREF_CTL_BGR_TC);
-            rtn_val = (reg_val[0] & XDIC_R02_IREF_CTL_MASK) >> XDIC_R02_IREF_CTL_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_IBN_2uA];
             break;
         case XD_TRIM_DAC_LDO_1V5:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
-            rtn_val = (reg_val[0] & XDIC_R04_LDO_DAC_CTL_MASK) >> XDIC_R04_LDO_DAC_CTL_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_LDO_1V5];
             break;
         case XD_TRIM_DIG_LDO_1V5:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
-            rtn_val = (reg_val[0] & XDIC_R04_LDO_CTL_MASK) >> XDIC_R04_LDO_CTL_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DIG_LDO_1V5];
             break;
         case XD_TRIM_DAC_A_OFS:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
-            rtn_val = (reg_val[0] & XDIC_R01_DAC_A_OFS_MASK) >> XDIC_R01_DAC_A_OFS_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_A_OFS];
             break;
         case XD_TRIM_DAC_B_OFS:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
-            reg_val[1] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_IREF_CTL_BGR_TC);
-            rtn_val = (((reg_val[0] & XDIC_R01_DAC_B_OFS_MASK) >> XDIC_R01_DAC_B_OFS_SHIFT) << 0);
-            rtn_val |= (((reg_val[1] & XDIC_R02_DAC_B_OFS_MASK) >> XDIC_R02_DAC_B_OFS_SHIFT) << 5);
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_B_OFS];
             break;
         case XD_TRIM_FLL_LDO_1V5:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
-            rtn_val = (reg_val[0] & XDIC_R04_LDO_OSC_CTL_MASK) >> XDIC_R04_LDO_OSC_CTL_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_FLL_LDO_1V5];
             break;
         case XD_TRIM_OSC:
-            reg_val[0] = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL);
-            rtn_val = (reg_val[0] & XDIC_R03_OSC_RCTL_MASK) >> XDIC_R03_OSC_RCTL_SHIFT;
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OSC];
             break;
         case XD_TRIM_CH_GAIN:
-            rtn_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num);
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num];
             break;
         case XD_TRIM_CH_OFS:
-            rtn_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num);
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num];
             break;
     }
 
     return rtn_val;
 }
 
-uint16_t XDIC_Get_Mirror_Register_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
+uint16_t XDIC_Get_Substitute_Value_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
     uint16_t rtn_val = 0xFFFF;
     switch(in_trim_mode)
