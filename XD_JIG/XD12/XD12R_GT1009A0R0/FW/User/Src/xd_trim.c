@@ -62,6 +62,8 @@
 #define XD_SCREEN_ANA_GAP           (15)
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
+#define SKIP_2UA_TRIM 1
+
 typedef struct tag_XDIC_SCREEN_PARAM_T
 {
     uint16_t vref_point;
@@ -429,7 +431,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             ptr_Param->value[channel] = JigBD_IF_Reconvert_XDIC_Original_Freq((double)u16_adc_cur);
         }
-        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN | ptr_Param->trim_mode == XD_TRIM_CH_OFS)
+        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN || ptr_Param->trim_mode == XD_TRIM_CH_OFS)
         {
             ptr_Param->value[channel] = JigBD_IF_Convert_Adc_To_Current(u16_adc_cur, temp_current_gain);
         }
@@ -540,7 +542,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                 {
                     // Write Register
                     print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[i].u16_saved_reg);
-                    XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    XDIC_Write_Substitute_Value_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[i].u16_saved_reg);
                     u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[i].u16_saved_reg;
                     u16_data_gap[ptr_Param->u8_channel_cur] = 0;
                     ++ptr_Param->u8_channel_cur;
@@ -585,7 +587,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             // Write Register
             print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
-            XDIC_Write_Mirror_Register_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
+            XDIC_Write_Substitute_Value_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg;
             u16_data_gap[ptr_Param->u8_channel_cur] = u16_adc_gap_closest;
             ++ptr_Param->u8_channel_cur;
@@ -611,7 +613,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[MHz]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
         }
-        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN | ptr_Param->trim_mode == XD_TRIM_CH_OFS)
+        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN || ptr_Param->trim_mode == XD_TRIM_CH_OFS)
         {
             print(LOG_INFO, "[Cnt]\t\t[RANGE]\t\t\t[NOW]\t\t[mA]\t\t[REG]\t\t[JUDGE]\t\t[Target, Save Count]\r\n");
         }
@@ -643,7 +645,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             print(LOG_INFO, "[MHz] ");
         }
-        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN | ptr_Param->trim_mode == XD_TRIM_CH_OFS)
+        else if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN || ptr_Param->trim_mode == XD_TRIM_CH_OFS)
         {
             print(LOG_INFO, "[mA]    ");
         }
@@ -832,6 +834,7 @@ void XD_Trim_Task(void)
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     break;
                 }
+#ifdef SKIP_2UA_TRIM
                 if (gt_xd_trim_search_mode == XD_TRIM_IBN_2uA) // Temporary Solution
                 {
                     gt_xd_trim_search_mode = XD_TRIM_DAC_LDO_1V5;
@@ -841,6 +844,9 @@ void XD_Trim_Task(void)
                 {
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
                 }
+#else
+                gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
+#endif
                 break;
             case XD_TRIM_STEP_CHANGE_OUTPUT:
                 switch(gt_xd_trim_search_mode)
@@ -1053,7 +1059,7 @@ void XD_Trim_Task(void)
 
                     if (u16_substitute_value <= u16_tmp_limit)
                     {
-                        XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_substitute_value);
+                        XDIC_Write_Substitute_Value_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_substitute_value);
                     }
                     else
                     {
@@ -1066,7 +1072,7 @@ void XD_Trim_Task(void)
                     if (u16_substitute_value >= gt_trim_algorithm.adjust_amount[channel])
                     {
                         u16_substitute_value -= gt_trim_algorithm.adjust_amount[channel];
-                        XDIC_Write_Mirror_Register_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_substitute_value);
+                        XDIC_Write_Substitute_Value_By_Trim_Mode(channel, gt_xd_trim_search_mode, u16_substitute_value);
                     }
                     else
                     {

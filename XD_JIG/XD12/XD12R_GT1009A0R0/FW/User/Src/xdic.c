@@ -417,7 +417,7 @@ uint16_t XDIC_Get_Mirror_Reg(uint8_t addr)
     return xdic_reg_val;
 }
 
-void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val)
+void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val)
 {
     uint16_t reg_val = 0;
     uint16_t reg_form_value = 0;
@@ -460,11 +460,11 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             {
                 if (in_sub_val < 8)
                 {
-                    reg_form_value = in_sub_val ^ 7;
+                    reg_form_value = 15 - in_sub_val;
                 }
                 else
                 {
-                    reg_form_value = in_sub_val;
+                    reg_form_value = in_sub_val - 8;
                 }
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
                 reg_val &= ~XDIC_R04_LDO_CTL_MASK;
@@ -479,14 +479,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             }
             else
             {
-                if (in_sub_val < 64)
-                {
-                    reg_form_value = in_sub_val ^ 63;
-                }
-                else
-                {
-                    reg_form_value = in_sub_val;
-                }
+                reg_form_value = in_sub_val ^ 64;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
                 reg_val &= ~XDIC_R01_DAC_A_OFS_MASK;
                 reg_val |= (reg_form_value << XDIC_R01_DAC_A_OFS_SHIFT);
@@ -500,14 +493,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
             }
             else
             {
-                if (in_sub_val < 64)
-                {
-                    reg_form_value = in_sub_val ^ 63;
-                }
-                else
-                {
-                    reg_form_value = in_sub_val;
-                }
+                reg_form_value = in_sub_val ^ 64;
                 uint16_t dac_b_ofs_lsb = ((reg_form_value & 0x1F) >> 0);
                 uint16_t dac_b_ofs_msb = ((reg_form_value & 0x60) >> 5);
 
@@ -698,7 +684,7 @@ void XDIC_Read_All_Registers(void)
     XDIC_Dump_All_Registers();
 }
 
-void XDIC_Param_Init(void)
+static void XDIC_Param_Init(void)
 {
     gf_xd_mclk = XD_MCLK;
     gf_vsync_out = VSYNC;
@@ -816,6 +802,14 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r1B.fllcnt = ((gn_xd_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12);
                 gt_xdic_general_regs._r1B.fll_en = 0;
                 break;
+            case XDIC_ADDR_CHOP_EN :
+                gt_xdic_general_regs._r20.chop_bgr_en = 1;
+                gt_xdic_general_regs._r20.chop_dac_en = 1;
+                gt_xdic_general_regs._r20.chop_iref_en = 1;
+                gt_xdic_general_regs._r20.chop_osc_en = 1;
+                gt_xdic_general_regs._r20.chop_oscldo_en = 1;
+                gt_xdic_general_regs._r20.chop_drv_en = 1;
+                break;
             default :
                 continue;
             }
@@ -842,7 +836,7 @@ void XDIC_Init(void)
     }
 }
 
-void XDIC_Trim_Param_Init(void)
+static void XDIC_Trim_Param_Init(void)
 {
     for (uint8_t i = 0; i < 3; ++i)
     {
@@ -905,6 +899,14 @@ void XDIC_Trim_Init(void)
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r14.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
                 gt_xdic_general_regs._r14.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
+                break;
+            case XDIC_ADDR_CHOP_EN :
+                gt_xdic_general_regs._r20.chop_bgr_en = 1;
+                gt_xdic_general_regs._r20.chop_dac_en = 1;
+                gt_xdic_general_regs._r20.chop_iref_en = 1;
+                gt_xdic_general_regs._r20.chop_osc_en = 1;
+                gt_xdic_general_regs._r20.chop_oscldo_en = 1;
+                gt_xdic_general_regs._r20.chop_drv_en = 1;
                 break;
             case XDIC_ADDR_OTP_OP_MODE :
                 gt_xdic_general_regs._r3F.test_en = 1;
@@ -1267,7 +1269,6 @@ void XDIC_Trim_Partial_OSC(void)
     JigBD_IF_Start_Input_Capture();
     JigBD_IF_Wait_Input_Capture_Done();
     JigBD_IF_Stop_Input_Capture();
-    uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
     float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
     print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
 }
