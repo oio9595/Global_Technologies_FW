@@ -65,12 +65,12 @@ typedef struct tag_KEY_INFO
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-void key_func_1(void)
+static void key_func_1(void)
 {
     XDIC_Trim_Init();
 }
 
-void key_func_2(void)
+static void key_func_2(void)
 {
     // Off LED
     NVIC_SystemReset();
@@ -86,7 +86,7 @@ static key_info_t gt_key_info = {
 
 static uint8_t gn_key_task_tick;
 
-void btn_process(void)
+static void btn_process(void)
 {
     if (gn_key_task_tick == 0)
     {
@@ -207,9 +207,8 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
 
         if (log_lv > LOG_INFO)
         {
-            char temp_buffer[PRINT_BUFF_SIZE] = {0, };
-            snprintf(temp_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
-            fmt = temp_buffer;
+            snprintf(msg_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
+            fmt = msg_buffer;
         }
 
         va_list ap;
@@ -227,7 +226,7 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     }
 }
 
-void comm_print_help(void)
+static void comm_print_help(void)
 {
     print(LOG_INFO, "\n\r------------------ Command Help -----------------------------");
 
@@ -286,7 +285,7 @@ void comm_print_help(void)
     print(LOG_INFO, "\n\r--------------------------------------------------------------\n\r");
 }
 
-void comm_init(void)
+static void comm_init(void)
 {
     print(LOG_INFO, "\n\r--------------------------------------");
     print(LOG_INFO, "\n\r    [GT-XD12 PWM (ES3) JIG]");
@@ -1758,10 +1757,8 @@ void comm_rx_handler(uint8_t rx)
     {
         if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length)
         {
-            uint8_t temp[2] = {' ', UART_BACKSPACE};
-
-            UART_PutChar(temp[0]);
-            UART_PutChar(temp[1]);
+            UART_PutChar(' ');
+            UART_PutChar(UART_BACKSPACE);
             --gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
         }
     }

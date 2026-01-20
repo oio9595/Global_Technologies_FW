@@ -431,13 +431,12 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
 {
     if (gb_timer_input_capture_activated == 1)
     {
-        double f_freq = 0;
         double f_freq_avg = 0;
-        uint32_t delta = 0;
         uint32_t n_count = 0;
 
         for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
         {
+            uint32_t delta = 0;
             if (gn_input_capture_cnt[i + 1] > gn_input_capture_cnt[i + 0])
             {
                 delta = (gn_input_capture_cnt[i + 1] - gn_input_capture_cnt[i + 0]);
@@ -447,8 +446,7 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
                 delta = (0xFFFFFFFF - gn_input_capture_cnt[i + 0]) + gn_input_capture_cnt[i + 1] + 1;
             }
 
-            f_freq = (TIM5_FREQ / delta);
-            f_freq_avg += f_freq;
+            f_freq_avg += (TIM5_FREQ / delta);
             ++n_count;
         }
 
@@ -494,8 +492,8 @@ static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
     uint16_t logic_1_duty_cnt_min = 0;
     uint16_t logic_1_duty_cnt_max = 0;
 
-    uint16_t* p_rising = gn_serialize_rx_risingBuffer;
-    uint16_t* p_falling = gn_serialize_rx_fallingBuffer;
+    const uint16_t* p_rising = gn_serialize_rx_risingBuffer;
+    const uint16_t* p_falling = gn_serialize_rx_fallingBuffer;
 
     for (uint16_t i = 1 ; i < len ; ++i)
     {
@@ -661,11 +659,11 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
 
-            for (uint8_t i = 0 ; i < SERIAL_LD_SIZE ; ++i)
+            for (uint8_t k = 0 ; k < SERIAL_LD_SIZE ; ++k)
             {
                 if (write_data)
                 {
-                    gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_LD_data, SERIAL_LD_SIZE - i)) ? bit_1 : bit_0);
+                    gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_LD_data, SERIAL_LD_SIZE - k)) ? bit_1 : bit_0);
                 }
                 else
                 {

@@ -96,8 +96,6 @@ void XDIC_Get_Fault_Status(void)
     static uint8_t prev_fault_status = 0xFF;
     static uint16_t vsync_tick = 0;
 
-    char msg[50] = {0, };
-
     if (now_fault_status != prev_fault_status)
     {
         if (!now_fault_status)
@@ -106,6 +104,7 @@ void XDIC_Get_Fault_Status(void)
         }
         else
         {
+            char msg[50] = {0, };
             snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
             if (now_fault_status & FAULT_MASK_FB)
             {

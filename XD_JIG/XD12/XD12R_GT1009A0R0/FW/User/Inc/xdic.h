@@ -879,17 +879,14 @@ extern void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data);
 extern uint16_t XDIC_Read_Mirror_Reg(uint8_t addr);
 extern uint16_t XDIC_Get_Mirror_Reg(uint8_t addr);
 
-extern void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val);
+extern void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val);
 extern uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode);
 extern uint16_t XDIC_Get_Substitute_Value_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode);
 
 extern void XDIC_Dump_Trim_Regs_OneLine(void);
 extern void XDIC_Read_All_Registers(void);
 
-extern void XDIC_Param_Init(void);
 extern void XDIC_Init(void);
-
-extern void XDIC_Trim_Param_Init(void);
 extern void XDIC_Trim_Init(void);
 
 extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);

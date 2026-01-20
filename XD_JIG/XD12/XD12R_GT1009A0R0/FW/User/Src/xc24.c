@@ -163,7 +163,7 @@ static _reg_map_t gt_xc24_mirror_maps[] =
 };
 static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
-__STATIC_INLINE bool SPI_Timeout_Handler(void)
+static inline bool SPI_Timeout_Handler(void)
 {
     if (gn_xc_spi_timeout == 0)
     {
@@ -173,7 +173,7 @@ __STATIC_INLINE bool SPI_Timeout_Handler(void)
     return true;
 }
 
-__STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t len)
+static inline void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t len)
 {
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
@@ -201,7 +201,7 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     XC_NSCS_HI();
 }
 
-__STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t* p_rx_buffer, uint16_t len)
+static inline void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t* p_rx_buffer, uint16_t len)
 {
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
@@ -214,7 +214,7 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
 
     while(SET == LL_SPI_IsActiveFlag_RXNE(SPIx))
     {
-        volatile uint16_t temp  = LL_SPI_ReceiveData16(SPIx);
+        volatile uint16_t temp = LL_SPI_ReceiveData16(SPIx);
     }
 
     for (volatile uint16_t i = 0 ; i < len ; i++)
