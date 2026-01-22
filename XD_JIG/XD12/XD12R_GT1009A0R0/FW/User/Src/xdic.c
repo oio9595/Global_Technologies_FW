@@ -1189,7 +1189,7 @@ void XDIC_Trim_Init_OSC(void)
     gt_xdic_general_regs._r3F.mclk64_o = 1;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    XDIC_Set_OSC_Manual_Enable(TRUE);
+    XDIC_Set_OSC_Manual_Enable(true);
     XDIC_Set_OSC_Manual(0x8000);
 }
 

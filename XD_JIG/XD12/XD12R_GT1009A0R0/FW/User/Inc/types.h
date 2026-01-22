@@ -13,9 +13,6 @@
 extern "C" {
 #endif
 
-#define TRUE    1
-#define FALSE   0
-
 typedef unsigned char       BOOL;
 typedef unsigned char       U8;
 typedef char                S8;

@@ -135,6 +135,8 @@ extern void sys_tick_handler(void);
 #define XDIC_5_7V_GPIO_Port GPIOB
 #define CNT_MR_Pin LL_GPIO_PIN_15
 #define CNT_MR_GPIO_Port GPIOB
+#define SVSYNC_Pin LL_GPIO_PIN_6
+#define SVSYNC_GPIO_Port GPIOC
 #define VSYNC_Pin LL_GPIO_PIN_7
 #define VSYNC_GPIO_Port GPIOC
 #define ENABLE_SELECT1_Pin LL_GPIO_PIN_8

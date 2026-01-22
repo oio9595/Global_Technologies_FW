@@ -25,7 +25,7 @@ extern "C" {
 /********************************************************/
 
 /********************************************************/
-#define APB1_TIM_FREQ               (72.0) //MHz
+#define APB1_TIM_FREQ               (90.0f) //MHz
 #define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2) //MHz
 
 #define CONST_MHz_TO_Hz             (1000000.0f)

@@ -241,7 +241,7 @@ bool XD_Trim_IF_Get_OTP_Enable(void)
 /* BEGIN - TRIM ALGORITHM   ***************************************/
 static uint8_t XD_Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, uint8_t in_adj_type, xd_trim_mode_t in_trim_mode)
 {
-    uint8_t ret = TRUE;
+    uint8_t ret = true;
 
     if (in_adj_type == ADJ_PLUS)
     {
@@ -249,19 +249,19 @@ static uint8_t XD_Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, ui
 
         if ((XDIC_Get_Substitute_Value_By_Trim_Mode(in_channel, in_trim_mode) + in_step) > (u16_register_limit - 1))
         {
-            ret = FALSE;
+            ret = false;
         }
     }
     else if (in_adj_type == ADJ_MINUS)
     {
         if ((XDIC_Get_Substitute_Value_By_Trim_Mode(in_channel, in_trim_mode) - in_step) < (0 + 1))
         {
-            ret = FALSE;
+            ret = false;
         }
     }
     else
     {
-        ret = FALSE;
+        ret = false;
     }
 
     return ret;

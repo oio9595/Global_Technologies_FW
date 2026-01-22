@@ -93,7 +93,7 @@ extern void MCU_IF_Set_XDIC_Channel(uint8_t in_channel);
 
 static inline void Serialize_Tx_Start(uint32_t len)
 {
-    gb_pwm_dma_tx_flag = TRUE;
+    gb_pwm_dma_tx_flag = true;
 
     LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, len);
     //LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);

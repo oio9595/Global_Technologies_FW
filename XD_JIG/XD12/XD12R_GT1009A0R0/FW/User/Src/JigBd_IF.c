@@ -19,7 +19,7 @@
 #define MCU_ADC_VREF                (3.3f)
 #define MCU_ADC_RESOLUTION          (4095.0f)
 
-#define TIM1_PERIOD                 (143)
+#define TIM1_PERIOD                 (179)
 #define _LOGIC_0_                   (uint16_t)(((TIM1_PERIOD + 1) * 1.0f / 3.0f) - 1 + 0.5f)
 #define _LOGIC_1_                   (uint16_t)(((TIM1_PERIOD + 1) * 2.0f / 3.0f) - 1 + 0.5f)
 
@@ -91,7 +91,7 @@ void JigBD_IF_XC_VCC_EN(uint8_t on)
             XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE_DATA, 0x00);
         }
         XC_NSCS_LO();
-        XC24_Start_MCLK_Oscillation(FALSE);
+        XC24_Start_MCLK_Oscillation(false);
         LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
     }
     LL_mDelay(10);

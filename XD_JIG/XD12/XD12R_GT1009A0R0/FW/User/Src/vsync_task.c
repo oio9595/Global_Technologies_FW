@@ -31,8 +31,51 @@ static uint8_t gn_xdic_read_addr;
 
 static uint16_t gn_xdic_LD_out;
 
+static uint16_t gn_svsync_count;
+
+#define TIM3_FREQUENCY_HZ       (90000000U)
+#define TIM3_PRESCALER          (14U)
+#define TIM3_CALC_ARR(freq)     ((uint32_t)((TIM3_FREQUENCY_HZ / (TIM3_PRESCALER + 1)) / (freq) - 1U))
+
+void Svsync_Timer_Start(void)
+{
+    gn_svsync_count = 0;
+    // For Red, change frequency
+    uint32_t arr = TIM3_CALC_ARR(360);
+    LL_TIM_SetAutoReload(TIM3, arr);
+    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+    LL_TIM_EnableCounter(TIM3);
+}
+
+void Svsync_Update_Handler(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM3);
+
+    ++gn_svsync_count;
+
+    if (gn_svsync_count == 1U)
+    {
+        // For Green, change frequency
+        uint32_t arr = TIM3_CALC_ARR(480);
+        LL_TIM_SetAutoReload(TIM3, arr);
+    }
+    else if (gn_svsync_count == 2U)
+    {
+        // For Blue, change frequency
+        uint32_t arr = TIM3_CALC_ARR(640);
+        LL_TIM_SetAutoReload(TIM3, arr);
+        us_delay(5);
+        LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+    }
+    else
+    {
+        LL_TIM_DisableCounter(TIM3);
+    }
+}
+
 void Vsync_Timer_Start(void)
 {
+    LL_TIM_ClearFlag_UPDATE(TIM8);
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
@@ -57,6 +100,7 @@ void Vsync_Update_Handler(void)
     {
         JigBD_IF_SyncGen_Command();
     }
+    Svsync_Timer_Start();
     gb_xdic_vsync_flag = true;
 }
 
@@ -143,7 +187,7 @@ void XDIC_Vsync_Task(void)
 
         us_delay(1500);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
-        JigBD_IF_Fault_Read_Command();
+        //JigBD_IF_Fault_Read_Command();
 
         if (gb_xdic_write_flag)
         {

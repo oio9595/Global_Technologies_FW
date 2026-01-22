@@ -379,7 +379,7 @@ void XC24_Init(void)
     XC_NSCS_HI();
 
 #if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
-    XC24_Start_MCLK_Oscillation(TRUE);
+    XC24_Start_MCLK_Oscillation(true);
 #endif
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
@@ -513,7 +513,7 @@ void XC24_Trim_Init(void)
     XC_NSCS_HI();
 
 #if (XC24_MCLK_MODE == XC24_MCLK_EXTERNAL)
-    XC24_Start_MCLK_Oscillation(TRUE);
+    XC24_Start_MCLK_Oscillation(true);
 #endif
 
     print(LOG_DEBUG, " ...XC24 Initial Start...\r\n");
