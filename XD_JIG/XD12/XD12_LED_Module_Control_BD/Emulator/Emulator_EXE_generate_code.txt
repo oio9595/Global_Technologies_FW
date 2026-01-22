@@ -1,0 +1,1 @@
+pyinstaller --onefile --noconsole --clean --hidden-import PyQt5.sip --hidden-import PyQt5.QtCore --hidden-import PyQt5.QtGui --hidden-import PyQt5.QtWidgets XD04_LED_RS232_Emulator.py
