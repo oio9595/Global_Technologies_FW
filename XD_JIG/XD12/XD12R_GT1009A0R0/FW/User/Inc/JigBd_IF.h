@@ -175,5 +175,3 @@ static inline void Serialize_Rx_Start(uint32_t len)
 #endif /* ~__JIG_BD_IF_H__ */
 
 /*** end of file ***/
-
-

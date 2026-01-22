@@ -1718,5 +1718,3 @@ extern void XC24_Turn_On_Sync_Auto(void);
 #endif /* ~__XC24_H__ */
 
 /*** end of file ***/
-
-

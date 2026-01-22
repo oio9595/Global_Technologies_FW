@@ -42,9 +42,9 @@
 
 static uint16_t gn_mcu_adc_value;
 
-uint16_t gn_serialize_tx_buffer[4000] = {0, };
-uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
-uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
+static uint16_t gn_serialize_tx_buffer[4000] = {0, };
+static uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
+static uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 
 volatile uint16_t gn_xd_rx_timeout;
 volatile bool gb_xd_timeout_event;
@@ -587,7 +587,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 {
     uint32_t pwm_length = 0;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;   /* dummy */
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
@@ -600,14 +600,13 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
 
-        //bit5 ~ bit0 : addr[5:0]
         for (uint8_t j = 0 ; j < SERIAL_ADDR_SIZE ; ++j)
         {
             gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? bit_1 : bit_0);
         }
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gn_serialize_tx_buffer[pwm_length++] = 0;
     gb_pwm_is_rx_flag = true;
 
     Serialize_Tx_Start(pwm_length);
@@ -641,7 +640,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
 {
     uint16_t pwm_length = 0;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;   /* dummy */
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
@@ -654,7 +653,6 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
 
-        //LD[15:0]
         for (uint8_t j = 0 ; j < XDIC_CH_SIZE ; ++j)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
@@ -673,7 +671,7 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         }
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
@@ -688,7 +686,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 {
     uint32_t pwm_length = 0;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;   /* dummy */
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
@@ -702,7 +700,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
@@ -731,12 +729,11 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     return (uint16_t)(n_response & 0x0FFF);
 }
 
-
 static void MCU_IF_IdGen_Command()
 {
     uint16_t pwm_length = 0;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;   /* dummy */
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
@@ -750,7 +747,7 @@ static void MCU_IF_IdGen_Command()
         gn_serialize_tx_buffer[pwm_length++] = bit_0;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
@@ -765,7 +762,7 @@ static void MCU_IF_SyncGen_Command()
 {
     uint16_t pwm_length = 0;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;   /* dummy */
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
     uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
@@ -779,7 +776,7 @@ static void MCU_IF_SyncGen_Command()
         gn_serialize_tx_buffer[pwm_length++] = bit_1;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0; //Make Signal End LOW.
+    gn_serialize_tx_buffer[pwm_length++] = 0;
 
     gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);

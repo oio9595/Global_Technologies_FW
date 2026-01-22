@@ -118,5 +118,3 @@ extern bool XD_Trim_IF_Get_OTP_Enable(void);
 #endif /* ~__XD_TRIM_H__ */
 
 /*** end of file ***/
-
-

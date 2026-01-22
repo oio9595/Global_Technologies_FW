@@ -727,14 +727,14 @@ void XD_Trim_Calculate_Spec(void)
                 gt_xdic_trim_condition[mode].u16_p2 = 0;
                 break;
             case XD_TRIM_CH_GAIN:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000; //Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000; //Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_GAIN_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_GAIN_P2;
                 break;
             case XD_TRIM_CH_OFS:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000; //Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000; //Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_P2;
                 break;
@@ -1186,9 +1186,7 @@ void XD_Trim_Task(void)
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
                 JigBD_IF_XC_VCC_EN(PWR_OFF);
-
                 XDIC_Display_Mirror_Regs();
-                print(LOG_INFO, "======== TRIM END ========\r\n");
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
                 break;
             default:
