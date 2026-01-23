@@ -262,10 +262,8 @@ static uint16_t gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_MAX] =
 static float gf_xd_mclk;
 static float gf_vsync_out;
 static uint16_t gn_xd_pwm_res;
-static uint16_t gn_xd_scan_no;
 static uint16_t gn_xd_ch_size;
 
-static uint16_t gn_xd_pwm_max_size;
 static uint16_t gn_xd_fpwm_div;
 static uint32_t gn_xd_mclk_lock_cnt;
 
@@ -690,16 +688,13 @@ static void XDIC_Param_Init(void)
     gf_vsync_out = VSYNC;
 
     gn_xd_pwm_res = XDIC_PWM_RES_14BIT;
-    gn_xd_scan_no = 0;
 
     if (gn_xd_pwm_res == XDIC_PWM_RES_12BIT)
     {
-        gn_xd_pwm_max_size = (1 << (12 - gn_xd_scan_no)) - 1;
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 12)));
     }
     else //if (gn_xd_pwm_res == XDIC_PWM_RES_14BIT)
     {
-        gn_xd_pwm_max_size = (1 << (14 - gn_xd_scan_no)) - 1;
         gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
     }
 
@@ -741,16 +736,16 @@ void XDIC_Init(void)
             case XDIC_ADDR_LD_CONTROL :
                 gt_xdic_general_regs._r01.ld_mode = XDIC_LD_MODE_NORMAL;
                 gt_xdic_general_regs._r01.ld_dir = XDIC_LD_DIR_HEAD_SHIFT;
-                gt_xdic_general_regs._r01.ld_type = XDIC_LD_TYPE_1;
+                gt_xdic_general_regs._r01.ld_type = XDIC_LD_TYPE_2;
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
-                gt_xdic_general_regs._r01.syncmode = XDIC_SYNC_MODE_CMD;
+                gt_xdic_general_regs._r01.syncmode = XDIC_SYNC_MODE_SVI;
                 gt_xdic_general_regs._r01.vrefmode = XDIC_VREF_MODE_VREF2_3;
                 gt_xdic_general_regs._r01.pc_en = XDIC_PARITY_CHECK_DIS;
                 gt_xdic_general_regs._r01.ld_size = XDIC_CH_SIZE;
                 break;
             case XDIC_ADDR_SVSYNC_NUM :
                 gt_xdic_general_regs._r02.fpwm_div1 = 0;
-                gt_xdic_general_regs._r02.sv_no = 0;
+                gt_xdic_general_regs._r02.sv_no = 32;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_1_2 :
                 gt_xdic_general_regs._r03.fpwm_div1 = gn_xd_fpwm_div;
@@ -941,7 +936,7 @@ void XDIC_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XDIC_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
+    uint16_t delay_per_ch = 0; //gn_xd_pwm_max_size / gn_xd_ch_size;
 
     for (uint8_t ch = 0 ; ch < XDIC_CH_SIZE ; ++ch)
     {

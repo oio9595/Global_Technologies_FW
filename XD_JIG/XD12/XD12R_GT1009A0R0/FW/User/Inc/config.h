@@ -34,11 +34,28 @@ extern "C" {
 #define VSYNC                       (120.0f)
 #define XD_MCLK                     (50000000.0f)
 
+#if 0
+    #define SVSYNC_PHASE_RED        (1U)
+    #define SVSYNC_PHASE_GREEN      (2U)
+    #define SVSYNC_PHASE_BLUE       (0U)
+    #define SVSYNC_GATING_TIME_US   (10U)
+    #define SVSYNC_CYCLE            (3U)
+    #define SVSYNC_SIZE             (32U)
+    #define SVSYNC_TOTAL_CYCLE      (SVSYNC_CYCLE * SVSYNC_SIZE)
+#else
+    #define SVSYNC_PHASE_GREEN      (1U)
+    #define SVSYNC_PHASE_BLUE       (0U)
+    #define SVSYNC_GATING_TIME_US   (10U)
+    #define SVSYNC_CYCLE            (2U)
+    #define SVSYNC_SIZE             (32U)
+    #define SVSYNC_TOTAL_CYCLE      (SVSYNC_CYCLE * SVSYNC_SIZE)
+#endif
+
 #define XDIC_DAISY_SIZE             (1)
 #define XDIC_CH_SIZE                (12)
 
-#define XD_SERIAL_CLK_CNT_LOW       (13)
-#define XD_SERIAL_CLK_CNT_HIGH      (27)
+#define XD_SERIAL_CLK_CNT_LOW       (16)
+#define XD_SERIAL_CLK_CNT_HIGH      (34)
 
 #define XC24_MCLK_INTERNAL          (0x00)
 #define XC24_MCLK_EXTERNAL          (0x01)

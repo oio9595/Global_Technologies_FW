@@ -499,7 +499,8 @@ typedef union tag_XDIC_GENERAL_0x24_T
     uint16_t val;
     struct
     {
-        uint16_t sprd_gain  : 4;
+        uint16_t sprd_gain  : 3;
+        uint16_t            : 1;
         uint16_t sprd_speed : 3;
         uint16_t            : 4;
         uint16_t sprd_en    : 1;

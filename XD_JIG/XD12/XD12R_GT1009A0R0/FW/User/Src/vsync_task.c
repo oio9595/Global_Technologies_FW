@@ -11,6 +11,7 @@
 #include "JigBd_IF.h"
 #include "xdic.h"
 #include "xc24.h"
+#include "config.h"
 
 #define LD_WIDTH_MAX            (0x3FFF)
 
@@ -33,43 +34,54 @@ static uint16_t gn_xdic_LD_out;
 
 static uint16_t gn_svsync_count;
 
-#define TIM3_FREQUENCY_HZ       (90000000U)
-#define TIM3_PRESCALER          (14U)
-#define TIM3_CALC_ARR(freq)     ((uint32_t)((TIM3_FREQUENCY_HZ / (TIM3_PRESCALER + 1)) / (freq) - 1U))
+static bool gb_svsync_phase_vsync;
+
+#define TIM3_APB_FREQ_HZ        (APB1_TIM_FREQ * 1000000U)
+#define TIM3_PRESCALER          (0U)
+#define TIM3_FREQUENCY_HZ       (TIM3_APB_FREQ_HZ / (TIM3_PRESCALER + 1))
+#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_HZ / (freq) - 1U))
 
 void Svsync_Timer_Start(void)
 {
     gn_svsync_count = 0;
-    // For Red, change frequency
-    uint32_t arr = TIM3_CALC_ARR(360);
-    LL_TIM_SetAutoReload(TIM3, arr);
+    // For Vsync, change frequency
+    uint32_t period = 3599; // 10us on / 30us off
+    LL_TIM_SetAutoReload(TIM3, period);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableCounter(TIM3);
+    gb_svsync_phase_vsync = true;
 }
 
 void Svsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM3);
 
-    ++gn_svsync_count;
-
-    if (gn_svsync_count == 1U)
+    if (gb_svsync_phase_vsync)
     {
-        // For Green, change frequency
-        uint32_t arr = TIM3_CALC_ARR(480);
-        LL_TIM_SetAutoReload(TIM3, arr);
-    }
-    else if (gn_svsync_count == 2U)
-    {
-        // For Blue, change frequency
-        uint32_t arr = TIM3_CALC_ARR(640);
-        LL_TIM_SetAutoReload(TIM3, arr);
-        us_delay(5);
-        LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+        gb_svsync_phase_vsync = false;
     }
     else
     {
-        LL_TIM_DisableCounter(TIM3);
+        ++gn_svsync_count;
+        uint8_t phase = (gn_svsync_count % SVSYNC_CYCLE);
+        if (phase == SVSYNC_PHASE_GREEN)
+        {
+            // For Green, change frequency
+            uint32_t period = TIM3_CALC_PERIOD(7680); // 50% of 1-sub frame
+            LL_TIM_SetAutoReload(TIM3, period);
+        }
+        else if (phase == SVSYNC_PHASE_BLUE)
+        {
+            // For Blue, change frequency
+            uint32_t period = TIM3_CALC_PERIOD(7680); // 50% of 1-sub frame
+            LL_TIM_SetAutoReload(TIM3, period);
+            if (gn_svsync_count == SVSYNC_TOTAL_CYCLE)
+            {
+                us_delay(SVSYNC_GATING_TIME_US + 1);
+                LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+                LL_TIM_DisableCounter(TIM3);
+            }
+        }
     }
 }
 
@@ -96,10 +108,12 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
+#if 0
     if (!IS_XC24_Support())
     {
         JigBD_IF_SyncGen_Command();
     }
+#endif
     Svsync_Timer_Start();
     gb_xdic_vsync_flag = true;
 }
