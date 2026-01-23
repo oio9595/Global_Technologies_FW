@@ -26,8 +26,8 @@
 #define XDIC_OSC_TARGET             (XD_MCLK / 1000000)   /* MHz */
 
 #define XDIC_OFS_ERR_RATE           (0.5f / 100)   /* % */
-#define XDIC_OFS_P1                 (250)
-#define XDIC_OFS_P2                 (500)
+#define XDIC_OFS_P1                 (350)
+#define XDIC_OFS_P2                 (600)
 #define XDIC_OFS_CAL                (0.13f * 8.0f / 12.0f)
 #define XDIC_OFS_TARGET             (8.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f) + XDIC_OFS_CAL)   /* mA */
 
