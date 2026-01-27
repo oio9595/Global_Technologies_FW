@@ -215,7 +215,7 @@ float JigBD_IF_XC_ICC(void)
 
 /*
 CTL_UPPER_GAIN
- - HIGH : Sensing range  140mA
+ - HIGH : Sensing range   40mA
  - MID  : Sensing range   10mA
  - LOW  : Sensing range  0.5mA
 */
@@ -259,14 +259,14 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT4_LO();
         break;
     case XD_CH_02 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
+        ENABLE_SELECT1_LO();
+        ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
     case XD_CH_03 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
+        ENABLE_SELECT1_HI();
+        ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_LO();
         break;
@@ -283,14 +283,14 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT4_LO();
         break;
     case XD_CH_06 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
+        ENABLE_SELECT1_LO();
+        ENABLE_SELECT2_HI();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
     case XD_CH_07 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
+        ENABLE_SELECT1_HI();
+        ENABLE_SELECT2_LO();
         ENABLE_SELECT3_HI();
         ENABLE_SELECT4_LO();
         break;
@@ -307,14 +307,14 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
         ENABLE_SELECT4_HI();
         break;
     case XD_CH_10 :
-        ENABLE_SELECT1_HI();
-        ENABLE_SELECT2_LO();
+        ENABLE_SELECT1_LO();
+        ENABLE_SELECT2_HI();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;
     case XD_CH_11 :
-        ENABLE_SELECT1_LO();
-        ENABLE_SELECT2_HI();
+        ENABLE_SELECT1_HI();
+        ENABLE_SELECT2_LO();
         ENABLE_SELECT3_LO();
         ENABLE_SELECT4_HI();
         break;

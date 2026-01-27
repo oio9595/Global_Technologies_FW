@@ -14,6 +14,8 @@ extern "C" {
 
 extern bool gb_jig_vsync_active;
 
+extern void Svsync_Update_Handler(void);
+extern void Trim_Vsync_Timer_Start(void);
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);

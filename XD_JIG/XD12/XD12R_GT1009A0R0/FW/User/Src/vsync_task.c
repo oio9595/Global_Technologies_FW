@@ -36,6 +36,8 @@ static uint16_t gn_svsync_count;
 
 static bool gb_svsync_phase_vsync;
 
+static bool gb_vsync_for_trim;
+
 #define TIM3_APB_FREQ_HZ        (APB1_TIM_FREQ * 1000000U)
 #define TIM3_PRESCALER          (0U)
 #define TIM3_FREQUENCY_HZ       (TIM3_APB_FREQ_HZ / (TIM3_PRESCALER + 1))
@@ -85,6 +87,16 @@ void Svsync_Update_Handler(void)
     }
 }
 
+void Trim_Vsync_Timer_Start(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM8);
+    LL_TIM_EnableIT_UPDATE(TIM8);
+    LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
+    LL_TIM_EnableCounter(TIM8);
+
+    gb_vsync_for_trim = true;
+}
+
 void Vsync_Timer_Start(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
@@ -115,7 +127,10 @@ void Vsync_Update_Handler(void)
     }
 #endif
     Svsync_Timer_Start();
-    gb_xdic_vsync_flag = true;
+    if (!gb_vsync_for_trim)
+    {
+        gb_xdic_vsync_flag = true;
+    }
 }
 
 void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data)

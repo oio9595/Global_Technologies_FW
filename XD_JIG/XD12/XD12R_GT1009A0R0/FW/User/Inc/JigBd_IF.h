@@ -15,15 +15,15 @@ extern "C" {
 #include "types.h"
 
 #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
-#define CURRENT_SENSE_R_MID         (200.7f)    /* ohm */
-#define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
+#define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
+#define CURRENT_SENSE_R_HIGH        (49.9f)     /* ohm */
 #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
-#define CURRENT_SENSE_RO            (3293.0f)   /* ohm */
+#define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
 #define CURRENT_SENSE_R_ICC         (22.0f)     /* ohm */
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
-#define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max 140mA
+#define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max  40mA
 
 #define XDIC_INTERNAL_DIVIDER       (64)
 #define XC24_INTERNAL_DIVIDER       (32)
@@ -37,7 +37,7 @@ typedef enum tag_CURRENT_GAIN_T
 {
 	GAIN_LOW = 0,   /* Max 0.5mA */
 	GAIN_MID,       /* Max  10mA */
-	GAIN_HIGH,      /* Max 140mA */
+	GAIN_HIGH,      /* Max  40mA */
 	GAIN_MAX,
 } current_gain_t;
 

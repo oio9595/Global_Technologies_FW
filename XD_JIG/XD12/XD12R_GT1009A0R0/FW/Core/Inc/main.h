@@ -174,7 +174,7 @@ extern void sys_tick_handler(void);
 
 #define FREQ_IN_IC_LENGTH       (512)
 
-#define TIM5_FREQ               (72000000.0f)
+#define TIM5_FREQ               (90000000.0f)
 
 #define UART_BACKSPACE          (0x08)
 
