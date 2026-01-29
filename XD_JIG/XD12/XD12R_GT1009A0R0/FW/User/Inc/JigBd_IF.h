@@ -69,7 +69,7 @@ extern void JigBD_IF_IdGen_Command(void);
 extern void JigBD_IF_SyncGen_Command(void);
 
 extern void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data);
-extern void JigBD_IF_Write_LD_Command(uint16_t in_LD_data);
+extern void JigBD_IF_Write_LD_Command(uint16_t* p_in_LD_data);
 extern uint16_t JigBD_IF_Read_Command(uint8_t in_addr);
 extern uint16_t JigBD_IF_Fault_Read_Command(void);
 

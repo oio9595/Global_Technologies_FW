@@ -30,60 +30,83 @@ static uint16_t gn_xdic_write_data;
 static bool gb_xdic_read_flag;
 static uint8_t gn_xdic_read_addr;
 
-static uint16_t gn_xdic_LD_out;
+static uint16_t gn_xdic_LD_out[3]; // R, G, B
 
 static uint16_t gn_svsync_count;
 
-static bool gb_svsync_phase_vsync;
+volatile static bool gb_svsync_phase_dummy;
 
 static bool gb_vsync_for_trim;
 
 #define TIM3_APB_FREQ_HZ        (APB1_TIM_FREQ * 1000000U)
 #define TIM3_PRESCALER          (0U)
 #define TIM3_FREQUENCY_HZ       (TIM3_APB_FREQ_HZ / (TIM3_PRESCALER + 1))
-#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_HZ / (freq) - 1U))
+#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_HZ / freq - 1U))
+
+#define VSYNC_SVSYNC_FREQ       (50000U)
+#define VSYNC_CNT               (899U)
+
+#define GREEN_SVSYNC_FREQ       (7900U)
+#define BLUE_SVSYNC_FREQ        (7900U)
+#define NORMAL_CNT              (1799U)
 
 void Svsync_Timer_Start(void)
 {
     gn_svsync_count = 0;
-    // For Vsync, change frequency
-    uint32_t period = 3599; // 10us on / 30us off
+    LL_TIM_DisableCounter(TIM3);
+    LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+
+    LL_TIM_SetCounter(TIM3, 0);
+    LL_TIM_ClearFlag_UPDATE(TIM3);
+
+    volatile uint32_t period = TIM3_CALC_PERIOD(VSYNC_SVSYNC_FREQ); // 50% of 1-sub frame
     LL_TIM_SetAutoReload(TIM3, period);
+    LL_TIM_OC_SetCompareCH1(TIM3, VSYNC_CNT);
+
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableCounter(TIM3);
-    gb_svsync_phase_vsync = true;
+
+    gb_svsync_phase_dummy = true;
 }
 
 void Svsync_Update_Handler(void)
 {
-    LL_TIM_ClearFlag_UPDATE(TIM3);
-
-    if (gb_svsync_phase_vsync)
+    LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+    /*if (gb_svsync_phase_dummy)
     {
-        gb_svsync_phase_vsync = false;
+        LL_TIM_OC_SetCompareCH1(TIM3, NORMAL_CNT);
+        gb_svsync_phase_dummy = false;
     }
-    else
+    else*/
     {
         ++gn_svsync_count;
         uint8_t phase = (gn_svsync_count % SVSYNC_CYCLE);
         if (phase == SVSYNC_PHASE_GREEN)
         {
-            // For Green, change frequency
-            uint32_t period = TIM3_CALC_PERIOD(7680); // 50% of 1-sub frame
+            // For Blue, change frequency
+            volatile uint32_t period = TIM3_CALC_PERIOD(GREEN_SVSYNC_FREQ); // 50% of 1-sub frame
             LL_TIM_SetAutoReload(TIM3, period);
         }
         else if (phase == SVSYNC_PHASE_BLUE)
         {
-            // For Blue, change frequency
-            uint32_t period = TIM3_CALC_PERIOD(7680); // 50% of 1-sub frame
+            // For Green, change frequency
+            volatile uint32_t period = TIM3_CALC_PERIOD(BLUE_SVSYNC_FREQ); // 50% of 1-sub frame
             LL_TIM_SetAutoReload(TIM3, period);
-            if (gn_svsync_count == SVSYNC_TOTAL_CYCLE)
+            if (gn_svsync_count == (SVSYNC_TOTAL_CYCLE + 0))
             {
                 us_delay(SVSYNC_GATING_TIME_US + 1);
                 LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
                 LL_TIM_DisableCounter(TIM3);
+
+                LL_TIM_SetCounter(TIM3, 0);
+
+                LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+                us_delay(1);
+                LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+                us_delay(1);
             }
         }
+        LL_TIM_OC_SetCompareCH1(TIM3, NORMAL_CNT);
     }
 }
 
@@ -119,17 +142,16 @@ void Vsync_Timer_Stop(void)
 
 void Vsync_Update_Handler(void)
 {
-    LL_TIM_ClearFlag_UPDATE(TIM8);
-#if 0
-    if (!IS_XC24_Support())
-    {
-        JigBD_IF_SyncGen_Command();
-    }
-#endif
+    DEBUG_HI();
     Svsync_Timer_Start();
+    //JigBD_IF_SyncGen_Command();
     if (!gb_vsync_for_trim)
     {
         gb_xdic_vsync_flag = true;
+    }
+    else
+    {
+        JigBD_IF_SyncGen_Command();
     }
 }
 
@@ -146,19 +168,21 @@ void XDIC_Set_Read_Target_Reg(uint8_t addr)
     gb_xdic_read_flag = true;
 }
 
-void XDIC_Set_LD_Data(uint32_t in_ld_out)
+void XDIC_Set_LD_Data(uint32_t in_ld_R, uint32_t in_ld_G, uint32_t in_ld_B)
 {
-    if (in_ld_out <= LD_WIDTH_MAX)
+    if (in_ld_R <= LD_WIDTH_MAX && in_ld_G <= LD_WIDTH_MAX && in_ld_B <= LD_WIDTH_MAX)
     {
-        gn_xdic_LD_out = in_ld_out;
+        gn_xdic_LD_out[0] = in_ld_R;
+        gn_xdic_LD_out[1] = in_ld_G;
+        gn_xdic_LD_out[2] = in_ld_B;
     }
     else
     {
-        print(LOG_ERROR, "\r\n Out of LD_out [%u] [0 - %u]\r\n", in_ld_out, LD_WIDTH_MAX);
+        print(LOG_ERROR, "\r\n Out of LD_out [%u, %u, %u] [0 - %u]\r\n", in_ld_R, in_ld_G, in_ld_B, LD_WIDTH_MAX);
     }
 }
 
-uint16_t XDIC_Get_LD_Data(void)
+uint16_t* XDIC_Get_LD_Data(void)
 {
     return gn_xdic_LD_out;
 }
@@ -216,7 +240,7 @@ void XDIC_Vsync_Task(void)
 
         us_delay(1500);
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
-        //JigBD_IF_Fault_Read_Command();
+        XDIC_Get_Fault_Status();
 
         if (gb_xdic_write_flag)
         {

@@ -719,7 +719,7 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 }
 
 #if (XC_USE_FULL_CHANNEL == 1)
-void XC24_IF_Write_LD(uint16_t in_LD_data)
+void XC24_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
     uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24] = {0,};
@@ -738,7 +738,7 @@ void XC24_IF_Write_LD(uint16_t in_LD_data)
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 #else
-void XC24_IF_Write_LD(uint16_t in_LD_data)
+void XC24_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
     uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE] = {0,};

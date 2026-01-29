@@ -32,7 +32,7 @@ extern "C" {
 #define CONST_mV_TO_V               (1000.0f)
 
 #define VSYNC                       (120.0f)
-#define XD_MCLK                     (50000000.0f)
+#define XDIC_MCLK                   (50000000.0f)
 
 #if 0
     #define SVSYNC_PHASE_RED        (1U)
@@ -45,7 +45,7 @@ extern "C" {
 #else
     #define SVSYNC_PHASE_GREEN      (1U)
     #define SVSYNC_PHASE_BLUE       (0U)
-    #define SVSYNC_GATING_TIME_US   (10U)
+    #define SVSYNC_GATING_TIME_US   (21U)
     #define SVSYNC_CYCLE            (2U)
     #define SVSYNC_SIZE             (32U)
     #define SVSYNC_TOTAL_CYCLE      (SVSYNC_CYCLE * SVSYNC_SIZE)
@@ -54,8 +54,8 @@ extern "C" {
 #define XDIC_DAISY_SIZE             (1)
 #define XDIC_CH_SIZE                (12)
 
-#define XD_SERIAL_CLK_CNT_LOW       (16)
-#define XD_SERIAL_CLK_CNT_HIGH      (34)
+#define XDIC_SERIAL_CLK_CNT_LOW       (16)
+#define XDIC_SERIAL_CLK_CNT_HIGH      (34)
 
 #define XC24_MCLK_INTERNAL          (0x00)
 #define XC24_MCLK_EXTERNAL          (0x01)
@@ -74,18 +74,19 @@ extern "C" {
 #define SERIAL_ADDR_SIZE            (6)
 #define SERIAL_FAULT_DATA_SIZE      (4)
 #define SERIAL_DATA_SIZE            (12)
-#define SERIAL_LD_SIZE              (16)
+#define SERIAL_EVEN_SIZE            (14)
+#define SERIAL_ODD_SIZE             (28)
 
 #define XDIC_WRITE_BITS             (SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE + SERIAL_DATA_SIZE)
 #define XDIC_READ_BITS              (SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE)
 #define XDIC_READ_RECV_BITS         (SERIAL_CMD_SIZE + SERIAL_ID_SIZE + SERIAL_DATA_SIZE)
-#define XDIC_LD_TRANS_BITS          (SERIAL_CMD_SIZE + SERIAL_LD_SIZE * XDIC_CH_SIZE)
+#define XDIC_LD_TRANS_BITS          (SERIAL_CMD_SIZE + SERIAL_ODD_SIZE * XDIC_CH_SIZE)
 #define XDIC_FAULT_READ_BITS        (SERIAL_CMD_SIZE)
 #define XDIC_FAULT_RECV_BITS        (SERIAL_CMD_SIZE + SERIAL_FAULT_DATA_SIZE)
 #define XDIC_SYNCGEN_BITS           (SERIAL_CMD_SIZE)
 #define XDIC_IDGEN_BITS             (SERIAL_CMD_SIZE)
 
-#define XDIC_SERIALIZER_TIME        ((((CONST_MHz_TO_Hz / XD_MCLK) * (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW))) * 2.0f)
+#define XDIC_SERIALIZER_TIME        ((((CONST_MHz_TO_Hz / XDIC_MCLK) * (XDIC_SERIAL_CLK_CNT_HIGH + XDIC_SERIAL_CLK_CNT_LOW))) * 2.0f)
 #define XDIC_RESET_DELAY            (100)
 #define XDIC_WRITE_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_WRITE_BITS * XDIC_DAISY_SIZE) + 0.5f))
 #define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS * XDIC_DAISY_SIZE) + 0.5f))

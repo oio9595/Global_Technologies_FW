@@ -54,14 +54,17 @@ typedef enum tag_XDIC_CHANNEL_T
 
 typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
 {
-    DEV_MAX_CURR_LEVEL_4mA = 0, // 3b'000
-    DEV_MAX_CURR_LEVEL_8mA,     // 3b'001
-    DEV_MAX_CURR_LEVEL_12mA,    // 3b'010
-    DEV_MAX_CURR_LEVEL_16mA,    // 3b'011
-    DEV_MAX_CURR_LEVEL_20mA,    // 3b'100
-    DEV_MAX_CURR_LEVEL_24mA,    // 3b'101
-    DEV_MAX_CURR_LEVEL_28mA,    // 3b'110
-    DEV_MAX_CURR_LEVEL_32mA,    // 3b'111
+    DEV_MAX_CURR_LEVEL_4mA = 0,     // 4b'0000
+    DEV_MAX_CURR_LEVEL_8mA,         // 4b'0001
+    DEV_MAX_CURR_LEVEL_12mA,        // 4b'0010
+    DEV_MAX_CURR_LEVEL_16mA,        // 4b'0011
+    DEV_MAX_CURR_LEVEL_20mA,        // 4b'0100
+
+    DEV_MAX_CURR_LEVEL_24mA = 11,   // 4b'1011
+    DEV_MAX_CURR_LEVEL_28mA = 12,   // 4b'1100
+    DEV_MAX_CURR_LEVEL_32mA = 13,   // 4b'1101
+    DEV_MAX_CURR_LEVEL_36mA = 14,   // 4b'1110
+    DEV_MAX_CURR_LEVEL_40mA = 15,   // 4b'1111
     DEV_MAX_CURR_LEVEL_MAX,
 } dev_max_curr_level_t;
 
@@ -918,6 +921,8 @@ extern void XDIC_Trim_Partial_FLL_LDO_1V5(void);
 extern void XDIC_Trim_Partial_OSC(void);
 extern void XDIC_Trim_Partial_CH_GAIN(void);
 extern void XDIC_Trim_Partial_CH_OFS(void);
+
+extern void XDIC_Trim_Show_OSC(void);
 
 extern void XDIC_Set_OTP_Protect(bool en);
 extern void XDIC_Set_OTP_PG_Start(bool en);

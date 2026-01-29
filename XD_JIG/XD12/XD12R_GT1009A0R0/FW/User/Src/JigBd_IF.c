@@ -28,8 +28,8 @@
 #define BIT_RATIO_SUM               (3.0f)
 
 #define D_ERR_RATE                  (0.3)
-#define XD_LOGIC_0_DUTY             ((double)XD_SERIAL_CLK_CNT_LOW / (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW))
-#define XD_LOGIC_1_DUTY             ((double)XD_SERIAL_CLK_CNT_HIGH / (XD_SERIAL_CLK_CNT_HIGH + XD_SERIAL_CLK_CNT_LOW))
+#define XD_LOGIC_0_DUTY             ((double)XDIC_SERIAL_CLK_CNT_LOW / (XDIC_SERIAL_CLK_CNT_HIGH + XDIC_SERIAL_CLK_CNT_LOW))
+#define XD_LOGIC_1_DUTY             ((double)XDIC_SERIAL_CLK_CNT_HIGH / (XDIC_SERIAL_CLK_CNT_HIGH + XDIC_SERIAL_CLK_CNT_LOW))
 
 #define LOGIC_0_COUNT_MIN(N)        ((uint16_t)((N) * (XD_LOGIC_0_DUTY * (1 - D_ERR_RATE))))
 #define LOGIC_0_COUNT_MAX(N)        ((uint16_t)((N) * (XD_LOGIC_0_DUTY * (1 + D_ERR_RATE))))
@@ -477,7 +477,7 @@ double JigBD_IF_Reconvert_XDIC_Original_Freq(double count)
 /* END - PWM Read Frequency ******************************************/
 
 /* BEGIN - Make XDIC DATA SIGNAL through PWM DMA *******************************************/
-static uint16_t Get_Nth_Bit(uint16_t x, int n)
+static uint16_t Get_Nth_Bit(uint32_t x, int n)
 {
     return ((x & (1 << (n - 1))) >> (n - 1));
 }
@@ -619,7 +619,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     if (gb_xd_timeout_event)
     {
-        DEBUG_LO();
+        DEBUG_HI();
         print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
         gb_xdic_initial_failed = true;
     }
@@ -630,15 +630,17 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
             ((n_response >> 17) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12) & SERIAL_DECODE_MASK_ID), ((n_response >> 0) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
-    DEBUG_LO();
     us_delay(XDIC_READ_DELAY);
+    DEBUG_LO();
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
 }
 
-void MCU_IF_Write_LD(uint16_t in_LD_data)
+void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     uint16_t pwm_length = 0;
+    uint32_t LD_even_data = p_in_LD_data[0];
+    uint32_t LD_odd_data = ((p_in_LD_data[1] << 14) | (p_in_LD_data[2] << 0));
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
@@ -657,15 +659,32 @@ void MCU_IF_Write_LD(uint16_t in_LD_data)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
 
-            for (uint8_t k = 0 ; k < SERIAL_LD_SIZE ; ++k)
+            if (((j + 1) % 2) == 1/*0*/)
             {
-                if (write_data)
+                for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k)
                 {
-                    gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_LD_data, SERIAL_LD_SIZE - k)) ? bit_1 : bit_0);
+                    if (write_data)
+                    {
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_even_data, SERIAL_EVEN_SIZE - k)) ? bit_1 : bit_0);
+                    }
+                    else
+                    {
+                        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+                    }
                 }
-                else
+            }
+            else
+            {
+                for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k)
                 {
-                    gn_serialize_tx_buffer[pwm_length++] = bit_0;
+                    if (write_data)
+                    {
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_odd_data, SERIAL_ODD_SIZE - k)) ? bit_1 : bit_0);
+                    }
+                    else
+                    {
+                        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+                    }
                 }
             }
         }
@@ -715,6 +734,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     if (gb_xd_timeout_event)
     {
+        DEBUG_HI();
         print(LOG_ERROR, "Rx Timeout!!!\r\n");
     }
     else
@@ -725,6 +745,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     }
 
     us_delay(10);
+    DEBUG_LO();
 
     return (uint16_t)(n_response & 0x0FFF);
 }
@@ -813,15 +834,15 @@ uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
     return ret;
 }
 
-void JigBD_IF_Write_LD_Command(uint16_t in_LD_data)
+void JigBD_IF_Write_LD_Command(uint16_t* p_in_LD_data)
 {
     if (IS_XC24_Support())
     {
-        XC24_IF_Write_LD(in_LD_data);
+        XC24_IF_Write_LD(p_in_LD_data);
     }
     else
     {
-        MCU_IF_Write_LD(in_LD_data);
+        MCU_IF_Write_LD(p_in_LD_data);
     }
 }
 

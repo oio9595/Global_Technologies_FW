@@ -29,7 +29,9 @@
 #define XDIC_DAC_A_OFS_TARGET       (0.11f)             /* V */
 #define XDIC_DAC_B_OFS_TARGET       (0.11f)             /* V */
 #define XDIC_FLL_LDO_1V5_TARGET     (1.5f)              /* V */
-#define XDIC_OSC_TARGET             (XD_MCLK / 1000000) /* MHz */
+
+#define XDIC_OSC_ERR_RATE           (10.0f / 100)        /* % */
+#define XDIC_OSC_TARGET             (XDIC_MCLK / 1000000) /* MHz */
 
 #define XDIC_OFS_ERR_RATE           (0.9f / 100)        /* % */
 #define XDIC_OFS_P1                 (200)
@@ -723,8 +725,8 @@ void XD_Trim_Calculate_Spec(void)
                 gt_xdic_trim_condition[mode].u16_p2 = 0;
                 break;
             case XD_TRIM_OSC:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OSC_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OSC_TARGET * (1 + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OSC_TARGET * (1 - XDIC_OSC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OSC_TARGET * (1 + XDIC_OSC_ERR_RATE));
                 gt_xdic_trim_condition[mode].u16_p1 = 0;
                 gt_xdic_trim_condition[mode].u16_p2 = 0;
                 break;
@@ -822,6 +824,9 @@ void XD_Trim_Task(void)
                     break;
                 case XD_TRIM_OSC:
                     XDIC_Trim_Init_OSC();
+                    Trim_Vsync_Timer_Start();
+                    LL_mDelay(999);
+                    Vsync_Timer_Stop();
                     break;
                 case XD_TRIM_CH_GAIN:
                     XDIC_Trim_Init_CH_GAIN();
@@ -837,8 +842,6 @@ void XD_Trim_Task(void)
                     JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
-                    //Trim_Vsync_Timer_Start();
-                    //gn_task_delay = 50;
                     break;
                 }
 #ifdef SKIP_2UA_TRIM
@@ -847,11 +850,13 @@ void XD_Trim_Task(void)
                     gt_xd_trim_search_mode = XD_TRIM_DAC_LDO_1V5;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 }
+#if 0
                 else if (gt_xd_trim_search_mode == XD_TRIM_OSC) // Temporary Solution
                 {
                     gt_xd_trim_search_mode = XD_TRIM_CH_GAIN;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 }
+#endif
                 else
                 {
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
@@ -1230,8 +1235,13 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
             break;
         case XD_SCREEN_STEP_SETUP :
-            XDIC_Overwrite_Mirror_Regs();
+            //XDIC_Overwrite_Mirror_Regs();
+            for (uint8_t addr = XDIC_MIRROR_ADDR_OFS_CH_01 ; addr < XDIC_MIRROR_ADDR_GAIN_CH_01 ; ++addr)
+            {
+                XDIC_Write_Mirror_Reg(addr, 64);
+            }
             XDIC_Display_Mirror_Regs();
+
 
             XDIC_Trim_Init_CH_OFS();
 
@@ -1246,7 +1256,7 @@ void XD_Screen_Task(void)
             break;
         case XD_SCREEN_STEP_SET_MAX_CURR_LVL :
             gn_xd_screen_ana = 0;
-            XDIC_Set_Max_Current_Level(((dev_max_curr_level_t)(DEV_MAX_CURR_LEVEL_16mA + gn_xd_max_curr_lvl_cnt)));
+            XDIC_Set_Max_Current_Level(((dev_max_curr_level_t)(gn_xd_max_curr_lvl_cnt)));
             print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
             Trim_Vsync_Timer_Start();
             LL_mDelay(50);
@@ -1303,6 +1313,18 @@ void XD_Screen_Task(void)
                     {
                         gn_xd_screen_ana = 4095;
                     }
+
+                    gn_xd_screen_ana = 0;
+                    if (gn_xd_max_curr_lvl_cnt == 4)
+                    {
+                        gn_xd_max_curr_lvl_cnt += 7;
+                    }
+                    else
+                    {
+                        gn_xd_max_curr_lvl_cnt += 1;
+                    }
+                    gt_xd_screen_step = XD_SCREEN_STEP_SET_MAX_CURR_LVL;
+
                 #else
                     print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_max_current, \
                         gf_screen_current[ 0], gf_screen_current[ 1], gf_screen_current[ 2], gf_screen_current[ 3],

@@ -356,6 +356,8 @@ int main(void)
 
     LL_TIM_ClearFlag_UPDATE(TIM3);
     LL_TIM_EnableIT_UPDATE(TIM3);
+    LL_TIM_DisableCounter(TIM3);
+    LL_TIM_SetCounter(TIM3, 0);
 
     LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
     LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
@@ -366,6 +368,7 @@ int main(void)
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
     comm_init();
+
 
   /* USER CODE END 2 */
 
@@ -873,7 +876,7 @@ static void MX_TIM3_Init(void)
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
   /* TIM3 interrupt Init */
-  NVIC_SetPriority(TIM3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_SetPriority(TIM3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
   NVIC_EnableIRQ(TIM3_IRQn);
 
   /* USER CODE BEGIN TIM3_Init 1 */
@@ -881,7 +884,7 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   TIM_InitStruct.Prescaler = 0;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 16665;
+  TIM_InitStruct.Autoreload = 719;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   LL_TIM_Init(TIM3, &TIM_InitStruct);
   LL_TIM_DisableARRPreload(TIM3);
@@ -890,16 +893,16 @@ static void MX_TIM3_Init(void)
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-  TIM_OC_InitStruct.CompareValue = 899;
+  TIM_OC_InitStruct.CompareValue = 359;
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   LL_TIM_OC_Init(TIM3, LL_TIM_CHANNEL_CH1, &TIM_OC_InitStruct);
   LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH1);
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
   /* USER CODE BEGIN TIM3_Init 2 */
-
   /* USER CODE END TIM3_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /**TIM3 GPIO Configuration
   PC6   ------> TIM3_CH1
   */
@@ -1583,21 +1586,22 @@ static void TaskDebugUart(void)
             uint16_t ret = XDIC_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
-        else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_ldim", "%d %d %d", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
         {
-            if (u32_recv_param[0] <= 65535)
+            if (u32_recv_param[0] <= 65535 && u32_recv_param[1] <= 65535 && u32_recv_param[2] <= 65535)
             {
-                print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
-                XDIC_Set_LD_Data(u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set ldim to [%u, %u, %u]\r\n", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2]);
+                XDIC_Set_LD_Data(u32_recv_param[0], u32_recv_param[1], u32_recv_param[2]);
             }
             else
             {
-                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
+                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u, %u, %u] [0 - %u]\r\n", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], 65535);
             }
         }
         else if (Command_is_("xd_ldim"))
         {
-            print(LOG_INFO, "\r\n ldim - [%u]\r\n", XDIC_Get_LD_Data());
+            uint16_t* p_ld_buffer = XDIC_Get_LD_Data();
+            print(LOG_INFO, "\r\n ldim - [%u, %u, %u]\r\n", p_ld_buffer[0], p_ld_buffer[1], p_ld_buffer[2]);
         }
         else if (Command_is_("xd_debug"))
         {
@@ -1655,6 +1659,11 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
             }
         }
+        else if (Command_is_("xd_show_osc"))
+        {
+            XDIC_Trim_Show_OSC();
+        }
+
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
@@ -1753,11 +1762,14 @@ static void TaskDebugUart(void)
 
             JigBD_IF_VLED_9V_EN(PWR_ON);
             print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
-
+#if 1
             Vsync_Timer_Start();
             print(LOG_INFO, "vsync start\r\n");
-
-            XDIC_Set_LD_Data(100);
+#else
+            Trim_Vsync_Timer_Start();
+            print(LOG_INFO, "Trim Vsync start\r\n");
+#endif
+            XDIC_Set_LD_Data(100, 100, 100);
         }
         else if (Command_is_("xc_trim_start") || Command_is_("4"))
         {
