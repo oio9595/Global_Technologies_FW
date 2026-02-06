@@ -95,10 +95,6 @@ class MacroApp(QWidget):
                     self.read_thread = threading.Thread(target=self.read_serial_data, daemon=True)
                     self.read_thread.start()
 
-                    # 🔥 COM 연결 성공 → 15초 타이머 시작
-                    self.seq_timer.start(15000)
-                    self.log("⏱ 15초 Sequence Test 타이머 시작")
-
                 except Exception as e:
                     self.log(f"❌ 포트 열기 실패: {e}")
                     QMessageBox.critical(self, "포트 열기 실패", str(e))
