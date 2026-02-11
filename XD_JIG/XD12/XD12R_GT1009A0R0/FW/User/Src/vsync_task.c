@@ -13,12 +13,12 @@
 #include "xc24.h"
 #include "config.h"
 
-#define LD_WIDTH_MAX            (0x3FFF)
+#define LD_WIDTH_MAX        (0x3FFF)
 
-#define FAULT_MASK_FB           (1 << 0)
-#define FAULT_MASK_OPEN         (1 << 1)
-#define FAULT_MASK_SHORT        (1 << 2)
-#define FAULT_MASK_THERMAL      (1 << 3)
+#define FAULT_MASK_FB1      (1 << 0)
+#define FAULT_MASK_FB2      (1 << 1)
+#define FAULT_MASK_FB3      (1 << 2)
+#define FAULT_MASK_FAULT    (1 << 3)
 
 bool gb_jig_vsync_active;
 static bool gb_xdic_vsync_flag;
@@ -34,21 +34,22 @@ static uint16_t gn_xdic_LD_out[3]; // R, G, B
 
 static uint16_t gn_svsync_count;
 
-volatile static bool gb_svsync_phase_dummy;
-
 static bool gb_vsync_for_trim;
 
-#define TIM3_APB_FREQ_HZ        (APB1_TIM_FREQ * 1000000U)
+#define TIM3_APB_FREQ_Hz        (APB1_TIM_FREQ * 1000000U)
+#define TIM3_APB_FREQ_MHz       (APB1_TIM_FREQ)
 #define TIM3_PRESCALER          (0U)
-#define TIM3_FREQUENCY_HZ       (TIM3_APB_FREQ_HZ / (TIM3_PRESCALER + 1))
-#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_HZ / freq - 1U))
+#define TIM3_FREQUENCY_Hz       (TIM3_APB_FREQ_Hz / (TIM3_PRESCALER + 1))
+#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_Hz / freq - 1U))
+#define TIM3_CALC_COMPARE(us)   ((uint32_t)(TIM3_APB_FREQ_MHz * us - 1U))
 
-#define VSYNC_SVSYNC_FREQ       (50000U)
-#define VSYNC_CNT               (899U)
+#define SVSYNC_VSYNC_FREQ       (50000U)
+#define SVSYNC_VSYNC_ON_us      (10U) // 10us
 
-#define GREEN_SVSYNC_FREQ       (7900U)
-#define BLUE_SVSYNC_FREQ        (7900U)
-#define NORMAL_CNT              (1799U)
+#define SVSYNC_RED_FREQ         (11520U)
+#define SVSYNC_GREEN_FREQ       (7680U)
+#define SVSYNC_BLUE_FREQ        (7680U)
+#define SVSYNC_DIMMING_ON_us    (20U) // 20us
 
 void Svsync_Timer_Start(void)
 {
@@ -59,55 +60,41 @@ void Svsync_Timer_Start(void)
     LL_TIM_SetCounter(TIM3, 0);
     LL_TIM_ClearFlag_UPDATE(TIM3);
 
-    volatile uint32_t period = TIM3_CALC_PERIOD(VSYNC_SVSYNC_FREQ); // 50% of 1-sub frame
+    uint32_t period = TIM3_CALC_PERIOD(SVSYNC_VSYNC_FREQ); // 50% of 1-sub frame
     LL_TIM_SetAutoReload(TIM3, period);
-    LL_TIM_OC_SetCompareCH1(TIM3, VSYNC_CNT);
+
+    uint32_t compare = TIM3_CALC_COMPARE(SVSYNC_VSYNC_ON_us); // 10us
+    LL_TIM_OC_SetCompareCH1(TIM3, compare);
 
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableCounter(TIM3);
-
-    gb_svsync_phase_dummy = true;
 }
 
 void Svsync_Update_Handler(void)
 {
-    LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
-    /*if (gb_svsync_phase_dummy)
-    {
-        LL_TIM_OC_SetCompareCH1(TIM3, NORMAL_CNT);
-        gb_svsync_phase_dummy = false;
-    }
-    else*/
-    {
-        ++gn_svsync_count;
-        uint8_t phase = (gn_svsync_count % SVSYNC_CYCLE);
-        if (phase == SVSYNC_PHASE_GREEN)
-        {
-            // For Blue, change frequency
-            volatile uint32_t period = TIM3_CALC_PERIOD(GREEN_SVSYNC_FREQ); // 50% of 1-sub frame
-            LL_TIM_SetAutoReload(TIM3, period);
-        }
-        else if (phase == SVSYNC_PHASE_BLUE)
-        {
-            // For Green, change frequency
-            volatile uint32_t period = TIM3_CALC_PERIOD(BLUE_SVSYNC_FREQ); // 50% of 1-sub frame
-            LL_TIM_SetAutoReload(TIM3, period);
-            if (gn_svsync_count == (SVSYNC_TOTAL_CYCLE + 0))
-            {
-                us_delay(SVSYNC_GATING_TIME_US + 1);
-                LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
-                LL_TIM_DisableCounter(TIM3);
+    ++gn_svsync_count;
+    uint8_t phase = (gn_svsync_count % SVSYNC_CYCLE);
 
-                LL_TIM_SetCounter(TIM3, 0);
-
-                LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
-                us_delay(1);
-                LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
-                us_delay(1);
-            }
-        }
-        LL_TIM_OC_SetCompareCH1(TIM3, NORMAL_CNT);
+    if (phase == SVSYNC_PHASE_GREEN) // For Green, change frequency
+    {
+        uint32_t period = TIM3_CALC_PERIOD(SVSYNC_GREEN_FREQ); // 50% of 1-sub frame
+        LL_TIM_SetAutoReload(TIM3, period);
     }
+    else if (phase == SVSYNC_PHASE_BLUE) // For Blue, change frequency
+    {
+        uint32_t period = TIM3_CALC_PERIOD(SVSYNC_BLUE_FREQ); // 50% of 1-sub frame
+        LL_TIM_SetAutoReload(TIM3, period);
+        if (gn_svsync_count == SVSYNC_TOTAL_CYCLE)
+        {
+            us_delay(SVSYNC_GATING_TIME_US + 1);
+            LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+            LL_TIM_DisableCounter(TIM3);
+            LL_TIM_SetCounter(TIM3, 0);
+        }
+    }
+
+    uint32_t compare = TIM3_CALC_COMPARE(SVSYNC_DIMMING_ON_us); // 20us
+    LL_TIM_OC_SetCompareCH1(TIM3, compare);
 }
 
 void Trim_Vsync_Timer_Start(void)
@@ -142,7 +129,6 @@ void Vsync_Timer_Stop(void)
 
 void Vsync_Update_Handler(void)
 {
-    DEBUG_HI();
     Svsync_Timer_Start();
     //JigBD_IF_SyncGen_Command();
     if (!gb_vsync_for_trim)
@@ -153,6 +139,17 @@ void Vsync_Update_Handler(void)
     {
         JigBD_IF_SyncGen_Command();
     }
+}
+
+void Vsync_Change_Frequency(uint16_t in_freq_Hz)
+{
+    LL_TIM_DisableCounter(TIM8);
+    LL_TIM_SetCounter(TIM8, 0);
+    uint32_t prescaler = LL_TIM_GetPrescaler(TIM8);
+    uint32_t period = (uint32_t)((APB2_TIM_FREQ * 1000000U) / ((prescaler + 1U) * in_freq_Hz) - 1U);
+    LL_TIM_SetAutoReload(TIM8, period);
+
+    LL_TIM_EnableCounter(TIM8);
 }
 
 void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
@@ -201,23 +198,23 @@ void XDIC_Get_Fault_Status(void)
         }
         else
         {
-            char msg[50] = {0, };
+            char msg[55] = {0, };
             snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
-            if (now_fault_status & FAULT_MASK_FB)
+            if (now_fault_status & FAULT_MASK_FB1)
             {
-                strncat(msg, "FB ", sizeof(msg) - strlen(msg) - 1);
+                strncat(msg, "FB1 ", sizeof(msg) - strlen(msg) - 1);
             }
-            if (now_fault_status & FAULT_MASK_OPEN)
+            if (now_fault_status & FAULT_MASK_FB2)
             {
-                strncat(msg, "OPEN ", sizeof(msg) - strlen(msg) - 1);
+                strncat(msg, "FB2 ", sizeof(msg) - strlen(msg) - 1);
             }
-            if (now_fault_status & FAULT_MASK_SHORT)
+            if (now_fault_status & FAULT_MASK_FB3)
             {
-                strncat(msg, "SHORT ", sizeof(msg) - strlen(msg) - 1);
+                strncat(msg, "FB3 ", sizeof(msg) - strlen(msg) - 1);
             }
-            if (now_fault_status & FAULT_MASK_THERMAL)
+            if (now_fault_status & FAULT_MASK_FAULT)
             {
-                strncat(msg, "THERMAL", sizeof(msg) - strlen(msg) - 1);
+                strncat(msg, "FAULT", sizeof(msg) - strlen(msg) - 1);
             }
             strncat(msg, " ]\r\n", sizeof(msg) - strlen(msg) - 1);
             print(LOG_INFO, "%s", msg);

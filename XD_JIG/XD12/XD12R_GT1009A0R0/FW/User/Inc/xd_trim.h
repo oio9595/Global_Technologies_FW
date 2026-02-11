@@ -22,8 +22,8 @@ extern "C" {
 #define XDIC_GAIN_CH_DEFAULT_VALUE      (0x20)  /* 6-bit */
 #define XDIC_OFS_CH_DEFAULT_VALUE       (0x80)  /* 8-bit */
 
-#define XDIC_GAIN_MAX_CURRENT_LVL       (DEV_MAX_CURR_LEVEL_16mA)
-#define XDIC_OFS_MAX_CURRENT_LVL        (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_GAIN_MAX_CURRENT_LVL       (DEV_MAX_CURR_LEVEL_4mA)
+#define XDIC_OFS_MAX_CURRENT_LVL        (DEV_MAX_CURR_LEVEL_4mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {

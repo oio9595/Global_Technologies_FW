@@ -22,7 +22,7 @@
 #define TRIM_REGISTER_SAVED_CNT     (5)
 #define TRIM_OUT_OF_RANGE_CNT       (45)
 
-#define XDIC_ERR_RATE               (1.0f / 100)        /* % */
+#define XDIC_ERR_RATE               (1.5f / 100)        /* % */
 #define XDIC_IBN_2uA_TARGET         (2.0)               /* uA */
 #define XDIC_DAC_LDO_1V5_TARGET     (1.5f)              /* V */
 #define XDIC_DIG_LDO_1V5_TARGET     (1.5f)              /* V */
@@ -33,16 +33,17 @@
 #define XDIC_OSC_ERR_RATE           (10.0f / 100)        /* % */
 #define XDIC_OSC_TARGET             (XDIC_MCLK / 1000000) /* MHz */
 
-#define XDIC_OFS_ERR_RATE           (0.9f / 100)        /* % */
+#define XDIC_OFS_ERR_RATE           (1.2f / 100)        /* % */
 #define XDIC_OFS_P1                 (200)
 #define XDIC_OFS_P2                 (400)
 //#define XDIC_OFS_TARGET             (4.0f * (XDIC_OFS_P1 + XDIC_OFS_P2) / (XDIC_VREF_MAX * 2.0f))  /* mA */
-#define XDIC_OFS_TARGET             (1.8)  /* mA */
+#define XDIC_OFS_TARGET             (0.386f)  /* mA */
 
-#define XDIC_GAIN_ERR_RATE          (0.5f / 100)        /* % */
+#define XDIC_GAIN_ERR_RATE          (1.2f / 100)        /* % */
 #define XDIC_GAIN_P1                (300)
 #define XDIC_GAIN_P2                (1500)
-#define XDIC_GAIN_TARGET            (16.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))       /* mA */
+//#define XDIC_GAIN_TARGET            (16.0f * (XDIC_GAIN_P2 - XDIC_GAIN_P1) / (XDIC_VREF_MAX))       /* mA */
+#define XDIC_GAIN_TARGET            (1.143f)       /* mA */
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -343,7 +344,7 @@ static void XD_Trim_Param_Algorithm_Init(void)
             break;
         case XD_TRIM_CH_OFS:
             gt_trim_algorithm.u16_substitute_value = XDIC_OFS_CH_DEFAULT_VALUE;
-            temp_gain_level = GAIN_MID;
+            temp_gain_level = GAIN_LOW;
             break;
         }
 
@@ -834,7 +835,7 @@ void XD_Trim_Task(void)
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     Trim_Vsync_Timer_Start();
-                    LL_mDelay(50);
+                    LL_mDelay(99);
                     Vsync_Timer_Stop();
                     break;
                 case XD_TRIM_CH_OFS:
@@ -842,6 +843,9 @@ void XD_Trim_Task(void)
                     JigBD_IF_Select_Output_Ch(gn_xd_adc_channel);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
+                    Trim_Vsync_Timer_Start();
+                    LL_mDelay(99);
+                    Vsync_Timer_Stop();
                     break;
                 }
 #ifdef SKIP_2UA_TRIM
@@ -850,13 +854,6 @@ void XD_Trim_Task(void)
                     gt_xd_trim_search_mode = XD_TRIM_DAC_LDO_1V5;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 }
-#if 0
-                else if (gt_xd_trim_search_mode == XD_TRIM_OSC) // Temporary Solution
-                {
-                    gt_xd_trim_search_mode = XD_TRIM_CH_GAIN;
-                    gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
-                }
-#endif
                 else
                 {
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT;
@@ -1227,7 +1224,7 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_PWR_ON :
             XDIC_Trim_Init();
 
-            gt_screen_gain = GAIN_HIGH;
+            gt_screen_gain = GAIN_MID;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
             gn_xd_adc_channel = 0;
@@ -1235,19 +1232,13 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
             break;
         case XD_SCREEN_STEP_SETUP :
-            //XDIC_Overwrite_Mirror_Regs();
-            for (uint8_t addr = XDIC_MIRROR_ADDR_OFS_CH_01 ; addr < XDIC_MIRROR_ADDR_GAIN_CH_01 ; ++addr)
-            {
-                XDIC_Write_Mirror_Reg(addr, 64);
-            }
+            XDIC_Overwrite_Mirror_Regs();
             XDIC_Display_Mirror_Regs();
-
-
             XDIC_Trim_Init_CH_OFS();
-
             JigBD_IF_VLED_9V_EN(PWR_ON);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             gt_xd_screen_step = XD_SCREEN_STEP_SET_MAX_CURR_LVL;
+            gn_xd_max_curr_lvl_cnt = DEV_MAX_CURR_LEVEL_4mA;
             #if (XD_SCREEN_TYPE == XD_SCREEN_ANA)
             #else
                 print(LOG_INFO, "vref, %4u\r\n", XDIC_CURRENT_TRIM_VREF);
@@ -1257,7 +1248,7 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_SET_MAX_CURR_LVL :
             gn_xd_screen_ana = 0;
             XDIC_Set_Max_Current_Level(((dev_max_curr_level_t)(gn_xd_max_curr_lvl_cnt)));
-            print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_level());
+            print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_Level());
             Trim_Vsync_Timer_Start();
             LL_mDelay(50);
             Vsync_Timer_Stop();
@@ -1313,17 +1304,6 @@ void XD_Screen_Task(void)
                     {
                         gn_xd_screen_ana = 4095;
                     }
-
-                    gn_xd_screen_ana = 0;
-                    if (gn_xd_max_curr_lvl_cnt == 4)
-                    {
-                        gn_xd_max_curr_lvl_cnt += 7;
-                    }
-                    else
-                    {
-                        gn_xd_max_curr_lvl_cnt += 1;
-                    }
-                    gt_xd_screen_step = XD_SCREEN_STEP_SET_MAX_CURR_LVL;
 
                 #else
                     print(LOG_INFO, "%4u, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\r\n", gn_xd_screen_max_current, \

@@ -62,12 +62,10 @@ static uint8_t gn_xdic_dimming_channel = 0;
 
 void us_delay(uint16_t us_delay)
 {
-    LL_TIM_EnableCounter(TIM12);
-    while(LL_TIM_GetCounter(TIM12) < us_delay)
+    uint16_t start = LL_TIM_GetCounter(TIM12);
+    while ((uint16_t)(LL_TIM_GetCounter(TIM12) - start) < us_delay)
     {
     }
-    LL_TIM_DisableCounter(TIM12);
-    LL_TIM_SetCounter(TIM12, 0);
 }
 
 void JigBD_IF_Detect_XC24(void)
@@ -477,9 +475,9 @@ double JigBD_IF_Reconvert_XDIC_Original_Freq(double count)
 /* END - PWM Read Frequency ******************************************/
 
 /* BEGIN - Make XDIC DATA SIGNAL through PWM DMA *******************************************/
-static uint16_t Get_Nth_Bit(uint32_t x, int n)
+static uint16_t Get_Nth_Bit(uint64_t x, int n)
 {
-    return ((x & (1 << (n - 1))) >> (n - 1));
+    return (x >> (n - 1)) & 1ULL;
 }
 
 static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
@@ -619,7 +617,6 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     if (gb_xd_timeout_event)
     {
-        DEBUG_HI();
         print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
         gb_xdic_initial_failed = true;
     }
@@ -631,7 +628,6 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     }
 
     us_delay(XDIC_READ_DELAY);
-    DEBUG_LO();
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
 }
@@ -639,8 +635,8 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     uint16_t pwm_length = 0;
-    uint32_t LD_even_data = p_in_LD_data[0];
-    uint32_t LD_odd_data = ((p_in_LD_data[1] << 14) | (p_in_LD_data[2] << 0));
+    uint64_t LD_data_Even = p_in_LD_data[0];
+    uint64_t LD_data_Odd = ((uint64_t)p_in_LD_data[1] << 14) | ((uint64_t)p_in_LD_data[2] << 0);
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
@@ -658,14 +654,13 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
         for (uint8_t j = 0 ; j < XDIC_CH_SIZE ; ++j)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
-
-            if (((j + 1) % 2) == 1/*0*/)
+            if (j % 2 == 0) // Even
             {
                 for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k)
                 {
                     if (write_data)
                     {
-                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_even_data, SERIAL_EVEN_SIZE - k)) ? bit_1 : bit_0);
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Even, SERIAL_EVEN_SIZE - k)) ? bit_1 : bit_0);
                     }
                     else
                     {
@@ -673,13 +668,13 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
                     }
                 }
             }
-            else
+            else // Odd
             {
                 for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k)
                 {
                     if (write_data)
                     {
-                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_odd_data, SERIAL_ODD_SIZE - k)) ? bit_1 : bit_0);
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Odd, SERIAL_ODD_SIZE - k)) ? bit_1 : bit_0);
                     }
                     else
                     {
@@ -734,7 +729,6 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
     if (gb_xd_timeout_event)
     {
-        DEBUG_HI();
         print(LOG_ERROR, "Rx Timeout!!!\r\n");
     }
     else
@@ -744,8 +738,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
         n_response, f_frequency, ((n_response >> 4) & 0x0F), ((n_response >> 0) & 0x0F));
     }
 
-    us_delay(10);
-    DEBUG_LO();
+    us_delay(XDIC_FAULT_RECV_DELAY);
 
     return (uint16_t)(n_response & 0x0FFF);
 }

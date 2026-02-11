@@ -19,6 +19,8 @@ extern void Trim_Vsync_Timer_Start(void);
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);
+extern void Vsync_Change_Frequency(uint16_t in_freq_Hz);
+
 extern void XDIC_Vsync_Task(void);
 
 extern void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data);

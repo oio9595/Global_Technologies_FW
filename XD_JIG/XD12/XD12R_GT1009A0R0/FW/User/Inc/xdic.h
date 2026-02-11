@@ -894,8 +894,14 @@ extern void XDIC_Init(void);
 extern void XDIC_Trim_Init(void);
 
 extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
-extern float XDIC_Get_Max_Current_level(void);
+extern float XDIC_Get_Max_Current_Level(void);
+extern void XDIC_Set_FB_Level(fb_level_t in_fb_level);
+extern float XDIC_Get_FB_Level(void);
+extern void XDIC_Set_Short_Level(short_level_t in_short_level);
+extern float XDIC_Get_Short_Level(void);
+
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
+extern void XDIC_Set_MCLK_Lock_CNT(uint32_t in_mclk_lock_cnt);
 
 extern void XDIC_Overwrite_Mirror_Regs(void);
 extern void XDIC_Display_Mirror_Regs(void);

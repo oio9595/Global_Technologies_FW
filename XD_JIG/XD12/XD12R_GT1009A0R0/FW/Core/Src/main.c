@@ -205,24 +205,29 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     {
         int len = 0;
         char msg_buffer[PRINT_BUFF_SIZE] = {0, };
-
-        if (log_lv > LOG_INFO)
-        {
-            snprintf(msg_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
-            fmt = msg_buffer;
-        }
+        char color_buffer[PRINT_BUFF_SIZE] = {0, };
 
         va_list ap;
         va_start(ap, fmt);
-        len = vsnprintf(msg_buffer, (PRINT_BUFF_SIZE - 1), fmt, ap);
+        vsnprintf(msg_buffer, PRINT_BUFF_SIZE - 1, fmt, ap);
         va_end(ap);
 
-        for (int i = 0 ; i < len ; ++i)
+        // 컬러 적용
+        if (log_lv > LOG_INFO)
         {
-            /* Loop until the end of transmission */
+            snprintf(color_buffer, (PRINT_BUFF_SIZE - 1), "%s%s%s", ANSI_FONT_RED, msg_buffer, ANSI_FONT_NONE);
+            len = strlen(color_buffer);
+        }
+        else
+        {
+            len = strlen(msg_buffer);
+            memcpy(color_buffer, msg_buffer, len + 1);
+        }
+
+        for (uint16_t i = 0 ; i < len ; ++i)
+        {
             while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            /* Echo received character on TX */
-            LL_USART_TransmitData8(USART2, (uint8_t)msg_buffer[i]);
+            LL_USART_TransmitData8(USART2, (uint8_t)color_buffer[i]);
         }
     }
 }
@@ -369,7 +374,6 @@ int main(void)
 
     comm_init();
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -379,9 +383,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    XDIC_Vsync_Task();
     JigTestMainTask();
     TaskDebugUart();
-    XDIC_Vsync_Task();
     btn_process();
   }
   /* USER CODE END 3 */
@@ -1098,7 +1102,8 @@ static void MX_TIM12_Init(void)
   LL_TIM_EnableARRPreload(TIM12);
   LL_TIM_SetClockSource(TIM12, LL_TIM_CLOCKSOURCE_INTERNAL);
   /* USER CODE BEGIN TIM12_Init 2 */
-
+    LL_TIM_SetCounter(TIM12, 0);
+    LL_TIM_EnableCounter(TIM12);
   /* USER CODE END TIM12_Init 2 */
 
 }
@@ -1516,7 +1521,7 @@ static void TaskDebugUart(void)
         {
             if (u32_recv_param[0])
             {
-                Vsync_Timer_Start();
+                Trim_Vsync_Timer_Start();
                 print(LOG_INFO, "vsync start\r\n");
             }
             else
@@ -1525,6 +1530,19 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "vsync stop\r\n");
             }
             print(LOG_INFO, "supply external VLED\r\n");
+        }
+        else if (Command_Param_is_("vsync", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                Vsync_Change_Frequency((uint16_t)u32_recv_param[0]);
+                print(LOG_INFO, "Change Vsync Frequency to %u Hz\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                Vsync_Timer_Stop();
+                print(LOG_INFO, "Invalid vsync frequency value\r\nNeed To MCU Reset\r\n");
+            }
         }
 /* ----------------- command list - xd ----------------- */
         else if (Command_is_("xd_idgen"))
@@ -1586,6 +1604,66 @@ static void TaskDebugUart(void)
             uint16_t ret = XDIC_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
+        else if (Command_Param_is_("xd_current", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 15)
+            {
+                XDIC_Set_Max_Current_Level((dev_max_curr_level_t)u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set Max Current Level to %u\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of xdic_max_current [%u] [0 - %u]\r\n", u32_recv_param[0], 15);
+            }
+        }
+        else if (Command_is_("xd_current"))
+        {
+            XDIC_Get_Max_Current_Level();
+        }
+        else if (Command_Param_is_("xd_fb", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 7)
+            {
+                XDIC_Set_FB_Level((fb_level_t)u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set FB Level to %u\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of xdic_fb [%u] [0 - %u]\r\n", u32_recv_param[0], 7);
+            }
+        }
+        else if (Command_is_("xd_fb"))
+        {
+            XDIC_Get_FB_Level();
+        }
+        else if (Command_Param_is_("xd_short", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 7)
+            {
+                XDIC_Set_Short_Level((short_level_t)u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set Short Level to %u\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of xdic_short [%u] [0 - %u]\r\n", u32_recv_param[0], 7);
+            }
+        }
+        else if (Command_is_("xd_short"))
+        {
+            XDIC_Get_Short_Level();
+        }
+        else if (Command_Param_is_("xd_mclk", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 0x1FFFFF)
+            {
+                XDIC_Set_MCLK_Lock_CNT(u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set MCLK Lock CNT to %u\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of xdic_mclk [%u] [0 - %u]\r\n", u32_recv_param[0], 0x1FFFFF);
+            }
+        }
         else if (Command_Param_is_("xd_ldim", "%d %d %d", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
         {
             if (u32_recv_param[0] <= 65535 && u32_recv_param[1] <= 65535 && u32_recv_param[2] <= 65535)
@@ -1596,6 +1674,18 @@ static void TaskDebugUart(void)
             else
             {
                 print(LOG_ERROR, "\r\n Out of xdic_ldim [%u, %u, %u] [0 - %u]\r\n", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], 65535);
+            }
+        }
+        else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 65535)
+            {
+                print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
+                XDIC_Set_LD_Data(u32_recv_param[0], u32_recv_param[0], u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
             }
         }
         else if (Command_is_("xd_ldim"))
@@ -1662,6 +1752,7 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_show_osc"))
         {
             XDIC_Trim_Show_OSC();
+            print(LOG_INFO, "\r\n OK\r\n");
         }
 
 /* ----------------- command list - xc ----------------- */
@@ -1769,7 +1860,7 @@ static void TaskDebugUart(void)
             Trim_Vsync_Timer_Start();
             print(LOG_INFO, "Trim Vsync start\r\n");
 #endif
-            XDIC_Set_LD_Data(100, 100, 100);
+            XDIC_Set_LD_Data(0x100, 0x100, 0x100);
         }
         else if (Command_is_("xc_trim_start") || Command_is_("4"))
         {
