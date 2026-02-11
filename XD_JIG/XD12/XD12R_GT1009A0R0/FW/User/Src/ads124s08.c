@@ -73,6 +73,8 @@ static uint64_t gn_ads114s08_adc_temp;
 static uint16_t gn_adc_read_count;
 static uint16_t gn_ads114s08_offset[12];
 
+volatile uint16_t gn_ads114s08_read_timeout;
+
 #ifdef USE_DISPLAY_DEVICE_REGS
 static void ADS114S08_Dump_Registers(void)
 {
@@ -259,10 +261,16 @@ void ADS114S08_Set_Start(uint8_t b_set)
 
 void ADS114S08_Wait_Done(void)
 {
+    gn_ads114s08_read_timeout = 15; // 2000SPS * 16 EA = 8ms
     while(1)
     {
         if (gb_ads114s08_drdy_done)
         {
+            break;
+        }
+        if (gn_ads114s08_read_timeout == 0)
+        {
+            print(LOG_ERROR, "%s timeout\r\n", __func__);
             break;
         }
     }

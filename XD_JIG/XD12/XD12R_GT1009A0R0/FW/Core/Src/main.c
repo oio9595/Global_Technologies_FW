@@ -197,6 +197,10 @@ void sys_tick_handler(void)
     {
         --gn_key_task_tick;
     }
+    if (gn_ads114s08_read_timeout)
+    {
+        --gn_ads114s08_read_timeout;
+    }
 }
 
 void print(LOG_LV_T log_lv, const char *fmt, ...)

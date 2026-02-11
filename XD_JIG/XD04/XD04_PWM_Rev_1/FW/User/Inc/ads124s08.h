@@ -335,6 +335,8 @@ typedef struct
     ads114s08_gpiocon_t gpiocon;
 }ads114s08_regs_t;
 
+extern volatile uint16_t gn_ads114s08_read_timeout;
+
 // Device command prototypes
 extern void ADS114S08_Init(void);
 

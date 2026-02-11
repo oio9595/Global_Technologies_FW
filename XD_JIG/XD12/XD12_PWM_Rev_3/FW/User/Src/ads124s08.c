@@ -73,26 +73,28 @@ static uint64_t gn_ads114s08_adc_temp;
 static uint16_t gn_adc_read_count;
 static uint16_t gn_ads114s08_offset[12];
 
+volatile uint16_t gn_ads114s08_read_timeout;
+
 #ifdef USE_DISPLAY_DEVICE_REGS
 static void ADS114S08_Dump_Registers(void)
 {
-    print(LOG_DEBUG, "======== ADS114S08 regs value ========\r\n");
+    print(LOG_INFO, "======== ADS114S08 regs value ========\r\n");
 
-    print(LOG_DEBUG, "ID : 0x%X\r\n", gt_ads114s08_regs.id.value);
-    print(LOG_DEBUG, "\tDEV ID : %s\r\n", (gt_ads114s08_regs.id.u.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs.id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
+    print(LOG_INFO, "ID : 0x%X\r\n", gt_ads114s08_regs.id.value);
+    print(LOG_INFO, "\tDEV ID : %s\r\n", (gt_ads114s08_regs.id.u.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs.id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
 
-    print(LOG_DEBUG, "Device Status : 0x%X\r\n", gt_ads114s08_regs.status.value);
-    print(LOG_DEBUG, "\tPOR : %u\r\n", gt_ads114s08_regs.status.u.fl_por);
-    print(LOG_DEBUG, "\tRDY : %u\r\n", gt_ads114s08_regs.status.u.rdy);
+    print(LOG_INFO, "Device Status : 0x%X\r\n", gt_ads114s08_regs.status.value);
+    print(LOG_INFO, "\tPOR : %u\r\n", gt_ads114s08_regs.status.u.fl_por);
+    print(LOG_INFO, "\tRDY : %u\r\n", gt_ads114s08_regs.status.u.rdy);
 
-    print(LOG_DEBUG, "Data Rate : 0x%X\r\n", gt_ads114s08_regs.datarate.value);
-    print(LOG_DEBUG, "\tDR : %u\r\n", gt_ads114s08_regs.datarate.u.dr);
+    print(LOG_INFO, "Data Rate : 0x%X\r\n", gt_ads114s08_regs.datarate.value);
+    print(LOG_INFO, "\tDR : %u\r\n", gt_ads114s08_regs.datarate.u.dr);
 
-    print(LOG_DEBUG, "SYS : 0x%X\r\n", gt_ads114s08_regs.sys.value);
-    print(LOG_DEBUG, "\tSENDSTAT : %u\r\n", gt_ads114s08_regs.sys.u.sendstat);
-    print(LOG_DEBUG, "\tCRC : %u\r\n", gt_ads114s08_regs.sys.u.crc);
+    print(LOG_INFO, "SYS : 0x%X\r\n", gt_ads114s08_regs.sys.value);
+    print(LOG_INFO, "\tSENDSTAT : %u\r\n", gt_ads114s08_regs.sys.u.sendstat);
+    print(LOG_INFO, "\tCRC : %u\r\n", gt_ads114s08_regs.sys.u.crc);
 
-    print(LOG_DEBUG, "======================================\r\n");
+    print(LOG_INFO, "======================================\r\n");
 }
 #endif
 
@@ -259,10 +261,16 @@ void ADS114S08_Set_Start(uint8_t b_set)
 
 void ADS114S08_Wait_Done(void)
 {
+    gn_ads114s08_read_timeout = 15; // 2000SPS * 16 EA = 8ms
     while(1)
     {
         if (gb_ads114s08_drdy_done)
         {
+            break;
+        }
+        if (gn_ads114s08_read_timeout == 0)
+        {
+            print(LOG_ERROR, "%s timeout\r\n", __func__);
             break;
         }
     }
