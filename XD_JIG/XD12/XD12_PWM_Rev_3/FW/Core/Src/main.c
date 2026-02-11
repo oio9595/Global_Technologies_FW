@@ -1261,9 +1261,11 @@ static void MX_GPIO_Init(void)
     PWM_SWITCH_LO();
     LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
 
-	GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = XC_MCLK_Pin;
@@ -1273,6 +1275,8 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
     LL_GPIO_ResetOutputPin(XC_MCLK_GPIO_Port, XC_MCLK_Pin);
+
+    XD_FBI_LO();
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
@@ -1608,6 +1612,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_trim_ofs"))
         {
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             JigBD_IF_VLED_9V_EN(PWR_ON);
             uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
             current_gain_t current_gain = GAIN_MID;
@@ -1633,6 +1638,7 @@ static void TaskDebugUart(void)
         }
         else if (Command_is_("xd_trim_gain"))
         {
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             JigBD_IF_VLED_9V_EN(PWR_ON);
             uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
             current_gain_t current_gain = GAIN_HIGH;
