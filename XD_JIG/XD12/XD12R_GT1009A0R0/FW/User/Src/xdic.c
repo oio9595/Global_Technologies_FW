@@ -1536,7 +1536,7 @@ void XDIC_Trim_Partial_CH_OFS(void)
         float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
         iout_float[i][0] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][0], current_gain);
         iout_float[i][1] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][1], current_gain);
-        print(LOG_INFO, "OFS CH[%d] : AVG %.3f, P1 %.3f, P2 %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
+        print(LOG_INFO, "OFS CH[%d], AVG, %.3f, P1, %.3f, P2, %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
     }
 }
 

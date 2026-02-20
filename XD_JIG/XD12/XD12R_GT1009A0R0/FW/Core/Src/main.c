@@ -1394,7 +1394,7 @@ static void TaskDebugUart(void)
     {
         char str_in[RX_PACKET_SIZE + 1] = {0, };
         uint32_t u32_recv_param[6] = {0, };
-        double lf_recv_param[6] = {0,};
+        double lf_recv_param[6] = {0, };
 
         memcpy(str_in, p_data->buffer, p_data->length);
         p_data->length = 0;
