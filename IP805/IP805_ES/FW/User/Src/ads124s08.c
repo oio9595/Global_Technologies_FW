@@ -1,11 +1,11 @@
-/** @file uart.c
+/** @file ads124s08.c
  *
  * @brief
  *
  * @par
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
-#define __UART_C__
+#define __ADS124S08_C__
 
 
 /* Private includes ----------------------------------------------------------*/

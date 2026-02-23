@@ -1409,6 +1409,24 @@ void XDIC_Trim_Init_CH_OFS(void)
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
 }
 
+void XDIC_Trim_Init_UVOV_1P5(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 6;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+}
+
+void XDIC_Trim_Init_UVOV_VDD(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 7;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+}
+
 void XDIC_Trim_Partial_IBN_2uA(void)
 {
     XDIC_Trim_Init_IBN_2uA();
@@ -1545,6 +1563,16 @@ void XDIC_Trim_Partial_CH_OFS(void)
         iout_float[i][1] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][1], current_gain);
         print(LOG_INFO, "OFS CH[%d] : AVG %.3f, P1 %.3f, P2 %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
     }
+}
+
+void XDIC_Trim_Partial_UVOV_1P5(void)
+{
+    XDIC_Trim_Init_UVOV_1P5();
+}
+
+void XDIC_Trim_Partial_UVOV_VDD(void)
+{
+    XDIC_Trim_Init_UVOV_VDD();
 }
 
 void XDIC_Trim_Show_OSC(void)

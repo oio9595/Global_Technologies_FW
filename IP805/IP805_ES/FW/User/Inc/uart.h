@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 typedef enum tag_LOG_LV_T
 {
     LOG_DEBUG = 0,

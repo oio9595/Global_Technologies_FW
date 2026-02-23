@@ -17,7 +17,7 @@ extern "C" {
 /********************************************************/
 #define VERSION_MAJOR       (0)
 #define VERSION_MINOR       (0)
-#define VERSION_PATCH       (0) // At every new build, increase this value
+#define VERSION_PATCH       (1) // At every new build, increase this value
 /********************************************************/
 #define APB1_TIM_FREQ       (90.0f) //MHz
 #define APB2_TIM_FREQ       (APB1_TIM_FREQ * 2) //MHz

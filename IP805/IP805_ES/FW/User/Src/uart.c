@@ -47,6 +47,8 @@ static LOG_LV_T gt_log_lv = LOG_DEBUG;
 bool gb_uart_tx_busy;
 /* USER CODE END PV */
 
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN */
 __STATIC_INLINE void UART_PutChar(uint8_t data)
 {
     /* Echo received character on TX */
@@ -146,9 +148,9 @@ void Comm_Rx_Handler(uint8_t rx)
                     }
                     else
                     {
-                        if (gt_uart_rx.buffer[UART_BUFF_SIZE - 1].buffer[i])
+                        if (gt_uart_rx.buffer[UART_PACKET_SIZE - 1].buffer[i])
                         {
-                            gt_uart_rx.buffer[gt_uart_rx.InCnt].buffer[i] = gt_uart_rx.buffer[UART_BUFF_SIZE - 1].buffer[i];
+                            gt_uart_rx.buffer[gt_uart_rx.InCnt].buffer[i] = gt_uart_rx.buffer[UART_PACKET_SIZE - 1].buffer[i];
                             Print(LOG_INFO, "%c", gt_uart_rx.buffer[gt_uart_rx.InCnt].buffer[i]);
                         }
                         else
@@ -275,5 +277,6 @@ void Comm_UART_Task(void)
         }
     }
 }
+/* USER CODE END */
 
 /*** end of file ***/

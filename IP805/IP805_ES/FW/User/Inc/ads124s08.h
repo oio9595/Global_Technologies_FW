@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 #define ADS114S08_CH_XD_IOUT    (0)
 #define ADS114S08_CH_XC_LDO     (1)
 #define ADS114S08_CH_XC_DAC     (2)
