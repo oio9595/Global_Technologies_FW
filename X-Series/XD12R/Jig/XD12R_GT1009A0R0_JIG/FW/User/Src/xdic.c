@@ -1583,7 +1583,6 @@ void XDIC_Trim_Partial_UVOV_1P5(void)
     uint16_t ldo_uv = 0xFFFF;
 
     XDIC_Trim_Init_UVOV_1P5();
-    LL_mDelay(1);
     uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
 
     ldo_ov = ((fault_status & XDIC_R09_LDO_OV_MASK) >> XDIC_R09_LDO_OV_SHIFT);
@@ -1597,7 +1596,6 @@ void XDIC_Trim_Partial_UVOV_VDD(void)
     uint16_t vdd_uv = 0xFFFF;
 
     XDIC_Trim_Init_UVOV_VDD();
-    LL_mDelay(1);
     uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
 
     vdd_ov = ((fault_status & XDIC_R09_VDD_OV_MASK) >> XDIC_R09_VDD_OV_SHIFT);
