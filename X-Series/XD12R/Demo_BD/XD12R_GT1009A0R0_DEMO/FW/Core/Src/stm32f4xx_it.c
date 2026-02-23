@@ -26,7 +26,6 @@
 #include "JigBd_IF.h"
 #include "vsync_task.h"
 #include "config.h"
-#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -206,20 +205,57 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line 4 interrupt.
+  */
+void EXTI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+
+  /* USER CODE END EXTI4_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
+    /* USER CODE BEGIN LL_EXTI_LINE_4 */
+    ADC_DRDY_INT_Handler();
+    /* USER CODE END LL_EXTI_LINE_4 */
+  }
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
+
+  /* USER CODE END EXTI4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream2 global interrupt.
+  */
+void DMA1_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
+    if (LL_DMA_IsActiveFlag_TC2(DMA1) == 1)
+    {
+        LL_DMA_ClearFlag_TC2(DMA1);
+        LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
+
+        JigBD_IF_Calculate_Input_Capture_Freq();
+
+        gb_timer_input_capture_done = 1;
+    }
+    else if (LL_DMA_IsActiveFlag_TE2(DMA1) == 1)
+    {
+        LL_DMA_ClearFlag_TE2(DMA1);
+    }
+
+  /* USER CODE END DMA1_Stream2_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream6 global interrupt.
   */
 void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
-    if (LL_DMA_IsActiveFlag_TC6(DMA1))
-    {
-        LL_DMA_ClearFlag_TC6(DMA1);
-
-        LL_USART_DisableDMAReq_TX(USART2);
-        LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
-        Comm_Increase_Tx_OutCnt();
-        gb_uart_tx_busy = 0;
-    }
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
   /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
@@ -254,7 +290,7 @@ void USART2_IRQHandler(void)
     {
         /* Read one byte from the receive data register */
         uint8_t rx_data = LL_USART_ReceiveData8(USART2);
-        Comm_Rx_Handler(rx_data);
+        comm_rx_handler(rx_data);
     }
 
   /* USER CODE END USART2_IRQn 0 */
