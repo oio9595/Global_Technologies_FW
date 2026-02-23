@@ -1741,6 +1741,14 @@ static void TaskDebugUart(void)
         {
             XDIC_Trim_Partial_CH_OFS();
         }
+        else if (Command_is_("xd_trim_uvov_1p5"))
+        {
+            XDIC_Trim_Partial_UVOV_1P5();
+        }
+        else if (Command_is_("xd_trim_uvov_vdd"))
+        {
+            XDIC_Trim_Partial_UVOV_VDD();
+        }
         else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < (XD_CH_MAX + 1))

@@ -98,6 +98,18 @@
 #define XDIC_R04_LDO_DAC_CTL_SHIFT  (8U)
 #define XDIC_R04_LDO_DAC_CTL_MASK   (0x0F << XDIC_R04_LDO_DAC_CTL_SHIFT)
 
+#define XDIC_R09_VDD_OV_SHIFT       (9U)
+#define XDIC_R09_VDD_OV_MASK        (0x01 << XDIC_R09_VDD_OV_SHIFT)
+
+#define XDIC_R09_VDD_UV_SHIFT       (8U)
+#define XDIC_R09_VDD_UV_MASK        (0x01 << XDIC_R09_VDD_UV_SHIFT)
+
+#define XDIC_R09_LDO_OV_SHIFT       (7U)
+#define XDIC_R09_LDO_OV_MASK        (0x01 << XDIC_R09_LDO_OV_SHIFT)
+
+#define XDIC_R09_LDO_UV_SHIFT       (6U)
+#define XDIC_R09_LDO_UV_MASK        (0x01 << XDIC_R09_LDO_UV_SHIFT)
+
 typedef enum tag_XDIC_SUBSTITUTE_VALUE_ORDER_T
 {
     XDIC_SUBSTITUTE_VALUE_ORDER_IBN_2uA,
@@ -877,7 +889,7 @@ void XDIC_Init(void)
                 break;
             case XDIC_ADDR_TEMP :
                 gt_xdic_general_regs._r21.ofs_temp = 8;
-                gt_xdic_general_regs._r21.vdd_sel = 1;
+                gt_xdic_general_regs._r21.vdd_sel = 0;
                 gt_xdic_general_regs._r21.dac_rng = 1;
                 gt_xdic_general_regs._r21.flt_ctl = 1;
                 gt_xdic_general_regs._r21.flt_gain = 2;
@@ -986,6 +998,13 @@ void XDIC_Trim_Init(void)
                 gt_xdic_general_regs._r20.chop_osc_en = 1;
                 gt_xdic_general_regs._r20.chop_oscldo_en = 1;
                 gt_xdic_general_regs._r20.chop_drv_en = 1;
+                break;
+            case XDIC_ADDR_TEMP :
+                gt_xdic_general_regs._r21.ofs_temp = 8;
+                gt_xdic_general_regs._r21.vdd_sel = 0;
+                gt_xdic_general_regs._r21.dac_rng = 1;
+                gt_xdic_general_regs._r21.flt_ctl = 1;
+                gt_xdic_general_regs._r21.flt_gain = 2;
                 break;
             case XDIC_ADDR_OTP_OP_MODE :
                 gt_xdic_general_regs._r3F.test_en = 1;
@@ -1418,6 +1437,24 @@ void XDIC_Trim_Init_CH_OFS(void)
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
 }
 
+void XDIC_Trim_Init_UVOV_1P5(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 6;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+}
+
+void XDIC_Trim_Init_UVOV_VDD(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 7;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+}
+
 void XDIC_Trim_Partial_IBN_2uA(void)
 {
     XDIC_Trim_Init_IBN_2uA();
@@ -1538,6 +1575,34 @@ void XDIC_Trim_Partial_CH_OFS(void)
         iout_float[i][1] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][1], current_gain);
         print(LOG_INFO, "OFS CH[%d], AVG, %.3f, P1, %.3f, P2, %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
     }
+}
+
+void XDIC_Trim_Partial_UVOV_1P5(void)
+{
+    uint16_t ldo_ov = 0xFFFF;
+    uint16_t ldo_uv = 0xFFFF;
+
+    XDIC_Trim_Init_UVOV_1P5();
+    LL_mDelay(1);
+    uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
+
+    ldo_ov = ((fault_status & XDIC_R09_LDO_OV_MASK) >> XDIC_R09_LDO_OV_SHIFT);
+    ldo_uv = ((fault_status & XDIC_R09_LDO_UV_MASK) >> XDIC_R09_LDO_UV_SHIFT);
+    print(LOG_INFO, "\r\n UVOV_1P5 Fault Status : 0x%03X, LDO_OV : %d, LDO_UV : %d\r\n", fault_status, ldo_ov, ldo_uv);
+}
+
+void XDIC_Trim_Partial_UVOV_VDD(void)
+{
+    uint16_t vdd_ov = 0xFFFF;
+    uint16_t vdd_uv = 0xFFFF;
+
+    XDIC_Trim_Init_UVOV_VDD();
+    LL_mDelay(1);
+    uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
+
+    vdd_ov = ((fault_status & XDIC_R09_VDD_OV_MASK) >> XDIC_R09_VDD_OV_SHIFT);
+    vdd_uv = ((fault_status & XDIC_R09_VDD_UV_MASK) >> XDIC_R09_VDD_UV_SHIFT);
+    print(LOG_INFO, "\r\n UVOV_VDD Fault Status : 0x%03X, VDD_OV : %d, VDD_UV : %d\r\n", fault_status, vdd_ov, vdd_uv);
 }
 
 void XDIC_Trim_Show_OSC(void)

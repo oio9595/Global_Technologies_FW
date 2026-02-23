@@ -240,6 +240,10 @@ typedef union tag_XDIC_GENERAL_0x09_T
         uint16_t bit_open           : 1;
         uint16_t bit_short          : 1;
         uint16_t bit_thermal        : 1;
+        uint16_t bit_ldo_uv         : 1;
+        uint16_t bit_ldo_ov         : 1;
+        uint16_t bit_vdd_uv         : 1;
+        uint16_t bit_vdd_ov         : 1;
         uint16_t                    : 5;
         uint16_t bit_timeout_err    : 1;
         uint16_t                    : 4;
@@ -917,6 +921,8 @@ extern void XDIC_Trim_Init_FLL_LDO_1V5(void);
 extern void XDIC_Trim_Init_OSC(void);
 extern void XDIC_Trim_Init_CH_GAIN(void);
 extern void XDIC_Trim_Init_CH_OFS(void);
+extern void XDIC_Trim_Init_UVOV_1P5(void);
+extern void XDIC_Trim_Init_UVOV_VDD(void);
 
 extern void XDIC_Trim_Partial_IBN_2uA(void);
 extern void XDIC_Trim_Partial_DAC_LDO_1V5(void);
@@ -927,6 +933,8 @@ extern void XDIC_Trim_Partial_FLL_LDO_1V5(void);
 extern void XDIC_Trim_Partial_OSC(void);
 extern void XDIC_Trim_Partial_CH_GAIN(void);
 extern void XDIC_Trim_Partial_CH_OFS(void);
+extern void XDIC_Trim_Partial_UVOV_1P5(void);
+extern void XDIC_Trim_Partial_UVOV_VDD(void);
 
 extern void XDIC_Trim_Show_OSC(void);
 
