@@ -614,26 +614,48 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
                 XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL, reg_val);
             }
             break;
-        case XD_TRIM_CH_GAIN:
+        case XD_TRIM_CH_GAIN_ODD:
             if (in_sub_val > XDIC_REG_LIMIT_CH_GAIN)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_GAIN- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_GAIN_ODD- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num * 2] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num * 2, in_sub_val);
             }
             break;
-        case XD_TRIM_CH_OFS:
-            if (in_sub_val > XDIC_REG_LIMIT_CH_OFS)
+        case XD_TRIM_CH_GAIN_EVEN:
+            if (in_sub_val > XDIC_REG_LIMIT_CH_GAIN)
             {
-                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_OFS- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_GAIN_EVEN- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + ch_num * 2] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_02 + ch_num * 2, in_sub_val);
+            }
+            break;
+        case XD_TRIM_CH_OFS_ODD:
+            if (in_sub_val > XDIC_REG_LIMIT_CH_OFS)
+            {
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_OFS_ODD- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
+            }
+            else
+            {
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num * 2] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num * 2, in_sub_val);
+            }
+            break;
+        case XD_TRIM_CH_OFS_EVEN:
+            if (in_sub_val > XDIC_REG_LIMIT_CH_OFS)
+            {
+                print(LOG_ERROR, "ERROR: %s XD_TRIM_CH_OFS_EVEN- in_sub_val(%d) Over !!\r\n", __func__, in_sub_val);
+            }
+            else
+            {
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + ch_num * 2] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_02 + ch_num * 2, in_sub_val);
             }
             break;
     }
@@ -665,11 +687,17 @@ uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t i
         case XD_TRIM_OSC:
             rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OSC];
             break;
-        case XD_TRIM_CH_GAIN:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num];
+        case XD_TRIM_CH_GAIN_ODD:
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num * 2];
             break;
-        case XD_TRIM_CH_OFS:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num];
+        case XD_TRIM_CH_GAIN_EVEN:
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + ch_num * 2];
+            break;
+        case XD_TRIM_CH_OFS_ODD:
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num * 2];
+            break;
+        case XD_TRIM_CH_OFS_EVEN:
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + ch_num * 2];
             break;
     }
 
@@ -702,10 +730,12 @@ uint16_t XDIC_Get_Substitute_Value_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mo
     case XD_TRIM_OSC:
         rtn_val = XDIC_REG_LIMIT_OSC;
         break;
-    case XD_TRIM_CH_GAIN:
+    case XD_TRIM_CH_GAIN_ODD:
+    case XD_TRIM_CH_GAIN_EVEN:
         rtn_val = XDIC_REG_LIMIT_CH_GAIN;
         break;
-    case XD_TRIM_CH_OFS:
+    case XD_TRIM_CH_OFS_ODD:
+    case XD_TRIM_CH_OFS_EVEN:
         rtn_val = XDIC_REG_LIMIT_CH_OFS;
         break;
     }
@@ -1413,7 +1443,7 @@ void XDIC_Trim_Init_OSC(void)
     XDIC_Set_OSC_Manual(0x8000);
 }
 
-void XDIC_Trim_Init_CH_GAIN(void)
+void XDIC_Trim_Init_CH_GAIN_ODD(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.test_ana_en = 0;
@@ -1421,11 +1451,11 @@ void XDIC_Trim_Init_CH_GAIN(void)
     gt_xdic_general_regs._r3F.mclk64_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    XDIC_Set_Max_Current_Level(XDIC_GAIN_MAX_CURRENT_LVL);
+    XDIC_Set_Max_Current_Level(XDIC_GAIN_ODD_MAX_CURRENT_LVL);
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
 }
 
-void XDIC_Trim_Init_CH_OFS(void)
+void XDIC_Trim_Init_CH_GAIN_EVEN(void)
 {
     gt_xdic_general_regs._r3F.test_en = 1;
     gt_xdic_general_regs._r3F.test_ana_en = 0;
@@ -1433,7 +1463,31 @@ void XDIC_Trim_Init_CH_OFS(void)
     gt_xdic_general_regs._r3F.mclk64_o = 0;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    XDIC_Set_Max_Current_Level(XDIC_OFS_MAX_CURRENT_LVL);
+    XDIC_Set_Max_Current_Level(XDIC_GAIN_EVEN_MAX_CURRENT_LVL);
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+}
+
+void XDIC_Trim_Init_CH_OFS_ODD(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 0;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    XDIC_Set_Max_Current_Level(XDIC_OFS_ODD_MAX_CURRENT_LVL);
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+}
+
+void XDIC_Trim_Init_CH_OFS_EVEN(void)
+{
+    gt_xdic_general_regs._r3F.test_en = 1;
+    gt_xdic_general_regs._r3F.test_ana_en = 0;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1;
+    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
+
+    XDIC_Set_Max_Current_Level(XDIC_OFS_EVEN_MAX_CURRENT_LVL);
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
 }
 
@@ -1519,7 +1573,7 @@ void XDIC_Trim_Partial_CH_GAIN(void)
     float iout_float[XDIC_CH_SIZE][2] = {0, };
     current_gain_t current_gain = GAIN_HIGH;
 
-    XDIC_Trim_Init_CH_GAIN();
+    XDIC_Trim_Init_CH_GAIN_ODD();
     JigBD_IF_VLED_9V_EN(PWR_ON);
     JigBD_IF_Change_Current_Gain(current_gain);
 
@@ -1551,7 +1605,7 @@ void XDIC_Trim_Partial_CH_OFS(void)
     float iout_float[XDIC_CH_SIZE][2] = {0.0f, };
     current_gain_t current_gain = GAIN_MID;
 
-    XDIC_Trim_Init_CH_OFS();
+    XDIC_Trim_Init_CH_OFS_ODD();
     JigBD_IF_VLED_9V_EN(PWR_ON);
     JigBD_IF_Change_Current_Gain(current_gain);
 

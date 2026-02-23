@@ -12,29 +12,16 @@
 extern "C" {
 #endif
 
-#include "xd_trim.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
 
-#define XDIC_VREF_MAX               (4095)
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
 
-#define XDIC_REG_LIMIT_IBN_2uA      (31)    /* 5-bit */
-#define XDIC_REG_LIMIT_DAC_LDO_1V5  (31)    /* 5-bit */
-#define XDIC_REG_LIMIT_DIG_LDO_1V5  (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_DAC_A_OFS    (127)   /* 7-bit */
-#define XDIC_REG_LIMIT_DAC_B_OFS    (127)   /* 7-bit */
-#define XDIC_REG_LIMIT_FLL_LDO_1V5  (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_OSC          (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_CH_GAIN      (63)    /* 6-bit */
-#define XDIC_REG_LIMIT_CH_OFS       (255)   /* 8-bit */
-
-extern volatile bool gb_xdic_initial_failed;
-
-typedef enum tag_XDIC_REG_TYPE_T
-{
-    XDIC_REG_TYPE_NON_TRIM = 0,
-    XDIC_REG_TYPE_TRIM,
-    XDIC_REG_TYPE_MAX,
-} XDIC_REG_TYPE_t;
-
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
 typedef enum tag_XDIC_CHANNEL_T
 {
     XD_CH_01 = 0,
@@ -587,86 +574,6 @@ typedef union tag_XDIC_GENERAL_0x3F_T
     };
 } _xdic_op_mode_t;
 
-/////////////////////////////////
-//       TRIM REGISTERS        //
-/////////////////////////////////
-typedef union tag_XDIC_MIRROR_0x00_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t otp_crc_checksum : 8;
-        uint16_t                  : 8;
-    };
-} _xdic_otp_crc_t;
-
-typedef union tag_XDIC_MIRROR_0x01_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t dac_a_ofs  : 7;
-        uint16_t dac_b_ofs  : 5;
-        uint16_t            : 4;
-    };
-} _xdic_dac_ofs_t;
-
-typedef union tag_XDIC_MIRROR_0x02_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t bgr_tc     : 5;
-        uint16_t iref_ctl   : 5;
-        uint16_t dac_b_ofs  : 2;
-        uint16_t            : 4;
-    };
-} _xdic_iref_ctl_bgr_tc_t;
-
-typedef union tag_XDIC_MIRROR_0x03_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t osc_rctl       : 4;
-        uint16_t                : 7;
-        uint16_t ldo_dac_ctl    : 1;
-        uint16_t                : 4;
-    };
-} _xdic_ldo_dac_ctl_osc_rctl_t;
-
-typedef union tag_XDIC_MIRROR_0x04_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t ldo_ctl        : 4;
-        uint16_t ldo_osc_ctl    : 4;
-        uint16_t ldo_dac_ctl    : 4;
-        uint16_t                : 4;
-    };
-} _xdic_ldo_ctl_t;
-
-typedef union tag_XDIC_MIRROR_0x05_0x10_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t ofs_chx :  6;
-        uint16_t         : 10;
-    };
-} _xdic_ofs_ch_t;
-
-typedef union tag_XDIC_MIRROR_0x11_0x1C_T
-{
-    uint16_t val;
-    struct
-    {
-        uint16_t gain_chx : 7;
-        uint16_t          : 9;
-    };
-} _xdic_gain_ch_t;
-
 typedef enum tag_XDIC_GENERAL_ADDR_T
 {
     XDIC_ADDR_RESET_ID              = 0x00, // 0x00
@@ -735,40 +642,6 @@ typedef enum tag_XDIC_GENERAL_ADDR_T
     XDIC_ADDR_OTP_OP_MODE           = 0x3F, // 0x3F
     XDIC_ADDR_MAX                   = 0x40, // 0x40
 } xdic_addr_t;
-
-typedef enum tag_XDIC_MIRROR_ADDR_T
-{
-    XDIC_MIRROR_ADDR_OTP_CRC                = 0x00,  // 0x00
-    XDIC_MIRROR_ADDR_DAC_OFS                = 0x01,  // 0x01
-    XDIC_MIRROR_ADDR_IREF_CTL_BGR_TC        = 0x02,  // 0x02
-    XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL   = 0x03,  // 0x03
-    XDIC_MIRROR_ADDR_LDO_CTL                = 0x04,  // 0x04
-    XDIC_MIRROR_ADDR_OFS_CH_01              = 0x05,  // 0x05
-    XDIC_MIRROR_ADDR_OFS_CH_02              = 0x06,  // 0x06
-    XDIC_MIRROR_ADDR_OFS_CH_03              = 0x07,  // 0x07
-    XDIC_MIRROR_ADDR_OFS_CH_04              = 0x08,  // 0x08
-    XDIC_MIRROR_ADDR_OFS_CH_05              = 0x09,  // 0x09
-    XDIC_MIRROR_ADDR_OFS_CH_06              = 0x0A,  // 0x0A
-    XDIC_MIRROR_ADDR_OFS_CH_07              = 0x0B,  // 0x0B
-    XDIC_MIRROR_ADDR_OFS_CH_08              = 0x0C,  // 0x0C
-    XDIC_MIRROR_ADDR_OFS_CH_09              = 0x0D,  // 0x0D
-    XDIC_MIRROR_ADDR_OFS_CH_10              = 0x0E,  // 0x0E
-    XDIC_MIRROR_ADDR_OFS_CH_11              = 0x0F,  // 0x0F
-    XDIC_MIRROR_ADDR_OFS_CH_12              = 0x10,  // 0x10
-    XDIC_MIRROR_ADDR_GAIN_CH_01             = 0x11,  // 0x11
-    XDIC_MIRROR_ADDR_GAIN_CH_02             = 0x12,  // 0x12
-    XDIC_MIRROR_ADDR_GAIN_CH_03             = 0x13,  // 0x13
-    XDIC_MIRROR_ADDR_GAIN_CH_04             = 0x14,  // 0x14
-    XDIC_MIRROR_ADDR_GAIN_CH_05             = 0x15,  // 0x15
-    XDIC_MIRROR_ADDR_GAIN_CH_06             = 0x16,  // 0x16
-    XDIC_MIRROR_ADDR_GAIN_CH_07             = 0x17,  // 0x17
-    XDIC_MIRROR_ADDR_GAIN_CH_08             = 0x18,  // 0x18
-    XDIC_MIRROR_ADDR_GAIN_CH_09             = 0x19,  // 0x19
-    XDIC_MIRROR_ADDR_GAIN_CH_10             = 0x1A,  // 0x1A
-    XDIC_MIRROR_ADDR_GAIN_CH_11             = 0x1B,  // 0x1B
-    XDIC_MIRROR_ADDR_GAIN_CH_12             = 0x1C,  // 0x1C
-    XDIC_MIRROR_ADDR_MAX                    = 0x1D   // 0x1D
-} xdic_mirror_addr_t;
 
 typedef union tag_XDIC_GENERAL_REG_T
 {
@@ -841,105 +714,19 @@ typedef union tag_XDIC_GENERAL_REG_T
         _xdic_op_mode_t             _r3F;
     };
 } _xdic_general_regs_t;
+/* USER CODE END PTD */
 
-typedef union tag_XDIC_MIRROR_REG_T
-{
-    uint16_t ALL[XDIC_MIRROR_ADDR_MAX];
-    struct
-    {
-        _xdic_otp_crc_t                 _r00;
-        _xdic_dac_ofs_t                 _r01;
-        _xdic_iref_ctl_bgr_tc_t         _r02;
-        _xdic_ldo_dac_ctl_osc_rctl_t    _r03;
-        _xdic_ldo_ctl_t                 _r04;
-        _xdic_ofs_ch_t                  _r05;
-        _xdic_ofs_ch_t                  _r06;
-        _xdic_ofs_ch_t                  _r07;
-        _xdic_ofs_ch_t                  _r08;
-        _xdic_ofs_ch_t                  _r09;
-        _xdic_ofs_ch_t                  _r0A;
-        _xdic_ofs_ch_t                  _r0B;
-        _xdic_ofs_ch_t                  _r0C;
-        _xdic_ofs_ch_t                  _r0D;
-        _xdic_ofs_ch_t                  _r0E;
-        _xdic_ofs_ch_t                  _r0F;
-        _xdic_ofs_ch_t                  _r10;
-        _xdic_gain_ch_t                 _r11;
-        _xdic_gain_ch_t                 _r12;
-        _xdic_gain_ch_t                 _r13;
-        _xdic_gain_ch_t                 _r14;
-        _xdic_gain_ch_t                 _r15;
-        _xdic_gain_ch_t                 _r16;
-        _xdic_gain_ch_t                 _r17;
-        _xdic_gain_ch_t                 _r18;
-        _xdic_gain_ch_t                 _r19;
-        _xdic_gain_ch_t                 _r1A;
-        _xdic_gain_ch_t                 _r1B;
-        _xdic_gain_ch_t                 _r1C;
-    };
-} _xdic_mirror_regs_t;
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+/* USER CODE END PV */
 
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN */
 extern void XDIC_Write_General_Reg(uint8_t addr, uint16_t data);
 extern uint16_t XDIC_Read_General_Reg(uint8_t addr);
 extern uint16_t XDIC_Get_General_Reg(uint8_t addr);
-
-extern void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data);
-extern uint16_t XDIC_Read_Mirror_Reg(uint8_t addr);
-extern uint16_t XDIC_Get_Mirror_Reg(uint8_t addr);
-
-extern void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val);
-extern uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode);
-extern uint16_t XDIC_Get_Substitute_Value_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode);
-
-extern void XDIC_Dump_Trim_Regs_OneLine(void);
-extern void XDIC_Read_All_Registers(void);
-
 extern void XDIC_Init(void);
-extern void XDIC_Trim_Init(void);
-
-extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
-extern float XDIC_Get_Max_Current_Level(void);
-extern void XDIC_Set_FB_Level(fb_level_t in_fb_level);
-extern float XDIC_Get_FB_Level(void);
-extern void XDIC_Set_Short_Level(short_level_t in_short_level);
-extern float XDIC_Get_Short_Level(void);
-
-extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
-extern void XDIC_Set_MCLK_Lock_CNT(uint32_t in_mclk_lock_cnt);
-
-extern void XDIC_Overwrite_Mirror_Regs(void);
-extern void XDIC_Display_Mirror_Regs(void);
-extern void XDIC_Save_Mirror_Regs(void);
-extern uint64_t XDIC_Compare_Mirror_Regs(void);
-
-extern void XDIC_Trim_Init_IBN_2uA(void);
-extern void XDIC_Trim_Init_DAC_LDO_1V5(void);
-extern void XDIC_Trim_Init_DIG_LDO_1V5(void);
-extern void XDIC_Trim_Init_DAC_A_OFS(void);
-extern void XDIC_Trim_Init_DAC_B_OFS(void);
-extern void XDIC_Trim_Init_FLL_LDO_1V5(void);
-extern void XDIC_Trim_Init_OSC(void);
-extern void XDIC_Trim_Init_CH_GAIN(void);
-extern void XDIC_Trim_Init_CH_OFS(void);
-extern void XDIC_Trim_Init_UVOV_1P5(void);
-extern void XDIC_Trim_Init_UVOV_VDD(void);
-
-extern void XDIC_Trim_Partial_IBN_2uA(void);
-extern void XDIC_Trim_Partial_DAC_LDO_1V5(void);
-extern void XDIC_Trim_Partial_DIG_LDO_1V5(void);
-extern void XDIC_Trim_Partial_DAC_A_OFS(void);
-extern void XDIC_Trim_Partial_DAC_B_OFS(void);
-extern void XDIC_Trim_Partial_FLL_LDO_1V5(void);
-extern void XDIC_Trim_Partial_OSC(void);
-extern void XDIC_Trim_Partial_CH_GAIN(void);
-extern void XDIC_Trim_Partial_CH_OFS(void);
-extern void XDIC_Trim_Partial_UVOV_1P5(void);
-extern void XDIC_Trim_Partial_UVOV_VDD(void);
-
-extern void XDIC_Trim_Show_OSC(void);
-
-extern void XDIC_Set_OTP_Protect(bool en);
-extern void XDIC_Set_OTP_PG_Start(bool en);
+/* USER CODE END */
 
 #ifdef __cplusplus
 }

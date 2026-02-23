@@ -14,7 +14,13 @@
 extern "C" {
 #endif
 
-/********************************************************/
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
+
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
 #define VERSION_MAJOR       (0)
 #define VERSION_MINOR       (0)
 #define VERSION_PATCH       (1) // At every new build, increase this value
@@ -32,6 +38,19 @@ extern "C" {
 #define ANSI_FONT_BLUE      "\033[34m"
 #define ANSI_FONT_MAGENTA   "\033[35m"
 /********************************************************/
+/* USER CODE END PD */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+/* USER CODE END PTD */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+/* USER CODE END PV */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN */
+/* USER CODE END */
 
 #ifdef __cplusplus
 }

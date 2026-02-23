@@ -1,12 +1,12 @@
-/** @file vsync_task.h
+/** @file uart.h
  *
  * @brief
  *
  * @par
  * COPYRIGHT NOTICE: (c) XXX. All rights reserved.
  */
-#ifndef __VSYNC_TASK_H__
-#define __VSYNC_TASK_H__
+#ifndef __UART_H__
+#define __UART_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +14,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
@@ -22,31 +23,33 @@ extern "C" {
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum tag_LOG_LV_T
+{
+    LOG_DEBUG = 0,
+    LOG_INFO,
+    LOG_ERROR,
+    LOG_MAX,
+} LOG_LV_T;
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+extern bool gb_uart_tx_busy;
 /* USER CODE END PV */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN */
-extern void Svsync_Update_Handler(void);
-extern void Vsync_Timer_Start(void);
-extern void Vsync_Timer_Stop(void);
-extern void Vsync_Update_Handler(void);
-
-extern void XDIC_Vsync_Task(void);
-
-extern void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data);
-extern void XDIC_Set_Read_Target_Reg(uint8_t addr);
-
-extern void XDIC_Set_LD_Data(uint32_t in_ld_R, uint32_t in_ld_G, uint32_t in_ld_B);
-extern uint16_t* XDIC_Get_LD_Data(void);
+extern void Comm_Rx_Handler(uint8_t rx);
+extern void Print(LOG_LV_T log_lv, const char *fmt, ...);
+extern void Comm_Increase_Tx_OutCnt(void);
+extern void Comm_Init(void);
+extern void Comm_UART_Task(void);
 /* USER CODE END */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ~__VSYNC_TASK_H__ */
+#endif /* ~__UART_H__ */
+
 /*** end of file ***/

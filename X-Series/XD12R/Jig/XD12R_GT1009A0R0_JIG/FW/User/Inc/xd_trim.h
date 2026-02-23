@@ -22,8 +22,10 @@ extern "C" {
 #define XDIC_GAIN_CH_DEFAULT_VALUE      (0x20)  /* 6-bit */
 #define XDIC_OFS_CH_DEFAULT_VALUE       (0x80)  /* 8-bit */
 
-#define XDIC_GAIN_MAX_CURRENT_LVL       (DEV_MAX_CURR_LEVEL_4mA)
-#define XDIC_OFS_MAX_CURRENT_LVL        (DEV_MAX_CURR_LEVEL_4mA)
+#define XDIC_GAIN_ODD_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_32mA)
+#define XDIC_GAIN_EVEN_MAX_CURRENT_LVL  (DEV_MAX_CURR_LEVEL_16mA)
+#define XDIC_OFS_ODD_MAX_CURRENT_LVL    (DEV_MAX_CURR_LEVEL_32mA)
+#define XDIC_OFS_EVEN_MAX_CURRENT_LVL   (DEV_MAX_CURR_LEVEL_16mA)
 
 typedef enum tag_XD_TRIM_STEP_T
 {
@@ -83,8 +85,10 @@ typedef enum tag_XD_TRIM_MODE_T
     XD_TRIM_DAC_B_OFS,      /*   signed   */
     XD_TRIM_FLL_LDO_1V5,    /* non-signed */
     XD_TRIM_OSC,            /* non-signed */
-    XD_TRIM_CH_GAIN,        /* non-signed */
-    XD_TRIM_CH_OFS,         /* non-signed */
+    XD_TRIM_CH_GAIN_ODD,    /* non-signed */
+    XD_TRIM_CH_GAIN_EVEN,   /* non-signed */
+    XD_TRIM_CH_OFS_ODD,     /* non-signed */
+    XD_TRIM_CH_OFS_EVEN,    /* non-signed */
     XD_TRIM_MAX
 } xd_trim_mode_t;
 

@@ -919,8 +919,10 @@ extern void XDIC_Trim_Init_DAC_A_OFS(void);
 extern void XDIC_Trim_Init_DAC_B_OFS(void);
 extern void XDIC_Trim_Init_FLL_LDO_1V5(void);
 extern void XDIC_Trim_Init_OSC(void);
-extern void XDIC_Trim_Init_CH_GAIN(void);
-extern void XDIC_Trim_Init_CH_OFS(void);
+extern void XDIC_Trim_Init_CH_GAIN_ODD(void);
+extern void XDIC_Trim_Init_CH_GAIN_EVEN(void);
+extern void XDIC_Trim_Init_CH_OFS_ODD(void);
+extern void XDIC_Trim_Init_CH_OFS_EVEN(void);
 extern void XDIC_Trim_Init_UVOV_1P5(void);
 extern void XDIC_Trim_Init_UVOV_VDD(void);
 
