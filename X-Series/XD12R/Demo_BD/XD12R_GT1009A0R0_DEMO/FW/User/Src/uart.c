@@ -221,6 +221,8 @@ void Comm_Init(void)
     Print(LOG_INFO, "\n\r - Date  : %s", __DATE__);
     Print(LOG_INFO, "\n\r - Ver   : %u.%u.%u", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
     Print(LOG_INFO, "\n\r--------------------------------------\r\n");
+
+    Print(LOG_INFO, "\r\n %u \r\n", XDIC_LD_TRANS_BITS);
 }
 
 void Comm_UART_Task(void)

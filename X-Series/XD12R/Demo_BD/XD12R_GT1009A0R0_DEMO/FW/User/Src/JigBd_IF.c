@@ -46,7 +46,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-static uint16_t gn_serialize_tx_buffer[4000] = {0, };
+static uint16_t gn_serialize_tx_buffer[XDIC_LD_TRANS_BITS + 10] = {0, };
 static uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
 static uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 
@@ -72,12 +72,6 @@ void JigBD_IF_Link_DMA_With_Buffer(void)
 {
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)(&(TIM1->CCR1)));
     LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)gn_serialize_tx_buffer);
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)(&(TIM2->CCR2)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)gn_serialize_rx_risingBuffer);
-
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)(&(TIM2->CCR1)));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)gn_serialize_rx_fallingBuffer);
 }
 
 static uint16_t Get_Nth_Bit(uint64_t x, int n)

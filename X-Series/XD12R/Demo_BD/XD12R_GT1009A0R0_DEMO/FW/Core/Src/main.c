@@ -25,14 +25,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "config.h"
-#include "types.h"
 #include "jigbd_if.h"
-#include "xc24.h"
-#include "xd_trim.h"
-#include "ads124s08.h"
 #include "vsync_task.h"
 #include "xdic.h"
-#include "xc_trim.h"
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,9 +38,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RX_PACKET_SIZE  64
-#define RX_BUFF_SIZE    32
-
 typedef void (*func_t)(void);
 
 typedef struct tag_KEY_INFO
@@ -67,245 +60,117 @@ typedef struct tag_KEY_INFO
 /* USER CODE BEGIN PV */
 static void key_func_1(void)
 {
-    XDIC_Trim_Init();
 }
 
 static void key_func_2(void)
 {
-    // Off LED
-    NVIC_SystemReset();
 }
 
-static key_info_t gt_key_info = {
+static void key_func_3(void)
+{
+}
+
+static void key_func_4(void)
+{
+}
+
+static void key_func_5(void)
+{
+}
+
+static void key_func_6(void)
+{
+}
+
+static void key_func_7(void)
+{
+}
+
+static void key_func_8(void)
+{
+}
+
+static key_info_t gt_key_info[4] =
+{
+    {
     .now_state = 1,
     .prev_state = 1,
     .press_cnt = 0,
     .odd_even = 0,
-    .function = { key_func_1, key_func_2 },
+    },
 };
 
 static uint8_t gn_key_task_tick;
 
-static void btn_process(void)
+static void Key_Task(void)
 {
     if (gn_key_task_tick == 0)
     {
-        gt_key_info.now_state = LL_GPIO_IsInputPinSet(B1_GPIO_Port, B1_Pin);
-        if (gt_key_info.now_state != gt_key_info.prev_state)
+        for (uint8_t i = 0; i < 4; ++i)
         {
-            if (gt_key_info.now_state == 0)
+            gt_key_info[i].now_state = LL_GPIO_IsInputPinSet(B1_GPIO_Port, B1_Pin);
+            if (gt_key_info[i].now_state != gt_key_info[i].prev_state)
             {
-            }
-            else
-            {
-                // Button Released
-                if (gt_key_info.press_cnt >= 30)
+                if (gt_key_info[i].now_state == 0)
                 {
-                    if (gt_key_info.function[gt_key_info.odd_even] != NULL)
-                    {
-                        gt_key_info.function[gt_key_info.odd_even]();
-                    }
-                    gt_key_info.odd_even ^= 1;
                 }
-                gt_key_info.press_cnt = 0;
-            }
-            gt_key_info.prev_state = gt_key_info.now_state;
-        }
-        else
-        {
-            if (gt_key_info.now_state == 0)
-            {
-                // Button Pressed
-                ++gt_key_info.press_cnt;
+                else
+                {
+                    // Button Released
+                    if (gt_key_info[i].press_cnt >= 30)
+                    {
+                        if (gt_key_info[i].function[gt_key_info[i].odd_even] != NULL)
+                        {
+                            gt_key_info[i].function[gt_key_info[i].odd_even]();
+                        }
+                        gt_key_info[i].odd_even ^= 1;
+                    }
+                    gt_key_info[i].press_cnt = 0;
+                }
+                gt_key_info[i].prev_state = gt_key_info[i].now_state;
             }
             else
             {
-                // nothing
+                if (gt_key_info[i].now_state == 0)
+                {
+                    // Button Pressed
+                    ++gt_key_info[i].press_cnt;
+                }
+                else
+                {
+                    // nothing
+                }
             }
         }
         gn_key_task_tick = 10; //10ms
     }
 }
-
-typedef struct
-{
-    uint16_t length;
-    char buffer[RX_PACKET_SIZE];
-} rx_packet_t;
-
-typedef struct
-{
-    uint16_t RxInCnt;
-    uint16_t RxOutCnt;
-    rx_packet_t Rxbuff[RX_BUFF_SIZE];
-} RX_UART_t;
-static RX_UART_t gt_rx_uart;
-
-static bool gb_xd_run_trim_task;
-static bool gb_xd_run_screen_task;
-
-static bool gb_xc_run_trim_task;
-
-static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM12_Init(void);
-static void MX_SPI2_Init(void);
-static void MX_TIM5_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM1_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
-static void JigTestMainTask(void);
-static void TaskDebugUart(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void sys_tick_handler(void)
 {
-    if (gb_xd_run_trim_task == false)
-    {
-        gb_xd_run_trim_task = true;
-    }
-    if (gb_xd_run_screen_task == false)
-    {
-        gb_xd_run_screen_task = true;
-    }
-    if (gb_xc_run_trim_task == false)
-    {
-        gb_xc_run_trim_task = true;
-    }
     if (gn_xd_rx_timeout)
     {
         --gn_xd_rx_timeout;
-    }
-    if (gn_xc_spi_timeout)
-    {
-        --gn_xc_spi_timeout;
     }
     if (gn_key_task_tick)
     {
         --gn_key_task_tick;
     }
-    if (gn_ads114s08_read_timeout)
-    {
-        --gn_ads114s08_read_timeout;
-    }
-}
-
-void print(LOG_LV_T log_lv, const char *fmt, ...)
-{
-    if (log_lv >= gt_log_lv)
-    {
-        int len = 0;
-        char msg_buffer[PRINT_BUFF_SIZE] = {0, };
-        char color_buffer[PRINT_BUFF_SIZE] = {0, };
-
-        va_list ap;
-        va_start(ap, fmt);
-        vsnprintf(msg_buffer, PRINT_BUFF_SIZE - 1, fmt, ap);
-        va_end(ap);
-
-        // 컬러 적용
-        if (log_lv > LOG_INFO)
-        {
-            snprintf(color_buffer, (PRINT_BUFF_SIZE - 1), "%s%s%s", ANSI_FONT_RED, msg_buffer, ANSI_FONT_NONE);
-            len = strlen(color_buffer);
-        }
-        else
-        {
-            len = strlen(msg_buffer);
-            memcpy(color_buffer, msg_buffer, len + 1);
-        }
-
-        for (uint16_t i = 0 ; i < len ; ++i)
-        {
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, (uint8_t)color_buffer[i]);
-        }
-    }
-}
-
-static void comm_print_help(void)
-{
-    print(LOG_INFO, "\n\r------------------ Command Help -----------------------------");
-
-    print(LOG_INFO, "\n\r  help / ?\t\t : Show command help");
-    print(LOG_INFO, "\n\r  jig_ic_start\t\t : Start timer for frequency input capture");
-    print(LOG_INFO, "\n\r  jig_ic_stop\t\t : Stop input capture and print measured frequency");
-    print(LOG_INFO, "\n\r  jig_vref_start\t : Start MCU ADC");
-
-    print(LOG_INFO, "\n\r  jig_ch_sel [d]\t : Select output channel (0 ~ XD_CH_MAX)");
-    print(LOG_INFO, "\n\r  jig_xd_vcc [u]\t : XD VCC On/Off (1=On, 0=Off)");
-    print(LOG_INFO, "\n\r  jig_xd_vcc_level [u]\t : XD VCC level (0=5V, 1=5.7V)");
-    print(LOG_INFO, "\n\r  jig_xc_vcc [u]\t : XC VCC On/Off (1=On, 0=Off)");
-    print(LOG_INFO, "\n\r  jig_vled [u]\t\t : VLED 9V On/Off (1=On, 0=Off)");
-    print(LOG_INFO, "\n\r  jig_gain [u]\t\t : Set current gain (0 ~ GAIN_MAX-1)");
-    print(LOG_INFO, "\n\r  jig_vsync [d]\t\t : Start/Stop Vsync (1=Start, 0=Stop)");
-    print(LOG_INFO, "\n\r  vsync [lf]\t\t : Set vsync frequency (Hz)");
-    print(LOG_INFO, "\n\r  pwm_freq [lf]\t\t : Set PWM frequency (kHz)");
-
-    print(LOG_INFO, "\n\r  xd_idgen\t\t : Send IDGEN command to XDIC");
-    print(LOG_INFO, "\n\r  xd_reset\t\t : Reset XDIC");
-    print(LOG_INFO, "\n\r  xd_syncgen\t\t : Send SYNCGEN command to XDIC");
-    print(LOG_INFO, "\n\r  xd_test_en\t\t : Enter trim mode of XDIC");
-    print(LOG_INFO, "\n\r  xd_r_all\t\t : Read all registers of XDIC");
-    print(LOG_INFO, "\n\r  xd_r [x]\t\t : Read general register [x] (HEX)");
-    print(LOG_INFO, "\n\r  xd_rt [x]\t\t : Read trim register [x] (HEX)");
-    print(LOG_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to general register [x] (HEX)");
-    print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to trim register [x] (HEX)");
-    print(LOG_INFO, "\n\r  xd_ldim [d]\t\t : Set LDIM value [0 ~ 65535]");
-    print(LOG_INFO, "\n\r  xd_ldim\t\t : Show current LDIM value");
-    print(LOG_INFO, "\n\r  xd_fbi [x]\t\t : Set FBI pin (1=HI, 0=LO)");
-    print(LOG_INFO, "\n\r  xd_fbo\t\t : Read FBO pin status");
-    print(LOG_INFO, "\n\r  xd_ch [d]\t\t : Set XDIC channel (0 ~ XD_CH_MAX)");
-
-    print(LOG_INFO, "\n\r  xd_debug\t\t : Initialize XD debug environment");
-    print(LOG_INFO, "\n\r  xd_trim_debug\t : Initialize XD trim environment");
-    print(LOG_INFO, "\n\r  xd_trim_vref\t\t : Trim VREF of XDIC");
-    print(LOG_INFO, "\n\r  xd_trim_osc\t\t : Trim OSC of XDIC");
-    print(LOG_INFO, "\n\r  xd_trim_ofs [x]\t : Trim offset and fix LD to 1<<12");
-    print(LOG_INFO, "\n\r  xd_trim_gain [x]\t : Trim gain and fix LD to 6<<12");
-    print(LOG_INFO, "\n\r  xd_osc_debug\t\t : Auto scan OSC trim values");
-
-    print(LOG_INFO, "\n\r  xc_debug\t\t : Initialize XC24");
-    print(LOG_INFO, "\n\r  xc_r [x]\t\t : Read register [x] of XC24 (HEX)");
-    print(LOG_INFO, "\n\r  xc_w [x] [y]\t\t : Write [y] to register [x] of XC24 (HEX)");
-    print(LOG_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24");
-    print(LOG_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24 usage (0/1)");
-
-    print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC trim process");
-    print(LOG_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
-    print(LOG_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
-    print(LOG_INFO, "\n\r  xc_trim_start / 4\t : Start XC24 trim process");
-
-    print(LOG_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
-    print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
-
-    print(LOG_INFO, "\n\r--------------------------------------------------------------\n\r");
-}
-
-static void comm_init(void)
-{
-    print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r    [GT-XD12R GT1009A0R0 JIG]");
-    print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
-    print(LOG_INFO, "\n\r - Build : %s", __DATE__);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\n\r--------------------------------------\r\n");
 }
 /* USER CODE END 0 */
 
@@ -332,9 +197,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Configure the peripherals common clocks */
-  PeriphCommonClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -344,39 +206,37 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM12_Init();
-  MX_SPI2_Init();
-  MX_TIM5_Init();
-  MX_SPI1_Init();
-  MX_ADC1_Init();
   MX_TIM8_Init();
   MX_TIM1_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(false);
-    XD_Trim_IF_Set_OTP_Enable(false);
-    XC_Trim_IF_Set_OTP_Enable(false);
-    XC24_Start_MCLK_Oscillation(false);
-    JigBD_IF_Link_DMA_With_Buffer();
+    gt_key_info[0].function[0] = key_func_1;
+    gt_key_info[0].function[1] = key_func_2;
 
-    XD_Trim_Calculate_Spec();
-    ADS114S08_Init();
+    gt_key_info[1].function[0] = key_func_3;
+    gt_key_info[1].function[1] = key_func_4;
+
+    gt_key_info[2].function[0] = key_func_5;
+    gt_key_info[2].function[1] = key_func_6;
+
+    gt_key_info[3].function[0] = key_func_7;
+    gt_key_info[3].function[1] = key_func_8;
+
+    JigBD_IF_Link_DMA_With_Buffer();
 
     LL_TIM_ClearFlag_UPDATE(TIM3);
     LL_TIM_EnableIT_UPDATE(TIM3);
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetCounter(TIM3, 0);
 
-    LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
-    LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
-    LL_TIM_EnableCounter(TIM5); /* for Freq Input */
+    LL_TIM_EnableCounter(TIM1);
 
-    /* DMA2_Stream2_IRQn interrupt configuration */
-    NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-    NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+    Comm_Init();
 
-    comm_init();
+    LL_mDelay(100);
+    XDIC_Init();
+    Vsync_Timer_Start();
 
   /* USER CODE END 2 */
 
@@ -388,9 +248,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     XDIC_Vsync_Task();
-    JigTestMainTask();
-    TaskDebugUart();
-    btn_process();
+    Comm_UART_Task();
+    Key_Task();
   }
   /* USER CODE END 3 */
 }
@@ -414,8 +273,6 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -448,220 +305,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_5);
-}
-
-/**
-  * @brief Peripherals Common Clock Configuration
-  * @retval None
-  */
-void PeriphCommonClock_Config(void)
-{
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  /** Initializes the peripherals clock
-  */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 400;
-  PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLI2SP_DIV2;
-  PeriphClkInitStruct.PLLI2S.PLLI2SM = 8;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
-  PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
-  PeriphClkInitStruct.PLLI2SDivQ = 1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
-
-  /* USER CODE BEGIN ADC1_Init 0 */
-
-  /* USER CODE END ADC1_Init 0 */
-
-  LL_ADC_InitTypeDef ADC_InitStruct = {0};
-  LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
-  LL_ADC_CommonInitTypeDef ADC_CommonInitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-  /**ADC1 GPIO Configuration
-  PB0   ------> ADC1_IN8
-  */
-  GPIO_InitStruct.Pin = XDIC_ADO_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(XDIC_ADO_GPIO_Port, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN ADC1_Init 1 */
-
-  /* USER CODE END ADC1_Init 1 */
-
-  /** Common config
-  */
-  ADC_InitStruct.Resolution = LL_ADC_RESOLUTION_12B;
-  ADC_InitStruct.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
-  ADC_InitStruct.SequencersScanMode = LL_ADC_SEQ_SCAN_DISABLE;
-  LL_ADC_Init(ADC1, &ADC_InitStruct);
-  ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
-  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
-  ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
-  ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
-  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_NONE;
-  LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
-  LL_ADC_REG_SetFlagEndOfConversion(ADC1, LL_ADC_REG_FLAG_EOC_UNITARY_CONV);
-  ADC_CommonInitStruct.CommonClock = LL_ADC_CLOCK_SYNC_PCLK_DIV4;
-  ADC_CommonInitStruct.Multimode = LL_ADC_MULTI_INDEPENDENT;
-  LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
-
-  /** Configure Regular Channel
-  */
-  LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_8);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_8, LL_ADC_SAMPLINGTIME_480CYCLES);
-  /* USER CODE BEGIN ADC1_Init 2 */
-    LL_ADC_Enable(ADC1);
-  /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI1_Init(void)
-{
-
-  /* USER CODE BEGIN SPI1_Init 0 */
-
-  /* USER CODE END SPI1_Init 0 */
-
-  LL_SPI_InitTypeDef SPI_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
-  /**SPI1 GPIO Configuration
-  PA5   ------> SPI1_SCK
-  PA6   ------> SPI1_MISO
-  PA7   ------> SPI1_MOSI
-  */
-  GPIO_InitStruct.Pin = XC_SPI_CLK_Pin|XC_SPI_MISO_Pin|XC_SPI_MOSI_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
-  SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_16BIT;
-  SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
-  SPI_InitStruct.ClockPhase = LL_SPI_PHASE_2EDGE;
-  SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV4;
-  SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
-  SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
-  SPI_InitStruct.CRCPoly = 10;
-  LL_SPI_Init(SPI1, &SPI_InitStruct);
-  LL_SPI_SetStandard(SPI1, LL_SPI_PROTOCOL_MOTOROLA);
-  /* USER CODE BEGIN SPI1_Init 2 */
-
-    //LL_SPI_Enable(SPI1);
-
-  /* USER CODE END SPI1_Init 2 */
-
-}
-
-/**
-  * @brief SPI2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI2_Init(void)
-{
-
-  /* USER CODE BEGIN SPI2_Init 0 */
-
-  /* USER CODE END SPI2_Init 0 */
-
-  LL_SPI_InitTypeDef SPI_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-  /**SPI2 GPIO Configuration
-  PC1   ------> SPI2_MOSI
-  PC2   ------> SPI2_MISO
-  PB10   ------> SPI2_SCK
-  */
-  GPIO_InitStruct.Pin = ADC_SPI_MOSI_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
-  LL_GPIO_Init(ADC_SPI_MOSI_GPIO_Port, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = ADC_SPI_MISO_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
-  LL_GPIO_Init(ADC_SPI_MISO_GPIO_Port, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = ADC_SPI_CLK_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
-  LL_GPIO_Init(ADC_SPI_CLK_GPIO_Port, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN SPI2_Init 1 */
-
-  /* USER CODE END SPI2_Init 1 */
-  /* SPI2 parameter configuration*/
-  SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
-  SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_8BIT;
-  SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
-  SPI_InitStruct.ClockPhase = LL_SPI_PHASE_2EDGE;
-  SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV2;
-  SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
-  SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
-  SPI_InitStruct.CRCPoly = 10;
-  LL_SPI_Init(SPI2, &SPI_InitStruct);
-  LL_SPI_SetStandard(SPI2, LL_SPI_PROTOCOL_MOTOROLA);
-  /* USER CODE BEGIN SPI2_Init 2 */
-
-  /* USER CODE END SPI2_Init 2 */
-
 }
 
 /**
@@ -764,106 +407,6 @@ static void MX_TIM1_Init(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-  /**TIM2 GPIO Configuration
-  PB3   ------> TIM2_CH2
-  */
-  GPIO_InitStruct.Pin = SERIAL_IN_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-  LL_GPIO_Init(SERIAL_IN_GPIO_Port, &GPIO_InitStruct);
-
-  /* TIM2 DMA Init */
-
-  /* TIM2_CH2_CH4 Init */
-  LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_6, LL_DMA_CHANNEL_3);
-
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_6, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-
-  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_6, LL_DMA_PRIORITY_LOW);
-
-  LL_DMA_SetMode(DMA1, LL_DMA_STREAM_6, LL_DMA_MODE_NORMAL);
-
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_6, LL_DMA_PERIPH_NOINCREMENT);
-
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_6, LL_DMA_MEMORY_INCREMENT);
-
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_6, LL_DMA_PDATAALIGN_HALFWORD);
-
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_6, LL_DMA_MDATAALIGN_HALFWORD);
-
-  LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_6);
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-    LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_5, LL_DMA_CHANNEL_3);
-    LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_5, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-    LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_5, LL_DMA_PRIORITY_LOW);
-    LL_DMA_SetMode(DMA1, LL_DMA_STREAM_5, LL_DMA_MODE_NORMAL);
-    LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_5, LL_DMA_PERIPH_NOINCREMENT);
-    LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_5, LL_DMA_MEMORY_INCREMENT);
-    LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_5, LL_DMA_PDATAALIGN_HALFWORD);
-    LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_5, LL_DMA_MDATAALIGN_HALFWORD);
-    LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_5);
-
-  /* USER CODE END TIM2_Init 1 */
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 4294967295;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  LL_TIM_Init(TIM2, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM2);
-  LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
-  LL_TIM_SetTriggerInput(TIM2, LL_TIM_TS_TI2FP2);
-  LL_TIM_SetSlaveMode(TIM2, LL_TIM_SLAVEMODE_RESET);
-  LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-  LL_TIM_IC_SetFilter(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1);
-  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
-  LL_TIM_DisableIT_TRIG(TIM2);
-  LL_TIM_DisableDMAReq_TRIG(TIM2);
-  LL_TIM_IC_SetActiveInput(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_INDIRECTTI);
-  LL_TIM_IC_SetPrescaler(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
-  LL_TIM_IC_SetFilter(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
-  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_FALLING);
-  LL_TIM_IC_SetActiveInput(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
-  LL_TIM_IC_SetPrescaler(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
-  LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM2);
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-    LL_DMA_ClearFlag_FE5(DMA1);
-    LL_DMA_ClearFlag_FE6(DMA1);
-    LL_DMA_ClearFlag_HT5(DMA1);
-    LL_DMA_ClearFlag_HT6(DMA1);
-    LL_DMA_ClearFlag_TC5(DMA1);
-    LL_DMA_ClearFlag_TC6(DMA1);
-
-  /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -910,7 +453,6 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
   /* USER CODE END TIM3_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
-  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /**TIM3 GPIO Configuration
   PC6   ------> TIM3_CH1
   */
@@ -921,86 +463,6 @@ static void MX_TIM3_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
   LL_GPIO_Init(SVSYNC_GPIO_Port, &GPIO_InitStruct);
-
-}
-
-/**
-  * @brief TIM5 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM5_Init(void)
-{
-
-  /* USER CODE BEGIN TIM5_Init 0 */
-
-  /* USER CODE END TIM5_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM5);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
-  /**TIM5 GPIO Configuration
-  PA0-WKUP   ------> TIM5_CH1
-  */
-  GPIO_InitStruct.Pin = DOUT_Q4_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-  LL_GPIO_Init(DOUT_Q4_GPIO_Port, &GPIO_InitStruct);
-
-  /* TIM5 DMA Init */
-
-  /* TIM5_CH1 Init */
-  LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_2, LL_DMA_CHANNEL_6);
-
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_2, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-
-  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_2, LL_DMA_PRIORITY_LOW);
-
-  LL_DMA_SetMode(DMA1, LL_DMA_STREAM_2, LL_DMA_MODE_NORMAL);
-
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_2, LL_DMA_PERIPH_NOINCREMENT);
-
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_2, LL_DMA_MEMORY_INCREMENT);
-
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_2, LL_DMA_PDATAALIGN_WORD);
-
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_2, LL_DMA_MDATAALIGN_WORD);
-
-  LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_2);
-
-  /* USER CODE BEGIN TIM5_Init 1 */
-
-  /* USER CODE END TIM5_Init 1 */
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 4294967295;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  LL_TIM_Init(TIM5, &TIM_InitStruct);
-  LL_TIM_EnableARRPreload(TIM5);
-  LL_TIM_SetClockSource(TIM5, LL_TIM_CLOCKSOURCE_INTERNAL);
-  LL_TIM_SetTriggerOutput(TIM5, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM5);
-  LL_TIM_IC_SetActiveInput(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
-  LL_TIM_IC_SetPrescaler(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
-  LL_TIM_IC_SetFilter(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
-  LL_TIM_IC_SetPolarity(TIM5, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
-  /* USER CODE BEGIN TIM5_Init 2 */
-
-    LL_TIM_EnableDMAReq_CC1(TIM5);
-    LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1);
-
-    LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_2);
-    LL_DMA_EnableIT_TE(DMA1, LL_DMA_STREAM_2);
-
-  /* USER CODE END TIM5_Init 2 */
 
 }
 
@@ -1144,6 +606,27 @@ static void MX_USART2_UART_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* USART2 DMA Init */
+
+  /* USART2_TX Init */
+  LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_6, LL_DMA_CHANNEL_4);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_6, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_6, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_STREAM_6, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_6, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_6, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_6, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_6, LL_DMA_MDATAALIGN_BYTE);
+
+  LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_6);
+
   /* USART2 interrupt Init */
   NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(USART2_IRQn);
@@ -1163,9 +646,17 @@ static void MX_USART2_UART_Init(void)
   LL_USART_Enable(USART2);
   /* USER CODE BEGIN USART2_Init 2 */
 
-    /* USART RX */
+    /* USART Tx */
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_EnableIT_TE(DMA1, LL_DMA_STREAM_6);
+
+    /* USART Rx */
     LL_USART_EnableIT_RXNE(USART2);
     LL_USART_EnableIT_ERROR(USART2);
+
+    LL_DMA_ClearFlag_DME6(DMA1);
+    LL_DMA_ClearFlag_TC6(DMA1);
+    LL_DMA_ClearFlag_TE6(DMA1);
 
   /* USER CODE END USART2_Init 2 */
 
@@ -1183,11 +674,8 @@ static void MX_DMA_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
   /* DMA interrupt init */
-  /* DMA1_Stream2_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
-  NVIC_EnableIRQ(DMA1_Stream2_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),1, 0));
+  NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   NVIC_SetPriority(DMA2_Stream1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
@@ -1202,7 +690,6 @@ static void MX_DMA_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-  LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
   /* USER CODE END MX_GPIO_Init_1 */
@@ -1215,23 +702,17 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOC, LTC_HIGH_CURRENT_Pin|ENABLE_SELECT1_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, PWM_SWITCH_Pin|DEBUG_Pin|VLED_R_EN_Pin|VLED_EN_Pin
+                          |VLED_G_SW_Pin);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOA, LTC_LOW_CURRENT_Pin|LTC_MID_CURRENT_Pin|ADC_CS_Pin|ENABLE_SELECT2_Pin);
+  LL_GPIO_ResetOutputPin(VLED_G_OFF_GPIO_Port, VLED_G_OFF_Pin);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOB, ENABLE_SELECT4_Pin|ENABLE_SELECT3_Pin|CNT_MR_Pin|VLED_CTR_9V_Pin
-                          |XDIC_VCC_EN_Pin|ADC_RESET_Pin);
+  LL_GPIO_ResetOutputPin(VLED_B_OFF_GPIO_Port, VLED_B_OFF_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(PWM_SWITCH_GPIO_Port, PWM_SWITCH_Pin);
-
-  /**/
-  LL_GPIO_ResetOutputPin(GPIOB, XC24_5V5_Pin|XDIC_5_7V_Pin|XC24_VCC_EN_Pin|XC24_NSCS_Pin);
-
-  /**/
-  LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
+  LL_GPIO_SetOutputPin(VLED_B_SW_GPIO_Port, VLED_B_SW_Pin);
 
   /**/
   GPIO_InitStruct.Pin = B1_Pin;
@@ -1240,767 +721,86 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LTC_HIGH_CURRENT_Pin|PWM_SWITCH_Pin|ENABLE_SELECT1_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LTC_LOW_CURRENT_Pin|LTC_MID_CURRENT_Pin|ADC_CS_Pin|ENABLE_SELECT2_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_5|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_9;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = ENABLE_SELECT4_Pin|ENABLE_SELECT3_Pin|XDIC_5_7V_Pin|VLED_CTR_9V_Pin
-                          |XDIC_VCC_EN_Pin|XC24_NSCS_Pin;
+  GPIO_InitStruct.Pin = PWM_SWITCH_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  LL_GPIO_Init(PWM_SWITCH_GPIO_Port, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = XC24_5V5_Pin|CNT_MR_Pin|XC24_VCC_EN_Pin|ADC_RESET_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = XC_MCLK_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_15;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_4|LL_GPIO_PIN_5
+                          |LL_GPIO_PIN_9|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12
+                          |LL_GPIO_PIN_15;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = DEBUG_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(DEBUG_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = XD_SELECT_Pin;
+  GPIO_InitStruct.Pin = SW1_Pin|SW2_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(XD_SELECT_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE4);
+  GPIO_InitStruct.Pin = SW3_Pin|SW4_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_4;
-  EXTI_InitStruct.LineCommand = ENABLE;
-  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
-  LL_EXTI_Init(&EXTI_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_10
+                          |LL_GPIO_PIN_12|LL_GPIO_PIN_13|LL_GPIO_PIN_14|LL_GPIO_PIN_15
+                          |LL_GPIO_PIN_3|LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6
+                          |LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  LL_GPIO_SetPinPull(ADC_DRDY_GPIO_Port, ADC_DRDY_Pin, LL_GPIO_PULL_UP);
+  GPIO_InitStruct.Pin = DEBUG_Pin|VLED_R_EN_Pin|VLED_EN_Pin|VLED_G_SW_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  LL_GPIO_SetPinMode(ADC_DRDY_GPIO_Port, ADC_DRDY_Pin, LL_GPIO_MODE_INPUT);
+  GPIO_InitStruct.Pin = VLED_G_OFF_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(VLED_G_OFF_GPIO_Port, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  NVIC_SetPriority(EXTI4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-  NVIC_EnableIRQ(EXTI4_IRQn);
+  /**/
+  GPIO_InitStruct.Pin = VLED_B_SW_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(VLED_B_SW_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = VLED_B_OFF_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(VLED_B_OFF_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
     PWM_SWITCH_LO();
-    LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
-
-    GPIO_InitStruct.Pin = XC_MCLK_Pin;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    LL_GPIO_Init(XC_MCLK_GPIO_Port, &GPIO_InitStruct);
-    LL_GPIO_ResetOutputPin(XC_MCLK_GPIO_Port, XC_MCLK_Pin);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-static void JigTestMainTask(void)
-{
-    if (gb_xd_run_trim_task)
-    {
-        XD_Trim_Task();
-        gb_xd_run_trim_task = false;
-    }
-
-    if (gb_xd_run_screen_task)
-    {
-        XD_Screen_Task();
-        gb_xd_run_screen_task = false;
-    }
-
-    if (gb_xc_run_trim_task)
-    {
-        XC_Trim_Task();
-        gb_xc_run_trim_task = false;
-    }
-}
-
-static uint8_t comm_get_rx_packet(rx_packet_t** pData)
-{
-    uint8_t ret = 0;
-
-    if (gt_rx_uart.RxInCnt != gt_rx_uart.RxOutCnt)
-    {
-        *pData = gt_rx_uart.Rxbuff + gt_rx_uart.RxOutCnt;
-
-        ++gt_rx_uart.RxOutCnt;
-        gt_rx_uart.RxOutCnt &= (uint16_t)(RX_BUFF_SIZE -1);
-
-        ret = 1;
-    }
-
-    return ret;
-}
-
-static void TaskDebugUart(void)
-{
-    rx_packet_t* p_data = NULL;
-
-    if (comm_get_rx_packet(&p_data))
-    {
-        char str_in[RX_PACKET_SIZE + 1] = {0, };
-        uint32_t u32_recv_param[6] = {0, };
-        double lf_recv_param[6] = {0, };
-
-        memcpy(str_in, p_data->buffer, p_data->length);
-        p_data->length = 0;
-
-        if (Command_is_("help") || Command_is_("?"))
-        {
-            comm_print_help();
-        }
-/* ----------------- command list - jig ----------------- */
-        else if (Command_is_("jig_ic_start"))
-        {
-            print(LOG_INFO, "\r\n Start timer for freq input capture\r\n");
-            JigBD_IF_Start_Input_Capture();
-            JigBD_IF_Wait_Input_Capture_Done();
-            JigBD_IF_Stop_Input_Capture();
-            double input_freq_Hz = JigBD_IF_Get_Input_Capture_Freq();
-            print(LOG_INFO, "\r\n Stop timer for freq input capture : %.3f [Hz]\r\n", input_freq_Hz);
-        }
-        else if (Command_is_("jig_vref_start"))
-        {
-            print(LOG_INFO, "\r\n ADC RUN\r\n");
-            JigBD_IF_Start_MCU_ADC();
-        }
-        else if (Command_Param_is_("jig_adc", "%d", &u32_recv_param[0]))
-        {
-            ADS114S08_Select_Input_CH(u32_recv_param[0]);
-            LL_mDelay(5);
-            ADS114S08_Set_Start(1);
-            ADS114S08_Wait_Done();
-            uint16_t adc_value = ADS114S08_Get_ADC_Value();
-            float adc_voltage = (float)(ADC_VOLT_PER_STEP * adc_value) / CONST_mV_TO_V; // Dac out convert to V
-            print(LOG_INFO, "\r\n ADC CH[%d] : %d / %.3f\r\n", u32_recv_param[0], adc_value, adc_voltage);
-        }
-        else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
-        {
-            print(LOG_INFO, "\r\n Output CH sel - [%u]\r\n", u32_recv_param[0]);
-            JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
-        }
-        else if (Command_Param_is_("jig_xd_vcc", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XD VCC On [5V]\r\n");
-                JigBD_IF_XD_VCC_EN(PWR_ON);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XD VCC Off [0V]\r\n");
-                JigBD_IF_XD_VCC_EN(PWR_OFF);
-            }
-        }
-        else if (Command_Param_is_("jig_xd_vcc_level", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XD VCC [5.7V]\r\n");
-                JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XD VCC [5V]\r\n");
-                JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-            }
-        }
-        else if (Command_Param_is_("jig_xc_vcc", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XC VCC On\r\n");
-                JigBD_IF_XC_VCC_EN(PWR_ON);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XC VCC Off\r\n");
-                JigBD_IF_XC_VCC_EN(PWR_OFF);
-            }
-        }
-        else if (Command_Param_is_("jig_xc_vcc_level", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XC VCC [5.7V]\r\n");
-                JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XC VCC [5V]\r\n");
-                JigBD_IF_XC_VCC_Level(PWR_ON_5V0);
-            }
-        }
-        else if (Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n VLED_Enable\r\n");
-                JigBD_IF_VLED_9V_EN(PWR_ON);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n VLED_Disable\r\n");
-                JigBD_IF_VLED_9V_EN(PWR_OFF);
-            }
-        }
-        else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] > (XD_CH_MAX + 1))
-            {
-                print(LOG_ERROR, "\r\n Out of CH SEL [%d] [0 - %d]\r\n", u32_recv_param[0], XD_CH_MAX);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XD CH SEL - [%d]\r\n", u32_recv_param[0]);
-                JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
-            }
-        }
-        else if (Command_Param_is_("jig_gain", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] < GAIN_MAX)
-            {
-                JigBD_IF_Change_Current_Gain((current_gain_t)u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of Jig Current Gain Level [%u] [0 - %u]\r\n", u32_recv_param[0], GAIN_MAX - 1);
-            }
-        }
-        else if (Command_Param_is_("jig_vsync", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                Trim_Vsync_Timer_Start();
-                print(LOG_INFO, "vsync start\r\n");
-            }
-            else
-            {
-                Vsync_Timer_Stop();
-                print(LOG_INFO, "vsync stop\r\n");
-            }
-            print(LOG_INFO, "supply external VLED\r\n");
-        }
-        else if (Command_Param_is_("vsync", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                Vsync_Change_Frequency((uint16_t)u32_recv_param[0]);
-                print(LOG_INFO, "Change Vsync Frequency to %u Hz\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                Vsync_Timer_Stop();
-                print(LOG_INFO, "Invalid vsync frequency value\r\nNeed To MCU Reset\r\n");
-            }
-        }
-/* ----------------- command list - xd ----------------- */
-        else if (Command_is_("xd_idgen"))
-        {
-            print(LOG_INFO, "\r\n XD IDGen\r\n");
-            JigBD_IF_IdGen_Command();
-        }
-        else if (Command_is_("xd_reset"))
-        {
-            print(LOG_INFO, "\r\n XD Reset\r\n");
-            JigBD_IF_Reset_Command();
-        }
-        else if (Command_is_("xd_syncgen"))
-        {
-            print(LOG_INFO, "\r\n XD Syncgen\r\n");
-            JigBD_IF_SyncGen_Command();
-        }
-        else if (Command_is_("xd_icc"))
-        {
-            JigBD_IF_XD_ICC();
-        }
-        else if (Command_is_("xd_r_all"))
-        {
-            print(LOG_INFO, "\r\n Read XD's register all\r\n");
-            XDIC_Read_All_Registers();
-        }
-        else if (Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            if (gb_jig_vsync_active)
-            {
-                XDIC_Set_Write_Target_Reg(u32_recv_param[0], u32_recv_param[1]);
-            }
-            else
-            {
-                XDIC_Write_General_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-            }
-            print(LOG_INFO, "\r\n OK\r\n");
-        }
-        else if (Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
-        {
-            if (gb_jig_vsync_active)
-            {
-                XDIC_Set_Read_Target_Reg(u32_recv_param[0]);
-            }
-            else
-            {
-                uint16_t ret = XDIC_Read_General_Reg((uint8_t)u32_recv_param[0]);
-                print(LOG_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
-            }
-            print(LOG_INFO, "\r\n OK\r\n");
-        }
-        else if (Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            XDIC_Write_Mirror_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-            print(LOG_INFO, "\r\n XD Write : 0x%02X - 0x%02X\r\n", (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-        }
-        else if (Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
-        {
-            uint16_t ret = XDIC_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
-            print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
-        }
-        else if (Command_Param_is_("xd_current", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 15)
-            {
-                XDIC_Set_Max_Current_Level((dev_max_curr_level_t)u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set Max Current Level to %u\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_max_current [%u] [0 - %u]\r\n", u32_recv_param[0], 15);
-            }
-        }
-        else if (Command_is_("xd_current"))
-        {
-            XDIC_Get_Max_Current_Level();
-        }
-        else if (Command_Param_is_("xd_fb", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 7)
-            {
-                XDIC_Set_FB_Level((fb_level_t)u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set FB Level to %u\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_fb [%u] [0 - %u]\r\n", u32_recv_param[0], 7);
-            }
-        }
-        else if (Command_is_("xd_fb"))
-        {
-            XDIC_Get_FB_Level();
-        }
-        else if (Command_Param_is_("xd_short", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 7)
-            {
-                XDIC_Set_Short_Level((short_level_t)u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set Short Level to %u\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_short [%u] [0 - %u]\r\n", u32_recv_param[0], 7);
-            }
-        }
-        else if (Command_is_("xd_short"))
-        {
-            XDIC_Get_Short_Level();
-        }
-        else if (Command_Param_is_("xd_mclk", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 0x1FFFFF)
-            {
-                XDIC_Set_MCLK_Lock_CNT(u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set MCLK Lock CNT to %u\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_mclk [%u] [0 - %u]\r\n", u32_recv_param[0], 0x1FFFFF);
-            }
-        }
-        else if (Command_Param_is_("xd_ldim", "%d %d %d", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
-        {
-            if (u32_recv_param[0] <= 65535 && u32_recv_param[1] <= 65535 && u32_recv_param[2] <= 65535)
-            {
-                print(LOG_INFO, "\r\n Set ldim to [%u, %u, %u]\r\n", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2]);
-                XDIC_Set_LD_Data(u32_recv_param[0], u32_recv_param[1], u32_recv_param[2]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u, %u, %u] [0 - %u]\r\n", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], 65535);
-            }
-        }
-        else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 65535)
-            {
-                print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
-                XDIC_Set_LD_Data(u32_recv_param[0], u32_recv_param[0], u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
-            }
-        }
-        else if (Command_is_("xd_ldim"))
-        {
-            uint16_t* p_ld_buffer = XDIC_Get_LD_Data();
-            print(LOG_INFO, "\r\n ldim - [%u, %u, %u]\r\n", p_ld_buffer[0], p_ld_buffer[1], p_ld_buffer[2]);
-        }
-        else if (Command_is_("xd_debug"))
-        {
-            XDIC_Init();
-        }
-        else if (Command_is_("xd_trim_debug"))
-        {
-            XDIC_Trim_Init();
-        }
-        else if (Command_is_("xd_trim_ibn_2uA"))
-        {
-            XDIC_Trim_Partial_IBN_2uA();
-        }
-        else if (Command_is_("xd_trim_dac_ldo_1v5"))
-        {
-            XDIC_Trim_Partial_DAC_LDO_1V5();
-        }
-        else if (Command_is_("xd_trim_dig_ldo_1v5"))
-        {
-            XDIC_Trim_Partial_DIG_LDO_1V5();
-        }
-        else if (Command_is_("xd_trim_dac_a_ofs"))
-        {
-            XDIC_Trim_Partial_DAC_A_OFS();
-        }
-        else if (Command_is_("xd_trim_dac_b_ofs"))
-        {
-            XDIC_Trim_Partial_DAC_B_OFS();
-        }
-        else if (Command_is_("xd_trim_fll_ldo_1v5"))
-        {
-            XDIC_Trim_Partial_FLL_LDO_1V5();
-        }
-        else if (Command_is_("xd_trim_osc"))
-        {
-            XDIC_Trim_Partial_OSC();
-        }
-        else if (Command_is_("xd_trim_gain"))
-        {
-            XDIC_Trim_Partial_CH_GAIN();
-        }
-        else if (Command_is_("xd_trim_ofs"))
-        {
-            XDIC_Trim_Partial_CH_OFS();
-        }
-        else if (Command_is_("xd_trim_uvov_1p5"))
-        {
-            XDIC_Trim_Partial_UVOV_1P5();
-        }
-        else if (Command_is_("xd_trim_uvov_vdd"))
-        {
-            XDIC_Trim_Partial_UVOV_VDD();
-        }
-        else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] < (XD_CH_MAX + 1))
-            {
-                print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
-                MCU_IF_Set_XDIC_Channel(u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
-            }
-        }
-        else if (Command_is_("xd_show_osc"))
-        {
-            XDIC_Trim_Show_OSC();
-            print(LOG_INFO, "\r\n OK\r\n");
-        }
-
-/* ----------------- command list - xc ----------------- */
-        else if (Command_is_("xc_debug"))
-        {
-            XC24_Init();
-        }
-        else if (Command_is_("xc_trim_debug"))
-        {
-            XC24_Trim_Init();
-        }
-        else if (Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            print(LOG_INFO, "\r\n XC Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
-            XC24_Write_Register((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-        }
-        else if (Command_is_("xc_r_all"))
-        {
-            XC24_Read_Register_All();
-        }
-        else if (Command_Param_is_("xc_r", "%x", &u32_recv_param[0]))
-        {
-            uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
-            print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
-        }
-        else if (Command_is_("xc_trim_ldo"))
-        {
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
-            LL_mDelay(1);
-            ADS114S08_Set_Start(1);
-            ADS114S08_Wait_Done();
-
-            uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
-            float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
-            print(LOG_INFO, "Screen  LDO_ADC [%u] -> LDO_LEVEL : %.3f\r\n", ext_adc_value, vctl_ldo_level);
-        }
-        else if (Command_is_("xc_trim_osc"))
-        {
-            XC24_Trim_Init_OSC();
-            LL_mDelay(1);
-            JigBD_IF_Start_Input_Capture();
-            JigBD_IF_Wait_Input_Capture_Done();
-            JigBD_IF_Stop_Input_Capture();
-            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-            print(LOG_INFO, "Screen  OSC : %.3f\r\n", osc_freq);
-        }
-        else if (Command_is_("xc_trim_dac"))
-        {
-            XC24_Trim_Init_DAC_Gain();
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
-            uint16_t dac_input[4] = {248, 1241, 2482, 3723};
-            for (uint8_t i = 0 ; i < 4 ; ++i)
-            {
-                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input[i]);
-                LL_mDelay(1);
-                ADS114S08_Set_Start(1);
-                ADS114S08_Wait_Done();
-
-                uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
-                float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
-                print(LOG_INFO, "%u, %.4f\r\n", dac_input[i], dac_val);
-            }
-        }
-        else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] < 2)
-            {
-                if (u32_recv_param[0])
-                {
-                    USE_XC24(true);
-                    print(LOG_INFO, "\r\n SUPPORT_XC24\r\n");
-                }
-                else
-                {
-                    USE_XC24(false);
-                    print(LOG_INFO, "\r\n NOT_SUPPORT_XC24\r\n");
-                }
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xc_use [%u] [0 - %u]\r\n", u32_recv_param[0], 1);
-            }
-        }
-/* ----------------- command list - ui ----------------- */
-        else if (Command_is_("xd_trim_start") || Command_is_("1"))
-        {
-            print(LOG_INFO, "\r\n XD Trim Start \r\n");
-            XD_Trim_IF_Trim_Start();
-        }
-        else if (Command_is_("xd_screen_start") || Command_is_("2"))
-        {
-            print(LOG_INFO, "\r\n XDIC Screen Start \r\n");
-            XD_Trim_IF_Screen_Start();
-        }
-        else if (Command_is_("xd_dimming_start") || Command_is_("3"))
-        {
-            XDIC_Init();
-
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
-#if 1
-            Vsync_Timer_Start();
-            print(LOG_INFO, "vsync start\r\n");
-#else
-            Trim_Vsync_Timer_Start();
-            print(LOG_INFO, "Trim Vsync start\r\n");
-#endif
-            XDIC_Set_LD_Data(0x100, 0x100, 0x100);
-        }
-        else if (Command_is_("xc_trim_start") || Command_is_("4"))
-        {
-            print(LOG_INFO, "\r\n XC Trim Start \r\n");
-            XC_Trim_IF_Trim_Start();
-        }
-        else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] < LOG_MAX)
-            {
-                print(LOG_INFO, "\r\n log_level - [%u]\r\n", u32_recv_param[0]);
-                gt_log_lv = (LOG_LV_T)u32_recv_param[0];
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
-            }
-        }
-        else if (Command_is_("reset"))
-        {
-            print(LOG_INFO, "\r\n system reset \r\n");
-            NVIC_SystemReset();
-        }
-        else
-        {
-            print(LOG_INFO, "\r\n What?\n\r");
-        }
-    }
-}
-
-__STATIC_INLINE void UART_PutChar(uint8_t data)
-{
-    /* Echo received character on TX */
-    if ((data == '\n') || (data == '\r'))
-    {
-        LL_USART_TransmitData8(USART2, '\r');
-        LL_USART_TransmitData8(USART2, '\n');
-    }
-    else
-    {
-        LL_USART_TransmitData8(USART2, data);
-    }
-
-    /* Loop until the end of transmission */
-    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-}
-
-void comm_rx_handler(uint8_t rx)
-{
-    UART_PutChar(rx);
-
-    if ((rx == '\n') || (rx == '\r'))
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = 0;
-        }
-        else
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
-        }
-
-        ++gt_rx_uart.RxInCnt;
-        gt_rx_uart.RxInCnt &= (uint16_t)(RX_BUFF_SIZE - 1);
-    }
-    else if (rx == UART_BACKSPACE)
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length)
-        {
-            UART_PutChar(' ');
-            UART_PutChar(UART_BACKSPACE);
-            --gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
-        }
-    }
-    else
-    {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
-        {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = rx;
-            ++gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
-
-            if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[0] == 0x1B)
-            {
-                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[1] == 0x5B)
-                {
-                    if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[2] == 0x41)
-                    {
-                        print(LOG_INFO, "\r\n\r\n");
-                        /* copy */
-                        for (uint8_t i = 0 ; i < 64 ; ++i)
-                        {
-                            if (gt_rx_uart.RxInCnt)
-                            {
-                                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i])
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i];
-                                    print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
-                                }
-                                else
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length = i;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                if (gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i])
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i];
-                                    print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
-                                }
-                                else
-                                {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length = i;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            //print(LOG_ERROR, "buffer limit...\r\n");
-        }
-    }
-}
 /* USER CODE END 4 */
 
 /**
@@ -2017,8 +817,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

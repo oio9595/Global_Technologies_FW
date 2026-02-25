@@ -2,7 +2,7 @@
 <project>
   <fileVersion>3</fileVersion>
   <configuration>
-    <name>XD12R_GT1009A0R0</name>
+    <name>XD12R_GT1009A0R0_DEMO</name>
     <toolchain>
       <name>ARM</name>
     </toolchain>
@@ -16,19 +16,19 @@
         <debug>1</debug>
         <option>
           <name>BrowseInfoPath</name>
-          <state>XD12R_GT1009A0R0\BrowseInfo</state>
+          <state>XD12R_GT1009A0R0_DEMO\BrowseInfo</state>
         </option>
         <option>
           <name>ExePath</name>
-          <state>XD12R_GT1009A0R0/Exe</state>
+          <state>XD12R_GT1009A0R0_DEMO/Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>XD12R_GT1009A0R0/Obj</state>
+          <state>XD12R_GT1009A0R0_DEMO/Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>XD12R_GT1009A0R0/List</state>
+          <state>XD12R_GT1009A0R0_DEMO/List</state>
         </option>
         <option>
           <name>GEndianMode</name>
@@ -341,7 +341,7 @@
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</state>
           <state>$PROJ_DIR$/../Drivers/CMSIS/Device/ST/STM32F4xx/Include</state>
-          <state>$PROJ_DIR$\..\Drivers\CMSIS\Include</state>
+          <state>$PROJ_DIR$/../Drivers/CMSIS/Include</state>
           <state>$PROJ_DIR$\..\User\Inc</state>
         </option>
         <option>
@@ -640,7 +640,7 @@
         </option>
         <option>
           <name>OOCOutputFile</name>
-          <state>XD12R_GT1009A0R0.hex</state>
+          <state>XD12R_GT1009A0R0_DEMO.hex</state>
         </option>
         <option>
           <name>OOCCommandLineProducer</name>
@@ -679,7 +679,7 @@
         <debug>1</debug>
         <option>
           <name>IlinkOutputFile</name>
-          <state>XD12R_GT1009A0R0.out</state>
+          <state>XD12R_GT1009A0R0_DEMO.out</state>
         </option>
         <option>
           <name>IlinkLibIOConfig</name>
@@ -984,7 +984,7 @@
         </option>
         <option>
           <name>IlinkTrustzoneImportLibraryOut</name>
-          <state>XD12R_GT1009A0R0_import_lib.o</state>
+          <state>XD12R_GT1009A0R0_DEMO_import_lib.o</state>
         </option>
         <option>
           <name>OILinkExtraOption</name>
@@ -1093,10 +1093,10 @@
         <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_gpio.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_adc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_dma.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_dma.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_tim.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc.c</name>
@@ -1147,12 +1147,6 @@
         <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_exti.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_spi.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_tim.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_usart.c</name>
       </file>
     </group>
@@ -1162,28 +1156,16 @@
     <group>
       <name>Inc</name>
       <file>
-        <name>$PROJ_DIR$\..\User\Inc\ads124s08.h</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\User\Inc\config.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\User\Inc\JigBd_IF.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\User\Inc\types.h</name>
+        <name>$PROJ_DIR$\..\User\Inc\uart.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\User\Inc\vsync_task.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Inc\xc24.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Inc\xc_trim.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Inc\xd_trim.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\User\Inc\xdic.h</name>
@@ -1192,22 +1174,13 @@
     <group>
       <name>Src</name>
       <file>
-        <name>$PROJ_DIR$\..\User\Src\ads124s08.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\User\Src\JigBd_IF.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\User\Src\uart.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\User\Src\vsync_task.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Src\xc24.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Src\xc_trim.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\User\Src\xd_trim.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\User\Src\xdic.c</name>

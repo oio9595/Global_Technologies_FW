@@ -19,7 +19,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LD_WIDTH_MAX        (0x3FFF)
+#define LED_MAP_HORIZONTAL      (8U)
+#define LED_MAP_VERTICAL        (18U)
+#define LED_MAP_SIZE            (LED_MAP_HORIZONTAL * LED_MAP_VERTICAL)
+
+#define LD_WIDTH_MAX            (0x3FFF)
 
 #define TIM3_APB_FREQ_Hz        (APB1_TIM_FREQ * 1000000U)
 #define TIM3_APB_FREQ_MHz       (APB1_TIM_FREQ)
@@ -39,6 +43,19 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct tag_LED_LD_BUFFER_T
+{
+    uint16_t ld_r;
+    uint16_t ld_g;
+    uint16_t ld_b;
+} led_ld_buffer_t;
+
+typedef struct tag_LED_ID_T
+{
+    uint8_t xd_num;
+    uint8_t xd_ch_r;
+    uint8_t xd_ch_gb;
+} led_id_t;
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -54,6 +71,15 @@ static bool gb_xdic_read_flag;
 static uint8_t gn_xdic_read_addr;
 
 static uint16_t gn_xdic_LD_out[3]; // R, G, B
+
+static led_ld_buffer_t gt_led_ld_buffer[LED_MAP_SIZE];
+const led_id_t gt_led_id_map[LED_MAP_SIZE] =
+{
+    {0, 0, 0}, {0, 0, 1}, {0, 0, 2}, {0, 0, 3}, {0, 1, 0}, {0, 1, 1}, {0, 1, 2}, {0, 1, 3},
+    {1, 0, 0}, {1, 0, 1}, {1, 0, 2}, {1, 0, 3}, {1, 1, 0}, {1, 1, 1}, {1, 1, 2}, {1, 1, 3},
+    {2, 0, 0}, {2, 0, 1}, {2, 0, 2}, {2, 0, 3}, {2, 1, 0}, {2, 1, 1}, {2, 1, 2}, {2, 1, 3},
+    {3, 0, 0}, {3, 0, 1}, {3, 0, 2}, {3, 0, 3}, {3, 1, 0}, {3, 1, 1}, {3, 1, 2}, {3, 1 ,3},
+};
 /* USER CODE END PV */
 
 /* Private user code ---------------------------------------------------------*/
@@ -124,6 +150,7 @@ void Vsync_Update_Handler(void)
 {
     Svsync_Timer_Start();
     //MCU_IF_SyncGen_Command();
+    gb_xdic_vsync_flag = true;
 }
 
 void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data)
