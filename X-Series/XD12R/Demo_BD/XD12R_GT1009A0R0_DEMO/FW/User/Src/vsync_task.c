@@ -19,12 +19,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_MAP_HORIZONTAL      (8U)
-#define LED_MAP_VERTICAL        (18U)
-#define LED_MAP_SIZE            (LED_MAP_HORIZONTAL * LED_MAP_VERTICAL)
-
-#define LD_WIDTH_MAX            (0x3FFF)
-
 #define TIM3_APB_FREQ_Hz        (APB1_TIM_FREQ * 1000000U)
 #define TIM3_APB_FREQ_MHz       (APB1_TIM_FREQ)
 #define TIM3_PRESCALER          (0U)
@@ -35,7 +29,6 @@
 #define SVSYNC_VSYNC_FREQ       (50000U)
 #define SVSYNC_VSYNC_ON_us      (10U) // 10us
 
-#define SVSYNC_RED_FREQ         (11520U)
 #define SVSYNC_GREEN_FREQ       (7680U)
 #define SVSYNC_BLUE_FREQ        (7680U)
 #define SVSYNC_DIMMING_ON_us    (20U) // 20us
@@ -43,19 +36,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct tag_LED_LD_BUFFER_T
-{
-    uint16_t ld_r;
-    uint16_t ld_g;
-    uint16_t ld_b;
-} led_ld_buffer_t;
-
-typedef struct tag_LED_ID_T
-{
-    uint8_t xd_num;
-    uint8_t xd_ch_r;
-    uint8_t xd_ch_gb;
-} led_id_t;
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -69,17 +49,6 @@ static uint16_t gn_xdic_write_data;
 
 static bool gb_xdic_read_flag;
 static uint8_t gn_xdic_read_addr;
-
-static uint16_t gn_xdic_LD_out[3]; // R, G, B
-
-static led_ld_buffer_t gt_led_ld_buffer[LED_MAP_SIZE];
-const led_id_t gt_led_id_map[LED_MAP_SIZE] =
-{
-    {0, 0, 0}, {0, 0, 1}, {0, 0, 2}, {0, 0, 3}, {0, 1, 0}, {0, 1, 1}, {0, 1, 2}, {0, 1, 3},
-    {1, 0, 0}, {1, 0, 1}, {1, 0, 2}, {1, 0, 3}, {1, 1, 0}, {1, 1, 1}, {1, 1, 2}, {1, 1, 3},
-    {2, 0, 0}, {2, 0, 1}, {2, 0, 2}, {2, 0, 3}, {2, 1, 0}, {2, 1, 1}, {2, 1, 2}, {2, 1, 3},
-    {3, 0, 0}, {3, 0, 1}, {3, 0, 2}, {3, 0, 3}, {3, 1, 0}, {3, 1, 1}, {3, 1, 2}, {3, 1 ,3},
-};
 /* USER CODE END PV */
 
 /* Private user code ---------------------------------------------------------*/
@@ -166,31 +135,11 @@ void XDIC_Set_Read_Target_Reg(uint8_t addr)
     gb_xdic_read_flag = true;
 }
 
-void XDIC_Set_LD_Data(uint32_t in_ld_R, uint32_t in_ld_G, uint32_t in_ld_B)
-{
-    if (in_ld_R <= LD_WIDTH_MAX && in_ld_G <= LD_WIDTH_MAX && in_ld_B <= LD_WIDTH_MAX)
-    {
-        gn_xdic_LD_out[0] = in_ld_R;
-        gn_xdic_LD_out[1] = in_ld_G;
-        gn_xdic_LD_out[2] = in_ld_B;
-    }
-    else
-    {
-        Print(LOG_ERROR, "\r\n Out of LD_out [%u, %u, %u] [0 - %u]\r\n", in_ld_R, in_ld_G, in_ld_B, LD_WIDTH_MAX);
-    }
-}
-
-uint16_t* XDIC_Get_LD_Data(void)
-{
-    return gn_xdic_LD_out;
-}
-
 void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        MCU_IF_Write_LD(gn_xdic_LD_out);
-
+        MCU_IF_Write_LD();
         if (gb_xdic_write_flag)
         {
             XDIC_Write_General_Reg(gn_xdic_write_addr, gn_xdic_write_data);
@@ -202,6 +151,7 @@ void XDIC_Vsync_Task(void)
             Print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
             gb_xdic_read_flag = false;
         }
+        LED_Update_Buffer();
         gb_xdic_vsync_flag = false;
     }
 }

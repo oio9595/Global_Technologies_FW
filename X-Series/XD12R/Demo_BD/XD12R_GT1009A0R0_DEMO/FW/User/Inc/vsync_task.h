@@ -39,9 +39,6 @@ extern void XDIC_Vsync_Task(void);
 
 extern void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data);
 extern void XDIC_Set_Read_Target_Reg(uint8_t addr);
-
-extern void XDIC_Set_LD_Data(uint32_t in_ld_R, uint32_t in_ld_G, uint32_t in_ld_B);
-extern uint16_t* XDIC_Get_LD_Data(void);
 /* USER CODE END */
 
 #ifdef __cplusplus

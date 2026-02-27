@@ -12,6 +12,7 @@
 #include "main.h"
 #include "uart.h"
 #include "config.h"
+#include "JigBd_IF.h"
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
@@ -20,6 +21,10 @@
 #define UART_PACKET_SIZE    (128)
 #define UART_BUFF_SIZE      (128)
 #define UART_BACKSPACE      (0x08)
+
+#define VA_GENERIC(_1, _2, _3, _4, _5, _6,x, ...) x
+#define Command_Param_is_(a, b, ...) (sscanf(str_in, a b, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
+#define Command_is_(x) (strncmp(str_in, x, strlen(x)) == 0)
 /* USER CODE END PD */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -242,9 +247,40 @@ void Comm_UART_Task(void)
         {
             Comm_Print_Help();
         }
-/* ----------------- command list - jig ----------------- */
-/* ----------------- command list - IP805 ----------------- */
-/* ----------------- command list - ui ----------------- */
+/* ----------------- command list - LED ----------------- */
+        else if (Command_Param_is_("led_color", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 3) // LED_COLOR_MAX
+            {
+                LED_Select_Color(u32_recv_param[0]);
+                Print(LOG_INFO, "\r\n OK \r\n");
+            }
+            else
+            {
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_color (0 ~ 3)]\r\n");
+            }
+        }
+        else if (Command_is_("led_brightness_up"))
+        {
+            LED_Select_Brightness_Up();
+        }
+        else if (Command_is_("led_brightness_down"))
+        {
+            LED_Select_Brightness_Down();
+        }
+        else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0])) // LED_PATTERN_MAX
+        {
+            if (u32_recv_param[0] <= 4)
+            {
+                LED_Select_Pattern(u32_recv_param[0]);
+                Print(LOG_INFO, "\r\n OK \r\n");
+            }
+            else
+            {
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_pattern (0 ~ 4)]\r\n");
+            }
+        }
+/* ----------------- command list - MCU Function ----------------- */
         else if (Command_is_("reset"))
         {
             Print(LOG_INFO, "\r\n system reset \r\n");

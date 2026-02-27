@@ -35,6 +35,13 @@ extern volatile bool gb_xd_timeout_event;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN */
+extern void LED_Select_Color(uint8_t color);
+extern void LED_Select_Brightness(uint8_t brightness);
+extern void LED_Select_Brightness_Up(void);
+extern void LED_Select_Brightness_Down(void);
+extern void LED_Select_Pattern(uint8_t pattern);
+extern void LED_Update_Buffer(void);
+
 extern void us_delay(uint16_t n_delay);
 extern void JigBD_IF_Link_DMA_With_Buffer(void);
 
@@ -115,10 +122,11 @@ static inline void Serialize_Rx_Start(uint32_t len)
 
 extern void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data);
 extern uint16_t MCU_IF_Read_XDIC(uint8_t in_addr);
-extern void MCU_IF_Write_LD(uint16_t* p_in_LD_data);
+extern void MCU_IF_Write_LD(void);
 extern uint16_t MCU_IF_Fault_Read_Command(void);
 extern void MCU_IF_IdGen_Command();
 extern void MCU_IF_SyncGen_Command();
+
 /* USER CODE END */
 
 #ifdef __cplusplus

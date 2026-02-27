@@ -14,11 +14,12 @@
 extern "C" {
 #endif
 
-/********************************************************/
-#define VERSION_MAJOR       (0)
-#define VERSION_MINOR       (0)
-#define VERSION_PATCH       (1) // At every new build, increase this value
-/********************************************************/
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+#define VERSION_MAJOR               (0)
+#define VERSION_MINOR               (0)
+#define VERSION_PATCH               (3) // At every new build, increase this value
+
 #define APB1_TIM_FREQ               (90.0f) //MHz
 #define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2) //MHz
 
@@ -36,7 +37,6 @@ extern "C" {
 #define SVSYNC_TOTAL_CYCLE          (SVSYNC_CYCLE * SVSYNC_SIZE)
 
 #define XDIC_DAISY_SIZE             (24)
-//#define XDIC_DAISY_SIZE             (1)
 #define XDIC_CH_SIZE                (12)
 
 #define XDIC_SERIAL_CLK_CNT_LOW     (16)
@@ -47,9 +47,9 @@ extern "C" {
 #define SERIAL_ADDR_SIZE            (6)
 #define SERIAL_FAULT_DATA_SIZE      (4)
 #define SERIAL_DATA_SIZE            (12)
-#define SERIAL_EVEN_SIZE            (14)
-#define SERIAL_ODD_SIZE             (28)
-#define SERIAL_LD_SIZE              (SERIAL_EVEN_SIZE + SERIAL_ODD_SIZE)
+#define SERIAL_ODD_SIZE             (14)
+#define SERIAL_EVEN_SIZE            (28)
+#define SERIAL_LD_SIZE              (SERIAL_ODD_SIZE + SERIAL_EVEN_SIZE)
 
 #define XDIC_WRITE_BITS             ((uint32_t)((SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE + SERIAL_DATA_SIZE) * XDIC_DAISY_SIZE))
 #define XDIC_READ_BITS              ((uint32_t)((SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE) * XDIC_DAISY_SIZE))
@@ -69,14 +69,28 @@ extern "C" {
 #define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS) + 0.5f))
 #define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS) + 0.5f))
 
+#define ANSI_FONT_NONE              "\033[0m"
+#define ANSI_FONT_RED               "\033[31m"
+#define ANSI_FONT_GREEN             "\033[32m"
+#define ANSI_FONT_YELLOW            "\033[33m"
+#define ANSI_FONT_BLUE              "\033[34m"
+#define ANSI_FONT_MAGENTA           "\033[35m"
+
+#define LED_MAP_HORIZONTAL      (8U)
+#define LED_MAP_VERTICAL        (18U)
+#define LED_MAP_SIZE            (LED_MAP_HORIZONTAL * LED_MAP_VERTICAL)
+/* USER CODE END PD */
 /********************************************************/
-#define ANSI_FONT_NONE      "\033[0m"
-#define ANSI_FONT_RED       "\033[31m"
-#define ANSI_FONT_GREEN     "\033[32m"
-#define ANSI_FONT_YELLOW    "\033[33m"
-#define ANSI_FONT_BLUE      "\033[34m"
-#define ANSI_FONT_MAGENTA   "\033[35m"
-/********************************************************/
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+typedef struct tag_LED_LD_BUFFER_T
+{
+    uint16_t ld_r;
+    uint16_t ld_g;
+    uint16_t ld_b;
+} led_ld_buffer_t;
+/* USER CODE END PTD */
 #ifdef __cplusplus
 }
 #endif

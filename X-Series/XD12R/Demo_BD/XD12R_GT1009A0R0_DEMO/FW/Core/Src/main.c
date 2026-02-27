@@ -33,11 +33,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 typedef void (*func_t)(void);
 
 typedef struct tag_KEY_INFO
@@ -45,9 +40,13 @@ typedef struct tag_KEY_INFO
     uint32_t now_state;
     uint32_t prev_state;
     uint8_t press_cnt;
-    uint8_t odd_even;
-    func_t function[2];
+    func_t function;
 } key_info_t;
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+#define KEY_SIZE    (4)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,93 +57,32 @@ typedef struct tag_KEY_INFO
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static void key_func_1(void)
-{
-}
-
-static void key_func_2(void)
-{
-}
-
-static void key_func_3(void)
-{
-}
-
-static void key_func_4(void)
-{
-}
-
-static void key_func_5(void)
-{
-}
-
-static void key_func_6(void)
-{
-}
-
-static void key_func_7(void)
-{
-}
-
-static void key_func_8(void)
-{
-}
-
-static key_info_t gt_key_info[4] =
+static GPIO_TypeDef* gp_key_port[KEY_SIZE] = { SW1_GPIO_Port, SW2_GPIO_Port, SW3_GPIO_Port, SW4_GPIO_Port };
+static uint32_t gn_key_pin[KEY_SIZE] = { SW1_Pin, SW2_Pin, SW3_Pin, SW4_Pin };
+static key_info_t gt_key_info[KEY_SIZE] =
 {
     {
-    .now_state = 1,
-    .prev_state = 1,
-    .press_cnt = 0,
-    .odd_even = 0,
+        .now_state = 1,
+        .prev_state = 1,
+        .press_cnt = 0,
+    },
+    {
+        .now_state = 1,
+        .prev_state = 1,
+        .press_cnt = 0,
+    },
+    {
+        .now_state = 1,
+        .prev_state = 1,
+        .press_cnt = 0,
+    },
+    {
+        .now_state = 1,
+        .prev_state = 1,
+        .press_cnt = 0,
     },
 };
-
 static uint8_t gn_key_task_tick;
-
-static void Key_Task(void)
-{
-    if (gn_key_task_tick == 0)
-    {
-        for (uint8_t i = 0; i < 4; ++i)
-        {
-            gt_key_info[i].now_state = LL_GPIO_IsInputPinSet(B1_GPIO_Port, B1_Pin);
-            if (gt_key_info[i].now_state != gt_key_info[i].prev_state)
-            {
-                if (gt_key_info[i].now_state == 0)
-                {
-                }
-                else
-                {
-                    // Button Released
-                    if (gt_key_info[i].press_cnt >= 30)
-                    {
-                        if (gt_key_info[i].function[gt_key_info[i].odd_even] != NULL)
-                        {
-                            gt_key_info[i].function[gt_key_info[i].odd_even]();
-                        }
-                        gt_key_info[i].odd_even ^= 1;
-                    }
-                    gt_key_info[i].press_cnt = 0;
-                }
-                gt_key_info[i].prev_state = gt_key_info[i].now_state;
-            }
-            else
-            {
-                if (gt_key_info[i].now_state == 0)
-                {
-                    // Button Pressed
-                    ++gt_key_info[i].press_cnt;
-                }
-                else
-                {
-                    // nothing
-                }
-            }
-        }
-        gn_key_task_tick = 10; //10ms
-    }
-}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -161,6 +99,63 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void key_func_1(void)
+{
+}
+
+static void key_func_2(void)
+{
+}
+
+static void key_func_3(void)
+{
+}
+
+static void key_func_4(void)
+{
+}
+
+static void Key_Task(void)
+{
+    if (gn_key_task_tick == 0)
+    {
+        for (uint8_t i = 0; i < KEY_SIZE; ++i)
+        {
+            gt_key_info[i].now_state = LL_GPIO_IsInputPinSet(gp_key_port[i], gn_key_pin[i]);
+            if (gt_key_info[i].now_state != gt_key_info[i].prev_state)
+            {
+                if (gt_key_info[i].now_state == 0)
+                {
+                }
+                else // Button Released
+                {
+                    if (gt_key_info[i].press_cnt >= 30)
+                    {
+                        if (gt_key_info[i].function != NULL)
+                        {
+                            gt_key_info[i].function();
+                        }
+                    }
+                    gt_key_info[i].press_cnt = 0;
+                }
+                gt_key_info[i].prev_state = gt_key_info[i].now_state;
+            }
+            else
+            {
+                if (gt_key_info[i].now_state == 0) // Button Pressed
+                {
+                    ++gt_key_info[i].press_cnt;
+                }
+                else
+                {
+                    // nothing
+                }
+            }
+        }
+        gn_key_task_tick = 10; //10ms
+    }
+}
+
 void sys_tick_handler(void)
 {
     if (gn_xd_rx_timeout)
@@ -172,6 +167,7 @@ void sys_tick_handler(void)
         --gn_key_task_tick;
     }
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -211,17 +207,10 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-    gt_key_info[0].function[0] = key_func_1;
-    gt_key_info[0].function[1] = key_func_2;
-
-    gt_key_info[1].function[0] = key_func_3;
-    gt_key_info[1].function[1] = key_func_4;
-
-    gt_key_info[2].function[0] = key_func_5;
-    gt_key_info[2].function[1] = key_func_6;
-
-    gt_key_info[3].function[0] = key_func_7;
-    gt_key_info[3].function[1] = key_func_8;
+    gt_key_info[0].function = key_func_1;
+    gt_key_info[1].function = key_func_2;
+    gt_key_info[2].function = key_func_3;
+    gt_key_info[3].function = key_func_4;
 
     JigBD_IF_Link_DMA_With_Buffer();
 
@@ -451,6 +440,7 @@ static void MX_TIM3_Init(void)
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
   /* USER CODE BEGIN TIM3_Init 2 */
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /* USER CODE END TIM3_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
   /**TIM3 GPIO Configuration

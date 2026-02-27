@@ -281,11 +281,14 @@ static void XDIC_Param_Init(void)
     //gn_xdic_mclk_lock_cnt = (uint32_t)(gf_xdic_mclk / gf_vsync_out + 0.5f);
     gn_xdic_mclk_lock_cnt = XDIC_MCLK_LOCK_CNT;
 
+    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    gt_xdic_dev_max_curr_level[1] = DEV_MAX_CURR_LEVEL_16mA; // G
+    gt_xdic_dev_max_curr_level[2] = DEV_MAX_CURR_LEVEL_16mA; // B
+
     for (uint8_t i = 0 ; i < 3 ; ++i)
     {
         gt_xdic_fb_level[i] = FB_LEVEL_0V45;
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
-        gt_xdic_dev_max_curr_level[i] = DEV_MAX_CURR_LEVEL_4mA;
     }
 }
 
@@ -410,7 +413,8 @@ void XDIC_Init(void)
     }
     XDIC_Set_Delay_CH();
     XDIC_Dump_All_Registers();
+
+    LED_Select_Brightness(50);
 }
 /* USER CODE END */
-
 /*** end of file ***/
