@@ -288,7 +288,11 @@ void USART2_IRQHandler(void)
 void TIM8_UP_TIM13_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
-    Vsync_Update_Handler();
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM8))
+    {
+        LL_TIM_ClearFlag_UPDATE(TIM8);
+        Vsync_Update_Handler();
+    }
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
 

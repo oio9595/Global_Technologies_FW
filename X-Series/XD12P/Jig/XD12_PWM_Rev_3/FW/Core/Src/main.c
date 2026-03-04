@@ -373,6 +373,10 @@ int main(void)
 
     comm_init();
 
+
+    JigBD_IF_XD_VCC_EN(PWR_ON);
+    print(LOG_INFO, "Power On XDIC");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -1811,10 +1815,7 @@ static void TaskDebugUart(void)
 
             XDIC_Init();
 
-            JigBD_IF_VLED_9V_EN(PWR_ON);
-            print(LOG_DEBUG, "\r\n xd_vled_on\r\n");
-
-            Vsync_Timer_Start();
+            Vsync_Timer_Start(); // TIM8
             print(LOG_INFO, "vsync start\r\n");
 
             XDIC_Set_LD_Data(100);
@@ -1836,16 +1837,85 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
             }
         }
-        else if (Command_Param_is_("delay", "%d", &u32_recv_param[0]))
+        else if (Command_is_("5"))
         {
-            if (u32_recv_param[0] <= 100)
+            // Initial
+            if (IS_XC24_Support())
             {
-                XDIC_Set_Sweep_Delay(u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set Delay to - [%u ms]\r\n", u32_recv_param[0]);
+                XC24_Init();
             }
-            else
+            XDIC_Trim_Init();
+
+            // Vref
+            XDIC_Trim_Init_VREF_CTL();
+            JigBD_IF_Start_MCU_ADC();
+            uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
+            print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+
+            // LDO
+            XDIC_Trim_Init_LDO_CTL();
+            JigBD_IF_Start_MCU_ADC();
+            uint16_t ldo_adc =  JigBD_IF_Get_MCU_ADC();
+            print(LOG_INFO, "\r\n LDO  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc));
+
+            // FREQ
+            XDIC_Trim_Init_OSC();
+            JigBD_IF_Start_Input_Capture();
+            JigBD_IF_Wait_Input_Capture_Done();
+            JigBD_IF_Stop_Input_Capture();
+            uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
+            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+            print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
+
+            // Current Ofs
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            current_gain_t current_gain = GAIN_MID;
+            XDIC_Trim_Init_OFS_CH();
+            JigBD_IF_Change_Current_Gain(current_gain);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
             {
-                print(LOG_ERROR, "\r\n Out of delay [%u] [0 - %u]\r\n", u32_recv_param[0], 100);
+                JigBD_IF_Select_Output_Ch(i);
+                //XDIC_Set_Max_Curr_Vref(250); // XDIC_OFS_P1
+                XDIC_Set_Max_Curr_Vref(350); // XDIC_OFS_P1
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+                //XDIC_Set_Max_Curr_Vref(500); // XDIC_OFS_P2
+                XDIC_Set_Max_Curr_Vref(600); // XDIC_OFS_P2
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+                uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2; //avg
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
+                print(LOG_INFO, "OFS CH[%d] : %.3f\r\n", (i + 1), iout_avg);
+            }
+
+            // Current Gain
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            //uint16_t iout_adc[XD_CH_SIZE][2] = {0, };
+            current_gain = GAIN_HIGH;
+            XDIC_Trim_Init_GAIN_CH();
+            JigBD_IF_Change_Current_Gain(current_gain);
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                JigBD_IF_Select_Output_Ch(i);
+
+                XDIC_Set_Max_Curr_Vref(3000); // XDIC_GAIN_P1
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc[i][0] = ADS114S08_Get_ADC_Value();
+
+                XDIC_Set_Max_Curr_Vref(1000); // XDIC_GAIN_P2
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc[i][1] = ADS114S08_Get_ADC_Value();
+
+                uint16_t adc_average = iout_adc[i][0] - iout_adc[i][1]; //delta
+                float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
+                print(LOG_INFO, "GAIN CH[%d] : %.3f\r\n", (i + 1), iout_avg);
             }
         }
         else if (Command_is_("reset"))

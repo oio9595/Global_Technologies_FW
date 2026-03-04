@@ -733,7 +733,6 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     return (uint16_t)(n_response & 0x0FFF);
 }
 
-
 static void MCU_IF_IdGen_Command()
 {
     uint16_t pwm_length = 0;
