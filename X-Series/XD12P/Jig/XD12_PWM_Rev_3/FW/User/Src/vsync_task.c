@@ -52,7 +52,6 @@ void Vsync_Timer_Stop(void)
 
 void Vsync_Update_Handler(void)
 {
-    LL_TIM_ClearFlag_UPDATE(TIM8);
     if (!XDIC_Is_Vsync_Mode_External() && !IS_XC24_Support())
     {
         JigBD_IF_SyncGen_Command();
@@ -92,11 +91,10 @@ uint16_t XDIC_Get_LD_Data(void)
 
 void XDIC_Get_Fault_Status(void)
 {
-    uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
     static uint8_t prev_fault_status = 0xFF;
     static uint16_t vsync_tick = 0;
 
-    char msg[50] = {0, };
+    uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
 
     if (now_fault_status != prev_fault_status)
     {
@@ -106,24 +104,18 @@ void XDIC_Get_Fault_Status(void)
         }
         else
         {
-            snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
-            if (now_fault_status & FAULT_MASK_FB)
-            {
-                strncat(msg, "FB ", sizeof(msg) - strlen(msg) - 1);
-            }
-            if (now_fault_status & FAULT_MASK_OPEN)
-            {
-                strncat(msg, "OPEN ", sizeof(msg) - strlen(msg) - 1);
-            }
-            if (now_fault_status & FAULT_MASK_SHORT)
-            {
-                strncat(msg, "SHORT ", sizeof(msg) - strlen(msg) - 1);
-            }
-            if (now_fault_status & FAULT_MASK_THERMAL)
-            {
-                strncat(msg, "THERMAL", sizeof(msg) - strlen(msg) - 1);
-            }
-            strncat(msg, " ]\r\n", sizeof(msg) - strlen(msg) - 1);
+            char msg[64] = {0}; // 버퍼 크기를 넉넉하게 64로 조절
+            int limit = sizeof(msg);
+            int len = 0;
+
+            len += snprintf(msg + len, limit - len, "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
+
+            if(now_fault_status & FAULT_MASK_FB)      { len += snprintf(msg + len, limit - len, "FB ");         }
+            if(now_fault_status & FAULT_MASK_OPEN)    { len += snprintf(msg + len, limit - len, "OPEN ");       }
+            if(now_fault_status & FAULT_MASK_SHORT)   { len += snprintf(msg + len, limit - len, "SHORT ");      }
+            if(now_fault_status & FAULT_MASK_THERMAL) { len += snprintf(msg + len, limit - len, "THERMAL ");    }
+
+            snprintf(msg + len, limit - len, "]\r\n");
             print(LOG_INFO, "%s", msg);
         }
         prev_fault_status = now_fault_status;

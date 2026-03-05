@@ -53,7 +53,7 @@ volatile bool gb_xdic_initial_failed;
 static _xdic_general_regs_t gt_xdic_general_regs;
 static _xdic_mirror_regs_t gt_xdic_mirror_regs;
 
-static _reg_map_t gt_xdic_general_maps[] =
+const static _reg_map_t gt_xdic_general_maps[] =
 {
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_RESET_ID         , _r00 ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_LD_CONTROL       , _r01 ),
@@ -122,7 +122,7 @@ static _reg_map_t gt_xdic_general_maps[] =
 };
 static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
 
-static _reg_map_t gt_xdic_mirror_maps[] =
+const static _reg_map_t gt_xdic_mirror_maps[] =
 {
     XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OTP_CRC     , _r00 ),
     XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_OSC         , _r01 ),
@@ -177,6 +177,8 @@ static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX] =
     // 20     21     22     23     24     25     26
     0x040, 0x040, 0x040, 0x040, 0x040, 0x040, 0x040
 };
+
+const static float gt_dev_max_curr_level_table[DEV_MAX_CURR_LEVEL_MAX] = { 4, 8, 12, 16, 24, 32, 46, 64, };
 
 /* Variable for XD Registers */
 static float gf_xd_mclk;
@@ -390,7 +392,7 @@ void XDIC_Write_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_t
 uint16_t XDIC_Get_Mirror_Register_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
     uint16_t rtn_val = 0xFFFF;
-    uint8_t xd_mirror_addr = 0;
+    uint8_t xd_mirror_addr = XDIC_MIRROR_ADDR_MAX;
     switch(in_trim_mode)
     {
     case XD_TRIM_VREF_CTL:
@@ -580,10 +582,10 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r26.serial_latency = 200;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0U);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_MSB_MASK) >> 12U);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
@@ -707,24 +709,27 @@ void XDIC_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XDIC_Set_Delay_CH(void)
 {
-    uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
-    uint16_t delay_msb_accumulator[2] = {0, };
-
-    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+    if(gn_xd_ch_size)
     {
-        gn_xd_delay_ch[ch] = delay_per_ch * ch;
-        uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
-        uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
+        uint16_t delay_msb_accumulator[2] = {0, };
+        uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
 
-        delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+        for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+        {
+            gn_xd_delay_ch[ch] = (delay_per_ch * ch);
+            uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
+            uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
 
-        print(LOG_DEBUG, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
+            delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
 
-        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+            print(LOG_DEBUG, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
+
+            XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+        }
+
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
     }
-
-    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
-    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
 }
 
 void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
@@ -740,36 +745,14 @@ float XDIC_Get_Max_Current_level(void)
     uint16_t fault_level = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_LEVEL);
     dev_max_curr_level_t dev_max_curr_lvl = (dev_max_curr_level_t)((fault_level & 0xF00) >> 8);
 
-    switch (dev_max_curr_lvl)
+    if(dev_max_curr_lvl < DEV_MAX_CURR_LEVEL_MAX)
     {
-    case DEV_MAX_CURR_LEVEL_4mA :
-        f_rtn = 4.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_8mA :
-        f_rtn = 8.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_12mA :
-        f_rtn = 12.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_16mA :
-        f_rtn = 16.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_24mA :
-        f_rtn = 24.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_32mA :
-        f_rtn = 32.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_46mA :
-        f_rtn = 46.0f;
-        break;
-    case DEV_MAX_CURR_LEVEL_64mA :
-        f_rtn = 64.0f;
-        break;
-    default :
+        f_rtn = gt_dev_max_curr_level_table[dev_max_curr_lvl];
+    }
+    else
+    {
         print(LOG_ERROR, "ERROR: %s - dev_max_curr_lvl(%d) Over !!\r\n", __func__, dev_max_curr_lvl);
         f_rtn = 0.0f;
-        break;
     }
     return f_rtn;
 }

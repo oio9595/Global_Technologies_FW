@@ -84,6 +84,11 @@ volatile bool gb_xd_timeout_event;
 volatile bool gb_pwm_dma_tx_flag;
 volatile bool gb_pwm_is_rx_flag;
 
+static uint16_t gn_mcu_serializer_bit_0;
+static uint16_t gn_mcu_serializer_bit_1;
+
+static uint16_t SyncGen_Pattern[4U];
+
 static led_color_type_t gt_led_color;
 
 static uint8_t gn_led_brightness_percent; // 0 ~ 100
@@ -344,16 +349,33 @@ void LED_Update_Buffer(void)
             LED_Update_Buffer_By_Pattern();
             break;
         default:
+            Print(LOG_ERROR, "\r\n Invalid LED Buffer Update Type\r\n");
+            Error_Handler();
             break;
     }
 }
 
 void us_delay(uint16_t us_delay)
 {
-    uint16_t start = LL_TIM_GetCounter(TIM12);
-    while ((uint16_t)(LL_TIM_GetCounter(TIM12) - start) < us_delay)
+    LL_TIM_EnableCounter(TIM12);
+    while(TIM12->CNT < us_delay)
     {
     }
+    LL_TIM_DisableCounter(TIM12);
+    TIM12->CNT = 0;
+}
+
+void MCU_IF_Serializer_Init_Param(void)
+{
+    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
+
+    gn_mcu_serializer_bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
+    gn_mcu_serializer_bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
+
+    SyncGen_Pattern[0U] = gn_mcu_serializer_bit_1;
+    SyncGen_Pattern[1U] = gn_mcu_serializer_bit_0;
+    SyncGen_Pattern[2U] = gn_mcu_serializer_bit_0;
+    SyncGen_Pattern[3U] = gn_mcu_serializer_bit_1;
 }
 
 void JigBD_IF_Link_DMA_With_Buffer(void)
@@ -423,36 +445,29 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-
     for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
 
         for (uint8_t j = 0 ; j < SERIAL_ADDR_SIZE ; ++j)
         {
-            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? bit_1 : bit_0);
+            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
 
         for (uint8_t k = 0 ; k < SERIAL_DATA_SIZE ; ++k)
         {
-            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_data, SERIAL_DATA_SIZE - k)) ? bit_1 : bit_0);
+            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_data, SERIAL_DATA_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
-
     while (gb_pwm_dma_tx_flag) {}
-
-    us_delay(XDIC_RESET_DELAY);
+    us_delay(XDIC_WRITE_DELAY);
 }
 
 uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
@@ -461,45 +476,42 @@ uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-
     for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
 
         for (uint8_t j = 0 ; j < SERIAL_ADDR_SIZE ; ++j)
         {
-            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? bit_1 : bit_0);
+            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
-    gb_pwm_is_rx_flag = true;
 
+    DEBUG_HI();
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
 
-    Serialize_Rx_Start(XDIC_READ_RECV_BITS);
-
     uint32_t n_response = 0;
 
-    if (gb_xd_timeout_event)
+    DEBUG_LO();
+    if (true == Serialize_Rx_Start(XDIC_READ_RECV_BITS))
     {
         Print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
     }
     else
     {
+        DEBUG_HI();
         float f_frequency = Decode_Input_Response(&n_response, XDIC_READ_RECV_BITS);
-        Print(LOG_DEBUG, "Received DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, ID : 0x%02X, DATA - 0x%03X, FULL - 0x%04X]\r\n", in_addr, f_frequency,
+        Print(LOG_DEBUG, "Received DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, ID : 0x%02X, DATA - 0x%03X, FULL - 0x%06X]\r\n", in_addr, f_frequency,
             ((n_response >> 17) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12) & SERIAL_DECODE_MASK_ID), ((n_response >> 0) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
     us_delay(XDIC_READ_DELAY);
+    DEBUG_LO();
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
 }
@@ -507,9 +519,6 @@ uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 void MCU_IF_Write_LD(void)
 {
     uint16_t pwm_length = 0;
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
@@ -527,73 +536,67 @@ void MCU_IF_Write_LD(void)
         uint32_t LD_data_GB = ((uint32_t)LD_data_G << 14U) | ((uint32_t)LD_data_B << 0U);
         if (i % 6 == 0)
         {
-            gn_serialize_tx_buffer[pwm_length++] = bit_1;
-            gn_serialize_tx_buffer[pwm_length++] = bit_1;
-            gn_serialize_tx_buffer[pwm_length++] = bit_1;
-            gn_serialize_tx_buffer[pwm_length++] = bit_1;
+            gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+            gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+            gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+            gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         }
         for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k) // For Red
         {
-            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_data_R, SERIAL_ODD_SIZE - k)) ? bit_1 : bit_0);
+            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_data_R, SERIAL_ODD_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
         for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k) // For Green & Blue
         {
-            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_data_GB, SERIAL_EVEN_SIZE - k)) ? bit_1 : bit_0);
+            gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint32_t)LD_data_GB, SERIAL_EVEN_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
-    #if 0
-
-    while (gb_pwm_dma_tx_flag) {}
-
-    #endif
 }
 
 uint16_t MCU_IF_Fault_Read_Command(void)
 {
     uint32_t pwm_length = 0;
+    static uint32_t read_msg_error_count = 0;
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-
     for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
-
     while (gb_pwm_dma_tx_flag) {}
-
-    Serialize_Rx_Start(XDIC_FAULT_RECV_BITS);
 
     uint32_t n_response = 0;
 
-    if (gb_xd_timeout_event)
+    if (true == Serialize_Rx_Start(XDIC_FAULT_RECV_BITS))
     {
-        Print(LOG_ERROR, "Rx Timeout!!!\r\n");
+        if((read_msg_error_count % 20) == 0)
+        {
+            Print(LOG_ERROR, "Rx Timeout!!!\r\n");
+        }
+
+        ++read_msg_error_count;
     }
     else
     {
         float f_frequency = Decode_Input_Response(&n_response, XDIC_FAULT_RECV_BITS);
         Print(LOG_DEBUG, "FAULT DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, DATA - 0x%01X]\r\n",\
         n_response, f_frequency, ((n_response >> 4) & 0x0F), ((n_response >> 0) & 0x0F));
+
+        read_msg_error_count = 0;
     }
 
-    us_delay(XDIC_FAULT_READ_DELAY);
+    us_delay(XDIC_FAULT_RECV_DELAY);
 
     return (uint16_t)(n_response & 0x0FFF);
 }
@@ -604,25 +607,18 @@ void MCU_IF_IdGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-
     for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
+        gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
-
     while (gb_pwm_dma_tx_flag) {}
-
     us_delay(XDIC_IDGEN_DELAY);
 }
 
@@ -632,25 +628,16 @@ void MCU_IF_SyncGen_Command()
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    uint32_t pwm_period = LL_TIM_GetAutoReload(TIM1);
-    uint16_t bit_0 = (uint16_t)(((pwm_period + 1) * BIT_0_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-    uint16_t bit_1 = (uint16_t)(((pwm_period + 1) * BIT_1_RATIO / BIT_RATIO_SUM) - 1 + 0.5f);
-
     for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
     {
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_0;
-        gn_serialize_tx_buffer[pwm_length++] = bit_1;
+        memcpy(&gn_serialize_tx_buffer[pwm_length], SyncGen_Pattern, sizeof(SyncGen_Pattern));
+        pwm_length += 4;
     }
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
-    gb_pwm_is_rx_flag = false;
     Serialize_Tx_Start(pwm_length);
-
     while (gb_pwm_dma_tx_flag) {}
-
     us_delay(XDIC_SYNCGEN_DELAY);
 }
 /* USER CODE END */

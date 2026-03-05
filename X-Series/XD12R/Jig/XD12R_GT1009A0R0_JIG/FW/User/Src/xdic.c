@@ -1071,7 +1071,7 @@ static void XDIC_Set_Delay_CH(void)
 {
     for (uint8_t ch = 0 ; ch < (XDIC_CH_SIZE / 2) ; ++ch)
     {
-        uint16_t temp_delay = (((ch * 2 + 1) << 5) | ((ch * 2 + 0) << 0));
+        uint16_t temp_delay = (((ch * 4 + 2) << 5) | ((ch * 4 + 0) << 0));
         XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01_02 + ch, temp_delay);
     }
 }

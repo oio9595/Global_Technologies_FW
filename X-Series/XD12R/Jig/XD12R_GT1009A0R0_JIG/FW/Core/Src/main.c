@@ -368,9 +368,9 @@ int main(void)
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetCounter(TIM3, 0);
 
-    LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
-    LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
-    LL_TIM_EnableCounter(TIM5); /* for Freq Input */
+    // LL_TIM_EnableCounter(TIM1); /* PWM Output for ... */
+    // LL_TIM_EnableCounter(TIM2); /* PWM Input for ... */
+    // LL_TIM_EnableCounter(TIM5); /* for Freq Input */
 
     /* DMA2_Stream2_IRQn interrupt configuration */
     NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
@@ -852,6 +852,11 @@ static void MX_TIM2_Init(void)
   LL_TIM_DisableMasterSlaveMode(TIM2);
   /* USER CODE BEGIN TIM2_Init 2 */
 
+    LL_TIM_EnableDMAReq_CC1(TIM2);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    LL_TIM_EnableDMAReq_CC2(TIM2);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+
     LL_DMA_ClearFlag_FE5(DMA1);
     LL_DMA_ClearFlag_FE6(DMA1);
     LL_DMA_ClearFlag_HT5(DMA1);
@@ -907,10 +912,10 @@ static void MX_TIM3_Init(void)
   LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH1);
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /* USER CODE BEGIN TIM3_Init 2 */
   /* USER CODE END TIM3_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
-  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /**TIM3 GPIO Configuration
   PC6   ------> TIM3_CH1
   */
@@ -1038,7 +1043,7 @@ static void MX_TIM8_Init(void)
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   TIM_InitStruct.RepetitionCounter = 0;
   LL_TIM_Init(TIM8, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM8);
+  LL_TIM_EnableARRPreload(TIM8);
   LL_TIM_SetClockSource(TIM8, LL_TIM_CLOCKSOURCE_INTERNAL);
   LL_TIM_OC_EnablePreload(TIM8, LL_TIM_CHANNEL_CH2);
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
@@ -2017,8 +2022,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

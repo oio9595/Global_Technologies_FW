@@ -14,9 +14,6 @@
 extern "C" {
 #endif
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-
 /* TRIM CONFIG  **********************************/
 #define INIT_ADC_PER_REG_OSC        ( 1)
 #define INIT_ADC_PER_REG_VREF       ( 1)

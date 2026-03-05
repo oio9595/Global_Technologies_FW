@@ -235,6 +235,7 @@ void DMA1_Stream2_IRQHandler(void)
         LL_DMA_ClearFlag_TC2(DMA1);
         LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
 
+        LL_TIM_DisableCounter(TIM5);
         JigBD_IF_Calculate_Input_Capture_Freq();
 
         gb_timer_input_capture_done = 1;
@@ -311,6 +312,7 @@ void DMA2_Stream1_IRQHandler(void)
         LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
 
         gb_pwm_dma_tx_flag = false;
+        LL_TIM_DisableCounter(TIM1);
     }
     else if (LL_DMA_IsActiveFlag_TE1(DMA2) == 1)
     {

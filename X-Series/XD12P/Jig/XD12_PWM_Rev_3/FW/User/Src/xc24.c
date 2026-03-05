@@ -214,7 +214,7 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
 
     while(SET == LL_SPI_IsActiveFlag_RXNE(SPIx))
     {
-        volatile uint16_t temp  = LL_SPI_ReceiveData16(SPIx);
+        volatile uint16_t temp = LL_SPI_ReceiveData16(SPIx);
     }
 
     for (volatile uint16_t i = 0 ; i < len ; i++)

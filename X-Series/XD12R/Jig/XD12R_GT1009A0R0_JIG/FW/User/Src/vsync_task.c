@@ -109,7 +109,6 @@ void Trim_Vsync_Timer_Start(void)
 
 void Vsync_Timer_Start(void)
 {
-    LL_TIM_ClearFlag_UPDATE(TIM8);
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);

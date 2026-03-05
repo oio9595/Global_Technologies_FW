@@ -18,7 +18,7 @@ extern "C" {
 /* USER CODE BEGIN PD */
 #define VERSION_MAJOR               (0)
 #define VERSION_MINOR               (0)
-#define VERSION_PATCH               (3) // At every new build, increase this value
+#define VERSION_PATCH               (4) // At every new build, increase this value
 
 #define APB1_TIM_FREQ               (90.0f) //MHz
 #define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2) //MHz
@@ -66,6 +66,7 @@ extern "C" {
 #define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS) + 0.5f))
 #define XDIC_LD_TRANS_DELAY         ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_LD_TRANS_BITS) + 0.5f))
 #define XDIC_FAULT_READ_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_READ_BITS) + 0.5f))
+#define XDIC_FAULT_RECV_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_RECV_BITS) + 0.5f))
 #define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS) + 0.5f))
 #define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS) + 0.5f))
 

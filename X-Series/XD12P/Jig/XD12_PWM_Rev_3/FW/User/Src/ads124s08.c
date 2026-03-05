@@ -71,7 +71,7 @@ static volatile bool gb_ads114s08_drdy_done;
 
 static uint64_t gn_ads114s08_adc_temp;
 static uint16_t gn_adc_read_count;
-static uint16_t gn_ads114s08_offset[12];
+static uint16_t gn_ads114s08_offset[XD_CH_MAX];
 
 volatile uint16_t gn_ads114s08_read_timeout;
 
@@ -295,7 +295,7 @@ static void ADS114S08_Get_ADC_Offset()
     }
     JigBD_IF_VLED_9V_EN(PWR_OFF);
     JigBD_IF_Select_Output_Ch(XD_CH_MAX);
-    print(LOG_DEBUG, "\r\n ...Get ADC Offset Done...\r\n");
+    print(LOG_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X, \r\n", gn_ads114s08_offset[0]);
 }
 
 void ADS114S08_Init(void)

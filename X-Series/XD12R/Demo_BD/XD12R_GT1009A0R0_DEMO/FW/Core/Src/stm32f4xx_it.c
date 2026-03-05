@@ -292,7 +292,7 @@ void DMA2_Stream1_IRQHandler(void)
         LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
 
         gb_pwm_dma_tx_flag = false;
-        Serialize_Tx_Done();
+        LL_TIM_DisableCounter(TIM1);
     }
     else if (LL_DMA_IsActiveFlag_TE1(DMA2) == 1)
     {

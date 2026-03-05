@@ -219,7 +219,7 @@ int main(void)
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetCounter(TIM3, 0);
 
-    LL_TIM_EnableCounter(TIM1);
+    // LL_TIM_EnableCounter(TIM1);
 
     Comm_Init();
 
@@ -439,8 +439,8 @@ static void MX_TIM3_Init(void)
   LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH1);
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
-  /* USER CODE BEGIN TIM3_Init 2 */
   LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
+  /* USER CODE BEGIN TIM3_Init 2 */
   /* USER CODE END TIM3_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
   /**TIM3 GPIO Configuration
@@ -490,7 +490,7 @@ static void MX_TIM8_Init(void)
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   TIM_InitStruct.RepetitionCounter = 0;
   LL_TIM_Init(TIM8, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM8);
+  LL_TIM_EnableARRPreload(TIM8);
   LL_TIM_SetClockSource(TIM8, LL_TIM_CLOCKSOURCE_INTERNAL);
   LL_TIM_OC_EnablePreload(TIM8, LL_TIM_CHANNEL_CH2);
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;

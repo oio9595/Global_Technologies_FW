@@ -55,32 +55,22 @@ static inline void Serialize_Tx_Start(uint32_t len)
     LL_TIM_EnableCounter(TIM1);
 }
 
-static inline void Serialize_Tx_Done(void)
+static inline bool Serialize_Rx_Start(uint32_t len)
 {
-    while (LL_TIM_IsActiveFlag_UPDATE(TIM1) == 0);  // ensure the update event occurred
-    LL_TIM_ClearFlag_UPDATE(TIM1);
-
-    LL_TIM_DisableCounter(TIM1);
-    LL_DMA_ClearFlag_TC1(DMA2);
-    //LL_DMA_DisableIT_TC(DMA2, LL_DMA_STREAM_1);
-    LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
-}
-
-static inline void Serialize_Rx_Start(uint32_t len)
-{
+    bool b_xd_timeout_event = false;
     gn_xd_rx_timeout = XD_TIMEOUT_MS;
-    gb_xd_timeout_event = false;
 
     /* output enable set HIGH */
     PWM_SWITCH_HI();
+
+    LL_TIM_SetCounter(TIM2, 0);
+
+    LL_TIM_EnableCounter(TIM2);
 
     LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, len);
     LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, len);
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
-
-    LL_TIM_EnableDMAReq_CC1(TIM2);
-    LL_TIM_EnableDMAReq_CC2(TIM2);
 
     LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
@@ -89,7 +79,7 @@ static inline void Serialize_Rx_Start(uint32_t len)
     {
         if (gn_xd_rx_timeout == 0)
         {
-            gb_xd_timeout_event = true;
+            b_xd_timeout_event = true;
             break;
         }
     }
@@ -101,7 +91,7 @@ static inline void Serialize_Rx_Start(uint32_t len)
     {
         if (gn_xd_rx_timeout == 0)
         {
-            gb_xd_timeout_event = true;
+            b_xd_timeout_event = true;
             break;
         }
     }
@@ -112,12 +102,12 @@ static inline void Serialize_Rx_Start(uint32_t len)
     LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
 
-    LL_TIM_DisableDMAReq_CC1(TIM2);
-    LL_TIM_DisableDMAReq_CC2(TIM2);
+    LL_TIM_DisableCounter(TIM2);
 
     /* output enable set LOW */
     PWM_SWITCH_LO();
-    gb_pwm_is_rx_flag = false;
+
+    return b_xd_timeout_event;
 }
 
 extern void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data);
