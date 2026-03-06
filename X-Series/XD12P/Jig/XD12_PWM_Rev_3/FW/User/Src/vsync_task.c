@@ -104,7 +104,7 @@ void XDIC_Get_Fault_Status(void)
         }
         else
         {
-            char msg[64] = {0}; // 버퍼 크기를 넉넉하게 64로 조절
+            char msg[64] = {0};
             int limit = sizeof(msg);
             int len = 0;
 
