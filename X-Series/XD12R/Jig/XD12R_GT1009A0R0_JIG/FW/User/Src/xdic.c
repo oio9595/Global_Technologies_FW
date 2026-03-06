@@ -844,15 +844,15 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r01.ld_size = XDIC_CH_SIZE;
                 break;
             case XDIC_ADDR_SVSYNC_NUM :
-                gt_xdic_general_regs._r02.fpwm_div1 = (XDIC_PWM_DIV_RED >> 8);
+                gt_xdic_general_regs._r02.fpwm_div1 = (XDIC_PWM_DIV_RED >> 8U);
                 gt_xdic_general_regs._r02.sv_no = SVSYNC_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_1_2 :
                 gt_xdic_general_regs._r03.fpwm_div1 = (XDIC_PWM_DIV_RED & 0xFF);
-                gt_xdic_general_regs._r03.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0x0F) >> 0);
+                gt_xdic_general_regs._r03.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0x0F) >> 0U);
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_2_3 :
-                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0xF0) >> 4);
+                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0xF0) >> 4U);
                 gt_xdic_general_regs._r04.fpwm_div3 = XDIC_PWM_DIV_BLUE;
                 break;
             case XDIC_ADDR_CHANNEL_ENABLE :
@@ -902,10 +902,10 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r17.sv_mask_en = 1;
                 break;
             case XDIC_ADDR_FLL_CONTROL_1 :
-                gt_xdic_general_regs._r1A.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r1A.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_LSB_MASK) >>  0U);
                 break;
             case XDIC_ADDR_FLL_CONTROL_2 :
-                gt_xdic_general_regs._r1B.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r1B.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12U);
                 gt_xdic_general_regs._r1B.fll_range = 3;
                 gt_xdic_general_regs._r1B.fll_en = 1;
                 break;
@@ -1071,7 +1071,7 @@ static void XDIC_Set_Delay_CH(void)
 {
     for (uint8_t ch = 0 ; ch < (XDIC_CH_SIZE / 2) ; ++ch)
     {
-        uint16_t temp_delay = (((ch * 4 + 2) << 5) | ((ch * 4 + 0) << 0));
+        uint16_t temp_delay = (((ch * 4 + 2) << 5U) | ((ch * 4 + 0) << 0U));
         XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01_02 + ch, temp_delay);
     }
 }

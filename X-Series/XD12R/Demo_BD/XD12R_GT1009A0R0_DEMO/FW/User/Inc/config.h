@@ -77,9 +77,9 @@ extern "C" {
 #define ANSI_FONT_BLUE              "\033[34m"
 #define ANSI_FONT_MAGENTA           "\033[35m"
 
-#define LED_MAP_HORIZONTAL      (8U)
-#define LED_MAP_VERTICAL        (18U)
-#define LED_MAP_SIZE            (LED_MAP_HORIZONTAL * LED_MAP_VERTICAL)
+#define LED_MAP_HORIZONTAL          (8U)
+#define LED_MAP_VERTICAL            (18U)
+#define LED_MAP_SIZE                (LED_MAP_HORIZONTAL * LED_MAP_VERTICAL)
 /* USER CODE END PD */
 /********************************************************/
 
