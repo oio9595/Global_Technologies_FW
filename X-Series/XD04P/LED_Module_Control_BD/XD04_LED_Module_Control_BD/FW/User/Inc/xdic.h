@@ -531,6 +531,7 @@ typedef union tag_XDIC_GENERAL_REG_T
 } _xdic_general_regs_t;
 
 extern float gf_xd_max_current;
+extern float gf_xd_duty;
 extern bool gb_led_low_current_mode;
 
 extern void XDIC_Write_General_Reg(uint8_t addr, uint16_t data);

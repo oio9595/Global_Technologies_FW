@@ -39,6 +39,7 @@ commands = {
     "0x40 (Block On Select)": 0x40,
     "0x80 (Block Off Select)": 0x80,
     "0x02 (Low Current Mode)": 0x02,
+    "0x04 (Duty)": 0x04,
 }
 
 class MacroApp(QWidget):
@@ -214,34 +215,6 @@ class MacroApp(QWidget):
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
                 eop_val = int(self.eop_cb.currentText(), 16)
-                """
-                if length_val == 1:
-                    data_val = int(self.data_label.text().strip())
-                    checksum_val = (sop_val + length_val + command_val + data_val) & 0xFF
-                    self.checksum_label.setText(f"0x{checksum_val:02X}")
-                    packet = bytes([sop_val, length_val, command_val, data_val, checksum_val, eop_val])
-                elif length_val == 2:
-                    data_val_1 = int(self.data_label.text().strip())
-                    data_val_2 = data_val_1 + 1
-                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2) & 0xFF
-                    self.checksum_label.setText(f"0x{checksum_val:02X}")
-                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, checksum_val, eop_val])
-                elif length_val == 3:
-                    data_val_1 = int(self.data_label.text().strip())
-                    data_val_2 = data_val_1 + 1
-                    data_val_3 = data_val_1 + 2
-                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3) & 0xFF
-                    self.checksum_label.setText(f"0x{checksum_val:02X}")
-                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, checksum_val, eop_val])
-                elif length_val == 4:
-                    data_val_1 = int(self.data_label.text().strip())
-                    data_val_2 = data_val_1 + 1
-                    data_val_3 = data_val_1 + 2
-                    data_val_4 = data_val_1 + 3
-                    checksum_val = (sop_val + length_val + command_val + data_val_1 + data_val_2 + data_val_3 + data_val_4) & 0xFF
-                    self.checksum_label.setText(f"0x{checksum_val:02X}")
-                    packet = bytes([sop_val, length_val, command_val, data_val_1, data_val_2, data_val_3, data_val_4, checksum_val, eop_val])
-                """
                 data_val_1 = int(self.data_label.text().strip())
 
                 # length 만큼 data 값 생성 (data_val_1, data_val_1+1, data_val_1+2, ...)

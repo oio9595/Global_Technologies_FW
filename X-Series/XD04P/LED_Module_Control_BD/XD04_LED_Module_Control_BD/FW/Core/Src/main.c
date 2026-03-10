@@ -59,6 +59,7 @@ enum tag_PROTOCOL_LIST
     CMD_BLK_ON_SELECT       = 0x40, // 0x40
     CMD_BLK_OFF_SELECT      = 0x80, // 0x80
     CMD_LOW_CURRENT_MODE    = 0x02, // 0x02
+    CMD_DUTY                = 0x04, // 0x04
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
@@ -415,6 +416,10 @@ static void Uart_Task(void)
             case CMD_LOW_CURRENT_MODE:
                 LED_Low_Current_Mode(p_packet->data[0]);
                 print(LOG_PC, "CMD_LOW_CURRENT_MODE: %u\r\n", p_packet->data[0]);
+                break;
+            case CMD_DUTY:
+                LED_Duty_Select((float)p_packet->data[0]);
+                print(LOG_PC, "CMD_DUTY: %u\r\n", p_packet->data[0]);
                 break;
         }
 

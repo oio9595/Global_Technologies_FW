@@ -78,7 +78,8 @@ void XDIC_Vsync_Task(void)
         }
         else
         {
-            XC24_IF_Write_LD(XDIC_LD_MAX);
+            uint16_t ld_val = (uint16_t)(gf_xd_duty / 100.0f * XDIC_LD_MAX + 0.5f);
+            XC24_IF_Write_LD(ld_val);
         }
         XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
 
@@ -196,6 +197,19 @@ void LED_Current_Increase(void)
     {
         gn_led_current_increase_cnt = 0;
     }
+}
+
+void LED_Duty_Select(float in_duty)
+{
+    if (in_duty < 0.0f)
+    {
+        in_duty = 0.0f;
+    }
+    else if (in_duty > 100.0f)
+    {
+        in_duty = 100.0f;
+    }
+    gf_xd_duty = in_duty;
 }
 
 void LED_System_Init(void)

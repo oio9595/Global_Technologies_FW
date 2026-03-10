@@ -1,4 +1,4 @@
-('C:\\working\\01_Project\\Jig\\XD_JIG\\XD04\\XD04_LED_Module_Control_BD\\Emulator\\build\\XD04_LED_RS232_Emulator\\PYZ-00.pyz',
+('C:\\working\\01_Project\\FW\\X-Series\\XD04P\\LED_Module_Control_BD\\XD04_LED_Module_Control_BD\\Emulator\\build\\XD04_LED_RS232_Emulator\\PYZ-00.pyz',
  [('PIL',
    'C:\\Users\\oio95\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PIL\\__init__.py',
    'PYMODULE'),

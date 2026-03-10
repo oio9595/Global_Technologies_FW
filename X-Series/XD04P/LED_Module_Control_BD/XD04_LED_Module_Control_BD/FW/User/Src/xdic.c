@@ -121,6 +121,7 @@ static short_level_t gt_xd_short_level;
 static fb_level_t gt_xd_fb_level;
 
 float gf_xd_max_current;
+float gf_xd_duty;
 bool gb_led_low_current_mode;
 
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
@@ -232,6 +233,7 @@ void XDIC_Param_Init(void)
     gt_xd_fb_level = FB_LEVEL_0V4;
 
     gf_xd_max_current = 0.0f;
+    gf_xd_duty = 100.0f;
 }
 
 void XDIC_Init(void)
@@ -315,6 +317,7 @@ void XDIC_DeInit(void)
     XDIC_VCC_OFF();
 
     gf_xd_max_current = 0.0f;
+    gf_xd_duty = 0.0f;
     gb_led_low_current_mode = false;
 }
 
