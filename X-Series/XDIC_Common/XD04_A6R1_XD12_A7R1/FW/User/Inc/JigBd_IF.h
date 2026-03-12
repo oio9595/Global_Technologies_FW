@@ -13,31 +13,12 @@ extern "C" {
 #endif
 
 #include "types.h"
-
-#define BOARD_NUM   1 // Rumens 1
-
-#if (BOARD_NUM == 1)
-    #define CURRENT_SENSE_R_LOW         (3914.0f)   /* ohm */
-    #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
-    #define CURRENT_SENSE_R_HIGH        (13.2f)     /* ohm */
-    #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
-    #define CURRENT_SENSE_RO            (3307.0f)   /* ohm */
-    #define CURRENT_SENSE_R_ICC         (22.15f)    /* ohm */
-#elif (BOARD_NUM == 2)
-    #define CURRENT_SENSE_R_LOW         (3908.0f)   /* ohm */
-    #define CURRENT_SENSE_R_MID         (200.8f)    /* ohm */
-    #define CURRENT_SENSE_R_HIGH        (13.1f)     /* ohm */
-    #define CURRENT_SENSE_RIN           (2203.0f)   /* ohm */
-    #define CURRENT_SENSE_RO            (3295.0f)   /* ohm */
-    #define CURRENT_SENSE_R_ICC         (22.14f)    /* ohm */
-#else
-    #define CURRENT_SENSE_R_LOW         (3900.0f)   /* ohm */
-    #define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
-    #define CURRENT_SENSE_R_HIGH        (13.0f)     /* ohm */
-    #define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
-    #define CURRENT_SENSE_RO            (3300.0f)   /* ohm */
-    #define CURRENT_SENSE_R_ICC         (22.0f)    /* ohm */
-#endif
+#define CURRENT_SENSE_R_LOW         (3914.0f)   /* ohm */
+#define CURRENT_SENSE_R_MID         (200.0f)    /* ohm */
+#define CURRENT_SENSE_R_HIGH        (13.2f)     /* ohm */
+#define CURRENT_SENSE_RIN           (2200.0f)   /* ohm */
+#define CURRENT_SENSE_RO            (3307.0f)   /* ohm */
+#define CURRENT_SENSE_R_ICC         (22.15f)    /* ohm */
 
 #define ADC_CONV_COEFF_LOW          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_LOW))    // Max 0.5mA
 #define ADC_CONV_COEFF_MID          ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_MID))    // Max  10mA
