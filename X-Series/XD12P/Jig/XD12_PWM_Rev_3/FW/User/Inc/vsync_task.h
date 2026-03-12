@@ -13,6 +13,8 @@ extern "C" {
 #endif
 
 extern bool gb_jig_vsync_active;
+extern bool gb_xd_ldim_sweep;
+extern uint16_t gn_xd_ldim_sweep_gap;
 
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);

@@ -42,7 +42,7 @@
 
 static uint16_t gn_mcu_adc_value;
 
-static uint16_t gn_serialize_tx_buffer[400] = {0, };
+static uint16_t gn_serialize_tx_buffer[4000] = {0, };
 static uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
 static uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 

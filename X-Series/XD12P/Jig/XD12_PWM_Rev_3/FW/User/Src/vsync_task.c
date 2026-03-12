@@ -31,11 +31,16 @@ static uint8_t gn_xdic_read_addr;
 
 static uint16_t gn_xdic_LD_out;
 
+bool gb_xd_ldim_sweep;
+uint16_t gn_xd_ldim_sweep_gap;
+
 void Vsync_Timer_Start(void)
 {
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
+
+    gn_xd_ldim_sweep_gap = 17;
 
     gb_jig_vsync_active = true;
 }
@@ -125,6 +130,8 @@ void XDIC_Get_Fault_Status(void)
 
 void XDIC_Vsync_Task(void)
 {
+    static uint8_t vsync_count = 0;
+    static bool b_is_x1 = true;
     if (gb_xdic_vsync_flag)
     {
         if (IS_XC24_Support())
@@ -135,6 +142,30 @@ void XDIC_Vsync_Task(void)
         }
 
         us_delay(1500);
+#if 0
+        if (++vsync_count > 120)
+        {
+            if (b_is_x1) // go to x8
+            {
+                uint16_t r01_value = XDIC_Get_General_Reg(XDIC_ADDR_LD_CONTROL);
+                r01_value &= ~(7U << 3); // set x8
+                r01_value |= (3U << 3);
+                XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, r01_value);
+                gn_xdic_LD_out >>= 3;
+                b_is_x1 = false;
+            }
+            else // go to x1
+            {
+                uint16_t r01_value = XDIC_Get_General_Reg(XDIC_ADDR_LD_CONTROL);
+                r01_value &= ~(7U << 3); // set x8
+                r01_value |= (0U << 3);
+                XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, r01_value);
+                gn_xdic_LD_out <<= 3;
+                b_is_x1 = true;
+            }
+            vsync_count = 0;
+        }
+#endif
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
         XDIC_Get_Fault_Status();
 
@@ -149,6 +180,15 @@ void XDIC_Vsync_Task(void)
             print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
             gb_xdic_read_flag = false;
         }
+        if (gb_xd_ldim_sweep)
+        {
+            gn_xdic_LD_out += gn_xd_ldim_sweep_gap;
+            if (gn_xdic_LD_out > LD_WIDTH_MAX)
+            {
+                gn_xdic_LD_out = 0;
+            }
+        }
+
         gb_xdic_vsync_flag = false;
     }
 }

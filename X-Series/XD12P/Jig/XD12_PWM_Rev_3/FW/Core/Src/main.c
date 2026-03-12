@@ -1676,12 +1676,39 @@ static void TaskDebugUart(void)
         {
             XDIC_Sweep_Vref();
         }
+#if 0
         else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < (XD_CH_MAX + 1))
             {
                 print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
                 MCU_IF_Set_XDIC_Channel(u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
+            }
+        }
+#endif
+        else if (Command_Param_is_("xd_ch", "%d %d", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] < (XD_CH_MAX + 1))
+            {
+                if (u32_recv_param[0])
+                {
+                    uint16_t ch_en_val = XDIC_Get_General_Reg(XDIC_ADDR_CHANNEL_ENABLE);
+                    ch_en_val &= ~(1 << (u32_recv_param[0] - 1));
+                    if (u32_recv_param[1] == 1)
+                    {
+                        ch_en_val |= (1 << (u32_recv_param[0] - 1));
+                    }
+                    XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, ch_en_val);
+                }
+                else
+                {
+                    uint16_t ch_en_val = 0xFFF;
+                    XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, ch_en_val);
+                }
             }
             else
             {
@@ -1713,6 +1740,60 @@ static void TaskDebugUart(void)
                 ADS114S08_Wait_Done();
 
                 print(LOG_INFO, "CURRENT CH[%d] : %.3f\r\n", (i + 1), iout_avg);
+            }
+        }
+        else if (Command_Param_is_("xd_sweep", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                gb_xd_ldim_sweep = true;
+                print(LOG_INFO, "\r\n XD LDIM Sweep Start\r\n");
+            }
+            else
+            {
+                gb_xd_ldim_sweep = false;
+                print(LOG_INFO, "\r\n XD LDIM Sweep Stop\r\n");
+            }
+        }
+        else if (Command_Param_is_("xd_sweep_gap", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] > 0)
+            {
+                gn_xd_ldim_sweep_gap = u32_recv_param[0];
+                print(LOG_INFO, "\r\n XD LDIM Sweep Gap Set to %u\r\n", gn_xd_ldim_sweep_gap);
+            }
+        }
+        else if (Command_Param_is_("xd_line_delay", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                uint16_t delay_msb_accumulator[2] = {0, };
+                uint16_t delay_per_ch = 16383U / 12;
+                uint16_t xd_delay_ch[12] = {0, };
+
+                for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+                {
+                    xd_delay_ch[ch] = (delay_per_ch * ch);
+                    uint16_t delay_lsb = ((xd_delay_ch[ch] & 0x0FFF) >>  0);
+                    uint16_t delay_msb = ((xd_delay_ch[ch] & 0x3000) >> 12);
+                    delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+                    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+                }
+
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
+                print(LOG_INFO, "\r\n XD Line Delay On\r\n");
+            }
+            else
+            {
+                for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+                {
+                    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, 0);
+                }
+
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, 0);
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, 0);
+                print(LOG_INFO, "\r\n XD Line Delay Off\r\n");
             }
         }
 /* ----------------- command list - xc ----------------- */
@@ -1819,7 +1900,7 @@ static void TaskDebugUart(void)
             Vsync_Timer_Start(); // TIM8
             print(LOG_INFO, "vsync start\r\n");
 
-            XDIC_Set_LD_Data(100);
+            XDIC_Set_LD_Data(512);
         }
         else if (Command_is_("xc_trim_start") || Command_is_("4"))
         {
@@ -1917,6 +1998,52 @@ static void TaskDebugUart(void)
                 uint16_t adc_average = iout_adc[i][0] - iout_adc[i][1]; //delta
                 float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
                 print(LOG_INFO, "GAIN CH[%d] : %.3f\r\n", (i + 1), iout_avg);
+            }
+        }
+        else if (Command_is_("6"))
+        {
+            // Initial
+            if (IS_XC24_Support())
+            {
+                XC24_Init();
+            }
+            XDIC_Trim_Init();
+
+            // Current Ofs
+            XDIC_Trim_Init_OFS_CH();
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+            JigBD_IF_VLED_9V_EN(PWR_ON);
+            uint16_t iout_adc_all[XD_CH_SIZE][2] = {0, };
+            uint16_t iout_adc_sel[XD_CH_SIZE][2] = {0, };
+            current_gain_t current_gain = GAIN_MID;
+            JigBD_IF_Change_Current_Gain(current_gain);
+            XDIC_Set_Max_Curr_Vref(1000);
+
+            // 1) All Channel Enable
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, 0xFFF);
+                JigBD_IF_Select_Output_Ch(i);
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc_all[i][0] = ADS114S08_Get_ADC_Value();
+            }
+            // 2) Select Channel Enable
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, (1 << i));
+                JigBD_IF_Select_Output_Ch(i);
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc_sel[i][0] = ADS114S08_Get_ADC_Value();
+            }
+            // 3) Display Result
+            print(LOG_INFO, "\r\n[All CH Enable] vs [Select CH Enable]\r\n");
+            for (uint8_t i = 0 ; i < XD_CH_SIZE ; ++i)
+            {
+                float iout_avg_all = JigBD_IF_Convert_Adc_To_Current(iout_adc_all[i][0], current_gain);
+                float iout_avg_sel = JigBD_IF_Convert_Adc_To_Current(iout_adc_sel[i][0], current_gain);
+                print(LOG_INFO, "CH[%d] : %.3f vs %.3f\r\n", (i + 1), iout_avg_all, iout_avg_sel);
             }
         }
         else if (Command_is_("reset"))
