@@ -1706,16 +1706,60 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n ICTL_H CH[%d] : %.3f\r\n", i, iout_avg);
             }
         }
-        else if (Command_Param_is_("xd_ch", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_ch", "%d %d", &u32_recv_param[0], &u32_recv_param[1]))
         {
             if (u32_recv_param[0] < (XD_CH_MAX + 1))
             {
-                print(LOG_INFO, "\r\n XD CH - [%u]\r\n", u32_recv_param[0]);
-                MCU_IF_Set_XDIC_Channel(u32_recv_param[0]);
+                if (u32_recv_param[0])
+                {
+                    uint16_t ch_en_val = XDIC_Get_General_Reg(XDIC_ADDR_CHANNEL_ENABLE);
+                    ch_en_val &= ~(1 << (u32_recv_param[0] - 1));
+                    if (u32_recv_param[1] == 1)
+                    {
+                        ch_en_val |= (1 << (u32_recv_param[0] - 1));
+                    }
+                    XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, ch_en_val);
+                }
+                else
+                {
+                    uint16_t ch_en_val = 0xFFF;
+                    XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, ch_en_val);
+                }
             }
             else
             {
                 print(LOG_ERROR, "\r\n Out of CH [%u] [0 - %u]\r\n", u32_recv_param[0], XD_CH_MAX - 1);
+            }
+        }
+        else if (Command_Param_is_("xd_line_delay", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                uint16_t delay_per_ch = 16383U / 4;
+                uint16_t delay_msb_accumulator[2] = {0, };
+                uint16_t delay_ch[4] = {0, };
+
+                for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+                {
+                    delay_ch[ch] = delay_per_ch * ch;
+                    uint16_t delay_lsb = ((delay_ch[ch] & 0x0FFF) >>  0);
+                    uint16_t delay_msb = ((delay_ch[ch] & 0x3000) >> 12);
+
+                    delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+
+                    print(LOG_DEBUG, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, delay_ch[ch], delay_msb, delay_lsb);
+
+                    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+                }
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND, delay_msb_accumulator[0]);
+            }
+            else
+            {
+                for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+                {
+                    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, 0);
+                }
+                XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND, 0);
             }
         }
 /* ----------------- command list - xc ----------------- */
