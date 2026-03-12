@@ -382,6 +382,8 @@ void JigBD_IF_Link_DMA_With_Buffer(void)
 {
     LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)(&(TIM1->CCR1)));
     LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)gn_serialize_tx_buffer);
+
+    MCU_IF_Serializer_Init_Param();
 }
 
 static inline uint16_t Get_Nth_Bit(uint32_t x, int n)

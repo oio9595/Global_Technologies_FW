@@ -219,8 +219,6 @@ int main(void)
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetCounter(TIM3, 0);
 
-    // LL_TIM_EnableCounter(TIM1);
-
     Comm_Init();
 
     LL_mDelay(100);

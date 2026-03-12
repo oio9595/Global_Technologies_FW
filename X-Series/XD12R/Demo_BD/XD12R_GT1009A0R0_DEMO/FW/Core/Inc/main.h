@@ -122,6 +122,24 @@ extern void sys_tick_handler(void);
 
 #define PWM_SWITCH_HI()         PWM_SWITCH_GPIO_Port->BSRR = PWM_SWITCH_Pin <<  0U
 #define PWM_SWITCH_LO()         PWM_SWITCH_GPIO_Port->BSRR = PWM_SWITCH_Pin << 16U
+
+#define VLED_EN_HI()            VLED_EN_GPIO_Port->BSRR = VLED_EN_Pin <<  0U
+#define VLED_EN_LO()            VLED_EN_GPIO_Port->BSRR = VLED_EN_Pin << 16U
+
+#define VLED_R_EN_HI()          VLED_R_EN_GPIO_Port->BSRR = VLED_R_EN_Pin <<  0U
+#define VLED_R_EN_LO()          VLED_R_EN_GPIO_Port->BSRR = VLED_R_EN_Pin << 16U
+
+#define VLED_G_SW_HI()          VLED_G_SW_GPIO_Port->BSRR = VLED_G_SW_Pin <<  0U
+#define VLED_G_SW_LO()          VLED_G_SW_GPIO_Port->BSRR = VLED_G_SW_Pin << 16U
+
+#define VLED_G_OFF_HI()         VLED_G_OFF_GPIO_Port->BSRR = VLED_G_OFF_Pin <<  0U
+#define VLED_G_OFF_LO()         VLED_G_OFF_GPIO_Port->BSRR = VLED_G_OFF_Pin << 16U
+
+#define VLED_B_SW_HI()          VLED_B_SW_GPIO_Port->BSRR = VLED_B_SW_Pin <<  0U
+#define VLED_B_SW_LO()          VLED_B_SW_GPIO_Port->BSRR = VLED_B_SW_Pin << 16U
+
+#define VLED_B_OFF_HI()         VLED_B_OFF_GPIO_Port->BSRR = VLED_B_OFF_Pin <<  0U
+#define VLED_B_OFF_LO()         VLED_B_OFF_GPIO_Port->BSRR = VLED_B_OFF_Pin << 16U
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

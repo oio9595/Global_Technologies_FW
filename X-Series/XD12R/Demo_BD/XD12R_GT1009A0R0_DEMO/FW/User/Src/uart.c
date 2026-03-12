@@ -263,10 +263,12 @@ void Comm_UART_Task(void)
         else if (Command_is_("led_brightness_up"))
         {
             LED_Select_Brightness_Up();
+            Print(LOG_INFO, "\r\n OK \r\n");
         }
         else if (Command_is_("led_brightness_down"))
         {
             LED_Select_Brightness_Down();
+            Print(LOG_INFO, "\r\n OK \r\n");
         }
         else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0])) // LED_PATTERN_MAX
         {

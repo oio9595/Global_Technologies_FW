@@ -53,6 +53,44 @@ static uint8_t gn_xdic_read_addr;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN */
+static inline void Vled_R_ON(void)
+{
+    VLED_R_EN_HI();
+}
+
+static inline void Vled_R_Off(void)
+{
+    VLED_R_EN_LO();
+}
+
+static inline void Vled_G_ON(void)
+{
+    VLED_EN_HI();
+    VLED_G_SW_HI();
+    VLED_G_OFF_HI();
+}
+
+static inline void Vled_G_Off(void)
+{
+    VLED_EN_LO();
+    VLED_G_SW_LO();
+    VLED_G_OFF_LO();
+}
+
+static inline void Vled_B_ON(void)
+{
+    VLED_EN_HI();
+    VLED_B_SW_HI();
+    VLED_B_OFF_HI();
+}
+
+static inline void Vled_B_Off(void)
+{
+    VLED_EN_LO();
+    VLED_B_SW_LO();
+    VLED_B_OFF_LO();
+}
+
 void Svsync_Timer_Start(void)
 {
     gn_svsync_count = 0;
@@ -79,11 +117,15 @@ void Svsync_Update_Handler(void)
 
     if (phase == SVSYNC_PHASE_GREEN) // For Green, change frequency
     {
+        Vled_B_Off();
+        Vled_G_ON();
         uint32_t period = TIM3_CALC_PERIOD(SVSYNC_GREEN_FREQ); // 50% of 1-sub frame
         LL_TIM_SetAutoReload(TIM3, period);
     }
     else if (phase == SVSYNC_PHASE_BLUE) // For Blue, change frequency
     {
+        Vled_G_Off();
+        Vled_B_ON();
         uint32_t period = TIM3_CALC_PERIOD(SVSYNC_BLUE_FREQ); // 50% of 1-sub frame
         LL_TIM_SetAutoReload(TIM3, period);
         if (gn_svsync_count == SVSYNC_TOTAL_CYCLE)
@@ -105,6 +147,7 @@ void Vsync_Timer_Start(void)
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
+    Vled_R_ON();
 }
 
 void Vsync_Timer_Stop(void)

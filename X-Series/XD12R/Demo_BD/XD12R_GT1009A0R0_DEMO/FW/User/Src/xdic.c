@@ -65,7 +65,9 @@
 #define XDIC_SV_MASK_SIZE           (570)
 
 #define XDIC_MCLK_LOCK_CNT          (450000U)
-#define XDIC_VREF                   (4095U)
+#define XDIC_VREF_R                 (4095U)
+#define XDIC_VREF_G                 (4095U)
+#define XDIC_VREF_B                 (4095U)
 
 #define XDIC_CHANNEL_ENABLE_MAX     ((1U << XDIC_CH_SIZE) - 1)
 /* USER CODE END PD */
@@ -355,13 +357,13 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r0A.max_curr_level3 = gt_xdic_dev_max_curr_level[2];
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF1 :
-                gt_xdic_general_regs._r0B.max_curr_vref = XDIC_VREF;
+                gt_xdic_general_regs._r0B.max_curr_vref = XDIC_VREF_R;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF2 :
-                gt_xdic_general_regs._r0C.max_curr_vref = XDIC_VREF;
+                gt_xdic_general_regs._r0C.max_curr_vref = XDIC_VREF_G;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF3 :
-                gt_xdic_general_regs._r0D.max_curr_vref = XDIC_VREF;
+                gt_xdic_general_regs._r0D.max_curr_vref = XDIC_VREF_B;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r14.serial_clk_high = XDIC_SERIAL_CLK_CNT_HIGH;
@@ -413,8 +415,7 @@ void XDIC_Init(void)
     }
     XDIC_Set_Delay_CH();
     XDIC_Dump_All_Registers();
-
-    LED_Select_Brightness(50);
+    LED_Select_Brightness(10U);
 }
 /* USER CODE END */
 /*** end of file ***/
