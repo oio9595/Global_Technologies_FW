@@ -42,7 +42,7 @@
 
 static uint16_t gn_mcu_adc_value;
 
-static uint16_t gn_serialize_tx_buffer[4000] = {0, };
+static uint16_t gn_serialize_tx_buffer[XDIC_LD_TRANS_BITS + 10] = {0, };
 static uint16_t gn_serialize_rx_risingBuffer[400] = {0, };
 static uint16_t gn_serialize_rx_fallingBuffer[400] = {0, };
 
@@ -56,7 +56,7 @@ bool gb_timer_input_capture_activated;
 volatile bool gb_timer_input_capture_done;
 static uint32_t gn_input_capture_cnt[FREQ_IN_IC_LENGTH];
 
-static uint8_t gn_xdic_dimming_channel = 0;
+static uint8_t gn_xdic_dimming_channel;
 
 static uint16_t gn_mcu_serializer_bit_0;
 static uint16_t gn_mcu_serializer_bit_1;
