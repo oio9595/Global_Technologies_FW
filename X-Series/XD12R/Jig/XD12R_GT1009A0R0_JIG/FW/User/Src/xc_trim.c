@@ -150,7 +150,7 @@ void XC_Trim_Task(void)
 
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
@@ -216,7 +216,7 @@ void XC_Trim_Task(void)
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P1);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
             ext_adc_value = ADS114S08_Get_ADC_Value();
             dac_gain_tgt_buff.dac_gain_tgt_p1 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
@@ -225,7 +225,7 @@ void XC_Trim_Task(void)
             XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, XC24_DAC_GAIN_P2);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
             ext_adc_value = ADS114S08_Get_ADC_Value();
             dac_gain_tgt_buff.dac_gain_tgt_p2 = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
@@ -290,7 +290,7 @@ void XC_Trim_Task(void)
                 XC24_Trim_Write_DAC_OFS(i);
                 ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
                 LL_mDelay(1);
-                ADS114S08_Set_Start(1);
+                ADS114S08_Set_Start(1U);
                 ADS114S08_Wait_Done();
 
                 ext_adc_value = ADS114S08_Get_ADC_Value();
@@ -391,7 +391,7 @@ void XC_Trim_Task(void)
         {
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();
@@ -409,7 +409,7 @@ void XC_Trim_Task(void)
 
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
 
             ext_adc_value = ADS114S08_Get_ADC_Value();

@@ -42,47 +42,47 @@ extern "C" {
 
 #include "JigBd_IF.h"
 
-#define ADS114S08_CH_XD_IOUT    (0)
-#define ADS114S08_CH_XC_LDO     (1)
-#define ADS114S08_CH_XC_DAC     (2)
-#define ADS114S08_CH_XD_ICC_P   (3)
-#define ADS114S08_CH_XD_ICC_N   (4)
-#define ADS114S08_CH_XC_ICC_P   (8)
-#define ADS114S08_CH_XC_ICC_N   (9)
+#define ADS114S08_CH_XD_IOUT    (0U)
+#define ADS114S08_CH_XC_LDO     (1U)
+#define ADS114S08_CH_XC_DAC     (2U)
+#define ADS114S08_CH_XD_ICC_P   (3U)
+#define ADS114S08_CH_XD_ICC_N   (4U)
+#define ADS114S08_CH_XC_ICC_P   (8U)
+#define ADS114S08_CH_XC_ICC_N   (9U)
 
-#define ADS114S08_READ_COUNT    (16) /* must be power of 2 */
+#define ADS114S08_READ_COUNT    (16U) /* must be power of 2 */
 
-#define ADS114S_VREF            (5000)  /* 5V */
-#define ADS114S_RESOLUTION      ((1U << (16 - 1)) - 1)  /* 16bit */
+#define ADS114S_VREF            (5000U)  /* 5V */
+#define ADS114S_RESOLUTION      ((1U << (16 - 1)) - 1U)  /* 16bit */
 #define ADC_VOLT_PER_STEP       ((double)ADS114S_VREF / ADS114S_RESOLUTION)
 
-#define ADS_AIN0                (0x00)
-#define ADS_AIN1                (0x01)
-#define ADS_AIN2                (0x02)
-#define ADS_AIN3                (0x03)
-#define ADS_AIN4                (0x04)
-#define ADS_AIN5                (0x05)
-#define ADS_AIN6                (0x06)
-#define ADS_AIN7                (0x07)
-#define ADS_AIN8                (0x08)
-#define ADS_AIN9                (0x09)
-#define ADS_AIN10               (0x0A)
-#define ADS_AIN11               (0x0B)
-#define ADS_AINCOM              (0x0C)
+#define ADS_AIN0                (0x00U)
+#define ADS_AIN1                (0x01U)
+#define ADS_AIN2                (0x02U)
+#define ADS_AIN3                (0x03U)
+#define ADS_AIN4                (0x04U)
+#define ADS_AIN5                (0x05U)
+#define ADS_AIN6                (0x06U)
+#define ADS_AIN7                (0x07U)
+#define ADS_AIN8                (0x08U)
+#define ADS_AIN9                (0x09U)
+#define ADS_AIN10               (0x0AU)
+#define ADS_AIN11               (0x0BU)
+#define ADS_AINCOM              (0x0CU)
 
 /* Commands */
-#define CMD_NOP                 (0x00)
-#define CMD_WAKEUP              (0x02) /* or 0x03 */
-#define CMD_POWER_DOWN          (0x04) /* or 0x05 */
-#define CMD_RESET               (0x06) /* or 0x07 */
-#define CMD_START               (0x08) /* or 0x09 */
-#define CMD_STOP                (0x0A) /* or 0x0B */
-#define CMD_SYOCAL              (0x16) /* System offset calibration */
-#define CMD_SYGCAL              (0x17) /* System gain calibration */
-#define CMD_SFOCAL              (0x19) /* Self offset calibration */
-#define CMD_RDATA               (0x12) /* or 0x13 */
-#define CMD_RREG                (0x20) /* Read nnnnn registers starting at address rrrrr */
-#define CMD_WREG                (0x40) /* Write nnnnn registers starting at address rrrrr */
+#define CMD_NOP                 (0x00U)
+#define CMD_WAKEUP              (0x02U) /* or 0x03 */
+#define CMD_POWER_DOWN          (0x04U) /* or 0x05 */
+#define CMD_RESET               (0x06U) /* or 0x07 */
+#define CMD_START               (0x08U) /* or 0x09 */
+#define CMD_STOP                (0x0AU) /* or 0x0B */
+#define CMD_SYOCAL              (0x16U) /* System offset calibration */
+#define CMD_SYGCAL              (0x17U) /* System gain calibration */
+#define CMD_SFOCAL              (0x19U) /* Self offset calibration */
+#define CMD_RDATA               (0x12U) /* or 0x13 */
+#define CMD_RREG                (0x20U) /* Read nnnnn registers starting at address rrrrr */
+#define CMD_WREG                (0x40U) /* Write nnnnn registers starting at address rrrrr */
 
 typedef enum tag_REG_ADDR_T
 {
@@ -347,7 +347,7 @@ extern void ADS114S08_Wait_Done(void);
 extern void ADC_DRDY_INT_Handler(void);
 extern uint16_t ADS114S08_Get_ADC_Value(void);
 
-extern double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
+extern float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
 extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain);
 
 #ifdef __cplusplus

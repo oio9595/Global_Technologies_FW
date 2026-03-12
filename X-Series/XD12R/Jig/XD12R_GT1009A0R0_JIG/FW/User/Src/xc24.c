@@ -16,12 +16,12 @@
 #define XC24_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xc24_general_regs.reg }
 #define XC24_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xc24_mirror_regs.reg }
 
-#define XC_SPI_TIMEOUT_MS           (10)
+#define XC_SPI_TIMEOUT_MS           (10U)
 
-#define XC24_OTP_PROTECT_DISABLE    (0xA5A)
-#define XC24_OTP_PROTECT_ENABLE     (0x5A5)
+#define XC24_OTP_PROTECT_DISABLE    (0xA5AU)
+#define XC24_OTP_PROTECT_ENABLE     (0x5A5U)
 
-#define XC_USE_FULL_CHANNEL         (0)
+#define XC_USE_FULL_CHANNEL         (0U)
 
 static SPI_TypeDef *g_hSPIx;
 
@@ -420,7 +420,7 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r11.local_wr_pointer_rst = 1;
                 break;
             case XC24_ADDR_FAULT_AUTO_READ_TIMER :
-                gt_xc24_general_regs._r12.fault_auto_rd_timer = 0xFFFF;
+                gt_xc24_general_regs._r12.fault_auto_rd_timer = 0xFFFFU;
                 break;
             case XC24_ADDR_FAULT_AUTO_READ_EVENT :
                 gt_xc24_general_regs._r13.fault_auto_rd_interval = 1;
@@ -722,19 +722,19 @@ uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 void XC24_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24] = {0,};
+    uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24U] = {0,};
 
     cmd_format.code = CMD_CODE_LD_TRANS;
     cmd_format.addr = 0;
     cmd_format.size = XDIC_DAISY_SIZE * XDIC_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint16_t i = 0 ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24) ; ++i)
+    for (uint16_t i = 0 ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24U) ; ++i)
     {
         tx_buffer[i + 1] = in_LD_data;
     }
 
-    SPI_Write(g_hSPIx, tx_buffer, 1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24);
+    SPI_Write(g_hSPIx, tx_buffer, 1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE * 24U);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 #else

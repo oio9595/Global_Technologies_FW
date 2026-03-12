@@ -18,22 +18,22 @@
 #define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
 #define XDIC_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xdic_mirror_regs.reg }
 
-#define XDIC_REG_GENERAL            (0)
-#define XDIC_REG_MIRROR             (1)
+#define XDIC_REG_GENERAL            (0U)
+#define XDIC_REG_MIRROR             (1U)
 
-#define XDIC_OTP_PROTECT_DISABLE    (0xA5A)
-#define XDIC_OTP_PROTECT_ENABLE     (0x5A5)
+#define XDIC_OTP_PROTECT_DISABLE    (0xA5AU)
+#define XDIC_OTP_PROTECT_ENABLE     (0x5A5U)
 
-#define XDIC_LD_MODE_NORMAL         (0)
-#define XDIC_LD_MODE_X8             (1)
+#define XDIC_LD_MODE_NORMAL         (0U)
+#define XDIC_LD_MODE_X8             (1U)
 
-#define XDIC_LD_DIR_HEAD_SHIFT      (0)
-#define XDIC_LD_DIR_TAIL_SHIFT      (1)
+#define XDIC_LD_DIR_HEAD_SHIFT      (0U)
+#define XDIC_LD_DIR_TAIL_SHIFT      (1U)
 
-#define XDIC_LD_TYPE_NOP            (0) // NOP
-#define XDIC_LD_TYPE_1              (1) // RGB, 12CH
-#define XDIC_LD_TYPE_2              (2) // R/GB, 6CH
-#define XDIC_LD_TYPE_3              (3) // MONO, 12CH
+#define XDIC_LD_TYPE_NOP            (0U) // NOP
+#define XDIC_LD_TYPE_1              (1U) // RGB, 12CH
+#define XDIC_LD_TYPE_2              (2U) // R/GB, 6CH
+#define XDIC_LD_TYPE_3              (3U) // MONO, 12CH
 
 #define XDIC_PWM_RES_12BIT          (0)
 #define XDIC_PWM_RES_14BIT          (1)
@@ -50,8 +50,8 @@
 #define XDIC_MCLK_FLL_ENABLE        (0)
 #define XDIC_MCLK_FLL_DISABLE       (1)
 
-#define XDIC_MCLK_LSB_MASK          (0x000FFFU) //LSB 12-bit
-#define XDIC_MCLK_MSB_MASK          (0x1FF000U) //MSB  9-bit
+#define XDIC_MCLK_LSB_MASK          (0xFFFU) //LSB 12-bit
+#define XDIC_MCLK_MSB_MASK          (0x1FFU) //MSB  9-bit
 
 #define XDIC_WR_PWM_DIV_VREF        (0xAAAU)
 #define XDIC_WR_OTHERS              (0x555U)
@@ -60,55 +60,55 @@
 #define XDIC_PWM_DIV_GREEN          (6U)
 #define XDIC_PWM_DIV_BLUE           (6U)
 
-#define XDIC_V_MASK_SIZE            (410)
-#define XDIC_SV_MASK_SIZE           (570)
+#define XDIC_V_MASK_SIZE            (410U)
+#define XDIC_SV_MASK_SIZE           (570U)
 
 #define XDIC_MCLK_LOCK_CNT          (450000U)
 #define XDIC_VREF                   (4095U)
 
-#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XDIC_CH_SIZE) - 1)
+#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XDIC_CH_SIZE) - 1U)
 
 #define XDIC_R01_DAC_A_OFS_SHIFT    (0U)
-#define XDIC_R01_DAC_A_OFS_MASK     (0x7F << XDIC_R01_DAC_A_OFS_SHIFT)
+#define XDIC_R01_DAC_A_OFS_MASK     ((uint16_t)(0x7FU << XDIC_R01_DAC_A_OFS_SHIFT))
 
 #define XDIC_R01_DAC_B_OFS_SHIFT    (7U)
-#define XDIC_R01_DAC_B_OFS_MASK     (0x1F << XDIC_R01_DAC_B_OFS_SHIFT)
+#define XDIC_R01_DAC_B_OFS_MASK     ((uint16_t)(0x1FU << XDIC_R01_DAC_B_OFS_SHIFT))
 
 #define XDIC_R02_BGR_TC_SHIFT       (0U)
-#define XDIC_R02_BGR_TC_MASK        (0x1F << XDIC_R02_BGR_TC_SHIFT)
+#define XDIC_R02_BGR_TC_MASK        ((uint16_t)(0x1FU << XDIC_R02_BGR_TC_SHIFT))
 
 #define XDIC_R02_IREF_CTL_SHIFT     (5U)
-#define XDIC_R02_IREF_CTL_MASK      (0x1F << XDIC_R02_IREF_CTL_SHIFT)
+#define XDIC_R02_IREF_CTL_MASK      ((uint16_t)(0x1FU << XDIC_R02_IREF_CTL_SHIFT))
 
 #define XDIC_R02_DAC_B_OFS_SHIFT    (10U)
-#define XDIC_R02_DAC_B_OFS_MASK     (0x03 << XDIC_R02_DAC_B_OFS_SHIFT)
+#define XDIC_R02_DAC_B_OFS_MASK     ((uint16_t)(0x03U << XDIC_R02_DAC_B_OFS_SHIFT))
 
 #define XDIC_R03_OSC_RCTL_SHIFT     (0U)
-#define XDIC_R03_OSC_RCTL_MASK      (0x0F << XDIC_R03_OSC_RCTL_SHIFT)
+#define XDIC_R03_OSC_RCTL_MASK      ((uint16_t)(0x0FU << XDIC_R03_OSC_RCTL_SHIFT))
 
 #define XDIC_R03_LDO_DAC_CTL_SHIFT  (11U)
-#define XDIC_R03_LDO_DAC_CTL_MASK   (0x01 << XDIC_R03_LDO_DAC_CTL_SHIFT)
+#define XDIC_R03_LDO_DAC_CTL_MASK   ((uint16_t)(0x01U << XDIC_R03_LDO_DAC_CTL_SHIFT))
 
 #define XDIC_R04_LDO_CTL_SHIFT      (0U)
-#define XDIC_R04_LDO_CTL_MASK       (0x0F << XDIC_R04_LDO_CTL_SHIFT)
+#define XDIC_R04_LDO_CTL_MASK       ((uint16_t)(0x0FU << XDIC_R04_LDO_CTL_SHIFT))
 
 #define XDIC_R04_LDO_OSC_CTL_SHIFT  (4U)
-#define XDIC_R04_LDO_OSC_CTL_MASK   (0x0F << XDIC_R04_LDO_OSC_CTL_SHIFT)
+#define XDIC_R04_LDO_OSC_CTL_MASK   ((uint16_t)(0x0FU << XDIC_R04_LDO_OSC_CTL_SHIFT))
 
 #define XDIC_R04_LDO_DAC_CTL_SHIFT  (8U)
-#define XDIC_R04_LDO_DAC_CTL_MASK   (0x0F << XDIC_R04_LDO_DAC_CTL_SHIFT)
+#define XDIC_R04_LDO_DAC_CTL_MASK   ((uint16_t)(0x0FU << XDIC_R04_LDO_DAC_CTL_SHIFT))
 
 #define XDIC_R09_VDD_OV_SHIFT       (9U)
-#define XDIC_R09_VDD_OV_MASK        (0x01 << XDIC_R09_VDD_OV_SHIFT)
+#define XDIC_R09_VDD_OV_MASK        (0x01U)
 
 #define XDIC_R09_VDD_UV_SHIFT       (8U)
-#define XDIC_R09_VDD_UV_MASK        (0x01 << XDIC_R09_VDD_UV_SHIFT)
+#define XDIC_R09_VDD_UV_MASK        (0x01U)
 
 #define XDIC_R09_LDO_OV_SHIFT       (7U)
-#define XDIC_R09_LDO_OV_MASK        (0x01 << XDIC_R09_LDO_OV_SHIFT)
+#define XDIC_R09_LDO_OV_MASK        (0x01U)
 
 #define XDIC_R09_LDO_UV_SHIFT       (6U)
-#define XDIC_R09_LDO_UV_MASK        (0x01 << XDIC_R09_LDO_UV_SHIFT)
+#define XDIC_R09_LDO_UV_MASK        (0x01U)
 
 typedef enum tag_XDIC_SUBSTITUTE_VALUE_ORDER_T
 {
@@ -288,9 +288,9 @@ static float gf_vsync_out;
 
 static uint32_t gn_xdic_mclk_lock_cnt;
 
-static dev_max_curr_level_t gt_xdic_dev_max_curr_level[3] = { DEV_MAX_CURR_LEVEL_4mA, };
-static short_level_t gt_xdic_short_level[3] = { SHORT_LEVEL_3V5, };
-static fb_level_t gt_xdic_fb_level[3] = { FB_LEVEL_0V45, };
+static dev_max_curr_level_t gt_xdic_dev_max_curr_level[3] = { 0 };
+static short_level_t gt_xdic_short_level[3] = { 0 };
+static fb_level_t gt_xdic_fb_level[3] = { 0 };
 
 static void XDIC_Set_Delay_CH(void);
 
@@ -309,7 +309,7 @@ static void XDIC_Set_Writeable_Type(bool reg_type)
 
 static void XDIC_Set_Register_Type(uint8_t reg_type)
 {
-    if (reg_type != XDIC_REG_GENERAL && reg_type != XDIC_REG_MIRROR)
+    if ((reg_type != XDIC_REG_GENERAL) && (reg_type != XDIC_REG_MIRROR))
     {
         print(LOG_ERROR, "ERROR: %s - Invalid Register Type !!\r\n", __func__);
         return;
@@ -339,9 +339,9 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
-        //print(LOG_INFO, "Write General Addr 0x%02X, Data 0x%04X             \r\n", addr, data);
+        //print(LOG_INFO, "Write General Addr 0x%02X, Data 0x%04X\r\n", addr, data);
         XDIC_Set_Register_Type(XDIC_REG_GENERAL);
-        if (/*addr == 0x02 || */addr == 0x03 || addr == 0x04 || addr == 0x0B || addr == 0x0C || addr == 0x0D)
+        if (/*(addr == 0x02U) || */(addr == 0x03U) || (addr == 0x04U) || (addr == 0x0BU) || (addr == 0x0CU) || (addr == 0x0DU))
         {
             XDIC_Set_Writeable_Type(true);
             *((uint16_t*)(map->reg_ptr)) = data;
@@ -362,7 +362,7 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
 
 uint16_t XDIC_Read_General_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFF;
+    uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
@@ -381,7 +381,7 @@ uint16_t XDIC_Read_General_Reg(uint8_t addr)
 
 uint16_t XDIC_Get_General_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFF;
+    uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
@@ -426,7 +426,7 @@ void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data)
 
 uint16_t XDIC_Read_Mirror_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFF;
+    uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(addr);
     if (map)
     {
@@ -445,7 +445,7 @@ uint16_t XDIC_Read_Mirror_Reg(uint8_t addr)
 
 uint16_t XDIC_Get_Mirror_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFF;
+    uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_Mirror_Map_Pointer(addr);
     if (map)
     {
@@ -490,8 +490,8 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
                 gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_LDO_1V5] = in_sub_val;
                 reg_form_value = in_sub_val;
 
-                uint16_t ldo_dac_ctl_lsb = ((reg_form_value & 0x0F) >> 0);
-                uint16_t ldo_dac_ctl_msb = ((reg_form_value & 0x10) >> 4);
+                uint16_t ldo_dac_ctl_lsb = ((reg_form_value >> 0U) & 0x0FU);
+                uint16_t ldo_dac_ctl_msb = ((reg_form_value >> 4U) & 0x01U);
 
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_DAC_CTL_OSC_RCTL);
                 reg_val &= ~XDIC_R03_LDO_DAC_CTL_MASK;
@@ -522,7 +522,7 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
                     reg_form_value = in_sub_val - 8;
                 }
 #endif
-                reg_form_value = in_sub_val ^ 8;
+                reg_form_value = in_sub_val ^ 8U;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_LDO_CTL);
                 reg_val &= ~XDIC_R04_LDO_CTL_MASK;
                 reg_val |= (reg_form_value << XDIC_R04_LDO_CTL_SHIFT);
@@ -538,15 +538,15 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             {
                 gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_A_OFS] = in_sub_val;
 
-                if (in_sub_val < 64)
+                if (in_sub_val < 64U)
                 {
-                    reg_form_value = 127 - in_sub_val;
+                    reg_form_value = 127U - in_sub_val;
                 }
                 else
                 {
-                    reg_form_value = in_sub_val - 64;
+                    reg_form_value = in_sub_val - 64U;
                 }
-                //reg_form_value = in_sub_val ^ 64;
+                //reg_form_value = in_sub_val ^ 64U;
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
                 reg_val &= ~XDIC_R01_DAC_A_OFS_MASK;
                 reg_val |= (reg_form_value << XDIC_R01_DAC_A_OFS_SHIFT);
@@ -561,17 +561,17 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             else
             {
                 gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_DAC_B_OFS] = in_sub_val;
-                if (in_sub_val < 64)
+                if (in_sub_val < 64U)
                 {
-                    reg_form_value = 127 - in_sub_val;
+                    reg_form_value = 127U - in_sub_val;
                 }
                 else
                 {
-                    reg_form_value = in_sub_val - 64;
+                    reg_form_value = in_sub_val - 64U;
                 }
-                //reg_form_value = in_sub_val ^ 64;
-                uint16_t dac_b_ofs_lsb = ((reg_form_value & 0x1F) >> 0);
-                uint16_t dac_b_ofs_msb = ((reg_form_value & 0x60) >> 5);
+                //reg_form_value = in_sub_val ^ 64U;
+                uint16_t dac_b_ofs_lsb = ((reg_form_value >> 0U) & 0x1FU);
+                uint16_t dac_b_ofs_msb = ((reg_form_value >> 5U) & 0x03U);
 
                 reg_val = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_DAC_OFS);
                 reg_val &= ~XDIC_R01_DAC_B_OFS_MASK;
@@ -621,8 +621,8 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num * 2] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + ch_num * 2, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + (ch_num * 2U)] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_01 + (ch_num * 2U), in_sub_val);
             }
             break;
         case XD_TRIM_CH_GAIN_EVEN:
@@ -632,8 +632,8 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + ch_num * 2] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_02 + ch_num * 2, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + (ch_num * 2U)] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_GAIN_CH_02 + (ch_num * 2U), in_sub_val);
             }
             break;
         case XD_TRIM_CH_OFS_ODD:
@@ -643,8 +643,8 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num * 2] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + ch_num * 2, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + (ch_num * 2U)] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_01 + (ch_num * 2U), in_sub_val);
             }
             break;
         case XD_TRIM_CH_OFS_EVEN:
@@ -654,8 +654,8 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
             }
             else
             {
-                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + ch_num * 2] = in_sub_val;
-                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_02 + ch_num * 2, in_sub_val);
+                gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + (ch_num * 2U)] = in_sub_val;
+                XDIC_Write_Mirror_Reg(XDIC_MIRROR_ADDR_OFS_CH_02 + (ch_num * 2U), in_sub_val);
             }
             break;
     }
@@ -663,7 +663,7 @@ void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_
 
 uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
-    uint16_t rtn_val = 0xFFFF;
+    uint16_t rtn_val = 0xFFFFU;
     switch(in_trim_mode)
     {
         case XD_TRIM_IBN_2uA:
@@ -688,16 +688,16 @@ uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t i
             rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OSC];
             break;
         case XD_TRIM_CH_GAIN_ODD:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + ch_num * 2];
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH01 + (ch_num * 2U)];
             break;
         case XD_TRIM_CH_GAIN_EVEN:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + ch_num * 2];
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_GAIN_CH02 + (ch_num * 2U)];
             break;
         case XD_TRIM_CH_OFS_ODD:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + ch_num * 2];
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH01 + (ch_num * 2U)];
             break;
         case XD_TRIM_CH_OFS_EVEN:
-            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + ch_num * 2];
+            rtn_val = gn_xdic_trim_substitute_value[XDIC_SUBSTITUTE_VALUE_ORDER_OFS_CH02 + (ch_num * 2U)];
             break;
     }
 
@@ -706,7 +706,7 @@ uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t i
 
 uint16_t XDIC_Get_Substitute_Value_Limit_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode)
 {
-    uint16_t rtn_val = 0xFFFF;
+    uint16_t rtn_val = 0xFFFFU;
     switch(in_trim_mode)
     {
     case XD_TRIM_IBN_2uA:
@@ -819,7 +819,7 @@ void XDIC_Init(void)
     JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
     JigBD_IF_XD_VCC_EN(PWR_ON);
 
-    LL_mDelay(100);
+    LL_mDelay(100U);
 
     XDIC_Param_Init();
 
@@ -848,11 +848,11 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r02.sv_no = SVSYNC_SIZE;
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_1_2 :
-                gt_xdic_general_regs._r03.fpwm_div1 = (XDIC_PWM_DIV_RED & 0xFF);
-                gt_xdic_general_regs._r03.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0x0F) >> 0U);
+                gt_xdic_general_regs._r03.fpwm_div1 = (XDIC_PWM_DIV_RED & 0xFFU);
+                gt_xdic_general_regs._r03.fpwm_div2 = ((XDIC_PWM_DIV_GREEN >> 0U) & 0x0FU);
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_2_3 :
-                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN & 0xF0) >> 4U);
+                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN >> 4U ) & 0x0FU);
                 gt_xdic_general_regs._r04.fpwm_div3 = XDIC_PWM_DIV_BLUE;
                 break;
             case XDIC_ADDR_CHANNEL_ENABLE :
@@ -899,34 +899,34 @@ void XDIC_Init(void)
                 break;
             case XDIC_ADDR_SV_MASK :
                 gt_xdic_general_regs._r17.sv_mask = XDIC_SV_MASK_SIZE;
-                gt_xdic_general_regs._r17.sv_mask_en = 1;
+                gt_xdic_general_regs._r17.sv_mask_en = 1U;
                 break;
             case XDIC_ADDR_FLL_CONTROL_1 :
-                gt_xdic_general_regs._r1A.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_LSB_MASK) >>  0U);
+                gt_xdic_general_regs._r1A.fllcnt = ((gn_xdic_mclk_lock_cnt >>  0U) & XDIC_MCLK_LSB_MASK);
                 break;
             case XDIC_ADDR_FLL_CONTROL_2 :
-                gt_xdic_general_regs._r1B.fllcnt = ((gn_xdic_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12U);
-                gt_xdic_general_regs._r1B.fll_range = 3;
-                gt_xdic_general_regs._r1B.fll_en = 1;
+                gt_xdic_general_regs._r1B.fllcnt = ((gn_xdic_mclk_lock_cnt >> 12U) & XDIC_MCLK_MSB_MASK);
+                gt_xdic_general_regs._r1B.fll_range = 3U;
+                gt_xdic_general_regs._r1B.fll_en = 1U;
                 break;
             case XDIC_ADDR_CHOP_EN :
-                gt_xdic_general_regs._r20.chop_bgr_en = 1;
-                gt_xdic_general_regs._r20.chop_dac_en = 1;
-                gt_xdic_general_regs._r20.chop_iref_en = 1;
-                gt_xdic_general_regs._r20.chop_osc_en = 1;
-                gt_xdic_general_regs._r20.chop_oscldo_en = 1;
-                gt_xdic_general_regs._r20.chop_drv_en = 1;
+                gt_xdic_general_regs._r20.chop_bgr_en = 1U;
+                gt_xdic_general_regs._r20.chop_dac_en = 1U;
+                gt_xdic_general_regs._r20.chop_iref_en = 1U;
+                gt_xdic_general_regs._r20.chop_osc_en = 1U;
+                gt_xdic_general_regs._r20.chop_oscldo_en = 1U;
+                gt_xdic_general_regs._r20.chop_drv_en = 1U;
                 break;
             case XDIC_ADDR_TEMP :
-                gt_xdic_general_regs._r21.ofs_temp = 8;
-                gt_xdic_general_regs._r21.vdd_sel = 0;
-                gt_xdic_general_regs._r21.dac_rng = 1;
-                gt_xdic_general_regs._r21.flt_ctl = 1;
-                gt_xdic_general_regs._r21.flt_gain = 2;
+                gt_xdic_general_regs._r21.ofs_temp = 8U;
+                gt_xdic_general_regs._r21.vdd_sel = 0U;
+                gt_xdic_general_regs._r21.dac_rng = 1U;
+                gt_xdic_general_regs._r21.flt_ctl = 1U;
+                gt_xdic_general_regs._r21.flt_gain = 2U;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
-                gt_xdic_general_regs._r23.osc_fll_man = 0x08;
-                gt_xdic_general_regs._r23.osc_fll_man_e = 0;
+                gt_xdic_general_regs._r23.osc_fll_man = 0x08U;
+                gt_xdic_general_regs._r23.osc_fll_man_e = 0U;
                 break;
             default :
                 continue;
@@ -956,7 +956,7 @@ void XDIC_Init(void)
 
 static void XDIC_Trim_Param_Init(void)
 {
-    for (uint8_t i = 0 ; i < 3 ; ++i)
+    for (uint8_t i = 0U ; i < 3U ; ++i)
     {
         gt_xdic_fb_level[i] = FB_LEVEL_0V45;
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
@@ -973,7 +973,7 @@ void XDIC_Trim_Init(void)
     JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
     JigBD_IF_XD_VCC_EN(PWR_ON);
 
-    LL_mDelay(100);
+    LL_mDelay(100U);
 
     XDIC_Trim_Param_Init();
 
@@ -1009,35 +1009,35 @@ void XDIC_Trim_Init(void)
                 gt_xdic_general_regs._r0A.max_curr_level3 = gt_xdic_dev_max_curr_level[2];
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF1 :
-                gt_xdic_general_regs._r0B.max_curr_vref = 0;
+                gt_xdic_general_regs._r0B.max_curr_vref = 0U;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF2 :
-                gt_xdic_general_regs._r0C.max_curr_vref = 0;
+                gt_xdic_general_regs._r0C.max_curr_vref = 0U;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF3 :
-                gt_xdic_general_regs._r0D.max_curr_vref = 0;
+                gt_xdic_general_regs._r0D.max_curr_vref = 0U;
                 break;
             case XDIC_ADDR_SERIAL_BAUDRATE :
                 gt_xdic_general_regs._r14.serial_clk_high = XDIC_SERIAL_CLK_CNT_HIGH;
                 gt_xdic_general_regs._r14.serial_clk_low = XDIC_SERIAL_CLK_CNT_LOW;
                 break;
             case XDIC_ADDR_CHOP_EN :
-                gt_xdic_general_regs._r20.chop_bgr_en = 1;
-                gt_xdic_general_regs._r20.chop_dac_en = 1;
-                gt_xdic_general_regs._r20.chop_iref_en = 1;
-                gt_xdic_general_regs._r20.chop_osc_en = 1;
-                gt_xdic_general_regs._r20.chop_oscldo_en = 1;
-                gt_xdic_general_regs._r20.chop_drv_en = 1;
+                gt_xdic_general_regs._r20.chop_bgr_en = 1U;
+                gt_xdic_general_regs._r20.chop_dac_en = 1U;
+                gt_xdic_general_regs._r20.chop_iref_en = 1U;
+                gt_xdic_general_regs._r20.chop_osc_en = 1U;
+                gt_xdic_general_regs._r20.chop_oscldo_en = 1U;
+                gt_xdic_general_regs._r20.chop_drv_en = 1U;
                 break;
             case XDIC_ADDR_TEMP :
-                gt_xdic_general_regs._r21.ofs_temp = 8;
-                gt_xdic_general_regs._r21.vdd_sel = 0;
-                gt_xdic_general_regs._r21.dac_rng = 1;
-                gt_xdic_general_regs._r21.flt_ctl = 1;
-                gt_xdic_general_regs._r21.flt_gain = 2;
+                gt_xdic_general_regs._r21.ofs_temp = 8U;
+                gt_xdic_general_regs._r21.vdd_sel = 0U;
+                gt_xdic_general_regs._r21.dac_rng = 1U;
+                gt_xdic_general_regs._r21.flt_ctl = 1U;
+                gt_xdic_general_regs._r21.flt_gain = 2U;
                 break;
             case XDIC_ADDR_OTP_OP_MODE :
-                gt_xdic_general_regs._r3F.test_en = 1;
+                gt_xdic_general_regs._r3F.test_en = 1U;
                 break;
             default :
                 continue;
@@ -1069,9 +1069,11 @@ void XDIC_Trim_Init(void)
 /* ================================================================================================================================================= */
 static void XDIC_Set_Delay_CH(void)
 {
-    for (uint8_t ch = 0 ; ch < (XDIC_CH_SIZE / 2) ; ++ch)
+    for (uint8_t ch = 0U ; ch < (XDIC_CH_SIZE / 2U) ; ++ch)
     {
-        uint16_t temp_delay = (((ch * 4 + 2) << 5U) | ((ch * 4 + 0) << 0U));
+        uint16_t channel_odd = (uint16_t)(((ch * 4U) + 0U) << 0U);
+        uint16_t channel_even = (uint16_t)(((ch * 4U) + 2U) << 5U);
+        uint16_t temp_delay = (uint16_t)(channel_even | channel_odd);
         XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01_02 + ch, temp_delay);
     }
 }
@@ -1275,8 +1277,8 @@ static void XDIC_Set_OSC_Manual_Enable(bool en)
 
 static void XDIC_Set_OSC_Manual(uint16_t osc_manual)
 {
-    uint16_t osc_manual_lsb = ((osc_manual & 0x0FFF) >>  0);
-    uint16_t osc_manual_msb = ((osc_manual & 0xF000) >> 12);
+    uint16_t osc_manual_lsb = ((osc_manual >>  0U) & 0xFFFU);
+    uint16_t osc_manual_msb = ((osc_manual >> 12U) & 0x00FU);
 
     gt_xdic_general_regs._r22.osc_fll_man = osc_manual_lsb;
     gt_xdic_general_regs._r23.osc_fll_man = osc_manual_msb;
@@ -1568,8 +1570,8 @@ void XDIC_Trim_Partial_OSC(void)
 
 void XDIC_Trim_Partial_CH_GAIN(void)
 {
-    uint16_t iout_adc[XDIC_CH_SIZE][2] = {0, };
-    float iout_float[XDIC_CH_SIZE][2] = {0, };
+    uint16_t iout_adc[XDIC_CH_SIZE][2] = {{0}};
+    float iout_float[XDIC_CH_SIZE][2] = {{0.0f}};
     current_gain_t current_gain = GAIN_HIGH;
 
     XDIC_Trim_Init_CH_GAIN_ODD();
@@ -1580,13 +1582,13 @@ void XDIC_Trim_Partial_CH_GAIN(void)
     {
         JigBD_IF_Select_Output_Ch(i);
 
-        XDIC_Set_Max_Curr_Vref(1500); // XDIC_GAIN_P1
-        ADS114S08_Set_Start(1);
+        XDIC_Set_Max_Curr_Vref(1500U); // XDIC_GAIN_P1
+        ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][0] = ADS114S08_Get_ADC_Value();
 
-        XDIC_Set_Max_Curr_Vref(300); // XDIC_GAIN_P2
-        ADS114S08_Set_Start(1);
+        XDIC_Set_Max_Curr_Vref(300U); // XDIC_GAIN_P2
+        ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][1] = ADS114S08_Get_ADC_Value();
 
@@ -1600,8 +1602,8 @@ void XDIC_Trim_Partial_CH_GAIN(void)
 
 void XDIC_Trim_Partial_CH_OFS(void)
 {
-    uint16_t iout_adc[XDIC_CH_SIZE][2] = {0, };
-    float iout_float[XDIC_CH_SIZE][2] = {0.0f, };
+    uint16_t iout_adc[XDIC_CH_SIZE][2] = {{0}};
+    float iout_float[XDIC_CH_SIZE][2] = {{0.0f}};
     current_gain_t current_gain = GAIN_MID;
 
     XDIC_Trim_Init_CH_OFS_ODD();
@@ -1612,13 +1614,13 @@ void XDIC_Trim_Partial_CH_OFS(void)
     {
         JigBD_IF_Select_Output_Ch(i);
 
-        XDIC_Set_Max_Curr_Vref(200); // XDIC_OFS_P1
-        ADS114S08_Set_Start(1);
+        XDIC_Set_Max_Curr_Vref(200U); // XDIC_OFS_P1
+        ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][0] = ADS114S08_Get_ADC_Value();
 
-        XDIC_Set_Max_Curr_Vref(400); // XDIC_OFS_P2
-        ADS114S08_Set_Start(1);
+        XDIC_Set_Max_Curr_Vref(400U); // XDIC_OFS_P2
+        ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][1] = ADS114S08_Get_ADC_Value();
 
@@ -1632,27 +1634,27 @@ void XDIC_Trim_Partial_CH_OFS(void)
 
 void XDIC_Trim_Partial_UVOV_1P5(void)
 {
-    uint16_t ldo_ov = 0xFFFF;
-    uint16_t ldo_uv = 0xFFFF;
+    uint16_t ldo_ov = 0xFFFFU;
+    uint16_t ldo_uv = 0xFFFFU;
 
     XDIC_Trim_Init_UVOV_1P5();
     uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
 
-    ldo_ov = ((fault_status & XDIC_R09_LDO_OV_MASK) >> XDIC_R09_LDO_OV_SHIFT);
-    ldo_uv = ((fault_status & XDIC_R09_LDO_UV_MASK) >> XDIC_R09_LDO_UV_SHIFT);
+    ldo_ov = ((fault_status >> XDIC_R09_LDO_OV_SHIFT) & XDIC_R09_LDO_OV_MASK);
+    ldo_uv = ((fault_status >> XDIC_R09_LDO_UV_SHIFT) & XDIC_R09_LDO_UV_MASK);
     print(LOG_INFO, "\r\n UVOV_1P5 Fault Status : 0x%03X, LDO_OV : %d, LDO_UV : %d\r\n", fault_status, ldo_ov, ldo_uv);
 }
 
 void XDIC_Trim_Partial_UVOV_VDD(void)
 {
-    uint16_t vdd_ov = 0xFFFF;
-    uint16_t vdd_uv = 0xFFFF;
+    uint16_t vdd_ov = 0xFFFFU;
+    uint16_t vdd_uv = 0xFFFFU;
 
     XDIC_Trim_Init_UVOV_VDD();
     uint16_t fault_status = XDIC_Read_General_Reg(XDIC_ADDR_FAULT_STATUS);
 
-    vdd_ov = ((fault_status & XDIC_R09_VDD_OV_MASK) >> XDIC_R09_VDD_OV_SHIFT);
-    vdd_uv = ((fault_status & XDIC_R09_VDD_UV_MASK) >> XDIC_R09_VDD_UV_SHIFT);
+    vdd_ov = ((fault_status >> XDIC_R09_VDD_OV_SHIFT) & XDIC_R09_VDD_OV_MASK);
+    vdd_uv = ((fault_status >> XDIC_R09_VDD_UV_SHIFT) & XDIC_R09_VDD_UV_MASK);
     print(LOG_INFO, "\r\n UVOV_VDD Fault Status : 0x%03X, VDD_OV : %d, VDD_UV : %d\r\n", fault_status, vdd_ov, vdd_uv);
 }
 

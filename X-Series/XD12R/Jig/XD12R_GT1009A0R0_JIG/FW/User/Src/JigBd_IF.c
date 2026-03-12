@@ -179,12 +179,12 @@ float JigBD_IF_XD_ICC(void)
     uint16_t icc_adc[2] = {0, };
 
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P);
-    ADS114S08_Set_Start(1);
+    ADS114S08_Set_Start(1U);
     ADS114S08_Wait_Done();
     icc_adc[0] = ADS114S08_Get_ADC_Value();
 
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_N);
-    ADS114S08_Set_Start(1);
+    ADS114S08_Set_Start(1U);
     ADS114S08_Wait_Done();
     icc_adc[1] = ADS114S08_Get_ADC_Value();
 
@@ -207,12 +207,12 @@ float JigBD_IF_XC_ICC(void)
     uint16_t icc_adc[2] = {0, };
 
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_P);
-    ADS114S08_Set_Start(1);
+    ADS114S08_Set_Start(1U);
     ADS114S08_Wait_Done();
     icc_adc[0] = ADS114S08_Get_ADC_Value();
 
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_N);
-    ADS114S08_Set_Start(1);
+    ADS114S08_Set_Start(1U);
     ADS114S08_Wait_Done();
     icc_adc[1] = ADS114S08_Get_ADC_Value();
 
@@ -464,7 +464,7 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
             }
             else
             {
-                delta = (0xFFFFFFFF - gn_input_capture_cnt[i + 0]) + gn_input_capture_cnt[i + 1] + 1;
+                delta = (0xFFFFFFFFU - gn_input_capture_cnt[i + 0]) + gn_input_capture_cnt[i + 1] + 1;
             }
 
             f_freq = (TIM5_FREQ / delta);
@@ -635,7 +635,7 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
         DEBUG_HI();
         float f_frequency = Decode_Input_Response(&n_response, XDIC_READ_RECV_BITS);
         print(LOG_DEBUG, "Received DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, ID : 0x%02X, DATA - 0x%03X, FULL - 0x%06X]\r\n", in_addr, f_frequency,
-            ((n_response >> 17) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12) & SERIAL_DECODE_MASK_ID), ((n_response >> 0) & SERIAL_DECODE_MASK_DATA), n_response);
+            ((n_response >> 17U) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12U) & SERIAL_DECODE_MASK_ID), ((n_response >> 0U) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
     us_delay(XDIC_READ_DELAY);
@@ -647,8 +647,8 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 {
     uint16_t pwm_length = 0;
-    uint64_t LD_data_Even = p_in_LD_data[0];
-    uint64_t LD_data_Odd = ((uint64_t)p_in_LD_data[1] << 14) | ((uint64_t)p_in_LD_data[2] << 0);
+    uint64_t LD_data_Odd = p_in_LD_data[0];
+    uint64_t LD_data_Even = ((uint64_t)p_in_LD_data[1] << 14) | ((uint64_t)p_in_LD_data[2] << 0);
 
     gn_serialize_tx_buffer[pwm_length++] = 0;
 
@@ -662,13 +662,13 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
         for (uint8_t j = 0 ; j < XDIC_CH_SIZE ; ++j)
         {
             bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
-            if (j % 2 == 0) // Even
+            if (j % 2 == 0) // For Red
             {
-                for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k)
+                for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k)
                 {
                     if (write_data)
                     {
-                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Even, SERIAL_EVEN_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Odd, SERIAL_ODD_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
                     }
                     else
                     {
@@ -676,13 +676,13 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
                     }
                 }
             }
-            else // Odd
+            else // For Green & Blue
             {
-                for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k)
+                for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k)
                 {
                     if (write_data)
                     {
-                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Odd, SERIAL_ODD_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
+                        gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint64_t)LD_data_Even, SERIAL_EVEN_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
                     }
                     else
                     {
@@ -735,7 +735,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
     {
         float f_frequency = Decode_Input_Response(&n_response, XDIC_FAULT_RECV_BITS);
         print(LOG_DEBUG, "FAULT DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, DATA - 0x%01X]\r\n",\
-        n_response, f_frequency, ((n_response >> 4) & 0x0F), ((n_response >> 0) & 0x0F));
+        n_response, f_frequency, ((n_response >> 4U) & 0x0FU), ((n_response >> 0U) & 0x0FU));
 
         read_msg_error_count = 0;
     }

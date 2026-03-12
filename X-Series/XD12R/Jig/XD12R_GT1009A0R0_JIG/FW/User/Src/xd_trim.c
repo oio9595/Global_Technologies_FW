@@ -19,11 +19,11 @@
 #include "math.h"
 /* ---------------------------------------------------------------------------------------------------------------------- */
 /* Trim Parameter */
-#define TRIM_REGISTER_SAVED_CNT     (5)
-#define TRIM_OUT_OF_RANGE_CNT       (45)
+#define TRIM_REGISTER_SAVED_CNT     (5U)
+#define TRIM_OUT_OF_RANGE_CNT       (45U)
 
 #define XDIC_ERR_RATE               (1.5f / 100)        /* % */
-#define XDIC_IBN_2uA_TARGET         (2.0)               /* uA */
+#define XDIC_IBN_2uA_TARGET         (2.0f)              /* uA */
 #define XDIC_DAC_LDO_1V5_TARGET     (1.5f)              /* V */
 #define XDIC_DIG_LDO_1V5_TARGET     (1.5f)              /* V */
 #define XDIC_DAC_A_OFS_TARGET       (0.11f)             /* V */
@@ -31,35 +31,35 @@
 #define XDIC_FLL_LDO_1V5_TARGET     (1.5f)              /* V */
 
 #define XDIC_OSC_ERR_RATE           (10.0f / 100)       /* % */
-#define XDIC_OSC_TARGET             (XDIC_MCLK / 1000000) /* MHz */
+#define XDIC_OSC_TARGET             (XDIC_MCLK / 1000000U) /* MHz */
 
 #define XDIC_GAIN_ERR_RATE          (1.2f / 100)        /* % */
 #define XDIC_OFS_ERR_RATE           (1.2f / 100)        /* % */
 
-#define XDIC_GAIN_ODD_P1            (500)
-#define XDIC_GAIN_ODD_P2            (2000)
+#define XDIC_GAIN_ODD_P1            (500U)
+#define XDIC_GAIN_ODD_P2            (2000U)
 #define XDIC_GAIN_ODD_TARGET        (11.136f)       /* mA */
 
-#define XDIC_GAIN_EVEN_P1           (500)
-#define XDIC_GAIN_EVEN_P2           (2000)
+#define XDIC_GAIN_EVEN_P1           (500U)
+#define XDIC_GAIN_EVEN_P2           (2000U)
 #define XDIC_GAIN_EVEN_TARGET       (5.549f)       /* mA */
 
-#define XDIC_OFS_ODD_P1             (150)
-#define XDIC_OFS_ODD_P2             (250)
+#define XDIC_OFS_ODD_P1             (150U)
+#define XDIC_OFS_ODD_P2             (250U)
 #define XDIC_OFS_ODD_TARGET         (3.085f)  /* mA */
 
-#define XDIC_OFS_EVEN_P1            (150)
-#define XDIC_OFS_EVEN_P2            (300)
+#define XDIC_OFS_EVEN_P1            (150U)
+#define XDIC_OFS_EVEN_P2            (300U)
 #define XDIC_OFS_EVEN_TARGET        (1.590f)  /* mA */
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 /* Trim Screen Parameter */
-#define XDIC_SCREEN_POINT_SIZE      (9)
+#define XDIC_SCREEN_POINT_SIZE      (9U)
 
-#define XDIC_SCREEN_VREF1           (350)
-#define XDIC_SCREEN_VREF2           (1000)
-#define XDIC_SCREEN_VREF3           (4000)
+#define XDIC_SCREEN_VREF1           (350U)
+#define XDIC_SCREEN_VREF2           (1000U)
+#define XDIC_SCREEN_VREF3           (4000U)
 
 #define XDIC_SCREEN_MAX_CURR1       (DEV_MAX_CURR_LEVEL_4mA)
 #define XDIC_SCREEN_MAX_CURR2       (DEV_MAX_CURR_LEVEL_8mA)
@@ -68,10 +68,10 @@
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 /* Screen Parameter */
-#define XD_SCREEN_ANA               (0)
-#define XD_SCREEN_MAX_CURRENT       (1)
+#define XD_SCREEN_ANA               (0U)
+#define XD_SCREEN_MAX_CURRENT       (1U)
 #define XD_SCREEN_TYPE              XD_SCREEN_ANA
-#define XD_SCREEN_ANA_GAP           (15)
+#define XD_SCREEN_ANA_GAP           (15U)
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 #define SKIP_2UA_TRIM 1
@@ -117,7 +117,7 @@ typedef struct
     uint8_t trim_saved_cnt;
     uint16_t adc_cur[XD_CH_MAX];
     uint16_t adc_pre[XD_CH_MAX];
-    double value[XD_CH_MAX];
+    float value[XD_CH_MAX];
     trim_saved_data trim_saved_data[TRIM_REGISTER_SAVED_CNT];
     uint16_t adjust_amount[XD_CH_MAX];
     trim_adjust_type_t trim_adjust_flag[XD_CH_MAX];
@@ -495,7 +495,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
             }
             else
             {
-                if (u16_adc_range_target - u16_adc_cur >= u16_adc_per_register * 2)
+                if (u16_adc_range_target - u16_adc_cur >= u16_adc_per_register * 2U)
                 {
                     uint16_t adjust_mount = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
                     if (XD_Trim_Check_Valid_Step(adjust_mount, channel, ADJ_PLUS, ptr_Param->trim_mode))
@@ -600,8 +600,8 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
     // Check Vibration
     if (ptr_Param->trim_saved_cnt >= TRIM_REGISTER_SAVED_CNT)
     {
-        uint16_t u16_adc_gap_closest = 0xFFFF;
-        uint16_t u16_adc_gap_temp = 0;
+        uint16_t u16_adc_gap_closest = 0xFFFFU;
+        uint16_t u16_adc_gap_temp = 0U;
         uint8_t u8_closest_adc_index = TRIM_REGISTER_SAVED_CNT;
         for (uint8_t i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
         {
@@ -615,7 +615,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
         if (u8_closest_adc_index == TRIM_REGISTER_SAVED_CNT)
         {
-            print(LOG_ERROR, "********ADJUST_OVER_RANGE ERROR(%d,%d)********\r\n", channel + 1, u8_closest_adc_index);
+            print(LOG_ERROR, "********ADJUST_OVER_RANGE ERROR(%d,%d)********\r\n", channel + 1U, u8_closest_adc_index);
             XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
             u8_rtn_val = TRIM_ALGORITHM_ERROR;
         }
@@ -874,7 +874,7 @@ void XD_Trim_Task(void)
                     break;
                 case XD_TRIM_CH_GAIN_ODD:
                     XDIC_Trim_Init_CH_GAIN_ODD();
-                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2);
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2U);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     Trim_Vsync_Timer_Start();
@@ -883,7 +883,7 @@ void XD_Trim_Task(void)
                     break;
                 case XD_TRIM_CH_GAIN_EVEN:
                     XDIC_Trim_Init_CH_GAIN_EVEN();
-                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2 + 1);
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2U + 1U);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     Trim_Vsync_Timer_Start();
@@ -892,7 +892,7 @@ void XD_Trim_Task(void)
                     break;
                 case XD_TRIM_CH_OFS_ODD:
                     XDIC_Trim_Init_CH_OFS_ODD();
-                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2);
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2U);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     Trim_Vsync_Timer_Start();
@@ -901,7 +901,7 @@ void XD_Trim_Task(void)
                     break;
                 case XD_TRIM_CH_OFS_EVEN:
                     XDIC_Trim_Init_CH_OFS_EVEN();
-                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2 + 1);
+                    JigBD_IF_Select_Output_Ch(gn_xd_adc_channel * 2U + 1U);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
                     JigBD_IF_Change_Current_Gain(gt_trim_algorithm.trim_adc_trange[gt_xd_trim_search_mode].current_gain);
                     Trim_Vsync_Timer_Start();
@@ -995,7 +995,7 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_START_ADC_CONVERSION;
                 break;
             case XD_TRIM_STEP_START_ADC_CONVERSION:
-                ADS114S08_Set_Start(1);
+                ADS114S08_Set_Start(1U);
                 gt_xd_trim_step = XD_TRIM_STEP_GET_ADC_CH;
                 break;
             case XD_TRIM_STEP_GET_ADC_CH:
@@ -1192,7 +1192,7 @@ void XD_Trim_Task(void)
                     {
                         JigBD_IF_Select_Output_Ch(ch);
                         XDIC_Set_Max_Curr_Vref(gt_xd_screen_param[i].vref_point);
-                        ADS114S08_Set_Start(1);
+                        ADS114S08_Set_Start(1U);
                         ADS114S08_Wait_Done();
                         XDIC_Set_Max_Curr_Vref(0);
                         uint16_t adc = ADS114S08_Get_ADC_Value();
@@ -1344,7 +1344,7 @@ void XD_Screen_Task(void)
             gt_xd_screen_step = XD_SCREEN_STEP_START_ADC_CONVERSION;
             break;
         case XD_SCREEN_STEP_START_ADC_CONVERSION :
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             gt_xd_screen_step = XD_SCREEN_STEP_GET_ADC_CH;
             break;
         case XD_SCREEN_STEP_GET_ADC_CH :

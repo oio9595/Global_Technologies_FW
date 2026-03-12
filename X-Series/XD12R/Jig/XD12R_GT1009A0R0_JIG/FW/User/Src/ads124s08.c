@@ -289,7 +289,7 @@ static void ADS114S08_Get_ADC_Offset()
         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
         LL_mDelay(10);
 
-        ADS114S08_Set_Start(1);
+        ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         gn_ads114s08_offset[ch] = ADS114S08_Get_ADC_Value();
     }
@@ -332,9 +332,9 @@ void ADC_DRDY_INT_Handler(void)
     uint16_t temp = 0;
     temp = ADS114S08_Get_RData();
 
-    if (temp > 32767)
+    if (temp > 32767U)
     {
-        temp = 0;
+        temp = 0U;
     }
 
     if (gn_adc_read_count)
@@ -343,10 +343,10 @@ void ADC_DRDY_INT_Handler(void)
         --gn_adc_read_count;
     }
 
-    if (gn_adc_read_count == 0)
+    if (gn_adc_read_count == 0U)
     {
-        gb_ads114s08_drdy_done = 1;
-        ADS114S08_Set_Start(0);    /* stop continuous conversion */
+        gb_ads114s08_drdy_done = 1U;
+        ADS114S08_Set_Start(0U);    /* stop continuous conversion */
     }
 }
 
@@ -363,19 +363,19 @@ uint16_t ADS114S08_Get_ADC_Value(void)
     }
 }
 
-double JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
+float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
-	double ret = 0;
+	float ret = 0;
 	switch (gain)
 	{
 		case GAIN_HIGH :
-			ret = ((double)adc * ADC_CONV_COEFF_HIGH);	/* max  40mA */
+			ret = ((float)adc * ADC_CONV_COEFF_HIGH);	/* max  40mA */
 			break;
 		case GAIN_MID :
-			ret = ((double)adc * ADC_CONV_COEFF_MID);	/* max  10mA */
+			ret = ((float)adc * ADC_CONV_COEFF_MID);	/* max  10mA */
 			break;
 		case GAIN_LOW :
-			ret = ((double)adc * ADC_CONV_COEFF_LOW);	/* max 0.5mA */
+			ret = ((float)adc * ADC_CONV_COEFF_LOW);	/* max 0.5mA */
 			break;
 	}
 	return ret; //mA

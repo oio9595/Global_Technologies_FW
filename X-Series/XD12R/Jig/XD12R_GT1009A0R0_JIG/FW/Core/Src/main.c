@@ -1427,7 +1427,7 @@ static void TaskDebugUart(void)
         {
             ADS114S08_Select_Input_CH(u32_recv_param[0]);
             LL_mDelay(5);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
             uint16_t adc_value = ADS114S08_Get_ADC_Value();
             float adc_voltage = (float)(ADC_VOLT_PER_STEP * adc_value) / CONST_mV_TO_V; // Dac out convert to V
@@ -1799,7 +1799,7 @@ static void TaskDebugUart(void)
         {
             ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
             LL_mDelay(1);
-            ADS114S08_Set_Start(1);
+            ADS114S08_Set_Start(1U);
             ADS114S08_Wait_Done();
 
             uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
@@ -1825,7 +1825,7 @@ static void TaskDebugUart(void)
             {
                 XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input[i]);
                 LL_mDelay(1);
-                ADS114S08_Set_Start(1);
+                ADS114S08_Set_Start(1U);
                 ADS114S08_Wait_Done();
 
                 uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
