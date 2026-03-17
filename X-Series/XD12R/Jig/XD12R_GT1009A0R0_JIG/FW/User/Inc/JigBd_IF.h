@@ -50,7 +50,7 @@ extern bool gb_timer_input_capture_activated;
 extern volatile bool gb_timer_input_capture_done;
 
 /* BEGIN - INTERFACE FUNCTIONS */
-extern void us_delay(uint16_t n_delay);
+extern void us_delay(uint32_t n_delay);
 extern void JigBD_IF_Detect_XC24(void);
 extern void JigBD_IF_XC_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_EN(uint8_t on);

@@ -35,20 +35,20 @@
 #define XDIC_LD_TYPE_2              (2U) // R/GB, 6CH
 #define XDIC_LD_TYPE_3              (3U) // MONO, 12CH
 
-#define XDIC_PWM_RES_12BIT          (0)
-#define XDIC_PWM_RES_14BIT          (1)
+#define XDIC_PWM_RES_12BIT          (0U)
+#define XDIC_PWM_RES_14BIT          (1U)
 
-#define XDIC_SYNC_MODE_CMD          (0)
-#define XDIC_SYNC_MODE_SVI          (1)
+#define XDIC_SYNC_MODE_CMD          (0U)
+#define XDIC_SYNC_MODE_SVI          (1U)
 
-#define XDIC_VREF_MODE_VREF2_3      (0)
-#define XDIC_VREF_MODE_VREF2        (1)
+#define XDIC_VREF_MODE_VREF2_3      (0U)
+#define XDIC_VREF_MODE_VREF2        (1U)
 
-#define XDIC_PARITY_CHECK_DIS       (0)
-#define XDIC_PARITY_CHECK_EN        (1)
+#define XDIC_PARITY_CHECK_DIS       (0U)
+#define XDIC_PARITY_CHECK_EN        (1U)
 
-#define XDIC_MCLK_FLL_ENABLE        (0)
-#define XDIC_MCLK_FLL_DISABLE       (1)
+#define XDIC_MCLK_FLL_ENABLE        (0U)
+#define XDIC_MCLK_FLL_DISABLE       (1U)
 
 #define XDIC_MCLK_LSB_MASK          (0xFFFU) //LSB 12-bit
 #define XDIC_MCLK_MSB_MASK          (0x1FFU) //MSB  9-bit
@@ -66,7 +66,7 @@
 #define XDIC_MCLK_LOCK_CNT          (450000U)
 #define XDIC_VREF                   (4095U)
 
-#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XDIC_CH_SIZE) - 1U)
+#define XDIC_CHANNEL_ENABLE_MAX     (uint16_t)((1U << XDIC_CH_SIZE) - 1U)
 
 #define XDIC_R01_DAC_A_OFS_SHIFT    (0U)
 #define XDIC_R01_DAC_A_OFS_MASK     ((uint16_t)(0x7FU << XDIC_R01_DAC_A_OFS_SHIFT))
@@ -288,9 +288,9 @@ static float gf_vsync_out;
 
 static uint32_t gn_xdic_mclk_lock_cnt;
 
-static dev_max_curr_level_t gt_xdic_dev_max_curr_level[3] = { 0 };
-static short_level_t gt_xdic_short_level[3] = { 0 };
-static fb_level_t gt_xdic_fb_level[3] = { 0 };
+static dev_max_curr_level_t gt_xdic_dev_max_curr_level[3] = {0};
+static short_level_t gt_xdic_short_level[3] = {0};
+static fb_level_t gt_xdic_fb_level[3] = {0};
 
 static void XDIC_Set_Delay_CH(void);
 
@@ -852,19 +852,19 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r03.fpwm_div2 = ((XDIC_PWM_DIV_GREEN >> 0U) & 0x0FU);
                 break;
             case XDIC_ADDR_FPWM_DIVIDER_2_3 :
-                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN >> 4U ) & 0x0FU);
+                gt_xdic_general_regs._r04.fpwm_div2 = ((XDIC_PWM_DIV_GREEN >> 4U) & 0x0FU);
                 gt_xdic_general_regs._r04.fpwm_div3 = XDIC_PWM_DIV_BLUE;
                 break;
             case XDIC_ADDR_CHANNEL_ENABLE :
                 gt_xdic_general_regs._r05.val = XDIC_CHANNEL_ENABLE_MAX;
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
-                gt_xdic_general_regs._r06.o_off_e = 0;
-                gt_xdic_general_regs._r06.s_off_e = 0;
-                gt_xdic_general_regs._r06.t_off_e = 0;
-                gt_xdic_general_regs._r06.o_det_e = 1;
-                gt_xdic_general_regs._r06.s_det_e = 1;
-                gt_xdic_general_regs._r06.o_slew = 1;
+                gt_xdic_general_regs._r06.o_off_e = 0U;
+                gt_xdic_general_regs._r06.s_off_e = 0U;
+                gt_xdic_general_regs._r06.t_off_e = 0U;
+                gt_xdic_general_regs._r06.o_det_e = 1U;
+                gt_xdic_general_regs._r06.s_det_e = 1U;
+                gt_xdic_general_regs._r06.o_slew = 1U;
                 break;
             case XDIC_ADDR_FB_LEVEL :
                 gt_xdic_general_regs._r07.fb1_level = gt_xdic_fb_level[0];

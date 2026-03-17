@@ -54,14 +54,14 @@ static float gf_internal_freq_Hz;
 
 bool gb_timer_input_capture_activated;
 volatile bool gb_timer_input_capture_done;
-static uint32_t gn_input_capture_cnt[FREQ_IN_IC_LENGTH];
+static uint32_t gn_input_capture_cnt[FREQ_IN_IC_LENGTH] = {0};
 
 static uint8_t gn_xdic_dimming_channel;
 
 static uint16_t gn_mcu_serializer_bit_0;
 static uint16_t gn_mcu_serializer_bit_1;
 
-static uint16_t SyncGen_Pattern[4U];
+static uint16_t SyncGen_Pattern[4] = {0};
 
 void MCU_IF_Serializer_Init_Param(void)
 {
@@ -76,10 +76,10 @@ void MCU_IF_Serializer_Init_Param(void)
     SyncGen_Pattern[3U] = gn_mcu_serializer_bit_1;
 }
 
-void us_delay(uint16_t us_delay)
+void us_delay(uint32_t n_delay)
 {
     LL_TIM_EnableCounter(TIM12);
-    while(TIM12->CNT < us_delay)
+    while(TIM12->CNT < n_delay)
     {
     }
     LL_TIM_DisableCounter(TIM12);
