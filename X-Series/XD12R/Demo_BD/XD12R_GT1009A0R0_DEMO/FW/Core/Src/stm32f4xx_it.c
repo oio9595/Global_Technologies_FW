@@ -218,7 +218,7 @@ void DMA1_Stream6_IRQHandler(void)
         LL_USART_DisableDMAReq_TX(USART2);
         LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
         Comm_Increase_Tx_OutCnt();
-        gb_uart_tx_busy = 0;
+        gb_uart_tx_busy = false;
     }
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */

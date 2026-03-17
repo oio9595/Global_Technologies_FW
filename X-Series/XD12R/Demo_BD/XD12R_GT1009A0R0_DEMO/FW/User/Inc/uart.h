@@ -25,7 +25,7 @@ extern "C" {
 /* USER CODE BEGIN PTD */
 typedef enum tag_LOG_LV_T
 {
-    LOG_DEBUG = 0,
+    LOG_DEBUG = 0U,
     LOG_INFO,
     LOG_ERROR,
     LOG_MAX,

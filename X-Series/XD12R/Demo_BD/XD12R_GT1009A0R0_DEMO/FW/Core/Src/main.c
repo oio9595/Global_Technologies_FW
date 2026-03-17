@@ -101,25 +101,41 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN 0 */
 static void key_func_1(void)
 {
+    static uint8_t color = 1;
+    LED_Select_Color(color);
+    ++color;
+    if (color == LED_COLOR_MAX)
+    {
+        color = 0;
+    }
 }
 
 static void key_func_2(void)
 {
+    LED_Select_Brightness_Down();
 }
 
 static void key_func_3(void)
 {
+    LED_Select_Brightness_Up();
 }
 
 static void key_func_4(void)
 {
+    static uint8_t patter = 0;
+    LED_Select_Pattern(patter);
+    ++patter;
+    if (patter == LED_PATTERN_MAX)
+    {
+        patter = 0;
+    }
 }
 
 static void Key_Task(void)
 {
     if (gn_key_task_tick == 0)
     {
-        for (uint8_t i = 0; i < KEY_SIZE; ++i)
+        for (uint8_t i = 0U; i < KEY_SIZE; ++i)
         {
             gt_key_info[i].now_state = LL_GPIO_IsInputPinSet(gp_key_port[i], gn_key_pin[i]);
             if (gt_key_info[i].now_state != gt_key_info[i].prev_state)
@@ -129,14 +145,14 @@ static void Key_Task(void)
                 }
                 else // Button Released
                 {
-                    if (gt_key_info[i].press_cnt >= 30)
+                    if (gt_key_info[i].press_cnt >= 10)
                     {
                         if (gt_key_info[i].function != NULL)
                         {
                             gt_key_info[i].function();
                         }
                     }
-                    gt_key_info[i].press_cnt = 0;
+                    gt_key_info[i].press_cnt = 0U;
                 }
                 gt_key_info[i].prev_state = gt_key_info[i].now_state;
             }
@@ -152,7 +168,7 @@ static void Key_Task(void)
                 }
             }
         }
-        gn_key_task_tick = 10; //10ms
+        gn_key_task_tick = 10U; //10ms
     }
 }
 

@@ -22,9 +22,9 @@
 #define TIM3_APB_FREQ_Hz        (APB1_TIM_FREQ * 1000000U)
 #define TIM3_APB_FREQ_MHz       (APB1_TIM_FREQ)
 #define TIM3_PRESCALER          (0U)
-#define TIM3_FREQUENCY_Hz       (TIM3_APB_FREQ_Hz / (TIM3_PRESCALER + 1))
-#define TIM3_CALC_PERIOD(freq)  ((uint32_t)(TIM3_FREQUENCY_Hz / freq - 1U))
-#define TIM3_CALC_COMPARE(us)   ((uint32_t)(TIM3_APB_FREQ_MHz * us - 1U))
+#define TIM3_FREQUENCY_Hz       (TIM3_APB_FREQ_Hz / (TIM3_PRESCALER + 1U))
+#define TIM3_CALC_PERIOD(freq)  ((uint32_t)((TIM3_FREQUENCY_Hz / freq) - 1U))
+#define TIM3_CALC_COMPARE(us)   ((uint32_t)((TIM3_APB_FREQ_MHz * us) - 1U))
 
 #define SVSYNC_VSYNC_FREQ       (50000U)
 #define SVSYNC_VSYNC_ON_us      (10U) // 10us
@@ -91,7 +91,7 @@ static inline void Vled_B_Off(void)
     VLED_B_OFF_LO();
 }
 
-void Svsync_Timer_Start(void)
+static void Svsync_Timer_Start(void)
 {
     gn_svsync_count = 0;
     LL_TIM_DisableCounter(TIM3);
@@ -130,10 +130,10 @@ void Svsync_Update_Handler(void)
         LL_TIM_SetAutoReload(TIM3, period);
         if (gn_svsync_count == SVSYNC_TOTAL_CYCLE)
         {
-            us_delay(SVSYNC_GATING_TIME_US + 1);
+            us_delay(SVSYNC_GATING_TIME_US + 1U);
             LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
             LL_TIM_DisableCounter(TIM3);
-            LL_TIM_SetCounter(TIM3, 0);
+            LL_TIM_SetCounter(TIM3, 0U);
         }
     }
 
@@ -161,7 +161,6 @@ void Vsync_Timer_Stop(void)
 void Vsync_Update_Handler(void)
 {
     Svsync_Timer_Start();
-    //MCU_IF_SyncGen_Command();
     gb_xdic_vsync_flag = true;
 }
 
