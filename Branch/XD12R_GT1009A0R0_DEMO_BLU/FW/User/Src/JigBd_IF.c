@@ -40,6 +40,8 @@
 #define SERIAL_DECODE_MASK_CODE     (uint32_t)(0x0F)
 #define SERIAL_DECODE_MASK_ID       (uint32_t)(0x1F)
 #define SERIAL_DECODE_MASK_DATA     (uint32_t)(0xFFF)
+
+#define BOOT_PATTERN_CHANGE_COUNT   (240U)
 /* USER CODE END PD */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +53,13 @@ typedef enum tag_LED_BUFFER_UPDATE_TYPE_T
     LED_UPDATE_PIXEL,     // By Pattern
     LED_UPDATE_MAX,
 } led_buffer_update_type_t;
+
+typedef enum tag_BOOT_STATE_T
+{
+    BOOT_STATE_PATTERN = 0U,
+    BOOT_STATE_COLOR,
+    BOOT_STATE_NORMAL
+} boot_state_t;
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -66,8 +75,6 @@ volatile bool gb_pwm_is_rx_flag;
 
 static uint16_t gn_mcu_serializer_bit_0;
 static uint16_t gn_mcu_serializer_bit_1;
-
-//static uint16_t SyncGen_Pattern[4] = {0};
 
 static led_color_type_t gt_led_color;
 
@@ -418,20 +425,59 @@ static void LED_Update_Buffer_By_Pixel(void)
 
 void LED_Update_Buffer(void)
 {
-    switch (gt_led_buffer_update_type)
+    static boot_state_t boot_state = BOOT_STATE_PATTERN;
+    static uint8_t boot_pattern = 0U;
+    static uint8_t boot_color = 1U;
+    static uint16_t boot_vsync_count = 0U;
+
+    switch(boot_state)
     {
-        case LED_UPDATE_COLOR :
-            LED_Update_Buffer_By_Color();
-            break;
-        case LED_UPDATE_PATTERN :
+        case BOOT_STATE_PATTERN :
+            if (++boot_vsync_count > BOOT_PATTERN_CHANGE_COUNT)
+            {
+                boot_vsync_count = 0U;
+                if (++boot_pattern >= LED_PATTERN_MAX)
+                {
+                    boot_pattern = 0U;
+                    boot_state = BOOT_STATE_COLOR;
+                }
+            }
+            LED_Select_Pattern(boot_pattern);
             LED_Update_Buffer_By_Pattern();
             break;
-        case LED_UPDATE_PIXEL :
-            LED_Update_Buffer_By_Pixel();
+        case BOOT_STATE_COLOR :
+            if (++boot_vsync_count > BOOT_PATTERN_CHANGE_COUNT)
+            {
+                boot_vsync_count = 0U;
+                if (++boot_color >= LED_COLOR_MAX)
+                {
+                    boot_color = 0U;
+                    boot_state = BOOT_STATE_NORMAL;
+                }
+            }
+            LED_Select_Color(boot_color);
+            LED_Update_Buffer_By_Color();
             break;
-        default:
-            Print(LOG_ERROR, "\r\n Invalid LED Buffer Update Type\r\n");
-            Error_Handler();
+        case BOOT_STATE_NORMAL :
+            switch (gt_led_buffer_update_type)
+            {
+                case LED_UPDATE_COLOR :
+                    LED_Update_Buffer_By_Color();
+                    break;
+                case LED_UPDATE_PATTERN :
+                    LED_Update_Buffer_By_Pattern();
+                    break;
+                case LED_UPDATE_PIXEL :
+                    LED_Update_Buffer_By_Pixel();
+                    break;
+                default:
+                    Print(LOG_ERROR, "\r\n Invalid LED Buffer Update Type\r\n");
+                    Error_Handler();
+                    break;
+            }
+            break;
+        default :
+            Print(LOG_ERROR, "\r\n Invalid Boot State Type\r\n");
             break;
     }
 }

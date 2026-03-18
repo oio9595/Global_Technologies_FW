@@ -36,7 +36,7 @@ typedef enum tag_LED_PATTERN_T
 {
     LED_PATTERN_P0 = 0, // Checkerboard pattern 1
     LED_PATTERN_P1,     // Checkerboard pattern 2
-    LED_PATTERN_P2,     //
+    LED_PATTERN_P2,
     LED_PATTERN_P3,
     LED_PATTERN_P4,
     LED_PATTERN_P5,

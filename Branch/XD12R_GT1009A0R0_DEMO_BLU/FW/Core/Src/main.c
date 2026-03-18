@@ -801,6 +801,15 @@ static void MX_GPIO_Init(void)
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
     PWM_SWITCH_LO();
+
+    VLED_R_EN_LO();
+    VLED_EN_LO();
+
+    VLED_G_SW_LO();
+    VLED_G_OFF_LO();
+
+    VLED_B_SW_LO();
+    VLED_B_OFF_LO();
   /* USER CODE END MX_GPIO_Init_2 */
 }
 

@@ -62,9 +62,9 @@
 #define XDIC_MCLK_LOCK_CNT          (450000U)
 
 #if 1
-#define XDIC_VREF_R                 (100U)
+#define XDIC_VREF_R                 (50U)
 #define XDIC_VREF_G                 (4095U)
-#define XDIC_VREF_B                 (2048U)
+#define XDIC_VREF_B                 (3276U)
 #else
 #define XDIC_VREF_R                 (100U)
 #define XDIC_VREF_G                 (100U)
@@ -293,7 +293,8 @@ static void XDIC_Param_Init(void)
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
     }
 
-    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    //gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_16mA; // R
     gt_xdic_dev_max_curr_level[1] = DEV_MAX_CURR_LEVEL_16mA; // G
     gt_xdic_dev_max_curr_level[2] = DEV_MAX_CURR_LEVEL_16mA; // B
 }
@@ -419,7 +420,7 @@ void XDIC_Init(void)
     }
     XDIC_Set_Delay_CH();
     XDIC_Dump_All_Registers();
-    LED_Select_Brightness(10U);
+    LED_Select_Brightness(50U);
 }
 /* USER CODE END */
 /*** end of file ***/

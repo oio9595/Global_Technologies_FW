@@ -56,6 +56,7 @@ static uint8_t gn_xdic_read_addr;
 static inline void Vled_R_ON(void)
 {
     VLED_R_EN_HI();
+    VLED_EN_HI();
 }
 
 static inline void Vled_R_Off(void)
@@ -65,28 +66,24 @@ static inline void Vled_R_Off(void)
 
 static inline void Vled_G_ON(void)
 {
-    VLED_EN_HI();
     VLED_G_SW_HI();
     VLED_G_OFF_HI();
 }
 
 static inline void Vled_G_Off(void)
 {
-    VLED_EN_LO();
     VLED_G_SW_LO();
     VLED_G_OFF_LO();
 }
 
 static inline void Vled_B_ON(void)
 {
-    VLED_EN_HI();
     VLED_B_SW_HI();
     VLED_B_OFF_HI();
 }
 
 static inline void Vled_B_Off(void)
 {
-    VLED_EN_LO();
     VLED_B_SW_LO();
     VLED_B_OFF_LO();
 }

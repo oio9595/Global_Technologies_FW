@@ -253,7 +253,7 @@ void Comm_UART_Task(void)
 /* ----------------- command list - LED ----------------- */
         else if (Command_Param_is_("led_color", "%u", &u32_recv_param[0]))
         {
-            if (u32_recv_param[0] <= 3U) // LED_COLOR_MAX
+            if (u32_recv_param[0] < LED_COLOR_MAX)
             {
                 LED_Select_Color(u32_recv_param[0]);
                 Print(LOG_INFO, "\r\n OK \r\n");
@@ -273,9 +273,9 @@ void Comm_UART_Task(void)
             LED_Select_Brightness_Down();
             Print(LOG_INFO, "\r\n OK \r\n");
         }
-        else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0])) // LED_PATTERN_MAX
+        else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0]))
         {
-            if (u32_recv_param[0] <= 4U)
+            if (u32_recv_param[0] < LED_PATTERN_MAX)
             {
                 LED_Select_Pattern(u32_recv_param[0]);
                 Print(LOG_INFO, "\r\n OK \r\n");
@@ -285,7 +285,7 @@ void Comm_UART_Task(void)
                 Print(LOG_INFO, "\r\n Invalid Input. Use: led_pattern (0 ~ 4)]\r\n");
             }
         }
-        else if (Command_Param_is_("led_pixel", "%u", &u32_recv_param[0])) // LED_PATTERN_MAX
+        else if (Command_Param_is_("led_pixel", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < LED_MAP_SIZE)
             {

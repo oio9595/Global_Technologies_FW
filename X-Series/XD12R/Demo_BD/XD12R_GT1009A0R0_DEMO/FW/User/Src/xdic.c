@@ -74,7 +74,7 @@
 #define XDIC_CHANNEL_ENABLE_MAX     (uint16_t)((1U << XDIC_CH_SIZE) - 1U)
 /* USER CODE END PD */
 
-/* Private typedef -----------------------------------------------------------*
+/* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef struct tag_XDIC_REG_INFO_T
 {
@@ -293,7 +293,8 @@ static void XDIC_Param_Init(void)
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
     }
 
-    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    //gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_16mA; // R
     gt_xdic_dev_max_curr_level[1] = DEV_MAX_CURR_LEVEL_16mA; // G
     gt_xdic_dev_max_curr_level[2] = DEV_MAX_CURR_LEVEL_16mA; // B
 }
