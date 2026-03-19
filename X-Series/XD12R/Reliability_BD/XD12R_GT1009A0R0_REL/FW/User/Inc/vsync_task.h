@@ -12,22 +12,34 @@
 extern "C" {
 #endif
 
-extern bool gb_jig_vsync_active;
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
 
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+/* USER CODE END PTD */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+/* USER CODE END PV */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN */
 extern void Svsync_Update_Handler(void);
-extern void Trim_Vsync_Timer_Start(void);
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);
-extern void Vsync_Change_Frequency(uint16_t in_freq_Hz);
 
 extern void XDIC_Vsync_Task(void);
 
 extern void XDIC_Set_Write_Target_Reg(uint8_t addr, uint16_t data);
 extern void XDIC_Set_Read_Target_Reg(uint8_t addr);
-
-extern void XDIC_Set_LD_Data(uint32_t in_ld_R, uint32_t in_ld_G, uint32_t in_ld_B);
-extern uint16_t* XDIC_Get_LD_Data(void);
+/* USER CODE END */
 
 #ifdef __cplusplus
 }
