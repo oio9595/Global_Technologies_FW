@@ -53,10 +53,19 @@ static uint8_t gn_xdic_read_addr;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN */
+static inline void Vled_GB_Common_ON(void)
+{
+    VLED_EN_HI();
+}
+
+static inline void Vled_GB_Common_Off(void)
+{
+    VLED_EN_LO();
+}
+
 static inline void Vled_R_ON(void)
 {
     VLED_R_EN_HI();
-    VLED_EN_HI();
 }
 
 static inline void Vled_R_Off(void)
@@ -145,6 +154,7 @@ void Vsync_Timer_Start(void)
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
     Vled_R_ON();
+    Vled_GB_Common_ON();
 }
 
 void Vsync_Timer_Stop(void)

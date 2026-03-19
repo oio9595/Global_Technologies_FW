@@ -61,15 +61,9 @@
 
 #define XDIC_MCLK_LOCK_CNT          (450000U)
 
-#if 1
 #define XDIC_VREF_R                 (100U)
-#define XDIC_VREF_G                 (4095U)
+#define XDIC_VREF_G                 (3095U)
 #define XDIC_VREF_B                 (2048U)
-#else
-#define XDIC_VREF_R                 (100U)
-#define XDIC_VREF_G                 (100U)
-#define XDIC_VREF_B                 (100U)
-#endif
 
 #define XDIC_CHANNEL_ENABLE_MAX     (uint16_t)((1U << XDIC_CH_SIZE) - 1U)
 /* USER CODE END PD */
@@ -293,8 +287,7 @@ static void XDIC_Param_Init(void)
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
     }
 
-    //gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
-    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_16mA; // R
+    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
     gt_xdic_dev_max_curr_level[1] = DEV_MAX_CURR_LEVEL_16mA; // G
     gt_xdic_dev_max_curr_level[2] = DEV_MAX_CURR_LEVEL_16mA; // B
 }
