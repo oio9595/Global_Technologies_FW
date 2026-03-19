@@ -1,0 +1,100 @@
+
+/** @file config.h
+ *
+ * @brief
+ *
+ * @par
+ * COPYRIGHT NOTICE: (c) GT. All rights reserved.
+ */
+
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+#define VERSION_MAJOR               (0U)
+#define VERSION_MINOR               (0U)
+#define VERSION_PATCH               (5U) // At every new build, increase this value
+
+#define APB1_TIM_FREQ               (90.0f) //MHz
+#define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2U) //MHz
+
+#define CONST_MHz_TO_Hz             (1000000.0f)
+#define CONST_mV_TO_V               (1000.0f)
+
+#define VSYNC                       (120.0f)
+#define XDIC_MCLK                   (50000000.0f)
+
+#define SVSYNC_PHASE_GREEN          (1U)
+#define SVSYNC_PHASE_BLUE           (0U)
+#define SVSYNC_GATING_TIME_US       (21U)
+#define SVSYNC_CYCLE                (2U)
+#define SVSYNC_SIZE                 (16U)
+#define SVSYNC_TOTAL_CYCLE          (SVSYNC_CYCLE * SVSYNC_SIZE)
+
+#define XDIC_DAISY_SIZE             (24U)
+#define XDIC_CH_SIZE                (12U)
+
+#define XDIC_SERIAL_CLK_CNT_LOW     (16U)
+#define XDIC_SERIAL_CLK_CNT_HIGH    (34U)
+
+#define SERIAL_CMD_SIZE             (4U)
+#define SERIAL_ID_SIZE              (5U)
+#define SERIAL_ADDR_SIZE            (6U)
+#define SERIAL_FAULT_DATA_SIZE      (4U)
+#define SERIAL_DATA_SIZE            (12U)
+#define SERIAL_ODD_SIZE             (14U)
+#define SERIAL_EVEN_SIZE            (28U)
+#define SERIAL_LD_SIZE              (SERIAL_ODD_SIZE + SERIAL_EVEN_SIZE)
+
+#define XDIC_WRITE_BITS             ((uint32_t)((SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE + SERIAL_DATA_SIZE) * XDIC_DAISY_SIZE))
+#define XDIC_READ_BITS              ((uint32_t)((SERIAL_CMD_SIZE + SERIAL_ADDR_SIZE) * XDIC_DAISY_SIZE))
+#define XDIC_READ_RECV_BITS         ((uint32_t)(SERIAL_CMD_SIZE + SERIAL_ID_SIZE + SERIAL_DATA_SIZE))
+#define XDIC_LD_TRANS_BITS          ((uint32_t)((SERIAL_CMD_SIZE + SERIAL_LD_SIZE * ((uint32_t)(XDIC_CH_SIZE / 2.0f))) * XDIC_DAISY_SIZE))
+#define XDIC_FAULT_READ_BITS        ((uint32_t)(SERIAL_CMD_SIZE * XDIC_DAISY_SIZE))
+#define XDIC_FAULT_RECV_BITS        ((uint32_t)(SERIAL_CMD_SIZE + SERIAL_FAULT_DATA_SIZE))
+#define XDIC_SYNCGEN_BITS           ((uint32_t)(SERIAL_CMD_SIZE * XDIC_DAISY_SIZE))
+#define XDIC_IDGEN_BITS             ((uint32_t)(SERIAL_CMD_SIZE * XDIC_DAISY_SIZE))
+
+#define XDIC_SERIALIZER_TIME        ((((CONST_MHz_TO_Hz / XDIC_MCLK) * (XDIC_SERIAL_CLK_CNT_HIGH + XDIC_SERIAL_CLK_CNT_LOW))) * 2.0f)
+#define XDIC_RESET_DELAY            (100U)
+#define XDIC_WRITE_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_WRITE_BITS) + 0.5f))
+#define XDIC_READ_DELAY             ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_READ_BITS) + 0.5f))
+#define XDIC_LD_TRANS_DELAY         ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_LD_TRANS_BITS) + 0.5f))
+#define XDIC_FAULT_READ_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_READ_BITS) + 0.5f))
+#define XDIC_FAULT_RECV_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_RECV_BITS) + 0.5f))
+#define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS) + 0.5f))
+#define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS) + 0.5f))
+
+#define ANSI_FONT_NONE              "\033[0m"
+#define ANSI_FONT_RED               "\033[31m"
+#define ANSI_FONT_GREEN             "\033[32m"
+#define ANSI_FONT_YELLOW            "\033[33m"
+#define ANSI_FONT_BLUE              "\033[34m"
+#define ANSI_FONT_MAGENTA           "\033[35m"
+
+#define LED_MAP_ROW                 (9U)
+#define LED_MAP_COL                 (16U)
+#define LED_MAP_SIZE                (LED_MAP_ROW * LED_MAP_COL)
+/* USER CODE END PD */
+/********************************************************/
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+typedef struct tag_LED_LD_BUFFER_T
+{
+    uint16_t ld_r;
+    uint16_t ld_g;
+    uint16_t ld_b;
+} led_ld_buffer_t;
+/* USER CODE END PTD */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ~__CONFIG_H__ */
+/*** end of file ***/
