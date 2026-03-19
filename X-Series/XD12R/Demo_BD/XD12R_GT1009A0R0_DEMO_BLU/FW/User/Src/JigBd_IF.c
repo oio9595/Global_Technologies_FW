@@ -41,7 +41,7 @@
 #define SERIAL_DECODE_MASK_ID       (uint32_t)(0x1F)
 #define SERIAL_DECODE_MASK_DATA     (uint32_t)(0xFFF)
 
-#define BOOT_PATTERN_CHANGE_COUNT   (240U)
+#define BOOT_PATTERN_CHANGE_COUNT   (120U)
 /* USER CODE END PD */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +50,7 @@ typedef enum tag_LED_BUFFER_UPDATE_TYPE_T
 {
     LED_UPDATE_COLOR = 0,   // By Color
     LED_UPDATE_PATTERN,     // By Pattern
-    LED_UPDATE_PIXEL,     // By Pattern
+    LED_UPDATE_PIXEL,       // By Pattern
     LED_UPDATE_MAX,
 } led_buffer_update_type_t;
 

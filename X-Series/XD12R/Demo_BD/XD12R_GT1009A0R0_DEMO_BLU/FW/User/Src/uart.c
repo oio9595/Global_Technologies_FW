@@ -273,6 +273,18 @@ void Comm_UART_Task(void)
             LED_Select_Brightness_Down();
             Print(LOG_INFO, "\r\n OK \r\n");
         }
+        else if (Command_Param_is_("led_brightness", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 100U)
+            {
+                LED_Select_Brightness(u32_recv_param[0]);
+                Print(LOG_INFO, "\r\n OK \r\n");
+            }
+            else
+            {
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_brightness (0 ~ 100)]\r\n");
+            }
+        }
         else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] < LED_PATTERN_MAX)
