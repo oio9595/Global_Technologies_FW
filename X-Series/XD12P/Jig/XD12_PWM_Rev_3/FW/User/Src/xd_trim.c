@@ -1088,7 +1088,7 @@ void XD_Screen_Task(void)
             JigBD_IF_Detect_XC24();
             XDIC_Trim_Init();
 
-            gt_screen_gain = GAIN_MID;
+            gt_screen_gain = GAIN_HIGH;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
             gn_xd_adc_channel = 0;

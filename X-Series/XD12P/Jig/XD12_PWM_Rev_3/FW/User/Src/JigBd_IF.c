@@ -627,21 +627,19 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
     uint32_t n_response = 0;
 
     DEBUG_LO();
-    if (true == Serialize_Rx_Start(XDIC_READ_RECV_BITS))
+    if (true == Serialize_Rx_Start(XDIC_READ_RECV_BITS * XD_DAISY_SIZE))
     {
         print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
         gb_xdic_initial_failed = true;
     }
     else
     {
-        DEBUG_HI();
         float f_frequency = Decode_Input_Response(&n_response, XDIC_READ_RECV_BITS);
         print(LOG_DEBUG, "Received DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, ID : 0x%02X, DATA - 0x%03X, FULL - 0x%06X]\r\n", in_addr, f_frequency,
             ((n_response >> 17) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12) & SERIAL_DECODE_MASK_ID), ((n_response >> 0) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
     us_delay(XDIC_READ_DELAY);
-    DEBUG_LO();
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
 }

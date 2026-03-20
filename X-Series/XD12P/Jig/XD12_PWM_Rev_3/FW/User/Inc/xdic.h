@@ -772,6 +772,8 @@ extern void XDIC_Set_OTP_Protect(bool en);
 extern void XDIC_Set_OTP_PG_Start(bool en);
 extern void XDIC_Sweep_Vref(void);
 extern void XDIC_Set_Sweep_Delay(uint16_t delay_ms);
+extern void XDIC_Set_Sweep_Line_Delay(uint16_t line_delay);
+extern void XDIC_Set_Scan_No(uint8_t scan_no);
 
 #ifdef __cplusplus
 }

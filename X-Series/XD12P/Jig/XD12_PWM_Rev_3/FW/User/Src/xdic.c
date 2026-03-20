@@ -200,6 +200,7 @@ static uint16_t gn_xd_delay_ch[XD_CH_SIZE] = {0, };
 uint32_t gn_xd_vref_sweep_delay = 1000;
 
 static void XDIC_Set_Delay_CH(void);
+static void XDIC_Detect_Is_OTP_Written(void);
 
 static void XDIC_Set_Register_Type(uint8_t reg_type)
 {
@@ -547,9 +548,9 @@ void XDIC_Init(void)
             switch (xdic_addr)
             {
             case XDIC_ADDR_LD_CONTROL :
-                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
+                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
-                gt_xdic_general_regs._r01.over_to_e = 1;
+                gt_xdic_general_regs._r01.over_to_e = 0;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
                 gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
@@ -567,9 +568,9 @@ void XDIC_Init(void)
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
                 gt_xdic_general_regs._r07.timeout_en = 1;
-                gt_xdic_general_regs._r07.s_det_e = 1;
-                gt_xdic_general_regs._r07.o_det_e = 1;
-                gt_xdic_general_regs._r07.s_off_e = 1;
+                gt_xdic_general_regs._r07.s_det_e = 0;
+                gt_xdic_general_regs._r07.o_det_e = 0;
+                gt_xdic_general_regs._r07.s_off_e = 0;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
                 gt_xdic_general_regs._r08.max_curr_vref = 0xFFF;
@@ -613,6 +614,7 @@ void XDIC_Init(void)
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
     XDIC_Read_All_Registers();
+    XDIC_Detect_Is_OTP_Written();
 
     print(LOG_INFO, "\r\n\r\n\r\n\r\n\r\n\r\n\r\n==================== XDIC Initialization Result ====================\r\n");
 
@@ -1013,4 +1015,43 @@ void XDIC_Sweep_Vref(void)
 void XDIC_Set_Sweep_Delay(uint16_t delay_ms)
 {
     gn_xd_vref_sweep_delay = delay_ms * 1000;
+}
+
+void XDIC_Set_Sweep_Line_Delay(uint16_t line_delay)
+{
+    print(LOG_DEBUG, "sweep delay : %u\r\n", line_delay);
+    uint16_t delay_msb_accumulator[2] = {0U};
+    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+    {
+        uint16_t delay_lsb = ((line_delay & 0x0FFFU) >>  0U);
+        uint16_t delay_msb = ((line_delay & 0x3000U) >> 12U);
+
+        delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+    }
+
+    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
+}
+
+void XDIC_Set_Scan_No(uint8_t scan_no)
+{
+    uint16_t r01 = XDIC_Get_General_Reg(XDIC_ADDR_LD_CONTROL);
+    r01 &= ~(0x07 << 3);
+    r01 |= (scan_no << 3);
+    XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, r01);
+}
+
+static void XDIC_Detect_Is_OTP_Written(void)
+{
+    uint16_t otp_crc = XDIC_Read_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
+    if (otp_crc != 0U)
+    {
+        print(LOG_INFO, "OTP Written!!\r\n");
+    }
+    else
+    {
+        print(LOG_ERROR, "OTP Empty!!\r\n");
+    }
 }

@@ -16,6 +16,11 @@ extern bool gb_jig_vsync_active;
 extern bool gb_xd_ldim_sweep;
 extern uint16_t gn_xd_ldim_sweep_gap;
 
+extern bool gb_xd_line_delay_sweep;
+
+extern bool gb_xd_scan_no;
+extern uint8_t gn_xd_scan_no;
+
 extern void Vsync_Timer_Start(void);
 extern void Vsync_Timer_Stop(void);
 extern void Vsync_Update_Handler(void);

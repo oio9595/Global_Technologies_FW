@@ -34,6 +34,11 @@ static uint16_t gn_xdic_LD_out;
 bool gb_xd_ldim_sweep;
 uint16_t gn_xd_ldim_sweep_gap;
 
+bool gb_xd_line_delay_sweep;
+
+bool gb_xd_scan_no;
+uint8_t gn_xd_scan_no;
+
 void Vsync_Timer_Start(void)
 {
     LL_TIM_EnableIT_UPDATE(TIM8);
@@ -132,6 +137,7 @@ void XDIC_Vsync_Task(void)
 {
     static uint8_t vsync_count = 0;
     static bool b_is_x1 = true;
+    static uint16_t linedelay = 1U;
     if (gb_xdic_vsync_flag)
     {
         if (IS_XC24_Support())
@@ -182,11 +188,46 @@ void XDIC_Vsync_Task(void)
         }
         if (gb_xd_ldim_sweep)
         {
+            static uint16_t vref = 4095;
+            if (vref > 4)
+            {
+                vref -= 4;
+            }
+            else
+            {
+                vref = 0;
+            }
             gn_xdic_LD_out += gn_xd_ldim_sweep_gap;
+            XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, vref);
+
             if (gn_xdic_LD_out > LD_WIDTH_MAX)
             {
+                static dev_max_curr_level_t max_current = DEV_MAX_CURR_LEVEL_4mA;
+                XDIC_Set_Max_Current_Level(max_current);
+                ++max_current;
+                if (max_current > DEV_MAX_CURR_LEVEL_46mA)
+                {
+                    max_current = DEV_MAX_CURR_LEVEL_4mA;
+                }
+                print(LOG_INFO, "Max Curr : %.3f\r\n", XDIC_Get_Max_Current_level());
                 gn_xdic_LD_out = 0;
+                vref = 4095;
             }
+            if (++vsync_count > 120U)
+            {
+                XDIC_Set_Sweep_Line_Delay(linedelay);
+                linedelay <<= 1U;
+                if (linedelay > 0x3FFF)
+                {
+                    linedelay = 1U;
+                }
+                vsync_count = 0;
+            }
+        }
+        if (gb_xd_scan_no)
+        {
+            XDIC_Set_Scan_No(gn_xd_scan_no);
+            gb_xd_scan_no = false;
         }
 
         gb_xdic_vsync_flag = false;

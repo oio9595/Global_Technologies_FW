@@ -1747,12 +1747,12 @@ static void TaskDebugUart(void)
             if (u32_recv_param[0])
             {
                 gb_xd_ldim_sweep = true;
-                print(LOG_INFO, "\r\n XD LDIM Sweep Start\r\n");
+                print(LOG_INFO, "\r\n XD Sweep Start (LDIM & MAX_CURR & VREF & LINE_DELAY)\r\n");
             }
             else
             {
                 gb_xd_ldim_sweep = false;
-                print(LOG_INFO, "\r\n XD LDIM Sweep Stop\r\n");
+                print(LOG_INFO, "\r\n XD Sweep Stop\r\n");
             }
         }
         else if (Command_Param_is_("xd_sweep_gap", "%d", &u32_recv_param[0]))
@@ -1796,6 +1796,26 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n XD Line Delay Off\r\n");
             }
         }
+        else if (Command_Param_is_("xd_line_delay_sweep", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0])
+            {
+                gb_xd_line_delay_sweep = true;
+                print(LOG_INFO, "\r\n XD LDIM Sweep Start\r\n");
+            }
+            else
+            {
+                gb_xd_line_delay_sweep = false;
+                print(LOG_INFO, "\r\n XD LDIM Sweep Stop\r\n");
+            }
+        }
+        else if (Command_Param_is_("xd_scan_no", "%d", &u32_recv_param[0]))
+        {
+            gb_xd_scan_no = true;
+            gn_xd_scan_no = u32_recv_param[0];
+            print(LOG_INFO, "\r\n XD SCAN_NO to %u\r\n", gn_xd_scan_no);
+        }
+
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
