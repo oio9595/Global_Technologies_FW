@@ -14,25 +14,25 @@
 
 #define XDIC_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xdic_general_regs.reg }
 
-#define XD_LD_DIR_HEAD_SHIFT        (0)
-#define XD_LD_DIR_TAIL_SHIFT        (1)
+#define XD_LD_DIR_HEAD_SHIFT        (0U)
+#define XD_LD_DIR_TAIL_SHIFT        (1U)
 
-#define XD_PWM_RES_12BIT            (0)
-#define XD_PWM_RES_14BIT            (1)
+#define XD_PWM_RES_12BIT            (0U)
+#define XD_PWM_RES_14BIT            (1U)
 
-#define XD_IO_MODE_NOP              (0)
-#define XD_IO_MODE_EXT_VSYNC        (1)
-#define XD_IO_MODE_FBO              (2)
-#define XD_IO_MODE_EXT_VYI_FBO      (3)
+#define XD_IO_MODE_NOP              (0U)
+#define XD_IO_MODE_EXT_VSYNC        (1U)
+#define XD_IO_MODE_FBO              (2U)
+#define XD_IO_MODE_EXT_VYI_FBO      (3U)
 
-#define XD_MCLK_FLL_ENABLE          (0)
-#define XD_MCLK_FLL_DISABLE         (1)
+#define XD_MCLK_FLL_ENABLE          (0U)
+#define XD_MCLK_FLL_DISABLE         (1U)
 
-#define MCLK_LSB_MASK               (0x00FFF) //LSB 12-bit
-#define MCLK_MSB_MASK               (0xFF000) //MSB  8-bit
+#define MCLK_LSB_MASK               (0x00FFFU) //LSB 12-bit
+#define MCLK_MSB_MASK               (0xFF000U) //MSB  8-bit
 
-#define XDIC_RESET_VALUE            (1U << 11)
-#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XD_CH_SIZE) - 1)
+#define XDIC_RESET_VALUE            (1U << 11U)
+#define XDIC_CHANNEL_ENABLE_MAX     ((1U << XD_CH_SIZE) - 1U)
 
 #define XDIC_VREF_LOW_CURR_MODE     (800U)
 
@@ -115,6 +115,7 @@ static uint16_t gn_xd_pwm_res;
 static uint16_t gn_xd_scan_no;
 static uint16_t gn_xd_fpwm_div;
 static uint32_t gn_xd_mclk_lock_cnt;
+static uint16_t gn_xd_delay_ch[4] = {0U};
 
 static dev_max_curr_level_t gt_xd_dev_max_curr_level;
 static short_level_t gt_xd_short_level;
@@ -152,7 +153,7 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
 
 uint16_t XDIC_Read_General_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFF;
+    uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
@@ -193,7 +194,7 @@ void XDIC_Read_All_Registers(void)
 
 void XDIC_Update_Max_Current_Vref(float in_current, bool low_current_mode)
 {
-    uint16_t max_curr_vref = 0;
+    uint16_t max_curr_vref = 0U;
     if (low_current_mode)
     {
         max_curr_vref = XDIC_VREF_LOW_CURR_MODE;
@@ -201,12 +202,41 @@ void XDIC_Update_Max_Current_Vref(float in_current, bool low_current_mode)
     else
     {
         max_curr_vref = (uint16_t)(in_current * 4095.0f / 128.0f + 0.5f);
-        if (max_curr_vref > 4095)
+        if (max_curr_vref > 4095U)
         {
-            max_curr_vref = 4095;
+            max_curr_vref = 4095U;
         }
     }
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, max_curr_vref);
+}
+
+static void XDIC_Set_Delay_CH(void)
+{
+        uint16_t delay_msb_accumulator = 0U;
+        uint16_t delay_per_ch = 0U;
+        if (gn_xd_pwm_res == XD_PWM_RES_14BIT)
+        {
+            delay_per_ch = ((16383U + 1U) / XD_CH_SIZE);
+        }
+        else
+        {
+            delay_per_ch = ((4095U + 1U) / XD_CH_SIZE);
+        }
+
+        for (uint8_t ch = 0U ; ch < XD_CH_SIZE ; ++ch)
+        {
+            gn_xd_delay_ch[ch] = (delay_per_ch * ch);
+            uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFFU) >>  0U);
+            uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000U) >> 12U);
+
+            delay_msb_accumulator |= (delay_msb << (2U * ch));
+
+            print(LOG_PC, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
+
+            XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+        }
+
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND, delay_msb_accumulator);
 }
 
 void XDIC_Param_Init(void)
@@ -215,21 +245,21 @@ void XDIC_Param_Init(void)
     gf_vsync_out = VSYNC;
 
     gn_xd_pwm_res = XD_PWM_RES_14BIT;
-    gn_xd_scan_no = 0;
+    gn_xd_scan_no = 0U;
 
     if (gn_xd_pwm_res == XD_PWM_RES_12BIT)
     {
-        gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 12)));
+        gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1U << 12U)));
     }
     else //if (gn_xd_pwm_res == XD_PWM_RES_14BIT)
     {
-        gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1 << 14)));
+        gn_xd_fpwm_div = (uint16_t)(((gf_xd_mclk / gf_vsync_out) / (1U << 14U)));
     }
 
-    gn_xd_mclk_lock_cnt = (uint32_t)((gf_xd_mclk / gf_vsync_out + 0.5f) * (1 + 0.1f / 100));
+    gn_xd_mclk_lock_cnt = (uint32_t)((gf_xd_mclk / gf_vsync_out + 0.5f) * (1U + 0.1f / 100U));
 
     gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_128mA;
-    gt_xd_short_level = SHORT_LEVEL_6V;
+    gt_xd_short_level = SHORT_LEVEL_70V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 
     gf_xd_max_current = 0.0f;
@@ -254,9 +284,9 @@ void XDIC_Init(void)
             switch (xdic_addr)
             {
             case XDIC_ADDR_LD_CONTROL :
-                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_HEAD_SHIFT;
+                gt_xdic_general_regs._r01.ld_dir = XD_LD_DIR_TAIL_SHIFT;
                 gt_xdic_general_regs._r01.pwm_res = gn_xd_pwm_res;
-                gt_xdic_general_regs._r01.over_to_e = 1;
+                gt_xdic_general_regs._r01.over_to_e = 0U;
                 gt_xdic_general_regs._r01.scan_no = gn_xd_scan_no;
                 gt_xdic_general_regs._r01.io_mode = XD_IO_MODE_NOP;
                 gt_xdic_general_regs._r01.ld_size = XD_CH_SIZE;
@@ -273,7 +303,7 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r06.dev_max_curr_level = gt_xd_dev_max_curr_level;
                 break;
             case XDIC_ADDR_FAULT_CONTROL :
-                gt_xdic_general_regs._r07.timeout_en = 1;
+                gt_xdic_general_regs._r07.timeout_en = 1U;
                 break;
             case XDIC_ADDR_MAX_CURRENT_VREF :
                 gt_xdic_general_regs._r08.max_curr_vref = 0x00;
@@ -283,20 +313,20 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
             case XDIC_ADDR_SERIAL_LATENCY :
-                gt_xdic_general_regs._r26.serial_latency = 60;
+                gt_xdic_general_regs._r26.serial_latency = 60U;
                 break;
             case XDIC_ADDR_MCLK_LOCK_1 :
-                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0);
+                gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0U);
                 break;
             case XDIC_ADDR_MCLK_LOCK_2 :
-                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12);
+                gt_xdic_general_regs._r28.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_MSB_MASK) >> 12U);
                 gt_xdic_general_regs._r28.mclk_lock_cnt_e = XD_MCLK_FLL_ENABLE;
                 break;
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
-                gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
+                gt_xdic_general_regs._r2B.osc_fll_man_e = 0U;
                 break;
             case XDIC_ADDR_WR_PROTECT :
-                gt_xdic_general_regs._r2D.val = 0x155;
+                gt_xdic_general_regs._r2D.val = 0x155U;
                 break;
             default :
                 continue;
@@ -308,12 +338,13 @@ void XDIC_Init(void)
             print(LOG_PC, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
         }
     }
+    XDIC_Set_Delay_CH();
     XDIC_Read_All_Registers();
 }
 
 void XDIC_DeInit(void)
 {
-    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, (1 << 11)); // Reset
+    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, XDIC_RESET_VALUE); // Reset
     XDIC_VCC_OFF();
 
     gf_xd_max_current = 0.0f;

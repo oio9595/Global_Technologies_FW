@@ -15,10 +15,12 @@
 #define XDIC_LD_MAX             (16383U)
 #define XDIC_LD_LOW_CURR_MODE   (20U)
 
+#define XDIC_TEST               (0)
+
 static bool gb_xdic_vsync_flag;
 volatile static bool gb_system_active;
 
-bool gb_xd_led_enable_table[TOTAL_BLOCK_SIZE] = {false, };
+bool gb_xd_led_enable_table[TOTAL_BLOCK_SIZE] = {false};
 
 static uint8_t gn_led_current_increase_cnt;
 
@@ -33,7 +35,7 @@ void Vsync_Timer_Start(void)
         gb_xd_led_enable_table[i] = false;
     }
     gf_xd_max_current = 0.0f;
-    gn_led_current_increase_cnt = 0;
+    gn_led_current_increase_cnt = 0U;
 
     gb_system_active = true;
 }
@@ -41,7 +43,7 @@ void Vsync_Timer_Start(void)
 void Vsync_Timer_Stop(void)
 {
     LL_TIM_DisableCounter(TIM8);
-    LL_TIM_SetCounter(TIM8, 0);
+    LL_TIM_SetCounter(TIM8, 0U);
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableIT_UPDATE(TIM8);
 
@@ -50,7 +52,7 @@ void Vsync_Timer_Stop(void)
         gb_xd_led_enable_table[i] = false;
     }
     gf_xd_max_current = 0.0f;
-    gn_led_current_increase_cnt = 0;
+    gn_led_current_increase_cnt = 0U;
 
     gb_system_active = false;
 }
@@ -65,13 +67,13 @@ void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        us_delay(10);
+        us_delay(10U);
         XC24_Turn_Off_Sync_Auto();
 
-        us_delay(100);
+        us_delay(100U);
         XC24_Turn_On_Sync_Auto();
 
-        us_delay(3500);
+        us_delay(3500U);
         if (gb_led_low_current_mode)
         {
             XC24_IF_Write_LD(XDIC_LD_LOW_CURR_MODE);
@@ -102,69 +104,69 @@ void XDIC_Vsync_Task(void)
 
 void LED_BAR_On_Select(uint8_t in_bar_num)
 {
-    if (in_bar_num == 0)
+    if (in_bar_num == 0U)
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             gb_xd_led_enable_table[i] = true;
         }
     }
-    else if (in_bar_num <= 20)
+    else if (in_bar_num <= 20U)
     {
-        uint8_t start_blk = in_bar_num - 1;
-        for (uint8_t blk = 0 ; blk < 8 ; ++blk)
+        uint8_t start_blk = (in_bar_num - 1U);
+        for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + 20 * blk] = true;
+            gb_xd_led_enable_table[start_blk + (20U * blk)] = true;
         }
     }
 }
 
 void LED_BAR_Off_Select(uint8_t in_bar_num)
 {
-    if (in_bar_num == 0)
+    if (in_bar_num == 0U)
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             gb_xd_led_enable_table[i] = false;
         }
     }
-    else if (in_bar_num <= 20)
+    else if (in_bar_num <= 20U)
     {
-        uint8_t start_blk = in_bar_num - 1;
-        for (uint8_t blk = 0 ; blk < 8 ; ++blk)
+        uint8_t start_blk = (in_bar_num - 1U);
+        for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + 20 * blk] = false;
+            gb_xd_led_enable_table[start_blk + (20U * blk)] = false;
         }
     }
 }
 
 void LED_BLK_On_Select(uint8_t in_blk_num)
 {
-    if (in_blk_num == 0)
+    if (in_blk_num == 0U)
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             gb_xd_led_enable_table[i] = true;
         }
     }
     else if (in_blk_num <= TOTAL_BLOCK_SIZE)
     {
-        gb_xd_led_enable_table[in_blk_num - 1] = true;
+        gb_xd_led_enable_table[in_blk_num - 1U] = true;
     }
 }
 
 void LED_BLK_Off_Select(uint8_t in_blk_num)
 {
-    if (in_blk_num == 0)
+    if (in_blk_num == 0U)
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             gb_xd_led_enable_table[i] = false;
         }
     }
     else if (in_blk_num <= TOTAL_BLOCK_SIZE)
     {
-        gb_xd_led_enable_table[in_blk_num - 1] = false;
+        gb_xd_led_enable_table[in_blk_num - 1U] = false;
     }
 }
 
@@ -189,13 +191,13 @@ void LED_Current_Increase(void)
     }
     else
     {
-        gf_xd_max_current = (16 * gn_led_current_increase_cnt) - 1;
+        gf_xd_max_current = (16U * gn_led_current_increase_cnt) - 1U;
     }
 
     ++gn_led_current_increase_cnt;
-    if (gn_led_current_increase_cnt > 8)
+    if (gn_led_current_increase_cnt > 8U)
     {
-        gn_led_current_increase_cnt = 0;
+        gn_led_current_increase_cnt = 0U;
     }
 }
 
@@ -232,7 +234,7 @@ void LED_System_Manual_Init(void)
     XDIC_Init();
     Vsync_Timer_Start();
 
-    for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
         gb_xd_led_enable_table[i] = true;
     }

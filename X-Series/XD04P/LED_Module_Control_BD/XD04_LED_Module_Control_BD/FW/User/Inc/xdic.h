@@ -14,7 +14,7 @@ extern "C" {
 
 typedef enum tag_XDIC_CHANNEL_T
 {
-    XD_CH_01 = 0,
+    XD_CH_01 = 0U,
     XD_CH_02,
     XD_CH_03,
     XD_CH_04,
@@ -23,7 +23,7 @@ typedef enum tag_XDIC_CHANNEL_T
 
 typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
 {
-    DEV_MAX_CURR_LEVEL_8mA = 0, // 3b'000
+    DEV_MAX_CURR_LEVEL_8mA = 0U, // 3b'000
     DEV_MAX_CURR_LEVEL_16mA,    // 3b'001
     DEV_MAX_CURR_LEVEL_24mA,    // 3b'010
     DEV_MAX_CURR_LEVEL_32mA,    // 3b'011
@@ -36,7 +36,7 @@ typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
 
 typedef enum tag_XDIC_SHORT_LEVEL_T
 {
-    SHORT_LEVEL_6V = 0, // 3b'000
+    SHORT_LEVEL_6V = 0U, // 3b'000
     SHORT_LEVEL_8V,     // 3b'001
     SHORT_LEVEL_12V,    // 3b'010
     SHORT_LEVEL_16V,    // 3b'011
@@ -49,7 +49,7 @@ typedef enum tag_XDIC_SHORT_LEVEL_T
 
 typedef enum tag_XDIC_FB_LEVEL_T
 {
-    FB_LEVEL_0V4 = 0,   // 3b'000
+    FB_LEVEL_0V4 = 0U,   // 3b'000
     FB_LEVEL_0V6,       // 3b'001
     FB_LEVEL_0V8,       // 3b'010
     FB_LEVEL_1V0,       // 3b'011
@@ -391,71 +391,71 @@ typedef union tag_XDIC_GENERAL_0x3F_T
 
 typedef enum tag_XDIC_GENERAL_ADDR_T
 {
-    XDIC_ADDR_RESET_ID              = 0X00, // 0x00
-    XDIC_ADDR_LD_CONTROL            = 0X01, // 0x01
-    XDIC_ADDR_FPWM_DIVIDER          = 0X02, // 0x02
-    XDIC_ADDR_CHANNEL_ENABLE        = 0X03, // 0x03
-    XDIC_ADDR_DUMMY_04              = 0X04, // 0x04
-    XDIC_ADDR_FAULT_STATUS          = 0X05, // 0x05
-    XDIC_ADDR_FAULT_LEVEL           = 0X06, // 0x06
-    XDIC_ADDR_FAULT_CONTROL         = 0X07, // 0x07
-    XDIC_ADDR_MAX_CURRENT_VREF      = 0X08, // 0x08
-    XDIC_ADDR_DELAY_CH_EXTEND       = 0X09, // 0x09
-    XDIC_ADDR_DUMMY_0A              = 0X0A, // 0x0A
-    XDIC_ADDR_DELAY_CH_01           = 0X0B, // 0x0B
-    XDIC_ADDR_DELAY_CH_02           = 0X0C, // 0x0C
-    XDIC_ADDR_DELAY_CH_03           = 0X0D, // 0x0D
-    XDIC_ADDR_DELAY_CH_04           = 0X0E, // 0x0E
-    XDIC_ADDR_DUMMY_0F              = 0X0F, // 0x0F
-    XDIC_ADDR_DUMMY_10              = 0X10, // 0x10
-    XDIC_ADDR_DUMMY_11              = 0X11, // 0x11
-    XDIC_ADDR_DUMMY_12              = 0X12, // 0x12
-    XDIC_ADDR_DUMMY_13              = 0X13, // 0x13
-    XDIC_ADDR_DUMMY_14              = 0X14, // 0x14
-    XDIC_ADDR_DUMMY_15              = 0X15, // 0x15
-    XDIC_ADDR_DUMMY_16              = 0X16, // 0x16
-    XDIC_ADDR_DUMMY_17              = 0X17, // 0x17
-    XDIC_ADDR_DUMMY_18              = 0X18, // 0x18
-    XDIC_ADDR_DUMMY_19              = 0X19, // 0x19
-    XDIC_ADDR_DUMMY_1A              = 0X1A, // 0x1A
-    XDIC_ADDR_DUMMY_1B              = 0X1B, // 0x1B
-    XDIC_ADDR_DUMMY_1C              = 0X1C, // 0x1C
-    XDIC_ADDR_DUMMY_1D              = 0X1D, // 0x1D
-    XDIC_ADDR_DUMMY_1E              = 0X1E, // 0x1E
-    XDIC_ADDR_DUMMY_1F              = 0X1F, // 0x1F
-    XDIC_ADDR_DUMMY_20              = 0X20, // 0x20
-    XDIC_ADDR_DUMMY_21              = 0X21, // 0x21
-    XDIC_ADDR_DUMMY_22              = 0X22, // 0x22
-    XDIC_ADDR_DUMMY_23              = 0X23, // 0x23
-    XDIC_ADDR_DUMMY_24              = 0X24, // 0x24
-    XDIC_ADDR_SERIAL_BAUDRATE       = 0X25, // 0x25
-    XDIC_ADDR_SERIAL_LATENCY        = 0X26, // 0x26
-    XDIC_ADDR_MCLK_LOCK_1           = 0X27, // 0x27
-    XDIC_ADDR_MCLK_LOCK_2           = 0X28, // 0x28
-    XDIC_ADDR_TEMP                  = 0X29, // 0x29
-    XDIC_ADDR_OSC_FLL_MANUAL_1      = 0X2A, // 0x2A
-    XDIC_ADDR_OSC_FLL_MANUAL_2      = 0X2B, // 0x2B
-    XDIC_ADDR_OSC_FLL_MONITOR       = 0X2C, // 0x2C
-    XDIC_ADDR_WR_PROTECT            = 0X2D, // 0x2D
-    XDIC_ADDR_DUMMY_2E              = 0X2E, // 0x2E
-    XDIC_ADDR_VREF_FIX              = 0X2F, // 0x2F
-    XDIC_ADDR_DUMMY_30              = 0X30, // 0x30
-    XDIC_ADDR_DUMMY_31              = 0X31, // 0x31
-    XDIC_ADDR_DUMMY_32              = 0X32, // 0x32
-    XDIC_ADDR_DUMMY_33              = 0X33, // 0x33
-    XDIC_ADDR_DUMMY_34              = 0X34, // 0x34
-    XDIC_ADDR_DUMMY_35              = 0X35, // 0x35
-    XDIC_ADDR_DUMMY_36              = 0X36, // 0x36
-    XDIC_ADDR_DUMMY_37              = 0X37, // 0x37
-    XDIC_ADDR_DUMMY_38              = 0X38, // 0x38
-    XDIC_ADDR_DUMMY_39              = 0X39, // 0x39
-    XDIC_ADDR_OTP_ACCESS_1          = 0X3A, // 0x3A
-    XDIC_ADDR_OTP_ACCESS_2          = 0X3B, // 0x3B
-    XDIC_ADDR_OTP_WRITE             = 0X3C, // 0x3C
-    XDIC_ADDR_OTP_RD_PROG           = 0X3D, // 0x3D
-    XDIC_ADDR_OTP_PROTECT           = 0X3E, // 0x3E
-    XDIC_ADDR_OTP_OP_MODE           = 0X3F, // 0x3F
-    XDIC_ADDR_MAX                   = 0x40, // 0x40
+    XDIC_ADDR_RESET_ID              = 0x00U, // 0x00
+    XDIC_ADDR_LD_CONTROL            = 0x01U, // 0x01
+    XDIC_ADDR_FPWM_DIVIDER          = 0x02U, // 0x02
+    XDIC_ADDR_CHANNEL_ENABLE        = 0x03U, // 0x03
+    XDIC_ADDR_DUMMY_04              = 0x04U, // 0x04
+    XDIC_ADDR_FAULT_STATUS          = 0x05U, // 0x05
+    XDIC_ADDR_FAULT_LEVEL           = 0x06U, // 0x06
+    XDIC_ADDR_FAULT_CONTROL         = 0x07U, // 0x07
+    XDIC_ADDR_MAX_CURRENT_VREF      = 0x08U, // 0x08
+    XDIC_ADDR_DELAY_CH_EXTEND       = 0x09U, // 0x09
+    XDIC_ADDR_DUMMY_0A              = 0x0AU, // 0x0A
+    XDIC_ADDR_DELAY_CH_01           = 0x0BU, // 0x0B
+    XDIC_ADDR_DELAY_CH_02           = 0x0CU, // 0x0C
+    XDIC_ADDR_DELAY_CH_03           = 0x0DU, // 0x0D
+    XDIC_ADDR_DELAY_CH_04           = 0x0EU, // 0x0E
+    XDIC_ADDR_DUMMY_0F              = 0x0FU, // 0x0F
+    XDIC_ADDR_DUMMY_10              = 0x10U, // 0x10
+    XDIC_ADDR_DUMMY_11              = 0x11U, // 0x11
+    XDIC_ADDR_DUMMY_12              = 0x12U, // 0x12
+    XDIC_ADDR_DUMMY_13              = 0x13U, // 0x13
+    XDIC_ADDR_DUMMY_14              = 0x14U, // 0x14
+    XDIC_ADDR_DUMMY_15              = 0x15U, // 0x15
+    XDIC_ADDR_DUMMY_16              = 0x16U, // 0x16
+    XDIC_ADDR_DUMMY_17              = 0x17U, // 0x17
+    XDIC_ADDR_DUMMY_18              = 0x18U, // 0x18
+    XDIC_ADDR_DUMMY_19              = 0x19U, // 0x19
+    XDIC_ADDR_DUMMY_1A              = 0x1AU, // 0x1A
+    XDIC_ADDR_DUMMY_1B              = 0x1BU, // 0x1B
+    XDIC_ADDR_DUMMY_1C              = 0x1CU, // 0x1C
+    XDIC_ADDR_DUMMY_1D              = 0x1DU, // 0x1D
+    XDIC_ADDR_DUMMY_1E              = 0x1EU, // 0x1E
+    XDIC_ADDR_DUMMY_1F              = 0x1FU, // 0x1F
+    XDIC_ADDR_DUMMY_20              = 0x20U, // 0x20
+    XDIC_ADDR_DUMMY_21              = 0x21U, // 0x21
+    XDIC_ADDR_DUMMY_22              = 0x22U, // 0x22
+    XDIC_ADDR_DUMMY_23              = 0x23U, // 0x23
+    XDIC_ADDR_DUMMY_24              = 0x24U, // 0x24
+    XDIC_ADDR_SERIAL_BAUDRATE       = 0x25U, // 0x25
+    XDIC_ADDR_SERIAL_LATENCY        = 0x26U, // 0x26
+    XDIC_ADDR_MCLK_LOCK_1           = 0x27U, // 0x27
+    XDIC_ADDR_MCLK_LOCK_2           = 0x28U, // 0x28
+    XDIC_ADDR_TEMP                  = 0x29U, // 0x29
+    XDIC_ADDR_OSC_FLL_MANUAL_1      = 0x2AU, // 0x2A
+    XDIC_ADDR_OSC_FLL_MANUAL_2      = 0x2BU, // 0x2B
+    XDIC_ADDR_OSC_FLL_MONITOR       = 0x2CU, // 0x2C
+    XDIC_ADDR_WR_PROTECT            = 0x2DU, // 0x2D
+    XDIC_ADDR_DUMMY_2E              = 0x2EU, // 0x2E
+    XDIC_ADDR_VREF_FIX              = 0x2FU, // 0x2F
+    XDIC_ADDR_DUMMY_30              = 0x30U, // 0x30
+    XDIC_ADDR_DUMMY_31              = 0x31U, // 0x31
+    XDIC_ADDR_DUMMY_32              = 0x32U, // 0x32
+    XDIC_ADDR_DUMMY_33              = 0x33U, // 0x33
+    XDIC_ADDR_DUMMY_34              = 0x34U, // 0x34
+    XDIC_ADDR_DUMMY_35              = 0x35U, // 0x35
+    XDIC_ADDR_DUMMY_36              = 0x36U, // 0x36
+    XDIC_ADDR_DUMMY_37              = 0x37U, // 0x37
+    XDIC_ADDR_DUMMY_38              = 0x38U, // 0x38
+    XDIC_ADDR_DUMMY_39              = 0x39U, // 0x39
+    XDIC_ADDR_OTP_ACCESS_1          = 0x3AU, // 0x3A
+    XDIC_ADDR_OTP_ACCESS_2          = 0x3BU, // 0x3B
+    XDIC_ADDR_OTP_WRITE             = 0x3CU, // 0x3C
+    XDIC_ADDR_OTP_RD_PROG           = 0x3DU, // 0x3D
+    XDIC_ADDR_OTP_PROTECT           = 0x3EU, // 0x3E
+    XDIC_ADDR_OTP_OP_MODE           = 0x3FU, // 0x3F
+    XDIC_ADDR_MAX                   = 0x40U, // 0x40
 } xdic_addr_t;
 
 typedef union tag_XDIC_GENERAL_REG_T
