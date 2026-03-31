@@ -40,7 +40,7 @@
 #include "ads124s08.h"
 #include "xdic.h"
 
-#define USE_DISPLAY_DEVICE_REGS
+//#define USE_DISPLAY_DEVICE_REGS
 #define ADS114S08_READ_OFS_COUNT    (128) /* must be power of 2 */
 
 typedef enum tag_ADC_SPS_T

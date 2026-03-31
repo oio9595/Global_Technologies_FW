@@ -227,6 +227,15 @@ void XDIC_Vsync_Task(void)
         if (gb_xd_scan_no)
         {
             XDIC_Set_Scan_No(gn_xd_scan_no);
+
+            if (gn_xd_scan_no == 3U)
+            {
+                gn_xdic_LD_out >>= 3;
+            }
+            else
+            {
+                gn_xdic_LD_out <<= 3;
+            }
             gb_xd_scan_no = false;
         }
 

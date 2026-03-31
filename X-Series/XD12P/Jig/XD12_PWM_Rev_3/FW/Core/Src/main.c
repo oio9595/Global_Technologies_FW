@@ -294,6 +294,7 @@ void comm_print_help(void)
     print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
 
     print(LOG_INFO, "\n\r--------------------------------------------------------------\n\r");
+
 }
 
 void comm_init(void)
@@ -1548,14 +1549,14 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xd_ldim", "%d", &u32_recv_param[0]))
         {
-            if (u32_recv_param[0] <= 65535)
+            if (u32_recv_param[0] <= 16383)
             {
-                print(LOG_INFO, "\r\n Set ldim to [%u]\r\n", u32_recv_param[0]);
+                print(LOG_INFO, "\r\n Set ldim to [%u (%.3f[%%])]\r\n", u32_recv_param[0], ((float)u32_recv_param[0] * 100.0f) / 1000.0f);
                 XDIC_Set_LD_Data(u32_recv_param[0]);
             }
             else
             {
-                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 65535);
+                print(LOG_ERROR, "\r\n Out of xdic_ldim [%u] [0 - %u]\r\n", u32_recv_param[0], 16383);
             }
         }
         else if (Command_is_("xd_ldim"))
@@ -1813,7 +1814,7 @@ static void TaskDebugUart(void)
         {
             gb_xd_scan_no = true;
             gn_xd_scan_no = u32_recv_param[0];
-            print(LOG_INFO, "\r\n XD SCAN_NO to %u\r\n", gn_xd_scan_no);
+            print(LOG_INFO, "\r\n Set XD SCAN_NO to %u\r\n", gn_xd_scan_no);
         }
 
 /* ----------------- command list - xc ----------------- */
@@ -1939,7 +1940,7 @@ static void TaskDebugUart(void)
                 print(LOG_ERROR, "\r\n Out of log_lv [%u] [0 - %u]\r\n", u32_recv_param[0], LOG_MAX - 1);
             }
         }
-        else if (Command_is_("5"))
+        else if (Command_is_("xd_ec_start") | Command_is_("5"))
         {
             // Initial
             if (IS_XC24_Support())
@@ -1952,13 +1953,29 @@ static void TaskDebugUart(void)
             XDIC_Trim_Init_VREF_CTL();
             JigBD_IF_Start_MCU_ADC();
             uint16_t vref_adc =  JigBD_IF_Get_MCU_ADC();
-            print(LOG_INFO, "\r\n VREF  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc));
+            float vref = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
+            if ((vref > 2.2 * 1.03f) || (vref < 2.2 * 0.97f))
+            {
+                print(LOG_INFO, "\r\n VREF : %.3f [V] (Typ : 2.2V) [NG]\r\n", vref);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n VREF : %.3f [V] (Typ : 2.2V) [OK]\r\n", vref);
+            }
 
             // LDO
             XDIC_Trim_Init_LDO_CTL();
             JigBD_IF_Start_MCU_ADC();
             uint16_t ldo_adc =  JigBD_IF_Get_MCU_ADC();
-            print(LOG_INFO, "\r\n LDO  : %.3f\r\n", JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc));
+            float ldo = JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc);
+            if ((ldo > 1.5 * 1.03f) || (ldo < 1.5 * 0.97f))
+            {
+                print(LOG_INFO, "\r\n LDO : %.3f [V] (Typ : 1.5V) [NG]\r\n", ldo);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n LDO : %.3f [V] (Typ : 1.5V) [OK]\r\n", ldo);
+            }
 
             // FREQ
             XDIC_Trim_Init_OSC();
@@ -1967,8 +1984,14 @@ static void TaskDebugUart(void)
             JigBD_IF_Stop_Input_Capture();
             uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
             float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-            print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
-
+            if ((osc_freq > 39.3192 * 1.03f) || (osc_freq < 39.3192 * 0.97f))
+            {
+                print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz] (Typ : 39.3192MHz) [NG]\r\n", osc_freq);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz] (Typ : 39.3192MHz) [OK]\r\n", osc_freq);
+            }
             // Current Ofs
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
             JigBD_IF_VLED_9V_EN(PWR_ON);
@@ -1991,7 +2014,14 @@ static void TaskDebugUart(void)
                 iout_adc[i][1] = ADS114S08_Get_ADC_Value();
                 uint16_t adc_average = (iout_adc[i][0] + iout_adc[i][1]) / 2; //avg
                 float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
-                print(LOG_INFO, "OFS CH[%d] : %.3f\r\n", (i + 1), iout_avg);
+                if ((iout_avg > 1.000 * 1.03f) || (iout_avg < 1.000 * 0.97f))
+                {
+                    print(LOG_INFO, "OFS CH[%d] : %.3f [mA] (Typ : 1mA) [NG]\r\n", (i + 1), iout_avg);
+                }
+                else
+                {
+                    print(LOG_INFO, "OFS CH[%d] : %.3f [mA] (Typ : 1mA) [OK]\r\n", (i + 1), iout_avg);
+                }
             }
 
             // Current Gain
@@ -2017,10 +2047,17 @@ static void TaskDebugUart(void)
 
                 uint16_t adc_average = iout_adc[i][0] - iout_adc[i][1]; //delta
                 float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
-                print(LOG_INFO, "GAIN CH[%d] : %.3f\r\n", (i + 1), iout_avg);
+                if ((iout_avg > 3.907 * 1.03f) || (iout_avg < 3.907 * 0.97f))
+                {
+                    print(LOG_INFO, "GAIN CH[%d] : %.3f [mA] (Typ : 3.907mA) [NG]\r\n", (i + 1), iout_avg);
+                }
+                else
+                {
+                    print(LOG_INFO, "GAIN CH[%d] : %.3f [mA] (Typ : 3.907mA) [OK]\r\n", (i + 1), iout_avg);
+                }
             }
         }
-        else if (Command_is_("6"))
+        else if (Command_is_("xd_ch_start") | Command_is_("6"))
         {
             // Initial
             if (IS_XC24_Support())
@@ -2063,7 +2100,33 @@ static void TaskDebugUart(void)
             {
                 float iout_avg_all = JigBD_IF_Convert_Adc_To_Current(iout_adc_all[i][0], current_gain);
                 float iout_avg_sel = JigBD_IF_Convert_Adc_To_Current(iout_adc_sel[i][0], current_gain);
-                print(LOG_INFO, "CH[%d] : %.3f vs %.3f\r\n", (i + 1), iout_avg_all, iout_avg_sel);
+                bool judge = false;
+                if (iout_avg_all > iout_avg_sel)
+                {
+                    if (iout_avg_all - iout_avg_sel < 0.05)
+                    {
+                        judge = true;
+                    }
+                }
+                else if (iout_avg_all < iout_avg_sel)
+                {
+                    if (iout_avg_sel - iout_avg_all < 0.05)
+                    {
+                        judge = true;
+                    }
+                }
+                else
+                {
+                    judge = true;
+                }
+                if (judge == true)
+                {
+                    print(LOG_INFO, "CH[%d] : %.3f vs %.3f (O)\r\n", (i + 1), iout_avg_all, iout_avg_sel);
+                }
+                else
+                {
+                    print(LOG_ERROR, "CH[%d] : %.3f vs %.3f (X)\r\n", (i + 1), iout_avg_all, iout_avg_sel);
+                }
             }
         }
         else if (Command_is_("reset"))

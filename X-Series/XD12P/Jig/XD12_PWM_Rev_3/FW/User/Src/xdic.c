@@ -197,7 +197,7 @@ static fb_level_t gt_xd_fb_level;
 
 static uint16_t gn_xd_delay_ch[XD_CH_SIZE] = {0, };
 
-uint32_t gn_xd_vref_sweep_delay = 1000;
+uint32_t gn_xd_vref_sweep_delay = 1000U;
 
 static void XDIC_Set_Delay_CH(void);
 static void XDIC_Detect_Is_OTP_Written(void);
@@ -1052,6 +1052,6 @@ static void XDIC_Detect_Is_OTP_Written(void)
     }
     else
     {
-        print(LOG_ERROR, "OTP Empty!!\r\n");
+        print(LOG_ERROR, "Error!!! OTP Empty!!\r\n");
     }
 }
