@@ -26,26 +26,26 @@ typedef void (*func_t)(void);
 #define XDIC_LDO_SWEEP_TARGET   (0.005f) // 5mV
 
 /* XD12 Current Spec */
-#define XD12_GAIN_P1        (1000)
-#define XD12_GAIN_P2        (3000)
-#define XD12_GAIN_TARGET    (3.907) // Delta
+#define XD12_GAIN_P1            (1000)
+#define XD12_GAIN_P2            (3000)
+#define XD12_GAIN_TARGET        (3.907) // Delta
 
-#define XD12_OFS_P1         (350)
-#define XD12_OFS_P2         (600)
-#define XD12_OFS_TARGET     (1.00) // Average
+#define XD12_OFS_P1             (350)
+#define XD12_OFS_P2             (600)
+#define XD12_OFS_TARGET         (1.00) // Average
 
-#define XD12_ICC_TARGET     (2.95f)
+#define XD12_ICC_TARGET         (2.95f)
 
 /* XD04 Current Spec */
-#define XD04_ICTL_L_P1      (500)
-#define XD04_ICTL_L_P2      (900)
-#define XD04_ICTL_L_TARGET  (4.102) // Average
+#define XD04_ICTL_L_P1          (500)
+#define XD04_ICTL_L_P2          (900)
+#define XD04_ICTL_L_TARGET      (4.102) // Average
 
-#define XD04_ICTL_H_P1      (400)
-#define XD04_ICTL_H_P2      (1300)
-#define XD04_ICTL_H_TARGET  (26.57) // Average
+#define XD04_ICTL_H_P1          (400)
+#define XD04_ICTL_H_P2          (1300)
+#define XD04_ICTL_H_TARGET      (26.57) // Average
 
-#define XD04_ICC_TARGET     (1.8f)
+#define XD04_ICC_TARGET         (1.8f)
 
 static const char* gs_xdic_test_mode[XDIC_TEST_MAX] =
 {
@@ -93,7 +93,6 @@ static float gf_xdic_measured_icc;
 
 static float gf_xdic_measured_current_A[XDIC_CH_MAX];
 static float gf_xdic_measured_current_B[XDIC_CH_MAX];
-
 
 static float gf_xdic_measured_ldo_sweep[64];
 static xdic_test_condition_t gt_xdic_trim_condition[XDIC_TEST_MAX];
