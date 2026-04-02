@@ -1,4 +1,4 @@
-/** @file xdic.c
+    /** @file xdic.c
  *
  * @brief
  *
@@ -151,13 +151,13 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
     }
 }
 
-uint16_t XDIC_Read_General_Reg(uint8_t addr)
+uint16_t XDIC_Read_General_Reg(uint8_t addr, uint8_t initial_daisy_size)
 {
     uint16_t xdic_reg_val = 0xFFFFU;
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
-        xdic_reg_val = XC24_IF_Read_XDIC(addr);
+        xdic_reg_val = XC24_IF_Read_XDIC(addr, initial_daisy_size);
         *((uint16_t*)(map->reg_ptr)) = xdic_reg_val;
         print(LOG_PC, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
     }
@@ -266,7 +266,7 @@ void XDIC_Param_Init(void)
     gf_xd_duty = 100.0f;
 }
 
-void XDIC_Init(void)
+void XDIC_Init(uint8_t xd_daisy_size)
 {
     XDIC_VCC_ON();
     LL_mDelay(100);
@@ -340,6 +340,10 @@ void XDIC_Init(void)
     }
     XDIC_Set_Delay_CH();
     XDIC_Read_All_Registers();
+    if (xd_daisy_size != INIT_CHECK_DONE)
+    {
+        XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID, xd_daisy_size);
+    }
 }
 
 void XDIC_DeInit(void)

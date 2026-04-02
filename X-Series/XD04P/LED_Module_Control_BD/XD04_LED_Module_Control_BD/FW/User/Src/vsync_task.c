@@ -216,8 +216,18 @@ void LED_Duty_Select(float in_duty)
 
 void LED_System_Init(void)
 {
-    XC24_Init();
-    XDIC_Init();
+    print(LOG_PC, "INIT_DAISY_1------------------------------\r\n");
+    XC24_Init(INIT_CHECK_XD_DAISY_1);
+    XDIC_Init(INIT_CHECK_XD_DAISY_1);
+
+    print(LOG_PC, "INIT_DAISY_2------------------------------\r\n");
+    XC24_Init(INIT_CHECK_XD_DAISY_2);
+    XDIC_Init(INIT_CHECK_XD_DAISY_2);
+
+    print(LOG_PC, "INIT_For Dimming---------------------------\r\n");
+    XC24_Init_Final();
+    XDIC_Init(INIT_CHECK_DONE);
+
     Vsync_Timer_Start();
 }
 
@@ -230,8 +240,18 @@ void LED_System_DeInit(void)
 
 void LED_System_Manual_Init(void)
 {
-    XC24_Init();
-    XDIC_Init();
+    print(LOG_PC, "INIT_DAISY_1------------------------------\r\n");
+    XC24_Init(INIT_CHECK_XD_DAISY_1);
+    XDIC_Init(INIT_CHECK_XD_DAISY_1);
+
+    print(LOG_PC, "INIT_DAISY_2------------------------------\r\n");
+    XC24_Init(INIT_CHECK_XD_DAISY_2);
+    XDIC_Init(INIT_CHECK_XD_DAISY_2);
+
+    print(LOG_PC, "INIT_For Dimming---------------------------\r\n");
+    XC24_Init_Final();
+    XDIC_Init(INIT_CHECK_DONE);
+
     Vsync_Timer_Start();
 
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)

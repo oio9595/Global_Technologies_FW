@@ -154,9 +154,7 @@ typedef enum tag_XC24_ADDR_T
     XC24_ADDR_DUMMY_6D                      = 0x6D, // 0x6D
     XC24_ADDR_DUMMY_6E                      = 0x6E, // 0x6E
     XC24_ADDR_DUMMY_6F                      = 0x6F, // 0x6F
-
-    XC24_ADDR_PORT1_LOCAL_RW_DATA1          = 0x70, // 0x70
-    XC24_ADDR_MAX                           = 0x71, // 0x71
+    XC24_ADDR_MAX                           = 0x70, // 0x70
 }xc24_addr_t;
 
 typedef enum tag_XC24_MIRROR_ADDR_T
@@ -173,7 +171,6 @@ typedef enum tag_XC24_MIRROR_ADDR_T
     XC24_MIRROR_ADDR_MAX                    = 0xF8, // 0xF8
 }xc24_mirror_addr_t;
 
-/*
 typedef enum _xc24_data_addr_
 {
     XC24_ADDR_PORT1_LOCAL_RW_DATA1 = 0x70,
@@ -309,7 +306,6 @@ typedef enum _xc24_data_addr_
     XC24_ADDR_PORT7_LOCAL_RW_DATA16,
     XC24_ADDR_PORT8_LOCAL_RW_DATA16,
 }xc24_addr_port_local_t;
-*/
 
 /* SOFT RESET : default 0x00 */
 typedef union tag_DUMMY
@@ -1680,7 +1676,8 @@ extern void XC24_Write_Register(uint16_t in_addr, uint16_t in_data);
 extern uint16_t XC24_Read_Register(uint8_t in_addr);
 extern void XC24_Read_Register_All(void);
 extern void XC24_Dump_All_Register(void);
-extern void XC24_Init(void);
+extern void XC24_Init(uint8_t xd_daisy_size);
+extern void XC24_Init_Final(void);
 extern void XC24_DeInit(void);
 extern void XC24_Test_Init(void);
 
@@ -1689,7 +1686,7 @@ extern void XC24_IF_SyncGen_Command(void);
 extern uint16_t XC24_IF_Fault_Read_Command(void);
 
 extern void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data);
-extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr);
+extern uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr, uint8_t initial_daisy_size);
 extern void XC24_IF_Write_LD(uint16_t ld_duty);
 
 extern void XC24_Turn_Off_Sync_Auto(void);
