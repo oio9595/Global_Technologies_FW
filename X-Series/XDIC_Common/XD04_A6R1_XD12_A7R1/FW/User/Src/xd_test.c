@@ -309,6 +309,10 @@ static void XDIC_Display_Test_Result(void)
                 {
                     print(LOG_INFO, "\r\n");
                 }
+                if (gf_xdic_measured_ldo_sweep[i] > 1.65f)
+                {
+                    break;
+                }
             }
             break;
         default:
@@ -599,6 +603,12 @@ void XDIC_Test_Task(void)
                         gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                     }
                     else
+                    {
+                        gn_xdic_measure_count = 0;
+                        gt_xdic_test_mode = XDIC_TEST_MAX;
+                        gt_xdic_test_step = XDIC_TEST_STEP_RESULT;
+                    }
+                    if (gf_xdic_measured_ldo_sweep[gn_xdic_measure_count] > 1.65)
                     {
                         gn_xdic_measure_count = 0;
                         gt_xdic_test_mode = XDIC_TEST_MAX;
