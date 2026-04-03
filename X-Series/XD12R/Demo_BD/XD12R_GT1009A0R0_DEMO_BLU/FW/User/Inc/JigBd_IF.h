@@ -18,7 +18,7 @@ extern "C" {
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define XD_TIMEOUT_MS       (2)
+#define XD_TIMEOUT_MS       (1)
 /* USER CODE END PD */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,7 +55,7 @@ extern volatile bool gb_xd_timeout_event;
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN */
 extern void LED_Select_Color(uint8_t color);
-extern void LED_Select_Brightness(uint8_t brightness);
+extern void LED_Select_Brightness(uint8_t brt_r, uint8_t brt_g, uint8_t brt_b);
 extern void LED_Select_Brightness_Up(void);
 extern void LED_Select_Brightness_Down(void);
 extern void LED_Select_Pattern(uint8_t pattern);

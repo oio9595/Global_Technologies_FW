@@ -225,7 +225,7 @@ static void Comm_Print_Help(void)
 void Comm_Init(void)
 {
     Print(LOG_INFO, "\n\r--------------------------------------");
-    Print(LOG_INFO, "\n\r     [GT-IP805 (ES) JIG]");
+    Print(LOG_INFO, "\n\r     [GT-XD12R BLU (ES) DEMO]");
     Print(LOG_INFO, "\n\r--------------------------------------");
     Print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     Print(LOG_INFO, "\n\r - Date  : %s", __DATE__);
@@ -273,16 +273,28 @@ void Comm_UART_Task(void)
             LED_Select_Brightness_Down();
             Print(LOG_INFO, "\r\n OK \r\n");
         }
-        else if (Command_Param_is_("led_brightness", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("led_brightness", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
         {
             if (u32_recv_param[0] <= 100U)
             {
-                LED_Select_Brightness(u32_recv_param[0]);
+                LED_Select_Brightness(u32_recv_param[0], u32_recv_param[1], u32_recv_param[2]);
                 Print(LOG_INFO, "\r\n OK \r\n");
             }
             else
             {
-                Print(LOG_INFO, "\r\n Invalid Input. Use: led_brightness (0 ~ 100)]\r\n");
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_brightness (0 ~ 100)\r\n");
+            }
+        }
+        else if (Command_Param_is_("led_brightness", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 100U)
+            {
+                LED_Select_Brightness(u32_recv_param[0], u32_recv_param[0], u32_recv_param[0]);
+                Print(LOG_INFO, "\r\n OK \r\n");
+            }
+            else
+            {
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_brightness (0 ~ 100)\r\n");
             }
         }
         else if (Command_Param_is_("led_pattern", "%u", &u32_recv_param[0]))
@@ -294,7 +306,7 @@ void Comm_UART_Task(void)
             }
             else
             {
-                Print(LOG_INFO, "\r\n Invalid Input. Use: led_pattern (0 ~ 4)]\r\n");
+                Print(LOG_INFO, "\r\n Invalid Input. Use: led_pattern (0 ~ 4)\r\n");
             }
         }
         else if (Command_Param_is_("led_pixel", "%u", &u32_recv_param[0]))
@@ -309,40 +321,29 @@ void Comm_UART_Task(void)
                 Print(LOG_INFO, "\r\n Invalid Input. Use: led_pixel (0 ~ 143)]\r\n");
             }
         }
-        else if (Command_Param_is_("vref_r", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("vref", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] <= 4095U)
             {
                 XDIC_Set_Write_Target_Reg(XDIC_ADDR_MAX_CURRENT_VREF1, u32_recv_param[0]);
-                Print(LOG_INFO, "\r\n OK \r\n");
+                Print(LOG_INFO, "\r\n OK R -> %u \r\n", u32_recv_param[0]);
             }
             else
             {
                 Print(LOG_INFO, "\r\n Invalid Input. Use: vref_r (0 ~ 4095)]\r\n");
             }
         }
-        else if (Command_Param_is_("vref_g", "%u", &u32_recv_param[0]))
+        else if (Command_Param_is_("max_curr", "%u", &u32_recv_param[0]))
         {
-            if (u32_recv_param[0] <= 4095U)
+            if (u32_recv_param[0] <= 15)
             {
-                XDIC_Set_Write_Target_Reg(XDIC_ADDR_MAX_CURRENT_VREF2, u32_recv_param[0]);
-                Print(LOG_INFO, "\r\n OK \r\n");
+                uint16_t max_curr = ((u32_recv_param[0] << 8) | (u32_recv_param[0] << 4) | (u32_recv_param[0] << 0));
+                XDIC_Set_Write_Target_Reg(XDIC_ADDR_MAX_CURRENT_LEVEL, max_curr);
+                Print(LOG_INFO, "\r\n OK max_curr -> %u \r\n", u32_recv_param[0]);
             }
             else
             {
-                Print(LOG_INFO, "\r\n Invalid Input. Use: vref_g (0 ~ 4095)]\r\n");
-            }
-        }
-        else if (Command_Param_is_("vref_b", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 4095U)
-            {
-                XDIC_Set_Write_Target_Reg(XDIC_ADDR_MAX_CURRENT_VREF3, u32_recv_param[0]);
-                Print(LOG_INFO, "\r\n OK \r\n");
-            }
-            else
-            {
-                Print(LOG_INFO, "\r\n Invalid Input. Use: vref_g (0 ~ 4095)]\r\n");
+                Print(LOG_INFO, "\r\n Invalid Input. Use: max_curr (0 ~ 15)]\r\n");
             }
         }
 /* ----------------- command list - MCU Function ----------------- */

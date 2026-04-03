@@ -155,7 +155,7 @@ static _reg_map_t gt_xdic_general_maps[] =
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_PROTECT      , _r3E ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_OP_MODE      , _r3F ),
 };
-static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
+_Static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
 
 /* Variable for XD Registers */
 static float gf_xdic_mclk;
@@ -186,7 +186,7 @@ static void XDIC_Set_Writeable_Type(bool reg_type)
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
 {
     _reg_map_t* result = NULL;
-    for (uint8_t i = 0U; i < sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0]); ++i)
+    for (uint8_t i = 0U ; i < sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0]) ; ++i)
     {
         if (gt_xdic_general_maps[i].address == addr)
         {
@@ -418,9 +418,9 @@ void XDIC_Init(void)
             Print(LOG_ERROR, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
         }
     }
-    XDIC_Set_Delay_CH();
+    //XDIC_Set_Delay_CH();
     XDIC_Dump_All_Registers();
-    LED_Select_Brightness(50U);
+    LED_Select_Brightness(50U, 50U, 50U);
 }
 /* USER CODE END */
 /*** end of file ***/

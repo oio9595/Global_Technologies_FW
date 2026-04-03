@@ -17,8 +17,8 @@ extern "C" {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define VERSION_MAJOR               (0U)
-#define VERSION_MINOR               (0U)
-#define VERSION_PATCH               (5U) // At every new build, increase this value
+#define VERSION_MINOR               (1U)
+#define VERSION_PATCH               (0U) // At every new build, increase this value
 
 #define APB1_TIM_FREQ               (90.0f) //MHz
 #define APB2_TIM_FREQ               (APB1_TIM_FREQ * 2U) //MHz
@@ -36,7 +36,7 @@ extern "C" {
 #define SVSYNC_SIZE                 (32U)
 #define SVSYNC_TOTAL_CYCLE          (SVSYNC_CYCLE * SVSYNC_SIZE)
 
-#define XDIC_DAISY_SIZE             (28U)
+#define XDIC_DAISY_SIZE             (10U)
 #define XDIC_CH_SIZE                (12U)
 
 #define XDIC_SERIAL_CLK_CNT_LOW     (16U)
@@ -77,7 +77,7 @@ extern "C" {
 #define ANSI_FONT_BLUE              "\033[34m"
 #define ANSI_FONT_MAGENTA           "\033[35m"
 
-#define LED_MAP_ROW                 (14U)
+#define LED_MAP_ROW                 (5U)
 #define LED_MAP_COL                 (12U)
 #define LED_MAP_SIZE                (LED_MAP_ROW * LED_MAP_COL)
 /* USER CODE END PD */

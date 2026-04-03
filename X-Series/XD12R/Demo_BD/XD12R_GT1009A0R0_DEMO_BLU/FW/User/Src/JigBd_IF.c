@@ -60,6 +60,14 @@ typedef enum tag_BOOT_STATE_T
     BOOT_STATE_COLOR,
     BOOT_STATE_NORMAL
 } boot_state_t;
+
+typedef struct tag_BRIGHTNESS_PERCENT_T
+{
+    uint8_t percent_R;
+    uint8_t percent_G;
+    uint8_t percent_B;
+} brightness_percent_t;
+
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,7 +86,7 @@ static uint16_t gn_mcu_serializer_bit_1;
 
 static led_color_type_t gt_led_color;
 
-static uint8_t gn_led_brightness_percent; // 0 ~ 100
+static brightness_percent_t gt_led_brightness; // 0 ~ 100
 
 static uint8_t gn_led_pixel; // 0 ~ 100
 
@@ -90,34 +98,16 @@ static led_ld_buffer_t gt_led_ld_buffer[LED_MAP_SIZE] = {0};
 
 const static uint8_t gt_led_id_map[LED_MAP_SIZE] =
 {
-      0U,  12U,   1U,  13U,   2U,  14U,
-      3U,  15U,   4U,  16U,   5U,  17U,
-      6U,  18U,   7U,  19U,   8U,  20U,
-      9U,  21U,  10U,  22U,  11U,  23U,
-     33U,  45U,  34U,  46U,  35U,  47U,
-     30U,  42U,  31U,  43U,  32U,  44U,
-     27U,  39U,  28U,  40U,  29U,  41U,
-     24U,  36U,  25U,  37U,  26U,  38U,
-     48U,  60U,  49U,  61U,  50U,  62U,
-     51U,  63U,  52U,  64U,  53U,  65U,
-     54U,  66U,  55U,  67U,  56U,  68U,
-     57U,  69U,  58U,  70U,  59U,  71U,
-     81U,  93U,  82U,  94U,  83U,  95U,
-     78U,  90U,  79U,  91U,  80U,  92U,
-     75U,  87U,  76U,  88U,  77U,  89U,
-     72U,  84U,  73U,  85U,  74U,  86U,
-     96U, 108U,  97U, 109U,  98U, 110U,
-     99U, 111U, 100U, 112U, 101U, 113U,
-    102U, 114U, 103U, 115U, 104U, 116U,
-    105U, 117U, 106U, 118U, 107U, 119U,
-    129U, 141U, 130U, 142U, 131U, 143U,
-    126U, 138U, 127U, 139U, 128U, 140U,
-    123U, 135U, 124U, 136U, 125U, 137U,
-    120U, 132U, 121U, 133U, 122U, 134U,
-    144U, 156U, 145U, 157U, 146U, 158U,
-    147U, 159U, 148U, 160U, 149U, 161U,
-    150U, 162U, 151U, 163U, 152U, 164U,
-    153U, 165U, 154U, 166U, 155U, 167U,
+      0U,   1U,   2U,   3U,   4U,   5U,
+      6U,   7U,   8U,   9U,  10U,  11U,
+     12U,  13U,  14U,  15U,  16U,  17U,
+     18U,  19U,  20U,  21U,  22U,  23U,
+     24U,  25U,  26U,  27U,  28U,  29U,
+     30U,  31U,  32U,  33U,  34U,  35U,
+     36U,  37U,  38U,  39U,  40U,  41U,
+     42U,  43U,  44U,  45U,  46U,  47U,
+     48U,  49U,  50U,  51U,  52U,  53U,
+     54U,  55U,  56U,  57U,  58U,  59U,
 };
 /* USER CODE END PV */
 
@@ -134,6 +124,29 @@ void LED_Select_Color(uint8_t color)
     if ((led_color_type_t)color < LED_COLOR_MAX)
     {
         gt_led_color = (led_color_type_t)color;
+        switch (color)
+        {
+            case LED_COLOR_ALL : 
+                gt_led_brightness.percent_R = 50U;
+                gt_led_brightness.percent_G = 50U;
+                gt_led_brightness.percent_B = 50U;
+                break;
+            case LED_COLOR_RED : 
+                gt_led_brightness.percent_R = 50U;
+                gt_led_brightness.percent_G = 0U;
+                gt_led_brightness.percent_B = 0U;
+                break;
+            case LED_COLOR_GREEN : 
+                gt_led_brightness.percent_R = 0U;
+                gt_led_brightness.percent_G = 50U;
+                gt_led_brightness.percent_B = 0U;
+                break;
+            case LED_COLOR_BLUE : 
+                gt_led_brightness.percent_R = 0U;
+                gt_led_brightness.percent_G = 0U;
+                gt_led_brightness.percent_B = 50U;
+                break;
+        }
     }
     else
     {
@@ -142,39 +155,94 @@ void LED_Select_Color(uint8_t color)
     }
 }
 
-void LED_Select_Brightness(uint8_t brightness)
+void LED_Select_Brightness(uint8_t brt_r, uint8_t brt_g, uint8_t brt_b)
 {
-    if (brightness <= 100U)
+    if (brt_r <= 100U)
     {
-        gn_led_brightness_percent = brightness;
+        gt_led_brightness.percent_R = brt_r;
     }
     else
     {
-        gn_led_brightness_percent = 0U;
+        gt_led_brightness.percent_R = 0U;
     }
+    
+    if (brt_g <= 100U)
+    {
+        gt_led_brightness.percent_G = brt_g;
+    }
+    else
+    {
+        gt_led_brightness.percent_G = 0U;
+    }
+    
+    if (brt_b <= 100U)
+    {
+        gt_led_brightness.percent_B = brt_b;
+    }
+    else
+    {
+        gt_led_brightness.percent_B = 0U;
+    }
+    Print(LOG_INFO, "\r -> SET Brightness R [%3u%%], G [%3u%%], B[%3u%%]\r\n", gt_led_brightness.percent_R, gt_led_brightness.percent_G, gt_led_brightness.percent_B);
 }
 
 void LED_Select_Brightness_Up(void)
 {
-    if (gn_led_brightness_percent > 90U)
+    if (gt_led_brightness.percent_R > 90U)
     {
-        gn_led_brightness_percent = 100U;
+        gt_led_brightness.percent_R = 100U;
     }
     else
     {
-        gn_led_brightness_percent += 10U;
+        gt_led_brightness.percent_R += 10U;
+    }
+    
+    if (gt_led_brightness.percent_G > 90U)
+    {
+        gt_led_brightness.percent_G = 100U;
+    }
+    else
+    {
+        gt_led_brightness.percent_G += 10U;
+    }
+    
+    if (gt_led_brightness.percent_B > 90U)
+    {
+        gt_led_brightness.percent_B = 100U;
+    }
+    else
+    {
+        gt_led_brightness.percent_B += 10U;
     }
 }
 
 void LED_Select_Brightness_Down(void)
 {
-    if (gn_led_brightness_percent > 10U)
+    if (gt_led_brightness.percent_R > 10U)
     {
-        gn_led_brightness_percent -= 10U;
+        gt_led_brightness.percent_R -= 10U;
     }
     else
     {
-        gn_led_brightness_percent = 0U;
+        gt_led_brightness.percent_R = 0U;
+    }
+
+    if (gt_led_brightness.percent_G > 10U)
+    {
+        gt_led_brightness.percent_G -= 10U;
+    }
+    else
+    {
+        gt_led_brightness.percent_G = 0U;
+    }
+    
+    if (gt_led_brightness.percent_B > 10U)
+    {
+        gt_led_brightness.percent_B -= 10U;
+    }
+    else
+    {
+        gt_led_brightness.percent_B = 0U;
     }
 }
 
@@ -213,15 +281,15 @@ static void LED_Update_Buffer_By_Color(void)
         case LED_COLOR_ALL :
             for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
             {
-                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
             }
             break;
         case LED_COLOR_RED :
             for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
             {
-                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
                 gt_led_ld_buffer[map_idx].ld_g = 0U;
                 gt_led_ld_buffer[map_idx].ld_b = 0U;
             }
@@ -230,7 +298,7 @@ static void LED_Update_Buffer_By_Color(void)
             for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
             {
                 gt_led_ld_buffer[map_idx].ld_r = 0U;
-                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
                 gt_led_ld_buffer[map_idx].ld_b = 0U;
             }
             break;
@@ -239,7 +307,7 @@ static void LED_Update_Buffer_By_Color(void)
             {
                 gt_led_ld_buffer[map_idx].ld_r = 0U;
                 gt_led_ld_buffer[map_idx].ld_g = 0U;
-                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
             }
             break;
         default :
@@ -262,9 +330,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 {
                     if ((col & 1U) == 0U)
                     {
-                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                     }
                     else
                     {
@@ -277,9 +345,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 {
                     if ((col & 1U) != 0U)
                     {
-                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                     }
                     else
                     {
@@ -299,9 +367,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 {
                     if ((col & 1U) != 0U)
                     {
-                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                     }
                     else
                     {
@@ -314,9 +382,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 {
                     if ((col & 1U) == 0U)
                     {
-                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                     }
                     else
                     {
@@ -334,9 +402,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 uint8_t col = map_idx % LED_MAP_COL; // 0 ~ 15
                 if ((col & 1U) == 0U)
                 {
-                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                 }
                 else
                 {
@@ -353,9 +421,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 uint8_t col = map_idx % LED_MAP_COL; // 0 ~ 15
                 if ((col & 1U) == 1U)
                 {
-                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                 }
                 else
                 {
@@ -372,9 +440,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 //uint8_t col = map_idx % LED_MAP_COL; // 0 ~ 15
                 if ((row & 1U) == 0U)
                 {
-                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                 }
                 else
                 {
@@ -391,9 +459,9 @@ static void LED_Update_Buffer_By_Pattern(void)
                 //uint8_t col = map_idx % LED_MAP_COL; // 0 ~ 15
                 if ((row & 1U) == 1U)
                 {
-                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
-                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gt_led_brightness.percent_R);
+                    gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gt_led_brightness.percent_G);
+                    gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gt_led_brightness.percent_B);
                 }
                 else
                 {
@@ -418,9 +486,9 @@ static void LED_Update_Buffer_By_Pixel(void)
         gt_led_ld_buffer[map_idx].ld_g = 0U;
         gt_led_ld_buffer[map_idx].ld_b = 0U;
     }
-    gt_led_ld_buffer[gn_led_pixel].ld_r = LD_DATA(gn_led_brightness_percent);
-    gt_led_ld_buffer[gn_led_pixel].ld_g = LD_DATA(gn_led_brightness_percent);
-    gt_led_ld_buffer[gn_led_pixel].ld_b = LD_DATA(gn_led_brightness_percent);
+    gt_led_ld_buffer[gn_led_pixel].ld_r = LD_DATA(gt_led_brightness.percent_R);
+    gt_led_ld_buffer[gn_led_pixel].ld_g = LD_DATA(gt_led_brightness.percent_G);
+    gt_led_ld_buffer[gn_led_pixel].ld_b = LD_DATA(gt_led_brightness.percent_B);
 }
 
 void LED_Update_Buffer(void)
@@ -687,27 +755,23 @@ uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
     gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    DEBUG_HI();
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
 
     uint32_t n_response = 0U;
 
-    DEBUG_LO();
     if (true == Serialize_Rx_Start(XDIC_READ_RECV_BITS))
     {
         Print(LOG_ERROR, "Rx Timeout!!! [addr - 0x%02X]\r\n", in_addr);
     }
     else
     {
-        DEBUG_HI();
         float f_frequency = Decode_Input_Response(&n_response, XDIC_READ_RECV_BITS);
         Print(LOG_DEBUG, "Received DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, ID : 0x%02X, DATA - 0x%03X, FULL - 0x%06X]\r\n", in_addr, f_frequency,
             ((n_response >> 17U) & SERIAL_DECODE_MASK_CODE), ((n_response >> 12U) & SERIAL_DECODE_MASK_ID), ((n_response >> 0U) & SERIAL_DECODE_MASK_DATA), n_response);
     }
 
     us_delay(XDIC_READ_DELAY);
-    DEBUG_LO();
 
     return (uint16_t)(n_response & SERIAL_DECODE_MASK_DATA);
 }

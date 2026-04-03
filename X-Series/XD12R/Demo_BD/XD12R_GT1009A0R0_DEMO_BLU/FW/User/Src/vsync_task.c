@@ -188,18 +188,26 @@ void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        MCU_IF_Write_LD();
         if (gb_xdic_write_flag)
         {
+            DEBUG_HI();
             XDIC_Write_General_Reg(gn_xdic_write_addr, gn_xdic_write_data);
+            /*XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF1);
+            XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF2);
+            XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF3);*/
+            us_delay(100U);
             gb_xdic_write_flag = false;
+            DEBUG_LO();
         }
         if (gb_xdic_read_flag)
         {
             uint16_t ret = XDIC_Read_General_Reg(gn_xdic_read_addr);
             Print(LOG_INFO, "XDIC Read --> [ 0x%02X - 0x%04X] \r\n", gn_xdic_read_addr, ret);
+            us_delay(100U);
             gb_xdic_read_flag = false;
         }
+
+        MCU_IF_Write_LD();
         LED_Update_Buffer();
         gb_xdic_vsync_flag = false;
     }
