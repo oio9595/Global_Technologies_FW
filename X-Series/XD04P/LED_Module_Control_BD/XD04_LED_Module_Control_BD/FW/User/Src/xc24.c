@@ -141,7 +141,7 @@ static _reg_map_t gt_xc24_general_maps[] =
     XC24_GENERAL_REG_ENTRY( XC24_ADDR_DUMMY_6E                    , _r6E ),
     XC24_GENERAL_REG_ENTRY( XC24_ADDR_DUMMY_6F                    , _r6F ),
 };
-static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t)), "XC24 General Address map mismatch!");
+_Static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t)), "XC24 General Address map mismatch!");
 
 static _reg_map_t gt_xc24_mirror_maps[] =
 {
@@ -154,7 +154,7 @@ static _reg_map_t gt_xc24_mirror_maps[] =
     XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR2      , _rF6 ),
     XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR3      , _rF7 ),
 };
-static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
+_Static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
 static uint8_t gn_xd_id_read[20][2] = {0U};
 static bool gb_xd_id_error_channel[20] = {true}; // if true, mismatch

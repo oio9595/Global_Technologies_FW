@@ -105,7 +105,7 @@ static _reg_map_t gt_xdic_general_maps[] =
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_PROTECT     , _r3E ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_OP_MODE     , _r3F ),
 };
-static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
+_Static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
 
 /* Variable for XD Registers */
 static float gf_xd_mclk;
