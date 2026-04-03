@@ -148,7 +148,7 @@ static _reg_map_t gt_xc24_general_maps[] =
     XC24_GENERAL_REG_ENTRY( XC24_ADDR_DUMMY_6F                    , _r6F ),
     XC24_GENERAL_REG_ENTRY( XC24_ADDR_PORT1_LOCAL_RW_DATA1        , _r70 ),
 };
-static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t)), "XC24 General Address map mismatch!");
+_Static_assert(XC24_ADDR_MAX == (sizeof(gt_xc24_general_maps) / sizeof(_reg_map_t)), "XC24 General Address map mismatch!");
 
 static _reg_map_t gt_xc24_mirror_maps[] =
 {
@@ -161,7 +161,7 @@ static _reg_map_t gt_xc24_mirror_maps[] =
     XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR2      , _rF6 ),
     XC24_MIRROR_REG_ENTRY( XC24_MIRROR_ADDR_MIRROR3      , _rF7 ),
 };
-static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
+_Static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
@@ -408,7 +408,7 @@ void XC24_Init(void)
             case XC24_ADDR_AUTO_ENABLE:
                 gt_xc24_general_regs._r08.timeout_en = 1;
                 gt_xc24_general_regs._r08.sync_auto_en = 1;
-                gt_xc24_general_regs._r08.fault_auto_en = 0;
+                gt_xc24_general_regs._r08.fault_auto_en = 1;
                 break;
             case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
                 gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4;
