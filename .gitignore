@@ -78,3 +78,6 @@ thumbs.db
 
 # 측정파일 제거
 **/측정자료
+X-Series/XDIC_Common/XD04_A6R1_XD12_A7R1/Docs/xd04_iqc_jig_fw_release.xlsx
+X-Series/XDIC_Common/XD04_A6R1_XD12_A7R1/FW/User/Src/JigBd_IF.c
+X-Series/XDIC_Common/XD04_A6R1_XD12_A7R1/FW/User/Src/xd_test.c

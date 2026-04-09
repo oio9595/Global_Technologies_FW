@@ -23,7 +23,7 @@ typedef void (*func_t)(void);
 #define XDIC_VREF_TARGET        (2.2)
 #define XDIC_OSC_TARGET         (39.36f)
 #define XDIC_OSC_ERROR_RATE     (0.02f) // 2.0%
-#define XDIC_LDO_SWEEP_TARGET   (0.005f) // 5mV
+#define XDIC_LDO_SWEEP_TARGET   (0.0015f) // 1.5mV
 
 /* XD12 Current Spec */
 #define XD12_GAIN_P1            (1000)
@@ -281,6 +281,10 @@ static void XDIC_Display_Test_Result(void)
                     judge_result = false;
                     break;
                 }
+                if (gf_xdic_measured_ldo_sweep[i] > 1.65f)
+                {
+                    break;
+                }
             }
 
             if (judge_result)
@@ -412,7 +416,7 @@ void XDIC_Test_Task(void)
                 case XDIC_TEST_ICC:
                     break;
                 case XDIC_TEST_LDO_SWEEP:
-                    XDIC_Set_VREF_CTL(gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].vref_p1 + gn_xdic_measure_count);
+                    XDIC_Set_VREF_CTL(gt_xdic_trim_condition[XDIC_TEST_LDO_SWEEP].vref_p1 + gn_xdic_measure_count * 2U);
                     break;
                 default:
                     break;
@@ -435,6 +439,7 @@ void XDIC_Test_Task(void)
                         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_N);
                     }
                 }
+                gn_task_delay = 10;
                 gt_xdic_test_step = XDIC_TEST_STEP_START_ADC_CONVERSION;
                 break;
             case XDIC_TEST_STEP_START_ADC_CONVERSION:

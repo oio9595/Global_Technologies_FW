@@ -15,7 +15,7 @@
 #include "JigBd_IF.h"
 #include "ads124s08.h"
 
-#define MCU_ADC_MEASURE_COUNT       (20)
+#define MCU_ADC_MEASURE_COUNT       (100U)
 #define MCU_ADC_VREF                (3.3f)
 #define MCU_ADC_RESOLUTION          (4095.0f)
 
