@@ -5,7 +5,7 @@ import time
 import pyautogui
 import pygetwindow as gw
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout,
+    QApplication, QWidget, QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout, QSpinBox,
     QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox, QMessageBox, QInputDialog
 )
 from PyQt5.QtGui import QKeySequence
@@ -136,9 +136,10 @@ class MacroApp(QWidget):
 
         data_ver_layout = QVBoxLayout()
         data_ver_layout.addWidget(QLabel("DATA [Decimal]"))
-        self.data_label = QLineEdit()
-        self.data_label.setText("0")
-        data_ver_layout.addWidget(self.data_label)
+        self.data_spin = QSpinBox()
+        self.data_spin.setRange(0, 128)
+        self.data_spin.setValue(0)
+        data_ver_layout.addWidget(self.data_spin)
 
         checksum_ver_layout = QVBoxLayout()
         checksum_ver_layout.addWidget(QLabel("CHECKSUM"))
@@ -154,7 +155,7 @@ class MacroApp(QWidget):
         self.sop_cb.setFixedWidth(80)
         self.length_label.setFixedWidth(80)
         self.command_cb.setFixedWidth(200)
-        self.data_label.setFixedWidth(80)
+        self.data_spin.setFixedWidth(120)
         self.checksum_label.setFixedWidth(80)
         self.eop_cb.setFixedWidth(80)
 
@@ -215,7 +216,7 @@ class MacroApp(QWidget):
                 command_text = self.command_cb.currentText()
                 command_val = self.commands[command_text]
                 eop_val = int(self.eop_cb.currentText(), 16)
-                data_val_1 = int(self.data_label.text().strip())
+                data_val_1 = self.data_spin.value()
 
                 # length 만큼 data 값 생성 (data_val_1, data_val_1+1, data_val_1+2, ...)
                 data_list = [data_val_1 + i for i in range(length_val)]
