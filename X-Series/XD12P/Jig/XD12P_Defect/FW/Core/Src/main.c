@@ -256,7 +256,7 @@ void comm_print_help(void)
     print(LOG_INFO, "\n\r  \"xd_ldim\"\t\t\t : Show current LDIM value");
 
     print(LOG_INFO, "\n\r  \"test1\"\t : Check Basic Electrical Characteristic");
-    print(LOG_INFO, "\n\r  \"test2\"\t : Check Effect of Neighbor Channel");
+    print(LOG_INFO, "\n\r  \"test2\"\t : Check Channel Dependency");
     print(LOG_INFO, "\n\r  \"test3\"\t : Check PWM Operation");
     print(LOG_INFO, "\n\r  \"test4\"\t : Check Line Delay Operation");
 
@@ -1334,27 +1334,34 @@ static void TaskDebugUart(void)
         else if (Command_is_("test3"))
         {
             XDIC_Init();
+            XDIC_Set_Line_Delay_Into_Equal();
             Vsync_Timer_Start(); // TIM8
             XDIC_Set_LD_Data(512);
-            print(LOG_INFO, "====================================================\r\n");
-            print(LOG_INFO, "    < TEST3 PWM Operation >\r\n");
-            print(LOG_INFO, "    < use command \"xd_ldim\" to control PWM Duty (0 ~ 16383) >\r\n");
-            print(LOG_INFO, "    < ex) \"xd_ldim 1000\" or \"xd_ldim 8192\", ... >\r\n");
-            print(LOG_INFO, "    < If test done, use command \"reset\" to finish PWM test >\r\n");
-            print(LOG_INFO, "====================================================\r\n");
+            print(LOG_INFO, "===============================================================\r\n");
+            print(LOG_INFO, "    < TEST3 PWM Operation\t\t\t\t\t>\r\n");
+            print(LOG_INFO, "    < use command \"xd_ldim\" to control PWM Duty (0 ~ 16383)\t>\r\n");
+            print(LOG_INFO, "    < ex) \"xd_ldim 1000\" or \"xd_ldim 8192\", ...\t\t\t>\r\n");
+            print(LOG_INFO, "    <                      or\t\t\t\t\t>\r\n");
+            print(LOG_INFO, "    < use command \"xd_ldim_sweep 1\" to sweep PWM Duty\t\t>\r\n");
+            print(LOG_INFO, "    <             \"xd_ldim_sweep 0\" to stop sweep\t\t>\r\n");
+            print(LOG_INFO, "    < If test done, use command \"reset\" to finish PWM test\t>\r\n");
+            print(LOG_INFO, "===============================================================\r\n");
         }
         else if (Command_is_("test4"))
         {
             XDIC_Init();
             Vsync_Timer_Start(); // TIM8
             XDIC_Set_LD_Data(512);
-            print(LOG_INFO, "====================================================\r\n");
-            print(LOG_INFO, "    < TEST4 Line Delay Operation >\r\n");
-            print(LOG_INFO, "    < use command \"xd_line_delay 1\" to enable line delay function >\r\n");
-            print(LOG_INFO, "    < use command \"xd_line_delay 0\" to disable line delay function >\r\n");
-            print(LOG_INFO, "    < There should be no difference >\r\n");
-            print(LOG_INFO, "    < If test done, use command \"reset\" to finish Line Delay test >\r\n");
-            print(LOG_INFO, "====================================================\r\n");
+            print(LOG_INFO, "======================================================================\r\n");
+            print(LOG_INFO, "    < TEST4 Line Delay Operation\t\t\t\t\t>\r\n");
+            print(LOG_INFO, "    < use command \"xd_line_delay\" to control line delay (0 ~ 16383)\t>\r\n");
+            print(LOG_INFO, "    < ex) \"xd_line_delay 1000\" or \"xd_line_delay 8192\", ...\t\t>\r\n");
+            print(LOG_INFO, "    <                            or\t\t\t\t\t>\r\n");
+            print(LOG_INFO, "    < use command \"xd_line_delay_sweep 1\" to sweep line delay\t\t>\r\n");
+            print(LOG_INFO, "    <             \"xd_line_delay_sweep 0\" to stop sweep\t\t\t>\r\n");
+            print(LOG_INFO, "    < There should be no difference\t\t\t\t\t>\r\n");
+            print(LOG_INFO, "    < If test done, use command \"reset\" to finish Line Delay test\t>\r\n");
+            print(LOG_INFO, "======================================================================\r\n");
         }
         else if (Command_is_("xd_reset"))
         {
@@ -1461,7 +1468,7 @@ static void TaskDebugUart(void)
         {
             print(LOG_INFO, "\r\n ldim - [%u]\r\n", XDIC_Get_LD_Data());
         }
-        else if (Command_Param_is_("xd_line_delay", "%d", &u32_recv_param[0]))
+        else if (Command_Param_is_("xd_line_delay_sweep", "%d", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
             {
@@ -1474,6 +1481,20 @@ static void TaskDebugUart(void)
                 print(LOG_INFO, "\r\n XD Line Delay Sweep Stop\r\n");
             }
         }
+        else if (Command_Param_is_("xd_line_delay", "%d", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 16383U)
+            {
+                XDIC_Set_Line_Delay_Target_Value(u32_recv_param[0]);
+                print(LOG_INFO, "\r\n XD Line Delay Set to %u\r\n\r\n", u32_recv_param[0]);
+            }
+            else
+            {
+                print(LOG_ERROR, "\r\n Out of Line Delay [%u] [0 - %u]\r\n\r\n", u32_recv_param[0], 16383);
+            }
+        }
+
+        
         else if (Command_Param_is_("xd_scan_no", "%d", &u32_recv_param[0]))
         {
             gb_xd_scan_no = true;

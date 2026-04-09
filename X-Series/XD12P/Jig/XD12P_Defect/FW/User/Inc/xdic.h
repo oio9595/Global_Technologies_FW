@@ -753,7 +753,7 @@ extern void XDIC_Trim_Init(void);
 extern void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr);
 extern float XDIC_Get_Max_Current_level(void);
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
-extern void XDIC_Set_Delay_CH(void);
+extern void XDIC_Set_Line_Delay_Into_Equal(void);
 
 extern bool XDIC_Is_Vsync_Mode_External(void);
 extern void XDIC_Update_Vsync_Frequency(float n_freq);
@@ -773,7 +773,7 @@ extern void XDIC_Set_OTP_Protect(bool en);
 extern void XDIC_Set_OTP_PG_Start(bool en);
 extern void XDIC_Sweep_Vref(void);
 extern void XDIC_Set_Sweep_Delay(uint16_t delay_ms);
-extern void XDIC_Set_Sweep_Line_Delay(uint16_t line_delay);
+extern void XDIC_Set_Line_Delay(uint16_t line_delay);
 extern void XDIC_Set_Scan_No(uint8_t scan_no);
 
 extern void XDIC_Test_1(void);

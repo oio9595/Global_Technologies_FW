@@ -19,6 +19,8 @@
 #define FAULT_MASK_SHORT        (1 << 2)
 #define FAULT_MASK_THERMAL      (1 << 3)
 
+#define XD_PWM_LINE_DELAY_TABLE_SIZE    (9)
+
 bool gb_jig_vsync_active;
 static bool gb_xdic_vsync_flag;
 
@@ -30,6 +32,13 @@ static bool gb_xdic_read_flag;
 static uint8_t gn_xdic_read_addr;
 
 static uint16_t gn_xdic_LD_out;
+
+static bool gb_xdic_line_delay_write_flag;
+static uint16_t gn_xdic_line_delay;
+static uint16_t gn_xd_pwm_line_delay_table[XD_PWM_LINE_DELAY_TABLE_SIZE] = 
+{
+    0U, 2047U, 4095U, 6143U, 8191U, 10239U, 12287U, 14335U, 16383U
+};
 
 bool gb_xd_line_delay_sweep;
 
@@ -77,6 +86,12 @@ void XDIC_Set_Read_Target_Reg(uint8_t addr)
 {
     gn_xdic_read_addr = addr;
     gb_xdic_read_flag = true;
+}
+
+void XDIC_Set_Line_Delay_Target_Value(uint16_t data)
+{
+    gn_xdic_line_delay = data;
+    gb_xdic_line_delay_write_flag = true;
 }
 
 void XDIC_Set_LD_Data(uint32_t in_ld_out)
@@ -142,30 +157,21 @@ void XDIC_Vsync_Task(void)
             us_delay(100);
             XC24_Turn_On_Sync_Auto();
         }
-
         us_delay(1500);
 #if 0
-        if (++vsync_count > 120)
+        if (gb_xd_scan_no)
         {
-            if (b_is_x1) // go to x8
+            XDIC_Set_Scan_No(gn_xd_scan_no);
+
+            if (gn_xd_scan_no == 3U)
             {
-                uint16_t r01_value = XDIC_Get_General_Reg(XDIC_ADDR_LD_CONTROL);
-                r01_value &= ~(7U << 3); // set x8
-                r01_value |= (3U << 3);
-                XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, r01_value);
                 gn_xdic_LD_out >>= 3;
-                b_is_x1 = false;
             }
-            else // go to x1
+            else
             {
-                uint16_t r01_value = XDIC_Get_General_Reg(XDIC_ADDR_LD_CONTROL);
-                r01_value &= ~(7U << 3); // set x8
-                r01_value |= (0U << 3);
-                XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, r01_value);
                 gn_xdic_LD_out <<= 3;
-                b_is_x1 = true;
             }
-            vsync_count = 0;
+            gb_xd_scan_no = false;
         }
 #endif
         JigBD_IF_Write_LD_Command(gn_xdic_LD_out);
@@ -184,42 +190,39 @@ void XDIC_Vsync_Task(void)
         }
         if (gb_xd_line_delay_sweep)
         {
-            static uint16_t linedelay = 1U;
-            if (++vsync_count > 120U)
+            static uint16_t linedelay_idx = 0U;
+            if (++vsync_count > 60U)
             {
-                XDIC_Set_Sweep_Line_Delay(linedelay);
-                linedelay <<= 1U;
-                if (linedelay > 0x3FFF)
+                XDIC_Set_Line_Delay(gn_xd_pwm_line_delay_table[linedelay_idx]);
+                print(LOG_INFO, "Sweep - Line Delay : %u\r\n", gn_xd_pwm_line_delay_table[linedelay_idx]);
+                ++linedelay_idx;
+                if (linedelay_idx >= (XD_PWM_LINE_DELAY_TABLE_SIZE - 1U)) // avoid last value for better stability check at max line delay
                 {
-                    linedelay = 1U;
+                    linedelay_idx = 0U;
                 }
                 vsync_count = 0;
             }
         }
+        if (gb_xdic_line_delay_write_flag)
+        {
+            XDIC_Set_Line_Delay(gn_xdic_line_delay);
+            gb_xdic_line_delay_write_flag = false;
+        }
         if (gb_xd_ldim_sweep)
         {
-            gn_xdic_LD_out += 15;
-            if (gn_xdic_LD_out > 0x3FFF)
+            static uint16_t pwm_idx = 0U;
+            if (++vsync_count > 60U)
             {
-                gn_xdic_LD_out = 0;
+                gn_xdic_LD_out = gn_xd_pwm_line_delay_table[pwm_idx];
+                print(LOG_INFO, "Sweep - LDIM : %u (%.3f[%%])\r\n", gn_xdic_LD_out, ((float)gn_xdic_LD_out * 100.0f) / 16383.0f);
+                ++pwm_idx;
+                if (pwm_idx >= XD_PWM_LINE_DELAY_TABLE_SIZE)
+                {
+                    pwm_idx = 0U;
+                }
+                vsync_count = 0;
             }
         }
-#if 1
-        if (gb_xd_scan_no)
-        {
-            XDIC_Set_Scan_No(gn_xd_scan_no);
-
-            if (gn_xd_scan_no == 3U)
-            {
-                gn_xdic_LD_out >>= 3;
-            }
-            else
-            {
-                gn_xdic_LD_out <<= 3;
-            }
-            gb_xd_scan_no = false;
-        }
-#endif
         gb_xdic_vsync_flag = false;
     }
 }

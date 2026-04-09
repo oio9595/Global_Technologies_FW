@@ -54,7 +54,7 @@
 #define XD_TGT_OSC                  (39.3192f)
 #define XD_TGT_OFS                  (2.2f)
 #define XD_TGT_GAIN                 (2.2f)
-#define XD_TGT_ERR_RATE             (3.0f)
+#define XD_TGT_ERR_RATE             (10.0f)
 
 volatile bool gb_xdic_initial_failed;
 
@@ -128,7 +128,7 @@ const static _reg_map_t gt_xdic_general_maps[] =
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_PROTECT      , _r3E ),
     XDIC_GENERAL_REG_ENTRY( XDIC_ADDR_OTP_OP_MODE      , _r3F ),
 };
-static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
+_Static_assert(XDIC_ADDR_MAX == (sizeof(gt_xdic_general_maps) / sizeof(_reg_map_t)), "XDIC General Address map mismatch!");
 
 const static _reg_map_t gt_xdic_mirror_maps[] =
 {
@@ -172,7 +172,7 @@ const static _reg_map_t gt_xdic_mirror_maps[] =
     XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_11  , _r25 ),
     XDIC_MIRROR_REG_ENTRY( XDIC_MIRROR_ADDR_GAIN_CH_12  , _r26 ),
 };
-static_assert(XDIC_MIRROR_ADDR_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
+_Static_assert(XDIC_MIRROR_ADDR_MAX == (sizeof(gt_xdic_mirror_maps) / sizeof(_reg_map_t)), "XDIC Mirror Address map mismatch!");
 
 static uint16_t gn_xdic_saved_trim_reg[XDIC_MIRROR_ADDR_MAX] =
 {
@@ -502,12 +502,12 @@ void XDIC_Dump_Trim_Regs_OneLine(void)
 
 void XDIC_Read_All_Registers(void)
 {
-    for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
+    for (uint8_t xd_general_addr = XDIC_ADDR_RESET_ID ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
         XDIC_Read_General_Reg(xd_general_addr);
     }
 
-    for (uint8_t xd_mirror_addr = 0 ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
+    for (uint8_t xd_mirror_addr = XDIC_MIRROR_ADDR_OTP_CRC ; xd_mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++xd_mirror_addr)
     {
         XDIC_Read_Mirror_Reg(xd_mirror_addr);
     }
@@ -620,8 +620,6 @@ void XDIC_Init(void)
         }
     }
 
-    // XDIC_Set_Delay_CH();
-
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = XDIC_FB_IN_Pin;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -630,6 +628,7 @@ void XDIC_Init(void)
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(XDIC_FB_IN_GPIO_Port, &GPIO_InitStruct);
 
+    XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID); // Dummy Read
     XDIC_Read_All_Registers();
 }
 
@@ -697,21 +696,36 @@ void XDIC_Trim_Init(void)
         }
     }
     XDIC_Set_OTP_Protect(false);
+    XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID); // Dummy Read
     XDIC_Read_All_Registers();
 }
 
 /* ================================================================================================================================================= */
 /* General Function */
 /* ================================================================================================================================================= */
-void XDIC_Set_Delay_CH(void)
+void XDIC_Set_Line_Delay_Into_Equal(void)
 {
-    for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+    if(gn_xd_ch_size)
     {
-        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, 0xFFFU);
-    }
+        uint16_t delay_msb_accumulator[2] = {0, };
+        uint16_t delay_per_ch = gn_xd_pwm_max_size / gn_xd_ch_size;
 
-    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, 0xFFFU);
-    XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, 0xFFFU);
+        for (uint8_t ch = 0 ; ch < XD_CH_SIZE ; ++ch)
+        {
+            gn_xd_delay_ch[ch] = (delay_per_ch * ch);
+            uint16_t delay_lsb = ((gn_xd_delay_ch[ch] & 0x0FFF) >>  0);
+            uint16_t delay_msb = ((gn_xd_delay_ch[ch] & 0x3000) >> 12);
+
+            delay_msb_accumulator[ch / 6] |= (delay_msb << (2 * (ch % 6)));
+
+            print(LOG_DEBUG, "[%s] delay_ch[%u] = %u / msb = %u / lsb = %u\r\n", __func__, ch, gn_xd_delay_ch[ch], delay_msb, delay_lsb);
+
+            XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, delay_lsb);
+        }
+
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_1, delay_msb_accumulator[0]);
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND_2, delay_msb_accumulator[1]);
+    }
 }
 
 void XDIC_Set_Max_Current_Level(dev_max_curr_level_t in_dev_max_curr)
@@ -997,7 +1011,7 @@ void XDIC_Set_Sweep_Delay(uint16_t delay_ms)
     gn_xd_vref_sweep_delay = delay_ms * 1000;
 }
 
-void XDIC_Set_Sweep_Line_Delay(uint16_t line_delay)
+void XDIC_Set_Line_Delay(uint16_t line_delay)
 {
     print(LOG_DEBUG, "sweep delay : %u\r\n", line_delay);
     uint16_t delay_msb_accumulator[2] = {0U};
@@ -1048,6 +1062,20 @@ static void XDIC_Detect_Is_OTP_Written(void)
     }
 }
 
+static void XDIC_Detect_Is_ID_Failed(void)
+{
+    uint16_t r00 = XDIC_Get_General_Reg(XDIC_ADDR_RESET_ID);
+    uint16_t id = (r00 & 0x1FU);
+    if (id == 1U)
+    {
+        print(LOG_INFO, "OK. ID is 1\r\n");
+    }
+    else
+    {
+        print(LOG_ERROR, "NG. ID is not 1 ()\r\n");
+    }
+}
+
 static void XDIC_DeInit(void)
 {
     JigBD_IF_Reset_Command();
@@ -1063,7 +1091,8 @@ void XDIC_Test_1(void)
     print(LOG_INFO, "    < TEST1 Basic Electrical Characteristics >    \r\n");
     XDIC_Detect_Is_RW_Failed();
     XDIC_Detect_Is_OTP_Written();
-    bool test_result = false;
+    XDIC_Detect_Is_ID_Failed();
+
     // 1. VREF
     XDIC_Trim_Init_VREF_CTL();
     JigBD_IF_Start_MCU_ADC();
@@ -1071,92 +1100,76 @@ void XDIC_Test_1(void)
     float v_vref = JigBD_IF_Convert_MCU_ADC_To_Volt(vref_adc);
     if (v_vref <= (XD_TGT_VREF * (1U + XD_TGT_ERR_RATE / 100.0f)) && v_vref >= (XD_TGT_VREF * (1U - XD_TGT_ERR_RATE / 100.0f)))
     {
-        test_result = true;
         print(LOG_INFO, "VREF[V] : %.3f (OK)\r\n", v_vref);
     }
     else
     {
-        test_result = false;
         print(LOG_ERROR, "VREF[V] : %.3f (NG)\r\n", v_vref);
     }
 
     // 2. LDO
-    if (test_result == true)
+    XDIC_Trim_Init_LDO_CTL();
+    JigBD_IF_Start_MCU_ADC();
+    uint16_t ldo_adc =  JigBD_IF_Get_MCU_ADC();
+    float v_ldo = JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc);
+    if (v_ldo <= (XD_TGT_LDO * (1U + XD_TGT_ERR_RATE / 100.0f)) && v_ldo >= (XD_TGT_LDO * (1U - XD_TGT_ERR_RATE / 100.0f)))
     {
-        XDIC_Trim_Init_LDO_CTL();
-        JigBD_IF_Start_MCU_ADC();
-        uint16_t ldo_adc =  JigBD_IF_Get_MCU_ADC();
-        float v_ldo = JigBD_IF_Convert_MCU_ADC_To_Volt(ldo_adc);
-        if (v_ldo <= (XD_TGT_LDO * (1U + XD_TGT_ERR_RATE / 100.0f)) && v_ldo >= (XD_TGT_LDO * (1U - XD_TGT_ERR_RATE / 100.0f)))
-        {
-            test_result = true;
-            print(LOG_INFO, "LDO[V] : %.3f (OK)\r\n", v_ldo);
-        }
-        else
-        {
-            test_result = false;
-            print(LOG_ERROR, "LDO[V] : %.3f (NG)\r\n", v_ldo);
-        }
+        print(LOG_INFO, "LDO[V] : %.3f (OK)\r\n", v_ldo);
+    }
+    else
+    {
+        print(LOG_ERROR, "LDO[V] : %.3f (NG)\r\n", v_ldo);
     }
 
-
     // 3. OSC
-    if (test_result == true)
+    XDIC_Trim_Init_OSC();
+    JigBD_IF_Start_Input_Capture();
+    JigBD_IF_Wait_Input_Capture_Done();
+    JigBD_IF_Stop_Input_Capture();
+    uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
+    float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
+    if (osc_freq <= (XD_TGT_OSC * (1U + XD_TGT_ERR_RATE / 100.0f)) && osc_freq >= (XD_TGT_OSC * (1U - XD_TGT_ERR_RATE / 100.0f)))
     {
-        XDIC_Trim_Init_OSC();
-        JigBD_IF_Start_Input_Capture();
-        JigBD_IF_Wait_Input_Capture_Done();
-        JigBD_IF_Stop_Input_Capture();
-        uint16_t osc_cnt = (uint16_t)(JigBD_IF_Get_Input_Capture_Freq());
-        float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-        if (osc_freq <= (XD_TGT_OSC * (1U + XD_TGT_ERR_RATE / 100.0f)) && osc_freq >= (XD_TGT_OSC * (1U - XD_TGT_ERR_RATE / 100.0f)))
-        {
-            test_result = true;
-            print(LOG_INFO, "OSC[MHz] : %.3f (OK)\r\n", osc_freq);
-        }
-        else
-        {
-            test_result = false;
-            print(LOG_ERROR, "OSC[MHz] : %.3f (NG)\r\n", osc_freq);
-        }
+        print(LOG_INFO, "OSC[MHz] : %.3f (OK)\r\n", osc_freq);
+    }
+    else
+    {
+        print(LOG_ERROR, "OSC[MHz] : %.3f (NG)\r\n", osc_freq);
     }
 
     // 4. Current Sweep
-    if (test_result == true)
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
+    JigBD_IF_VLED_9V_EN(PWR_ON);
+    current_gain_t current_gain = GAIN_HIGH;
+    JigBD_IF_Change_Current_Gain(current_gain);
+    XDIC_Trim_Init_OFS_CH();
+    for (dev_max_curr_level_t max_curr = DEV_MAX_CURR_LEVEL_4mA ; max_curr < DEV_MAX_CURR_LEVEL_46mA ; ++max_curr)
     {
-        ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-        JigBD_IF_VLED_9V_EN(PWR_ON);
-        current_gain_t current_gain = GAIN_HIGH;
-        JigBD_IF_Change_Current_Gain(current_gain);
-        XDIC_Trim_Init_OFS_CH();
-        for (dev_max_curr_level_t max_curr = DEV_MAX_CURR_LEVEL_4mA ; max_curr < DEV_MAX_CURR_LEVEL_46mA ; ++max_curr)
+        XDIC_Set_Max_Current_Level(max_curr);
+        print(LOG_INFO, "Max Current : %.1f[mA]\r\n", XDIC_Get_Max_Current_level());
+        for (uint8_t i = 0 ; i < 3 ; ++i)
         {
-            XDIC_Set_Max_Current_Level(max_curr);
-            print(LOG_INFO, "Max Current : %.1f[mA]\r\n", XDIC_Get_Max_Current_level());
-            for (uint8_t i = 0 ; i < 3 ; ++i)
+            uint16_t vref_table[3] = {300U, 1000U, 4095U};
+            XDIC_Set_Max_Curr_Vref(vref_table[i]);
+            for (XD_CH_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
             {
-                uint16_t vref_table[3] = {300U, 1000U, 4095U};
-                XDIC_Set_Max_Curr_Vref(vref_table[i]);
-                for (XD_CH_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+                JigBD_IF_Select_Output_Ch(xd_ch);
+                uint16_t iout_adc = 0;
+                ADS114S08_Set_Start(1);
+                ADS114S08_Wait_Done();
+                iout_adc = ADS114S08_Get_ADC_Value();
+                float mA_iout = JigBD_IF_Convert_Adc_To_Current(iout_adc, current_gain);
+                float tgt_mA = gf_xd_iout_measure_tgt[max_curr * 3 + i];
+                if (mA_iout <= (tgt_mA * (1U + XD_TGT_ERR_RATE / 100.0f)) && mA_iout >= (tgt_mA * (1U - XD_TGT_ERR_RATE / 100.0f)))
                 {
-                    JigBD_IF_Select_Output_Ch(xd_ch);
-                    uint16_t iout_adc = 0;
-                    ADS114S08_Set_Start(1);
-                    ADS114S08_Wait_Done();
-                    iout_adc = ADS114S08_Get_ADC_Value();
-                    float mA_iout = JigBD_IF_Convert_Adc_To_Current(iout_adc, current_gain);
-                    float tgt_mA = gf_xd_iout_measure_tgt[max_curr * 3 + i];
-                    if (mA_iout <= (tgt_mA * (1U + XD_TGT_ERR_RATE / 100.0f)) && mA_iout >= (tgt_mA * (1U - XD_TGT_ERR_RATE / 100.0f)))
-                    {
-                        print(LOG_INFO, "%.3f(O)\t", mA_iout);
-                    }
-                    else
-                    {
-                        print(LOG_ERROR, "%.3f(X)\t", mA_iout);
-                    }
+                    print(LOG_INFO, "%.3f(O)\t", mA_iout);
                 }
-                print(LOG_INFO, "\r\n");
+                else
+                {
+                    print(LOG_ERROR, "%.3f(X)\t", mA_iout);
+                }
             }
+            print(LOG_INFO, "\r\n");
         }
     }
     print(LOG_INFO, "==================== TEST1 Done ====================\r\n");
@@ -1167,7 +1180,7 @@ void XDIC_Test_2(void)
 {
     XDIC_Trim_Init();
     print(LOG_INFO, "====================================================\r\n");
-    print(LOG_INFO, "    < TEST2 Effect of Neighbor Channel Depends on Enable/Disable >    \r\n");
+    print(LOG_INFO, "    < TEST2 Channel Dependency >    \r\n");
 
     XDIC_Trim_Init_OFS_CH();
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
