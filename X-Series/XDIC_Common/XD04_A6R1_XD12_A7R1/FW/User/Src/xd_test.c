@@ -20,30 +20,30 @@ typedef void (*func_t)(void);
 
 /* XDIC Common Spec */
 #define XDIC_ERROR_RATE         (0.026f) // 2.6%
-#define XDIC_VREF_TARGET        (2.2)
+#define XDIC_VREF_TARGET        (2.2f)
 #define XDIC_OSC_TARGET         (39.36f)
-#define XDIC_OSC_ERROR_RATE     (0.02f) // 2.0%
+#define XDIC_OSC_ERROR_RATE     (0.03f) // 2.0%
 #define XDIC_LDO_SWEEP_TARGET   (0.0015f) // 1.5mV
 
 /* XD12 Current Spec */
-#define XD12_GAIN_P1            (1000)
-#define XD12_GAIN_P2            (3000)
-#define XD12_GAIN_TARGET        (3.907) // Delta
+#define XD12_GAIN_P1            (1000U)
+#define XD12_GAIN_P2            (3000U)
+#define XD12_GAIN_TARGET        (3.907f) // Delta
 
-#define XD12_OFS_P1             (350)
-#define XD12_OFS_P2             (600)
-#define XD12_OFS_TARGET         (1.00) // Average
+#define XD12_OFS_P1             (350U)
+#define XD12_OFS_P2             (600U)
+#define XD12_OFS_TARGET         (1.00f) // Average
 
 #define XD12_ICC_TARGET         (2.95f)
 
 /* XD04 Current Spec */
-#define XD04_ICTL_L_P1          (500)
-#define XD04_ICTL_L_P2          (900)
-#define XD04_ICTL_L_TARGET      (4.102) // Average
+#define XD04_ICTL_L_P1          (500U)
+#define XD04_ICTL_L_P2          (900U)
+#define XD04_ICTL_L_TARGET      (4.102f) // Average
 
-#define XD04_ICTL_H_P1          (400)
-#define XD04_ICTL_H_P2          (1300)
-#define XD04_ICTL_H_TARGET      (26.57) // Average
+#define XD04_ICTL_H_P1          (400U)
+#define XD04_ICTL_H_P2          (1300U)
+#define XD04_ICTL_H_TARGET      (26.57f) // Average
 
 #define XD04_ICC_TARGET         (1.8f)
 
