@@ -156,8 +156,7 @@ static _reg_map_t gt_xc24_mirror_maps[] =
 };
 _Static_assert((XC24_MIRROR_ADDR_MAX - XC24_MIRROR_ADDR_START) == (sizeof(gt_xc24_mirror_maps) / sizeof(_reg_map_t)), "XC24 Mirror Address map mismatch!");
 
-static uint8_t gn_xd_id_read[20][2] = {0U};
-static bool gb_xd_id_error_channel[20] = {true}; // if true, mismatch
+static uint16_t gn_xc_local_rw_buffer[XC_CH_ENABLE_SIZE * XD_DAISY_SIZE]= { 0U };
 
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
@@ -322,6 +321,22 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     return rx_buffer[1];
 }
 
+void XC24_Write_Local_Register(uint16_t in_addr, uint16_t in_data)
+{
+    _xc24_cmd_t cmd_format = {0, };
+    uint16_t tx_buffer[2] = {0,};
+
+    cmd_format.code = CMD_CODE_REG_WRITE;
+    cmd_format.addr = in_addr;
+    cmd_format.size = 1;
+
+    tx_buffer[0] = cmd_format.ALL;
+    tx_buffer[1] = in_data;
+
+    SPI_Write(g_hSPIx, tx_buffer, 2);
+    us_delay(10U);
+}
+
 uint16_t XC24_Read_Local_Register(uint8_t in_addr)
 {
     _xc24_cmd_t cmd_format = {0, };
@@ -335,17 +350,6 @@ uint16_t XC24_Read_Local_Register(uint8_t in_addr)
     tx_buffer[0] = cmd_format.ALL;
 
     SPI_Read(g_hSPIx, tx_buffer, rx_buffer, 2);
-    /*
-    const _reg_map_t* xc24_map = XC24_Find_Register_Map(in_addr);
-    if (xc24_map)
-    {
-        *((uint16_t*)(xc24_map->reg_ptr)) = rx_buffer[1];
-    }
-    else
-    {
-        print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
-    }
-    */
     us_delay(10U);
     return rx_buffer[1];
 }
@@ -400,7 +404,53 @@ void XC24_Test_Init_OSC(void)
 	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_2, gt_xc24_general_regs._r1C.ALL);
 }
 
-void XC24_Init(uint8_t xd_daisy_size)
+void XC24_Update_Channel_Enable_By_XDIC_ID_Check(void)
+{   
+    bool* p_xd_id_error_table = XDIC_Get_ID_Error_Channel_Table();
+
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    {
+        const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
+        if (map)
+        {
+            switch (xc_addr)
+            {
+            case XC24_ADDR_CHANNEL_ENABLE1 :
+                gt_xc24_general_regs._r45.ch1_en = (p_xd_id_error_table[0] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch2_en = (p_xd_id_error_table[1] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch3_en = (p_xd_id_error_table[2] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch4_en = (p_xd_id_error_table[3] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch5_en = (p_xd_id_error_table[4] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch6_en = (p_xd_id_error_table[5] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch7_en = (p_xd_id_error_table[6] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch8_en = (p_xd_id_error_table[7] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch9_en = (p_xd_id_error_table[8] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch10_en = (p_xd_id_error_table[9] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch11_en = (p_xd_id_error_table[10] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch12_en = (p_xd_id_error_table[11] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch13_en = (p_xd_id_error_table[12] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch14_en = (p_xd_id_error_table[13] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch15_en = (p_xd_id_error_table[14] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r45.ch16_en = (p_xd_id_error_table[15] == true) ? 0U : 1U;
+                break;
+            case XC24_ADDR_CHANNEL_ENABLE2 :
+                gt_xc24_general_regs._r46.ch17_en = (p_xd_id_error_table[16] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r46.ch18_en = (p_xd_id_error_table[17] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r46.ch19_en = (p_xd_id_error_table[18] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r46.ch20_en = (p_xd_id_error_table[19] == true) ? 0U : 1U;
+                gt_xc24_general_regs._r46.ld_size = 20;
+                gt_xc24_general_regs._r46.ld_width = 3;
+                break;
+            default :
+                continue;
+            }
+            XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
+            us_delay(10);
+        }
+    }
+}
+
+void XC24_Init(void)
 {
     g_hSPIx = SPI1;
 
@@ -410,18 +460,8 @@ void XC24_Init(uint8_t xd_daisy_size)
 
     XC_NSCS_HI();
 
-    uint8_t daisy_size = 0U;
-    uint8_t block_size = 0U;
-    if (xd_daisy_size == INIT_CHECK_XD_DAISY_1)
-    {
-        daisy_size = 1U;
-        block_size = daisy_size * XD_CH_SIZE;
-    }
-    else
-    {
-        daisy_size = 2U;
-        block_size = daisy_size * XD_CH_SIZE;
-    }
+    uint8_t xd_daisy_size = XDIC_Get_Daisy_Chain_Size();
+    uint8_t block_size = xd_daisy_size * XD_CH_SIZE;
 
     for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
@@ -478,38 +518,38 @@ void XC24_Init(uint8_t xd_daisy_size)
                 gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
                 break;
             case XC24_ADDR_DAISY_SIZE1 :
-                gt_xc24_general_regs._r30.daisy_size_ch1 = daisy_size;
-                gt_xc24_general_regs._r30.daisy_size_ch2 = daisy_size;
-                gt_xc24_general_regs._r30.daisy_size_ch3 = daisy_size;
+                gt_xc24_general_regs._r30.daisy_size_ch1 = xd_daisy_size;
+                gt_xc24_general_regs._r30.daisy_size_ch2 = xd_daisy_size;
+                gt_xc24_general_regs._r30.daisy_size_ch3 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE2 :
-                gt_xc24_general_regs._r31.daisy_size_ch4 = daisy_size;
-                gt_xc24_general_regs._r31.daisy_size_ch5 = daisy_size;
-                gt_xc24_general_regs._r31.daisy_size_ch6 = daisy_size;
+                gt_xc24_general_regs._r31.daisy_size_ch4 = xd_daisy_size;
+                gt_xc24_general_regs._r31.daisy_size_ch5 = xd_daisy_size;
+                gt_xc24_general_regs._r31.daisy_size_ch6 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE3 :
-                gt_xc24_general_regs._r32.daisy_size_ch7 = daisy_size;
-                gt_xc24_general_regs._r32.daisy_size_ch8 = daisy_size;
-                gt_xc24_general_regs._r32.daisy_size_ch9 = daisy_size;
+                gt_xc24_general_regs._r32.daisy_size_ch7 = xd_daisy_size;
+                gt_xc24_general_regs._r32.daisy_size_ch8 = xd_daisy_size;
+                gt_xc24_general_regs._r32.daisy_size_ch9 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE4 :
-                gt_xc24_general_regs._r33.daisy_size_ch10 = daisy_size;
-                gt_xc24_general_regs._r33.daisy_size_ch11 = daisy_size;
-                gt_xc24_general_regs._r33.daisy_size_ch12 = daisy_size;
+                gt_xc24_general_regs._r33.daisy_size_ch10 = xd_daisy_size;
+                gt_xc24_general_regs._r33.daisy_size_ch11 = xd_daisy_size;
+                gt_xc24_general_regs._r33.daisy_size_ch12 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE5 :
-                gt_xc24_general_regs._r34.daisy_size_ch13 = daisy_size;
-                gt_xc24_general_regs._r34.daisy_size_ch14 = daisy_size;
-                gt_xc24_general_regs._r34.daisy_size_ch15 = daisy_size;
+                gt_xc24_general_regs._r34.daisy_size_ch13 = xd_daisy_size;
+                gt_xc24_general_regs._r34.daisy_size_ch14 = xd_daisy_size;
+                gt_xc24_general_regs._r34.daisy_size_ch15 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE6 :
-                gt_xc24_general_regs._r35.daisy_size_ch16 = daisy_size;
-                gt_xc24_general_regs._r35.daisy_size_ch17 = daisy_size;
-                gt_xc24_general_regs._r35.daisy_size_ch18 = daisy_size;
+                gt_xc24_general_regs._r35.daisy_size_ch16 = xd_daisy_size;
+                gt_xc24_general_regs._r35.daisy_size_ch17 = xd_daisy_size;
+                gt_xc24_general_regs._r35.daisy_size_ch18 = xd_daisy_size;
                 break;
             case XC24_ADDR_DAISY_SIZE7 :
-                gt_xc24_general_regs._r36.daisy_size_ch19 = daisy_size;
-                gt_xc24_general_regs._r36.daisy_size_ch20 = daisy_size;
+                gt_xc24_general_regs._r36.daisy_size_ch19 = xd_daisy_size;
+                gt_xc24_general_regs._r36.daisy_size_ch20 = xd_daisy_size;
                 break;
             case XC24_ADDR_BLOCK_SIZE1 :
                 gt_xc24_general_regs._r38.block_size_ch1 = block_size;
@@ -574,184 +614,6 @@ void XC24_Init(uint8_t xd_daisy_size)
                 gt_xc24_general_regs._r46.ch18_en = 1;
                 gt_xc24_general_regs._r46.ch19_en = 1;
                 gt_xc24_general_regs._r46.ch20_en = 1;
-                gt_xc24_general_regs._r46.ld_size = 20;
-                gt_xc24_general_regs._r46.ld_width = 3;
-                break;
-            default :
-                continue;
-            }
-            XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
-            us_delay(10);
-        }
-    }
-    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
-    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
-
-    print(LOG_PC, " ...XC24 Initial Done...\r\n");
-    XC24_Read_Register_All();
-}
-
-void XC24_Init_Final(void)
-{
-    g_hSPIx = SPI1;
-
-    XC_VCC_ON();
-
-    LL_mDelay(100);
-
-    XC_NSCS_HI();
-
-    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
-    {
-        const _reg_map_t* map = XC24_Find_Register_Map(xc_addr);
-        if (map)
-        {
-            switch (xc_addr)
-            {
-            case XC24_ADDR_SOFT_RESET:
-                gt_xc24_general_regs._r00.rst1 = 1;
-                gt_xc24_general_regs._r00.rst2 = 1;
-                gt_xc24_general_regs._r00.rst3 = 1;
-                break;
-            case XC24_ADDR_AUTO_ENABLE:
-                gt_xc24_general_regs._r08.timeout_en = 1;
-                gt_xc24_general_regs._r08.sync_auto_en = 1;
-                gt_xc24_general_regs._r08.fault_auto_en = 0;
-                break;
-            case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
-                gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4;
-                gt_xc24_general_regs._r0D.ld_diff_threshold = 4;
-                break;
-            case XC24_ADDR_LOCAL_RW_POINTER_RESET :
-                gt_xc24_general_regs._r11.local_rd_pointer_rst = 1;
-                gt_xc24_general_regs._r11.local_wr_pointer_rst = 1;
-                break;
-            case XC24_ADDR_FAULT_AUTO_READ_TIMER :
-                gt_xc24_general_regs._r12.fault_auto_rd_timer = 0xFFFF;
-                break;
-            case XC24_ADDR_FAULT_AUTO_READ_EVENT :
-                gt_xc24_general_regs._r13.fault_auto_rd_interval = 1;
-                gt_xc24_general_regs._r13.fault_auto_rd_event = 1;
-                break;
-            case XC24_ADDR_SERIALIZER_CLOCK_GEN :
-                gt_xc24_general_regs._r14.sck_low = XC_SERIAL_CLK_CNT_LOW;
-                gt_xc24_general_regs._r14.sck_high = XC_SERIAL_CLK_CNT_HIGH;
-                break;
-            case XC24_ADDR_INTERRUPT_ENABLE :
-                gt_xc24_general_regs._r15.int_fb_en = 1;
-                gt_xc24_general_regs._r15.int_open_en = 1;
-                gt_xc24_general_regs._r15.int_short_en = 1;
-                gt_xc24_general_regs._r15.int_thermal_en = 1;
-                break;
-            case XC24_ADDR_CLK_CONTROL_1:
-                gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
-                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
-                gt_xc24_general_regs._r1B.osc_spread_en = 0;
-                break;
-            case XC24_ADDR_COMMAND_LATENCY:
-                gt_xc24_general_regs._r1F.serial_latency = 0x20;
-                gt_xc24_general_regs._r1F.cmd_latency = 0x40;
-                break;
-            case XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 :
-                gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE1 :
-                gt_xc24_general_regs._r30.daisy_size_ch1 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r30.daisy_size_ch2 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r30.daisy_size_ch3 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE2 :
-                gt_xc24_general_regs._r31.daisy_size_ch4 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r31.daisy_size_ch5 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r31.daisy_size_ch6 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE3 :
-                gt_xc24_general_regs._r32.daisy_size_ch7 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r32.daisy_size_ch8 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r32.daisy_size_ch9 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE4 :
-                gt_xc24_general_regs._r33.daisy_size_ch10 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r33.daisy_size_ch11 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r33.daisy_size_ch12 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE5 :
-                gt_xc24_general_regs._r34.daisy_size_ch13 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r34.daisy_size_ch14 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r34.daisy_size_ch15 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE6 :
-                gt_xc24_general_regs._r35.daisy_size_ch16 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r35.daisy_size_ch17 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r35.daisy_size_ch18 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_DAISY_SIZE7 :
-                gt_xc24_general_regs._r36.daisy_size_ch19 = XD_DAISY_SIZE;
-                gt_xc24_general_regs._r36.daisy_size_ch20 = XD_DAISY_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE1 :
-                gt_xc24_general_regs._r38.block_size_ch1 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r38.block_size_ch2 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE2 :
-                gt_xc24_general_regs._r39.block_size_ch3 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r39.block_size_ch4 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE3 :
-                gt_xc24_general_regs._r3A.block_size_ch5 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3A.block_size_ch6 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE4 :
-                gt_xc24_general_regs._r3B.block_size_ch7 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3B.block_size_ch8 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE5 :
-                gt_xc24_general_regs._r3C.block_size_ch9 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3C.block_size_ch10 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE6 :
-                gt_xc24_general_regs._r3D.block_size_ch11 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3D.block_size_ch12 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE7 :
-                gt_xc24_general_regs._r3E.block_size_ch13 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3E.block_size_ch14 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE8 :
-                gt_xc24_general_regs._r3F.block_size_ch15 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r3F.block_size_ch16 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE9 :
-                gt_xc24_general_regs._r40.block_size_ch17 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r40.block_size_ch18 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_BLOCK_SIZE10 :
-                gt_xc24_general_regs._r41.block_size_ch19 = XD_DAISY_SIZE * XD_CH_SIZE;
-                gt_xc24_general_regs._r41.block_size_ch20 = XD_DAISY_SIZE * XD_CH_SIZE;
-                break;
-            case XC24_ADDR_CHANNEL_ENABLE1 :
-                gt_xc24_general_regs._r45.ch1_en = (gb_xd_id_error_channel[0] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch2_en = (gb_xd_id_error_channel[1] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch3_en = (gb_xd_id_error_channel[2] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch4_en = (gb_xd_id_error_channel[3] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch5_en = (gb_xd_id_error_channel[4] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch6_en = (gb_xd_id_error_channel[5] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch7_en = (gb_xd_id_error_channel[6] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch8_en = (gb_xd_id_error_channel[7] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch9_en = (gb_xd_id_error_channel[8] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch10_en = (gb_xd_id_error_channel[9] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch11_en = (gb_xd_id_error_channel[10] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch12_en = (gb_xd_id_error_channel[11] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch13_en = (gb_xd_id_error_channel[12] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch14_en = (gb_xd_id_error_channel[13] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch15_en = (gb_xd_id_error_channel[14] == true) ? 0 : 1;
-                gt_xc24_general_regs._r45.ch16_en = (gb_xd_id_error_channel[15] == true) ? 0 : 1;
-                break;
-            case XC24_ADDR_CHANNEL_ENABLE2 :
-                gt_xc24_general_regs._r46.ch17_en = (gb_xd_id_error_channel[16] == true) ? 0 : 1;
-                gt_xc24_general_regs._r46.ch18_en = (gb_xd_id_error_channel[17] == true) ? 0 : 1;
-                gt_xc24_general_regs._r46.ch19_en = (gb_xd_id_error_channel[18] == true) ? 0 : 1;
-                gt_xc24_general_regs._r46.ch20_en = (gb_xd_id_error_channel[19] == true) ? 0 : 1;
                 gt_xc24_general_regs._r46.ld_size = 20;
                 gt_xc24_general_regs._r46.ld_width = 3;
                 break;
@@ -898,92 +760,75 @@ void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
     us_delay(XDIC_WRITE_DELAY + 20);
 }
 
-uint16_t XC24_IF_Read_XDIC(uint8_t in_XDIC_addr, uint8_t initial_daisy_size)
+uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 {
     for (uint8_t seg = 0 ; seg < 3 ; ++seg)
     {
+        XC24_Write_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA2, 0U);
+
+        XC24_Write_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1, 0U);
+        XC24_Write_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2, 0U);
+        
+        LL_mDelay(1U);
+
         gt_xc24_general_regs._r11.ALL = 0;
         gt_xc24_general_regs._r11.local_wr_pointer_rst = 1;
         gt_xc24_general_regs._r11.local_rd_pointer_rst = 1;
         XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, gt_xc24_general_regs._r11.ALL);
+        us_delay(10U);
 
         gt_xc24_general_regs._r03.ALL = 0;
         gt_xc24_general_regs._r03.start = 1;
         gt_xc24_general_regs._r03.ch_seg = seg;
         gt_xc24_general_regs._r03.addr = in_XDIC_addr;
         XC24_Write_Register(XC24_ADDR_LOCAL_READ, gt_xc24_general_regs._r03.ALL);
-        us_delay(XDIC_READ_DELAY + XDIC_READ_RECV_DELAY);
+        us_delay((XDIC_READ_DELAY + XDIC_READ_RECV_DELAY) * 10U);
 
-        gn_xd_id_read[seg * 8 + 0][0] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
-        gn_xd_id_read[seg * 8 + 0][1] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2);
+        LL_mDelay(2U);
 
-        gn_xd_id_read[seg * 8 + 1][0] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA1);
-        gn_xd_id_read[seg * 8 + 1][1] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16 + 0] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16 + 1] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2);
 
-        gn_xd_id_read[seg * 8 + 2][0] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA1);
-        gn_xd_id_read[seg * 8 + 2][1] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16 + 2] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16 + 3] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA2);
 
-        gn_xd_id_read[seg * 8 + 3][0] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA1);
-        gn_xd_id_read[seg * 8 + 3][1] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16 + 4] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16 + 5] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA2);
+
+        gn_xc_local_rw_buffer[seg * 16 + 6] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16 + 7] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA2);
 
         if (seg < 2)
         {
-            gn_xd_id_read[seg * 8 + 4][0] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA1);
-            gn_xd_id_read[seg * 8 + 4][1] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16 +  8] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16 +  9] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA2);
 
-            gn_xd_id_read[seg * 8 + 5][0] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA1);
-            gn_xd_id_read[seg * 8 + 5][1] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16 + 10] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16 + 11] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA2);
 
-            gn_xd_id_read[seg * 8 + 6][0] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA1);
-            gn_xd_id_read[seg * 8 + 6][1] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16 + 12] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16 + 13] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2);
 
-            gn_xd_id_read[seg * 8 + 7][0] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1);
-            gn_xd_id_read[seg * 8 + 7][1] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16 + 14] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16 + 15] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2);
         }
-        LL_mDelay(10U);
+        LL_mDelay(5U);
     }
 
-    for (uint8_t ch = 0 ; ch < 20 ; ++ch)
-    {
-        print(LOG_PC, "[%2u][0] = 0x%04X, [%2u][1] = 0x%04X\r\n", ch, gn_xd_id_read[ch][0], ch, gn_xd_id_read[ch][1]);
-    }
-
-    if (initial_daisy_size == INIT_CHECK_XD_DAISY_1)
-    {
-        for (uint8_t ch = 0 ; ch < 20 ; ++ch)
-        {
-            if ((gn_xd_id_read[ch][0] > 0x0002))
-            {
-                DEBUG1_HI();
-                gb_xd_id_error_channel[ch] = true;
-                print(LOG_PC, "INIT_DAISY_1 / ERROR: Channel %u ID Read Mismatch!!\r\n", ch + 1);
-                DEBUG1_LO();
-            }
-            else
-            {
-                gb_xd_id_error_channel[ch] = false;
-            }
-        }
-    }
-    else
-    {
-        for (uint8_t ch = 0 ; ch < 20 ; ++ch)
-        {
-            if ((gn_xd_id_read[ch][0] > 0x0002) || (gn_xd_id_read[ch][1] > 0x0002))
-            {
-                DEBUG1_HI();
-                gb_xd_id_error_channel[ch] = true;
-                print(LOG_PC, "INIT_DAISY_2 / ERROR: Channel %u ID Read Mismatch!!\r\n", ch + 1);
-                DEBUG1_LO();
-            }
-            else
-            {
-                gb_xd_id_error_channel[ch] = false;
-            }
-        }
-    }
-
-    return 0;
+    return gn_xc_local_rw_buffer;
 }
 
 void XC24_IF_Write_LD(uint16_t ld_duty)

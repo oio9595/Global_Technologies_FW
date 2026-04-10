@@ -125,6 +125,10 @@ float gf_xd_max_current;
 float gf_xd_duty;
 bool gb_led_low_current_mode;
 
+static uint8_t gn_xd_daisy_chain_size = XD_DAISY_SIZE;
+
+static bool gb_xd_id_error_channel[XC_CH_ENABLE_SIZE] = {true}; // if true, mismatch
+
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
 {
     for (uint8_t i = 0 ; i < (sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0])) ; ++i)
@@ -151,22 +155,22 @@ void XDIC_Write_General_Reg(uint8_t addr, uint16_t data)
     }
 }
 
-uint16_t XDIC_Read_General_Reg(uint8_t addr, uint8_t initial_daisy_size)
+uint16_t* XDIC_Read_General_Reg(uint8_t addr)
 {
-    uint16_t xdic_reg_val = 0xFFFFU;
+    uint16_t* p_xdic_reg_buffer = NULL;
     const _reg_map_t* map = XDIC_Get_General_Map_Pointer(addr);
     if (map)
     {
-        xdic_reg_val = XC24_IF_Read_XDIC(addr, initial_daisy_size);
-        *((uint16_t*)(map->reg_ptr)) = xdic_reg_val;
-        print(LOG_PC, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, xdic_reg_val);
+        p_xdic_reg_buffer = XC24_IF_Read_XDIC(addr);
+        *((uint16_t*)(map->reg_ptr)) = *p_xdic_reg_buffer;
+        print(LOG_PC, "XDIC General Read --> [ 0x%02X - 0x%04X] \r\n", addr, *p_xdic_reg_buffer);
     }
     else
     {
         print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, addr);
     }
 
-    return xdic_reg_val;
+    return p_xdic_reg_buffer;
 }
 
 static void XDIC_Dump_All_Registers(void)
@@ -239,12 +243,81 @@ static void XDIC_Set_Delay_CH(void)
         XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_EXTEND, delay_msb_accumulator);
 }
 
+uint8_t XDIC_Get_Daisy_Chain_Size(void)
+{
+    uint8_t daisy_chain_size = gn_xd_daisy_chain_size;
+    print(LOG_PC, "Daisy Chain Size : %u\r\n", daisy_chain_size);
+    if (daisy_chain_size == 0U)
+    {
+        print(LOG_PC, "ERROR: Daisy Chain Size is 0!!\r\n");
+    }
+    return daisy_chain_size;
+}
+
+void XDIC_Set_Daisy_Chain_Size(uint8_t daisy_chain_size)
+{
+    if (daisy_chain_size == 0U)
+    {
+        print(LOG_PC, "ERROR: Daisy Chain Size cannot be set to 0!!\r\n");
+        return;
+    }
+    gn_xd_daisy_chain_size = daisy_chain_size;
+    print(LOG_PC, "Daisy Chain Size Set : %u\r\n", gn_xd_daisy_chain_size);
+}
+
+bool* XDIC_Get_ID_Error_Channel_Table(void)
+{
+    return gb_xd_id_error_channel;
+} 
+
+static void XDIC_ID_Check(void)
+{
+    DEBUG1_HI();
+    uint16_t* p_id_buffer = XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID);
+    for (uint8_t ch = 0U ; ch < XC_CH_ENABLE_SIZE ; ++ch)
+    {
+        print(LOG_PC, "[%2u][#1] = 0x%04X, [%2u][#2] = 0x%04X\r\n", (ch + 1U), p_id_buffer[ch * 2 + 0], (ch + 1U), p_id_buffer[ch * 2 + 1]);
+    }
+
+    if (gn_xd_daisy_chain_size == 1U)
+    {
+        for (uint8_t ch = 0U ; ch < 20U ; ++ch)
+        {
+            if ((p_id_buffer[ch * 2U] == 0x0001U))
+            {
+                gb_xd_id_error_channel[ch] = false;
+            }
+            else
+            {
+                gb_xd_id_error_channel[ch] = true;
+                print(LOG_PC, "DAISY SIZE 1 / ERROR: Channel %u ID Read Mismatch!!\r\n", (ch + 1U));
+            }
+        }
+    }
+    else
+    {
+        for (uint8_t ch = 0U ; ch < 20U ; ++ch)
+        {
+            if ((p_id_buffer[ch * 2U + 0U] == 0x0001U) && (p_id_buffer[ch * 2U + 1U] == 0x0002U))
+            {
+                gb_xd_id_error_channel[ch] = false;
+            }
+            else
+            {
+                gb_xd_id_error_channel[ch] = true;
+                print(LOG_PC, "DAISY SIZE 2 / ERROR: Channel %u ID Read Mismatch!!\r\n", (ch + 1U));
+            }
+        }
+    }
+    DEBUG1_LO();
+}
+
 void XDIC_Param_Init(void)
 {
     gf_xd_mclk = XD_MCLK;
     gf_vsync_out = VSYNC;
 
-    gn_xd_pwm_res = XD_PWM_RES_14BIT;
+    gn_xd_pwm_res = XD_PWM_RES_12BIT;
     gn_xd_scan_no = 0U;
 
     if (gn_xd_pwm_res == XD_PWM_RES_12BIT)
@@ -266,7 +339,7 @@ void XDIC_Param_Init(void)
     gf_xd_duty = 100.0f;
 }
 
-void XDIC_Init(uint8_t xd_daisy_size)
+void XDIC_Init(void)
 {
     XDIC_VCC_ON();
     LL_mDelay(100);
@@ -340,10 +413,7 @@ void XDIC_Init(uint8_t xd_daisy_size)
     }
     XDIC_Set_Delay_CH();
     XDIC_Read_All_Registers();
-    if (xd_daisy_size != INIT_CHECK_DONE)
-    {
-        XDIC_Read_General_Reg(XDIC_ADDR_RESET_ID, xd_daisy_size);
-    }
+    XDIC_ID_Check();
 }
 
 void XDIC_DeInit(void)

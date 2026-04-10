@@ -40,6 +40,7 @@ commands = {
     "0x80 (Block Off Select)": 0x80,
     "0x02 (Low Current Mode)": 0x02,
     "0x04 (Duty)": 0x04,
+    "0x08 (Model Select)": 0x08,
 }
 
 class MacroApp(QWidget):
@@ -130,7 +131,8 @@ class MacroApp(QWidget):
         command_ver_layout = QVBoxLayout()
         command_ver_layout.addWidget(QLabel("COMMAND"))
         self.command_cb = QComboBox()
-        self.command_cb.addItems(commands.keys())
+        self.command_cb.addItems(commands.keys())        
+        self.command_cb.setMaxVisibleItems(15)
         self.commands = commands
         command_ver_layout.addWidget(self.command_cb)
 

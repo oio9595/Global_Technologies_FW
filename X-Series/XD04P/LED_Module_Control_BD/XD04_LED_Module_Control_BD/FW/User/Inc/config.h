@@ -58,10 +58,6 @@ extern "C" {
 #define XDIC_FAULT_RECV_DELAY       ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_FAULT_RECV_BITS * XD_DAISY_SIZE) + 0.5f))
 #define XDIC_SYNCGEN_DELAY          ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_SYNCGEN_BITS * XD_DAISY_SIZE) + 0.5f))
 #define XDIC_IDGEN_DELAY            ((uint32_t)((XDIC_SERIALIZER_TIME * XDIC_IDGEN_BITS * XD_DAISY_SIZE) + 0.5f))
-
-#define INIT_CHECK_XD_DAISY_1       (0U)
-#define INIT_CHECK_XD_DAISY_2       (1U)
-#define INIT_CHECK_DONE             (2U)
 /********************************************************/
 
 #define BUILD_YEAR ((((__DATE__ [7] - '0') * 10 + (__DATE__ [8] - '0')) * 10 \

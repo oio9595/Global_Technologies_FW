@@ -60,6 +60,7 @@ enum tag_PROTOCOL_LIST
     CMD_BLK_OFF_SELECT      = 0x80, // 0x80
     CMD_LOW_CURRENT_MODE    = 0x02, // 0x02
     CMD_DUTY                = 0x04, // 0x04
+    CMD_MODEL_SELECT        = 0x08, // 0x08
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
@@ -116,8 +117,8 @@ typedef struct tag_KEY_INFO
     func_t function[2];
 } key_info_t;
 
-//static LOG_LV_T gt_log_lv = LOG_PC;
-static LOG_LV_T gt_log_lv = LOG_RS232;
+static LOG_LV_T gt_log_lv = LOG_PC;
+//static LOG_LV_T gt_log_lv = LOG_RS232;
 
 static uint8_t gn_uart_rx_timeout;
 static bool gb_uart_rx_timeout_enable;
@@ -420,6 +421,10 @@ static void Uart_Task(void)
             case CMD_DUTY:
                 LED_Duty_Select((float)p_packet->data[0]);
                 print(LOG_PC, "CMD_DUTY: %u\r\n", p_packet->data[0]);
+                break;
+            case CMD_MODEL_SELECT:
+                XDIC_Set_Daisy_Chain_Size(p_packet->data[0]);
+                print(LOG_PC, "CMD_MODEL_SELECT: %u\r\n", p_packet->data[0]);
                 break;
         }
 
