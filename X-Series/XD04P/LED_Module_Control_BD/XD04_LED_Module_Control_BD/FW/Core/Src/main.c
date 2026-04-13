@@ -37,35 +37,36 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PRINT_BUFF_SIZE     256
-#define RX_BUFF_SIZE        256 // must be 2^n
-#define RX_PACKET_SIZE      32  // must be 2^n
+#define PRINT_BUFF_SIZE     256U
+#define RX_BUFF_SIZE        256U // must be 2^n
+#define RX_PACKET_SIZE      32U  // must be 2^n
 
-#define RX_TIMEOUT_MS       20
+#define RX_TIMEOUT_MS       20U
 
-#define PACKET_SIZE_EXCEPT_DATA_FIELD   5   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
-#define PACKET_SIZE_SOP_TO_COMMAND      3   // SOP(1) + LEN(1) + CMD(1)
+#define PACKET_SIZE                     6U   // SOP(1) + LEN(1) + CMD(1) + DATA(1) + CHK(1) + EOP(1)
+#define PACKET_SIZE_EXCEPT_DATA_FIELD   5U   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
+#define PACKET_SIZE_SOP_TO_COMMAND      3U   // SOP(1) + LEN(1) + CMD(1)
 
 enum tag_PROTOCOL_LIST
 {
-    SOP                     = 0xA5, // 0xA5
-    EOP                     = 0x5A, // 0x5A
-    CMD_INIT                = 0x00, // 0x00
-    CMD_QUIT                = 0xFF, // 0xFF
-    CMD_STATUS              = 0xF0, // 0xF0
-    CMD_CURRENT             = 0x01, // 0x01
-    CMD_BAR_ON_SELECT       = 0x10, // 0x10
-    CMD_BAR_OFF_SELECT      = 0x20, // 0x20
-    CMD_BLK_ON_SELECT       = 0x40, // 0x40
-    CMD_BLK_OFF_SELECT      = 0x80, // 0x80
-    CMD_LOW_CURRENT_MODE    = 0x02, // 0x02
-    CMD_DUTY                = 0x04, // 0x04
-    CMD_MODEL_SELECT        = 0x08, // 0x08
+    SOP                     = 0xA5U, // 0xA5
+    EOP                     = 0x5AU, // 0x5A
+    CMD_INIT                = 0x00U, // 0x00
+    CMD_QUIT                = 0xFFU, // 0xFF
+    CMD_STATUS              = 0xF0U, // 0xF0
+    CMD_CURRENT             = 0x01U, // 0x01
+    CMD_BAR_ON_SELECT       = 0x10U, // 0x10
+    CMD_BAR_OFF_SELECT      = 0x20U, // 0x20
+    CMD_BLK_ON_SELECT       = 0x40U, // 0x40
+    CMD_BLK_OFF_SELECT      = 0x80U, // 0x80
+    CMD_LOW_CURRENT_MODE    = 0x02U, // 0x02
+    CMD_DUTY                = 0x04U, // 0x04
+    CMD_MODEL_SELECT        = 0x08U, // 0x08
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
 {
-    KEY_1 = 0,
+    KEY_1 = 0U,
     KEY_2,
     KEY_3,
     KEY_MAX,
@@ -117,8 +118,8 @@ typedef struct tag_KEY_INFO
     func_t function[2];
 } key_info_t;
 
-static LOG_LV_T gt_log_lv = LOG_PC;
-//static LOG_LV_T gt_log_lv = LOG_RS232;
+//static LOG_LV_T gt_log_lv = LOG_PC;
+static LOG_LV_T gt_log_lv = LOG_RS232;
 
 static uint8_t gn_uart_rx_timeout;
 static bool gb_uart_rx_timeout_enable;
@@ -153,7 +154,7 @@ void us_delay(uint16_t us_delay)
     {
     }
     LL_TIM_DisableCounter(TIM12);
-    LL_TIM_SetCounter(TIM12, 0);
+    LL_TIM_SetCounter(TIM12, 0U);
 }
 
 void sys_tick_handler(void)
@@ -177,18 +178,18 @@ void print(LOG_LV_T log_lv, const char *fmt, ...)
     if (log_lv >= gt_log_lv)
     {
         int len = 0;
-        char msg_buffer[PRINT_BUFF_SIZE] = {0, };
+        char msg_buffer[PRINT_BUFF_SIZE] = { 0 };
 
         if (log_lv > gt_log_lv)
         {
-            char temp_buffer[PRINT_BUFF_SIZE] = {0, };
-            snprintf(temp_buffer, PRINT_BUFF_SIZE - 1, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
+            char temp_buffer[PRINT_BUFF_SIZE] = { 0 };
+            snprintf(temp_buffer, PRINT_BUFF_SIZE - 1U, "%s%s%s", ANSI_FONT_RED, fmt, ANSI_FONT_NONE);
             fmt = temp_buffer;
         }
 
         va_list ap;
         va_start(ap, fmt);
-        len = vsnprintf(msg_buffer, (PRINT_BUFF_SIZE - 1), fmt, ap);
+        len = vsnprintf(msg_buffer, (PRINT_BUFF_SIZE - 1U), fmt, ap);
         va_end(ap);
 
         for (int i = 0 ; i < len ; ++i)
@@ -221,8 +222,8 @@ __STATIC_INLINE void UART_PutChar(uint8_t data)
 
 uint8_t comm_rx_calc_checksum(uint8_t* p_data, uint8_t length)
 {
-    uint8_t checksum = 0;
-    for (uint8_t i = 0 ; i < length ; ++i)
+    uint8_t checksum = 0U;
+    for (uint8_t i = 0U ; i < length ; ++i)
     {
         checksum += *(p_data + i);
     }
@@ -232,13 +233,13 @@ uint8_t comm_rx_calc_checksum(uint8_t* p_data, uint8_t length)
 void comm_rx_push(uint8_t rx)
 {
     gt_ring_buffer.buffer[gt_ring_buffer.head++] = rx;
-    gt_ring_buffer.head &= (RX_BUFF_SIZE - 1);
+    gt_ring_buffer.head &= (RX_BUFF_SIZE - 1U);
 }
 
 uint8_t comm_rx_pop(void)
 {
     uint8_t ret = gt_ring_buffer.buffer[gt_ring_buffer.tail++];
-    gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1);
+    gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1U);
     return ret;
 }
 
@@ -256,22 +257,22 @@ static uint8_t comm_get_rx_available(void)
 
 static void comm_tx_response(uint8_t status)
 {
-    uint8_t response_ok[6] = { SOP, 0x01, CMD_STATUS, 0xA5, 0x00, 0x5A };
-    uint8_t response_ng[6] = { SOP, 0x01, CMD_STATUS, 0x5A, 0x00, 0x5A };
+    uint8_t response_ok[PACKET_SIZE] = { SOP, 0x01U, CMD_STATUS, 0xA5U, 0x00U, 0x5AU };
+    uint8_t response_ng[PACKET_SIZE] = { SOP, 0x01U, CMD_STATUS, 0x5AU, 0x00U, 0x5AU };
 
     response_ok[4] = response_ok[0] + response_ok[1] + response_ok[2] + response_ok[3];
     response_ng[4] = response_ng[0] + response_ng[1] + response_ng[2] + response_ng[3];
 
     if (status)
     {
-        for (int i = 0 ; i < 6 ; ++i)
+        for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
         {
             UART_PutChar(response_ok[i]);
         }
     }
     else
     {
-        for (int i = 0 ; i < 6 ; ++i)
+        for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
         {
             UART_PutChar(response_ng[i]);
         }
@@ -280,16 +281,16 @@ static void comm_tx_response(uint8_t status)
 
 static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 {
-    uint8_t ret = 0;
-    rx_packet_t temp_packet = {0, };
+    uint8_t ret = 0U;
+    rx_packet_t temp_packet = { 0 };
 
     if (gt_ring_buffer.head != gt_ring_buffer.tail)
     {
         if (gt_ring_buffer.buffer[gt_ring_buffer.tail] != SOP)
         {
             ++gt_ring_buffer.tail;
-            gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1);
-            ret = 0;
+            gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1U);
+            ret = 0U;
         }
         else // If SOP
         {
@@ -298,15 +299,15 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 gn_uart_rx_timeout = RX_TIMEOUT_MS;
                 gb_uart_rx_timeout_enable = true;
             }
-            uint8_t length = gt_ring_buffer.buffer[(gt_ring_buffer.tail + 1) & (RX_BUFF_SIZE - 1)];
-            if (length < 1) length = 1; // Minimum data field length
+            uint8_t length = gt_ring_buffer.buffer[(gt_ring_buffer.tail + 1U) & (RX_BUFF_SIZE - 1U)];
+            if (length < 1U) length = 1U; // Minimum data field length
 
             if (comm_get_rx_available() >= (PACKET_SIZE_EXCEPT_DATA_FIELD + length))
             {
                 temp_packet.sop = comm_rx_pop();
                 temp_packet.length = comm_rx_pop();
                 temp_packet.command = comm_rx_pop();
-                for (uint8_t i = 0 ; i < length ; ++i)
+                for (uint8_t i = 0U ; i < length ; ++i)
                 {
                     temp_packet.data[i] = comm_rx_pop();
                 }
@@ -319,7 +320,7 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                     p_packet->sop = temp_packet.sop;
                     p_packet->length = temp_packet.length;
                     p_packet->command = temp_packet.command;
-                    for (uint8_t i = 0 ; i < length ; ++i)
+                    for (uint8_t i = 0U ; i < length ; ++i)
                     {
                         p_packet->data[i] = temp_packet.data[i];
                     }
@@ -328,18 +329,18 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 
                     print(LOG_PC, "\r\n\r\n%u\r\n\r\n", length);
 
-                    comm_tx_response(1);
+                    comm_tx_response(1U);
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X]}\r\n",
                         temp_packet.sop, temp_packet.length, temp_packet.command, \
                         temp_packet.data[0], temp_packet.data[1], temp_packet.data[2], temp_packet.data[3], temp_packet.data[4], \
                         temp_packet.checksum, temp_packet.eop);
-                    ret = 1;
+                    ret = 1U;
                 }
                 else
                 {
-                    comm_tx_response(0);
+                    comm_tx_response(0U);
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X]}\r\n",
@@ -350,12 +351,12 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 gb_uart_rx_timeout_enable = false;
             }
 
-            if (0 == gn_uart_rx_timeout) // Timeout
+            if (0U == gn_uart_rx_timeout) // Timeout
             {
-                comm_tx_response(0);
+                comm_tx_response(0U);
                 gt_ring_buffer.tail = gt_ring_buffer.head;
                 gb_uart_rx_timeout_enable = false;
-                ret = 0;
+                ret = 0U;
             }
         }
     }
@@ -387,28 +388,28 @@ static void Uart_Task(void)
                 print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_ON_SELECT:
-                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BAR_On_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BAR_OFF_SELECT:
-                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BAR_Off_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_ON_SELECT:
-                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BLK_On_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
             case CMD_BLK_OFF_SELECT:
-                for (uint8_t i = 0 ; i < p_packet->length ; ++i)
+                for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BLK_Off_Select(p_packet->data[i]);
                 }
@@ -429,7 +430,7 @@ static void Uart_Task(void)
         }
 
         ++gt_rx_packet_buffer.idx;
-        gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1);
+        gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1U);
     }
 }
 
@@ -439,8 +440,8 @@ static void Key_Init(void)
     {
         gt_key_info[key_list].now_state = LL_GPIO_IsInputPinSet(key_gpio_port[key_list], key_gpio_pin[key_list]);
         gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
-        gt_key_info[key_list].press_cnt = 0;
-        gt_key_info[key_list].odd_even = 0;
+        gt_key_info[key_list].press_cnt = 0U;
+        gt_key_info[key_list].odd_even = 0U;
     }
 
     gt_key_info[KEY_1].function[0] = LED_System_Manual_Init;
@@ -455,7 +456,7 @@ static void Key_Init(void)
 
 static void Key_Task(void)
 {
-    if (gn_key_task_tick == 0)
+    if (gn_key_task_tick == 0U)
     {
         for (key_list_t key_list = KEY_1 ; key_list < KEY_MAX ; ++key_list)
         {
@@ -463,29 +464,29 @@ static void Key_Task(void)
 
             if (gt_key_info[key_list].now_state != gt_key_info[key_list].prev_state)
             {
-                if (gt_key_info[key_list].now_state == 0)
+                if (gt_key_info[key_list].now_state == 0U)
                 {
-                    print(LOG_PC, "KEY_%u Pressed !!\r\n", key_list + 1);
+                    print(LOG_PC, "KEY_%u Pressed !!\r\n", key_list + 1U);
                 }
                 else
                 {
-                    print(LOG_PC, "KEY_%u Released !!\r\n", key_list + 1);
-                    if (gt_key_info[key_list].press_cnt >= 10) // 100ms at least
+                    print(LOG_PC, "KEY_%u Released !!\r\n", key_list + 1U);
+                    if (gt_key_info[key_list].press_cnt >= 10U) // 100ms at least
                     {
-                        print(LOG_PC, "KEY_%u Action !!\r\n", key_list + 1);
+                        print(LOG_PC, "KEY_%u Action !!\r\n", key_list + 1U);
                         if (gt_key_info[key_list].function[gt_key_info[key_list].odd_even] != NULL)
                         {
                             gt_key_info[key_list].function[gt_key_info[key_list].odd_even]();
                         }
-                        gt_key_info[key_list].odd_even ^= 1;
+                        gt_key_info[key_list].odd_even ^= 1U;
                     }
-                    gt_key_info[key_list].press_cnt = 0;
+                    gt_key_info[key_list].press_cnt = 0U;
                 }
                 gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
             }
             else
             {
-                if (gt_key_info[key_list].now_state == 0)
+                if (gt_key_info[key_list].now_state == 0U)
                 {
                     ++gt_key_info[key_list].press_cnt;
                 }
@@ -495,7 +496,7 @@ static void Key_Task(void)
                 }
             }
         }
-        gn_key_task_tick = 10; // 10ms
+        gn_key_task_tick = 10U; // 10ms
     }
 }
 /* USER CODE END 0 */
@@ -538,12 +539,12 @@ int main(void)
 
     Key_Init();
     Comm_Init();
-    for (uint8_t i = 0 ; i < 3 ; ++i)
+    for (uint8_t i = 0U ; i < 3U ; ++i)
     {
         LED_LO();
-        LL_mDelay(250);
+        LL_mDelay(250U);
         LED_HI();
-        LL_mDelay(250);
+        LL_mDelay(250U);
     }
     LED_LO();
 

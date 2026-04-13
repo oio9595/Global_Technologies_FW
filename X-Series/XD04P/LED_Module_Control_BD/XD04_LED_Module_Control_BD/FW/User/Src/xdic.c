@@ -131,7 +131,7 @@ static bool gb_xd_id_error_channel[XC_CH_ENABLE_SIZE] = {true}; // if true, mism
 
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
 {
-    for (uint8_t i = 0 ; i < (sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0])) ; ++i)
+    for (uint8_t i = 0U ; i < (sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0])) ; ++i)
     {
         if (gt_xdic_general_maps[i].address == addr)
         {
@@ -175,7 +175,7 @@ uint16_t* XDIC_Read_General_Reg(uint8_t addr)
 
 static void XDIC_Dump_All_Registers(void)
 {
-    for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
+    for (uint8_t xd_general_addr = 0U ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
         const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xd_general_addr);
         if (map)
@@ -188,7 +188,7 @@ static void XDIC_Dump_All_Registers(void)
 
 void XDIC_Read_All_Registers(void)
 {
-    for (uint8_t xd_general_addr = 0 ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
+    for (uint8_t xd_general_addr = 0U ; xd_general_addr < XDIC_ADDR_MAX ; ++xd_general_addr)
     {
         //XDIC_Read_General_Reg(xd_general_addr);
     }
@@ -283,7 +283,7 @@ static void XDIC_ID_Check(void)
     {
         for (uint8_t ch = 0U ; ch < 20U ; ++ch)
         {
-            if ((p_id_buffer[ch * 2U] == 0x0001U))
+            if ((p_id_buffer[ch * 2] == 0x0001U))
             {
                 gb_xd_id_error_channel[ch] = false;
             }
@@ -298,7 +298,7 @@ static void XDIC_ID_Check(void)
     {
         for (uint8_t ch = 0U ; ch < 20U ; ++ch)
         {
-            if ((p_id_buffer[ch * 2U + 0U] == 0x0001U) && (p_id_buffer[ch * 2U + 1U] == 0x0002U))
+            if ((p_id_buffer[ch * 2 + 0] == 0x0001U) && (p_id_buffer[ch * 2 + 1] == 0x0002U))
             {
                 gb_xd_id_error_channel[ch] = false;
             }
@@ -342,7 +342,7 @@ void XDIC_Param_Init(void)
 void XDIC_Init(void)
 {
     XDIC_VCC_ON();
-    LL_mDelay(100);
+    LL_mDelay(100U);
 
     XDIC_Param_Init();
 

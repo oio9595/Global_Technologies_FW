@@ -12,14 +12,14 @@
 extern "C" {
 #endif
 
-#define CMD_CODE_NONE       0x00    /* 0b00 : No operation */
-#define CMD_CODE_REG_READ   0x01    /* 0b01 : Register-read */
-#define CMD_CODE_REG_WRITE  0x02    /* 0b10 : Register-write */
-#define CMD_CODE_LD_TRANS   0x03    /* 0b11 : Local dimming data transfer */
+#define CMD_CODE_NONE       0x00U    /* 0b00 : No operation */
+#define CMD_CODE_REG_READ   0x01U    /* 0b01 : Register-read */
+#define CMD_CODE_REG_WRITE  0x02U    /* 0b10 : Register-write */
+#define CMD_CODE_LD_TRANS   0x03U    /* 0b11 : Local dimming data transfer */
 
-#define CH_SEG_1            0x00    /* CH01 ~ CH08 */
-#define CH_SEG_2            0x01    /* CH09 ~ CH16 */
-#define CH_SEG_3            0x20    /* CH17 ~ CH24 */
+#define CH_SEG_1            0x00U    /* CH01 ~ CH08 */
+#define CH_SEG_2            0x01U    /* CH09 ~ CH16 */
+#define CH_SEG_3            0x20U    /* CH17 ~ CH24 */
 
 typedef union tag_XC24_CMD
 {
@@ -36,286 +36,286 @@ typedef union tag_XC24_CMD
 /////////////////////////////////////// DATA FORMAT ///////////////////////////////////////
 typedef enum tag_XC24_ADDR_T
 {
-    XC24_ADDR_SOFT_RESET                    = 0x00, // 0x00
-    XC24_ADDR_GLOBAL_WRITE                  = 0x01, // 0x01
-    XC24_ADDR_LOCAL_WRITE                   = 0x02, // 0x02
-    XC24_ADDR_LOCAL_READ                    = 0x03, // 0x03
-    XC24_ADDR_ID_GEN                        = 0x04, // 0x04
-    XC24_ADDR_FAULT_READ                    = 0x05, // 0x05
-    XC24_ADDR_LD_TRANSFER                   = 0x06, // 0x06
-    XC24_ADDR_SYNC_GEN                      = 0x07, // 0x07
-    XC24_ADDR_AUTO_ENABLE                   = 0x08, // 0x08
-    XC24_ADDR_DUMMY_09                      = 0x09, // 0x09
-    XC24_ADDR_LD_WRITE_POINTER              = 0x0A, // 0x0A
-    XC24_ADDR_LD_READ_POINTER               = 0x0B, // 0x0B
-    XC24_ADDR_DIFFERENCE_POINTER            = 0x0C, // 0x0C
-    XC24_ADDR_LD_TRANSFER_START_POINTER_TH  = 0x0D, // 0x0D
-    XC24_ADDR_LOCAL_WR_TRANSFER_POINTER     = 0x0E, // 0x0E
-    XC24_ADDR_LOCAL_RD_RECEIVE_POINTER      = 0x0F, // 0x0F
+    XC24_ADDR_SOFT_RESET                    = 0x00U, // 0x00
+    XC24_ADDR_GLOBAL_WRITE                  = 0x01U, // 0x01
+    XC24_ADDR_LOCAL_WRITE                   = 0x02U, // 0x02
+    XC24_ADDR_LOCAL_READ                    = 0x03U, // 0x03
+    XC24_ADDR_ID_GEN                        = 0x04U, // 0x04
+    XC24_ADDR_FAULT_READ                    = 0x05U, // 0x05
+    XC24_ADDR_LD_TRANSFER                   = 0x06U, // 0x06
+    XC24_ADDR_SYNC_GEN                      = 0x07U, // 0x07
+    XC24_ADDR_AUTO_ENABLE                   = 0x08U, // 0x08
+    XC24_ADDR_DUMMY_09                      = 0x09U, // 0x09
+    XC24_ADDR_LD_WRITE_POINTER              = 0x0AU, // 0x0A
+    XC24_ADDR_LD_READ_POINTER               = 0x0BU, // 0x0B
+    XC24_ADDR_DIFFERENCE_POINTER            = 0x0CU, // 0x0C
+    XC24_ADDR_LD_TRANSFER_START_POINTER_TH  = 0x0DU, // 0x0D
+    XC24_ADDR_LOCAL_WR_TRANSFER_POINTER     = 0x0EU, // 0x0E
+    XC24_ADDR_LOCAL_RD_RECEIVE_POINTER      = 0x0FU, // 0x0F
 
-    XC24_ADDR_LOCAL_RW_DIFFERENCE_POINTER   = 0x10, // 0x10
-    XC24_ADDR_LOCAL_RW_POINTER_RESET        = 0x11, // 0x11
-    XC24_ADDR_FAULT_AUTO_READ_TIMER         = 0x12, // 0x12
-    XC24_ADDR_FAULT_AUTO_READ_EVENT         = 0x13, // 0x13
-    XC24_ADDR_SERIALIZER_CLOCK_GEN          = 0x14, // 0x14
-    XC24_ADDR_INTERRUPT_ENABLE              = 0x15, // 0x15
-    XC24_ADDR_COMMAND_STATUS1               = 0x16, // 0x16
-    XC24_ADDR_COMMAND_STATUS2               = 0x17, // 0x17
-    XC24_ADDR_RECEIVE_STATUS                = 0x18, // 0x18
-    XC24_ADDR_INTERRUPT_STATUS              = 0x19, // 0x19
-    XC24_ADDR_SPI_FAULT_STATUS_CONTROL      = 0x1A, // 0x1A
-    XC24_ADDR_CLK_CONTROL_1                 = 0x1B, // 0x1B
-    XC24_ADDR_CLK_CONTROL_2                 = 0x1C, // 0x1C
-    XC24_ADDR_VDD_LDO_STATUS                = 0x1D, // 0x1D
-    XC24_ADDR_VDD_LDO_FAULT_LEVEL           = 0x1E, // 0x1E
-    XC24_ADDR_COMMAND_LATENCY               = 0x1F, // 0x1F
+    XC24_ADDR_LOCAL_RW_DIFFERENCE_POINTER   = 0x10U, // 0x10
+    XC24_ADDR_LOCAL_RW_POINTER_RESET        = 0x11U, // 0x11
+    XC24_ADDR_FAULT_AUTO_READ_TIMER         = 0x12U, // 0x12
+    XC24_ADDR_FAULT_AUTO_READ_EVENT         = 0x13U, // 0x13
+    XC24_ADDR_SERIALIZER_CLOCK_GEN          = 0x14U, // 0x14
+    XC24_ADDR_INTERRUPT_ENABLE              = 0x15U, // 0x15
+    XC24_ADDR_COMMAND_STATUS1               = 0x16U, // 0x16
+    XC24_ADDR_COMMAND_STATUS2               = 0x17U, // 0x17
+    XC24_ADDR_RECEIVE_STATUS                = 0x18U, // 0x18
+    XC24_ADDR_INTERRUPT_STATUS              = 0x19U, // 0x19
+    XC24_ADDR_SPI_FAULT_STATUS_CONTROL      = 0x1AU, // 0x1A
+    XC24_ADDR_CLK_CONTROL_1                 = 0x1BU, // 0x1B
+    XC24_ADDR_CLK_CONTROL_2                 = 0x1CU, // 0x1C
+    XC24_ADDR_VDD_LDO_STATUS                = 0x1DU, // 0x1D
+    XC24_ADDR_VDD_LDO_FAULT_LEVEL           = 0x1EU, // 0x1E
+    XC24_ADDR_COMMAND_LATENCY               = 0x1FU, // 0x1F
 
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1  = 0x20, // 0x20
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE2  = 0x21, // 0x21
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE3  = 0x22, // 0x22
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE4  = 0x23, // 0x23
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE5  = 0x24, // 0x24
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE6  = 0x25, // 0x25
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE7  = 0x26, // 0x26
-    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE8  = 0x27, // 0x27
-    XC24_ADDR_DUMMY_28                      = 0x28, // 0x28
-    XC24_ADDR_DUMMY_29                      = 0x29, // 0x29
-    XC24_ADDR_DUMMY_2A                      = 0x2A, // 0x2A
-    XC24_ADDR_DUMMY_2B                      = 0x2B, // 0x2B
-    XC24_ADDR_DUMMY_2C                      = 0x2C, // 0x2C
-    XC24_ADDR_DUMMY_2D                      = 0x2D, // 0x2D
-    XC24_ADDR_DUMMY_2E                      = 0x2E, // 0x2E
-    XC24_ADDR_DUMMY_2F                      = 0x2F, // 0x2F
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1  = 0x20U, // 0x20
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE2  = 0x21U, // 0x21
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE3  = 0x22U, // 0x22
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE4  = 0x23U, // 0x23
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE5  = 0x24U, // 0x24
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE6  = 0x25U, // 0x25
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE7  = 0x26U, // 0x26
+    XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE8  = 0x27U, // 0x27
+    XC24_ADDR_DUMMY_28                      = 0x28U, // 0x28
+    XC24_ADDR_DUMMY_29                      = 0x29U, // 0x29
+    XC24_ADDR_DUMMY_2A                      = 0x2AU, // 0x2A
+    XC24_ADDR_DUMMY_2B                      = 0x2BU, // 0x2B
+    XC24_ADDR_DUMMY_2C                      = 0x2CU, // 0x2C
+    XC24_ADDR_DUMMY_2D                      = 0x2DU, // 0x2D
+    XC24_ADDR_DUMMY_2E                      = 0x2EU, // 0x2E
+    XC24_ADDR_DUMMY_2F                      = 0x2FU, // 0x2F
 
-    XC24_ADDR_DAISY_SIZE1                   = 0x30, // 0x30
-    XC24_ADDR_DAISY_SIZE2                   = 0x31, // 0x31
-    XC24_ADDR_DAISY_SIZE3                   = 0x32, // 0x32
-    XC24_ADDR_DAISY_SIZE4                   = 0x33, // 0x33
-    XC24_ADDR_DAISY_SIZE5                   = 0x34, // 0x34
-    XC24_ADDR_DAISY_SIZE6                   = 0x35, // 0x35
-    XC24_ADDR_DAISY_SIZE7                   = 0x36, // 0x36
-    XC24_ADDR_DAISY_SIZE8                   = 0x37, // 0x37
-    XC24_ADDR_BLOCK_SIZE1                   = 0x38, // 0x38
-    XC24_ADDR_BLOCK_SIZE2                   = 0x39, // 0x39
-    XC24_ADDR_BLOCK_SIZE3                   = 0x3A, // 0x3A
-    XC24_ADDR_BLOCK_SIZE4                   = 0x3B, // 0x3B
-    XC24_ADDR_BLOCK_SIZE5                   = 0x3C, // 0x3C
-    XC24_ADDR_BLOCK_SIZE6                   = 0x3D, // 0x3D
-    XC24_ADDR_BLOCK_SIZE7                   = 0x3E, // 0x3E
-    XC24_ADDR_BLOCK_SIZE8                   = 0x3F, // 0x3F
+    XC24_ADDR_DAISY_SIZE1                   = 0x30U, // 0x30
+    XC24_ADDR_DAISY_SIZE2                   = 0x31U, // 0x31
+    XC24_ADDR_DAISY_SIZE3                   = 0x32U, // 0x32
+    XC24_ADDR_DAISY_SIZE4                   = 0x33U, // 0x33
+    XC24_ADDR_DAISY_SIZE5                   = 0x34U, // 0x34
+    XC24_ADDR_DAISY_SIZE6                   = 0x35U, // 0x35
+    XC24_ADDR_DAISY_SIZE7                   = 0x36U, // 0x36
+    XC24_ADDR_DAISY_SIZE8                   = 0x37U, // 0x37
+    XC24_ADDR_BLOCK_SIZE1                   = 0x38U, // 0x38
+    XC24_ADDR_BLOCK_SIZE2                   = 0x39U, // 0x39
+    XC24_ADDR_BLOCK_SIZE3                   = 0x3AU, // 0x3A
+    XC24_ADDR_BLOCK_SIZE4                   = 0x3BU, // 0x3B
+    XC24_ADDR_BLOCK_SIZE5                   = 0x3CU, // 0x3C
+    XC24_ADDR_BLOCK_SIZE6                   = 0x3DU, // 0x3D
+    XC24_ADDR_BLOCK_SIZE7                   = 0x3EU, // 0x3E
+    XC24_ADDR_BLOCK_SIZE8                   = 0x3FU, // 0x3F
 
-    XC24_ADDR_BLOCK_SIZE9                   = 0x40, // 0x40
-    XC24_ADDR_BLOCK_SIZE10                  = 0x41, // 0x41
-    XC24_ADDR_BLOCK_SIZE11                  = 0x42, // 0x42
-    XC24_ADDR_BLOCK_SIZE12                  = 0x43, // 0x43
-    XC24_ADDR_DUMMY_44                      = 0x44, // 0x44
-    XC24_ADDR_CHANNEL_ENABLE1               = 0x45, // 0x45
-    XC24_ADDR_CHANNEL_ENABLE2               = 0x46, // 0x46
-    XC24_ADDR_DUMMY_47                      = 0x47, // 0x47
-    XC24_ADDR_DUMMY_48                      = 0x48, // 0x48
-    XC24_ADDR_DUMMY_49                      = 0x49, // 0x49
-    XC24_ADDR_DUMMY_4A                      = 0x4A, // 0x4A
-    XC24_ADDR_DUMMY_4B                      = 0x4B, // 0x4B
-    XC24_ADDR_DUMMY_4C                      = 0x4C, // 0x4C
-    XC24_ADDR_DAC_CONTROL                   = 0x4D, // 0x4D
-    XC24_ADDR_DUMMY_4E                      = 0x4E, // 0x4E
-    XC24_ADDR_CURRENT_TARGET_DAC            = 0x4F, // 0x4F
+    XC24_ADDR_BLOCK_SIZE9                   = 0x40U, // 0x40
+    XC24_ADDR_BLOCK_SIZE10                  = 0x41U, // 0x41
+    XC24_ADDR_BLOCK_SIZE11                  = 0x42U, // 0x42
+    XC24_ADDR_BLOCK_SIZE12                  = 0x43U, // 0x43
+    XC24_ADDR_DUMMY_44                      = 0x44U, // 0x44
+    XC24_ADDR_CHANNEL_ENABLE1               = 0x45U, // 0x45
+    XC24_ADDR_CHANNEL_ENABLE2               = 0x46U, // 0x46
+    XC24_ADDR_DUMMY_47                      = 0x47U, // 0x47
+    XC24_ADDR_DUMMY_48                      = 0x48U, // 0x48
+    XC24_ADDR_DUMMY_49                      = 0x49U, // 0x49
+    XC24_ADDR_DUMMY_4A                      = 0x4AU, // 0x4A
+    XC24_ADDR_DUMMY_4B                      = 0x4BU, // 0x4B
+    XC24_ADDR_DUMMY_4C                      = 0x4CU, // 0x4C
+    XC24_ADDR_DAC_CONTROL                   = 0x4DU, // 0x4D
+    XC24_ADDR_DUMMY_4E                      = 0x4EU, // 0x4E
+    XC24_ADDR_CURRENT_TARGET_DAC            = 0x4FU, // 0x4F
 
-    XC24_ADDR_PREVIOUS_TARGET_DAC           = 0x50, // 0x50
-    XC24_ADDR_DAC_OUT                       = 0x51, // 0x51
-    XC24_ADDR_DAC_INCREMENT1                = 0x52, // 0x52
-    XC24_ADDR_DAC_INCREMENT2_HOLD_LIMIT     = 0x53, // 0x53
-    XC24_ADDR_DAC_DECREMENT_INC_WAIT        = 0x54, // 0x54
-    XC24_ADDR_DAC_INCREMENT_HOLD_TH         = 0x55, // 0x55
-    XC24_ADDR_SOA_N11_N1                    = 0x56, // 0x56
-    XC24_ADDR_SOA_P2_P1                     = 0x57, // 0x57
-    XC24_ADDR_SOA_P3_P2                     = 0x58, // 0x58
-    XC24_ADDR_DAC_FB_VALID_TIMER            = 0x59, // 0x59
-    XC24_ADDR_DAC_MIN_LIMIT                 = 0x5A, // 0x5A
-    XC24_ADDR_DAC_MAX_LIMIT                 = 0x5B, // 0x5B
-    XC24_ADDR_DAC_STATE                     = 0x5C, // 0x5C
-    XC24_ADDR_VALID_CNT                     = 0x5D, // 0x5D
-    XC24_ADDR_DAC_INC_HOLD_WAIT_CNT         = 0x5E, // 0x5E
-    XC24_ADDR_R2                            = 0x5F, // 0x5F
+    XC24_ADDR_PREVIOUS_TARGET_DAC           = 0x50U, // 0x50
+    XC24_ADDR_DAC_OUT                       = 0x51U, // 0x51
+    XC24_ADDR_DAC_INCREMENT1                = 0x52U, // 0x52
+    XC24_ADDR_DAC_INCREMENT2_HOLD_LIMIT     = 0x53U, // 0x53
+    XC24_ADDR_DAC_DECREMENT_INC_WAIT        = 0x54U, // 0x54
+    XC24_ADDR_DAC_INCREMENT_HOLD_TH         = 0x55U, // 0x55
+    XC24_ADDR_SOA_N11_N1                    = 0x56U, // 0x56
+    XC24_ADDR_SOA_P2_P1                     = 0x57U, // 0x57
+    XC24_ADDR_SOA_P3_P2                     = 0x58U, // 0x58
+    XC24_ADDR_DAC_FB_VALID_TIMER            = 0x59U, // 0x59
+    XC24_ADDR_DAC_MIN_LIMIT                 = 0x5AU, // 0x5A
+    XC24_ADDR_DAC_MAX_LIMIT                 = 0x5BU, // 0x5B
+    XC24_ADDR_DAC_STATE                     = 0x5CU, // 0x5C
+    XC24_ADDR_VALID_CNT                     = 0x5DU, // 0x5D
+    XC24_ADDR_DAC_INC_HOLD_WAIT_CNT         = 0x5EU, // 0x5E
+    XC24_ADDR_R2                            = 0x5FU, // 0x5F
 
-    XC24_ADDR_GLOBAL_WRITE_DATA             = 0x60, // 0x60
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA1       = 0x61, // 0x61
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA2       = 0x62, // 0x62
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA3       = 0x63, // 0x63
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA4       = 0x64, // 0x64
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA5       = 0x65, // 0x65
-    XC24_ADDR_GLOBAL_FAULT_READ_DATA6       = 0x66, // 0x66
-    XC24_ADDR_DUMMY_67                      = 0x67, // 0x67
-    XC24_ADDR_DUMMY_68                      = 0x68, // 0x68
-    XC24_ADDR_DUMMY_69                      = 0x69, // 0x69
-    XC24_ADDR_DUMMY_6A                      = 0x6A, // 0x6A
-    XC24_ADDR_DUMMY_6B                      = 0x6B, // 0x6B
-    XC24_ADDR_DUMMY_6C                      = 0x6C, // 0x6C
-    XC24_ADDR_DUMMY_6D                      = 0x6D, // 0x6D
-    XC24_ADDR_DUMMY_6E                      = 0x6E, // 0x6E
-    XC24_ADDR_DUMMY_6F                      = 0x6F, // 0x6F
-    XC24_ADDR_MAX                           = 0x70, // 0x70
+    XC24_ADDR_GLOBAL_WRITE_DATA             = 0x60U, // 0x60
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA1       = 0x61U, // 0x61
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA2       = 0x62U, // 0x62
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA3       = 0x63U, // 0x63
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA4       = 0x64U, // 0x64
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA5       = 0x65U, // 0x65
+    XC24_ADDR_GLOBAL_FAULT_READ_DATA6       = 0x66U, // 0x66
+    XC24_ADDR_DUMMY_67                      = 0x67U, // 0x67
+    XC24_ADDR_DUMMY_68                      = 0x68U, // 0x68
+    XC24_ADDR_DUMMY_69                      = 0x69U, // 0x69
+    XC24_ADDR_DUMMY_6A                      = 0x6AU, // 0x6A
+    XC24_ADDR_DUMMY_6B                      = 0x6BU, // 0x6B
+    XC24_ADDR_DUMMY_6C                      = 0x6CU, // 0x6C
+    XC24_ADDR_DUMMY_6D                      = 0x6DU, // 0x6D
+    XC24_ADDR_DUMMY_6E                      = 0x6EU, // 0x6E
+    XC24_ADDR_DUMMY_6F                      = 0x6FU, // 0x6F
+    XC24_ADDR_MAX                           = 0x70U, // 0x70
 }xc24_addr_t;
 
 typedef enum tag_XC24_MIRROR_ADDR_T
 {
-    XC24_MIRROR_ADDR_START                  = 0xF0, // 0xF0
-    XC24_MIRROR_ADDR_TEST_CONTROL           = 0xF0, // 0xF0
-    XC24_MIRROR_ADDR_OTP_PG_ACCESS          = 0xF1, // 0xF1
-    XC24_MIRROR_ADDR_OTP_WRITE              = 0xF2, // 0xF2
-    XC24_MIRROR_ADDR_OTP_RD_PROG            = 0xF3, // 0xF3
-    XC24_MIRROR_ADDR_OTP_PROTECT            = 0xF4, // 0xF4
-    XC24_MIRROR_ADDR_MIRROR1                = 0xF5, // 0xF5
-    XC24_MIRROR_ADDR_MIRROR2                = 0xF6, // 0xF6
-    XC24_MIRROR_ADDR_MIRROR3                = 0xF7, // 0xF7
-    XC24_MIRROR_ADDR_MAX                    = 0xF8, // 0xF8
+    XC24_MIRROR_ADDR_START                  = 0xF0U, // 0xF0
+    XC24_MIRROR_ADDR_TEST_CONTROL           = 0xF0U, // 0xF0
+    XC24_MIRROR_ADDR_OTP_PG_ACCESS          = 0xF1U, // 0xF1
+    XC24_MIRROR_ADDR_OTP_WRITE              = 0xF2U, // 0xF2
+    XC24_MIRROR_ADDR_OTP_RD_PROG            = 0xF3U, // 0xF3
+    XC24_MIRROR_ADDR_OTP_PROTECT            = 0xF4U, // 0xF4
+    XC24_MIRROR_ADDR_MIRROR1                = 0xF5U, // 0xF5
+    XC24_MIRROR_ADDR_MIRROR2                = 0xF6U, // 0xF6
+    XC24_MIRROR_ADDR_MIRROR3                = 0xF7U, // 0xF7
+    XC24_MIRROR_ADDR_MAX                    = 0xF8U, // 0xF8
 }xc24_mirror_addr_t;
 
 typedef enum _xc24_data_addr_
 {
-    XC24_ADDR_PORT1_LOCAL_RW_DATA1  = 0x70, // 0x70
-    XC24_ADDR_PORT2_LOCAL_RW_DATA1  = 0x71, // 0x71
-    XC24_ADDR_PORT3_LOCAL_RW_DATA1  = 0x72, // 0x72
-    XC24_ADDR_PORT4_LOCAL_RW_DATA1  = 0x73, // 0x73
-    XC24_ADDR_PORT5_LOCAL_RW_DATA1  = 0x74, // 0x74
-    XC24_ADDR_PORT6_LOCAL_RW_DATA1  = 0x75, // 0x75
-    XC24_ADDR_PORT7_LOCAL_RW_DATA1  = 0x76, // 0x76
-    XC24_ADDR_PORT8_LOCAL_RW_DATA1  = 0x77, // 0x77
+    XC24_ADDR_PORT1_LOCAL_RW_DATA1  = 0x70U, // 0x70
+    XC24_ADDR_PORT2_LOCAL_RW_DATA1  = 0x71U, // 0x71
+    XC24_ADDR_PORT3_LOCAL_RW_DATA1  = 0x72U, // 0x72
+    XC24_ADDR_PORT4_LOCAL_RW_DATA1  = 0x73U, // 0x73
+    XC24_ADDR_PORT5_LOCAL_RW_DATA1  = 0x74U, // 0x74
+    XC24_ADDR_PORT6_LOCAL_RW_DATA1  = 0x75U, // 0x75
+    XC24_ADDR_PORT7_LOCAL_RW_DATA1  = 0x76U, // 0x76
+    XC24_ADDR_PORT8_LOCAL_RW_DATA1  = 0x77U, // 0x77
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA2  = 0x78, // 0x78
-    XC24_ADDR_PORT2_LOCAL_RW_DATA2  = 0x79, // 0x79
-    XC24_ADDR_PORT3_LOCAL_RW_DATA2  = 0x7A, // 0x7A
-    XC24_ADDR_PORT4_LOCAL_RW_DATA2  = 0x7B, // 0x7B
-    XC24_ADDR_PORT5_LOCAL_RW_DATA2  = 0x7C, // 0x7C
-    XC24_ADDR_PORT6_LOCAL_RW_DATA2  = 0x7D, // 0x7D
-    XC24_ADDR_PORT7_LOCAL_RW_DATA2  = 0x7E, // 0x7E
-    XC24_ADDR_PORT8_LOCAL_RW_DATA2  = 0x7F, // 0x7F
+    XC24_ADDR_PORT1_LOCAL_RW_DATA2  = 0x78U, // 0x78
+    XC24_ADDR_PORT2_LOCAL_RW_DATA2  = 0x79U, // 0x79
+    XC24_ADDR_PORT3_LOCAL_RW_DATA2  = 0x7AU, // 0x7A
+    XC24_ADDR_PORT4_LOCAL_RW_DATA2  = 0x7BU, // 0x7B
+    XC24_ADDR_PORT5_LOCAL_RW_DATA2  = 0x7CU, // 0x7C
+    XC24_ADDR_PORT6_LOCAL_RW_DATA2  = 0x7DU, // 0x7D
+    XC24_ADDR_PORT7_LOCAL_RW_DATA2  = 0x7EU, // 0x7E
+    XC24_ADDR_PORT8_LOCAL_RW_DATA2  = 0x7FU, // 0x7F
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA3  = 0x80, // 0x80
-    XC24_ADDR_PORT2_LOCAL_RW_DATA3  = 0x81, // 0x81
-    XC24_ADDR_PORT3_LOCAL_RW_DATA3  = 0x82, // 0x82
-    XC24_ADDR_PORT4_LOCAL_RW_DATA3  = 0x83, // 0x83
-    XC24_ADDR_PORT5_LOCAL_RW_DATA3  = 0x84, // 0x84
-    XC24_ADDR_PORT6_LOCAL_RW_DATA3  = 0x85, // 0x85
-    XC24_ADDR_PORT7_LOCAL_RW_DATA3  = 0x86, // 0x86
-    XC24_ADDR_PORT8_LOCAL_RW_DATA3  = 0x87, // 0x87
+    XC24_ADDR_PORT1_LOCAL_RW_DATA3  = 0x80U, // 0x80
+    XC24_ADDR_PORT2_LOCAL_RW_DATA3  = 0x81U, // 0x81
+    XC24_ADDR_PORT3_LOCAL_RW_DATA3  = 0x82U, // 0x82
+    XC24_ADDR_PORT4_LOCAL_RW_DATA3  = 0x83U, // 0x83
+    XC24_ADDR_PORT5_LOCAL_RW_DATA3  = 0x84U, // 0x84
+    XC24_ADDR_PORT6_LOCAL_RW_DATA3  = 0x85U, // 0x85
+    XC24_ADDR_PORT7_LOCAL_RW_DATA3  = 0x86U, // 0x86
+    XC24_ADDR_PORT8_LOCAL_RW_DATA3  = 0x87U, // 0x87
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA4  = 0x88, // 0x88
-    XC24_ADDR_PORT2_LOCAL_RW_DATA4  = 0x89, // 0x89
-    XC24_ADDR_PORT3_LOCAL_RW_DATA4  = 0x8A, // 0x8A
-    XC24_ADDR_PORT4_LOCAL_RW_DATA4  = 0x8B, // 0x8B
-    XC24_ADDR_PORT5_LOCAL_RW_DATA4  = 0x8C, // 0x8C
-    XC24_ADDR_PORT6_LOCAL_RW_DATA4  = 0x8D, // 0x8D
-    XC24_ADDR_PORT7_LOCAL_RW_DATA4  = 0x8E, // 0x8E
-    XC24_ADDR_PORT8_LOCAL_RW_DATA4  = 0x8F, // 0x8F
+    XC24_ADDR_PORT1_LOCAL_RW_DATA4  = 0x88U, // 0x88
+    XC24_ADDR_PORT2_LOCAL_RW_DATA4  = 0x89U, // 0x89
+    XC24_ADDR_PORT3_LOCAL_RW_DATA4  = 0x8AU, // 0x8A
+    XC24_ADDR_PORT4_LOCAL_RW_DATA4  = 0x8BU, // 0x8B
+    XC24_ADDR_PORT5_LOCAL_RW_DATA4  = 0x8CU, // 0x8C
+    XC24_ADDR_PORT6_LOCAL_RW_DATA4  = 0x8DU, // 0x8D
+    XC24_ADDR_PORT7_LOCAL_RW_DATA4  = 0x8EU, // 0x8E
+    XC24_ADDR_PORT8_LOCAL_RW_DATA4  = 0x8FU, // 0x8F
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA5  = 0x90, // 0x90
-    XC24_ADDR_PORT2_LOCAL_RW_DATA5  = 0x91, // 0x91
-    XC24_ADDR_PORT3_LOCAL_RW_DATA5  = 0x92, // 0x92
-    XC24_ADDR_PORT4_LOCAL_RW_DATA5  = 0x93, // 0x93
-    XC24_ADDR_PORT5_LOCAL_RW_DATA5  = 0x94, // 0x94
-    XC24_ADDR_PORT6_LOCAL_RW_DATA5  = 0x95, // 0x95
-    XC24_ADDR_PORT7_LOCAL_RW_DATA5  = 0x96, // 0x96
-    XC24_ADDR_PORT8_LOCAL_RW_DATA5  = 0x97, // 0x97
+    XC24_ADDR_PORT1_LOCAL_RW_DATA5  = 0x90U, // 0x90
+    XC24_ADDR_PORT2_LOCAL_RW_DATA5  = 0x91U, // 0x91
+    XC24_ADDR_PORT3_LOCAL_RW_DATA5  = 0x92U, // 0x92
+    XC24_ADDR_PORT4_LOCAL_RW_DATA5  = 0x93U, // 0x93
+    XC24_ADDR_PORT5_LOCAL_RW_DATA5  = 0x94U, // 0x94
+    XC24_ADDR_PORT6_LOCAL_RW_DATA5  = 0x95U, // 0x95
+    XC24_ADDR_PORT7_LOCAL_RW_DATA5  = 0x96U, // 0x96
+    XC24_ADDR_PORT8_LOCAL_RW_DATA5  = 0x97U, // 0x97
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA6  = 0x98, // 0x98
-    XC24_ADDR_PORT2_LOCAL_RW_DATA6  = 0x99, // 0x99
-    XC24_ADDR_PORT3_LOCAL_RW_DATA6  = 0x9A, // 0x9A
-    XC24_ADDR_PORT4_LOCAL_RW_DATA6  = 0x9B, // 0x9B
-    XC24_ADDR_PORT5_LOCAL_RW_DATA6  = 0x9C, // 0x9C
-    XC24_ADDR_PORT6_LOCAL_RW_DATA6  = 0x9D, // 0x9D
-    XC24_ADDR_PORT7_LOCAL_RW_DATA6  = 0x9E, // 0x9E
-    XC24_ADDR_PORT8_LOCAL_RW_DATA6  = 0x9F, // 0x9F
+    XC24_ADDR_PORT1_LOCAL_RW_DATA6  = 0x98U, // 0x98
+    XC24_ADDR_PORT2_LOCAL_RW_DATA6  = 0x99U, // 0x99
+    XC24_ADDR_PORT3_LOCAL_RW_DATA6  = 0x9AU, // 0x9A
+    XC24_ADDR_PORT4_LOCAL_RW_DATA6  = 0x9BU, // 0x9B
+    XC24_ADDR_PORT5_LOCAL_RW_DATA6  = 0x9CU, // 0x9C
+    XC24_ADDR_PORT6_LOCAL_RW_DATA6  = 0x9DU, // 0x9D
+    XC24_ADDR_PORT7_LOCAL_RW_DATA6  = 0x9EU, // 0x9E
+    XC24_ADDR_PORT8_LOCAL_RW_DATA6  = 0x9FU, // 0x9F
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA7  = 0xA0, // 0xA0
-    XC24_ADDR_PORT2_LOCAL_RW_DATA7  = 0xA1, // 0xA1
-    XC24_ADDR_PORT3_LOCAL_RW_DATA7  = 0xA2, // 0xA2
-    XC24_ADDR_PORT4_LOCAL_RW_DATA7  = 0xA3, // 0xA3
-    XC24_ADDR_PORT5_LOCAL_RW_DATA7  = 0xA4, // 0xA4
-    XC24_ADDR_PORT6_LOCAL_RW_DATA7  = 0xA5, // 0xA5
-    XC24_ADDR_PORT7_LOCAL_RW_DATA7  = 0xA6, // 0xA6
-    XC24_ADDR_PORT8_LOCAL_RW_DATA7  = 0xA7, // 0xA7
+    XC24_ADDR_PORT1_LOCAL_RW_DATA7  = 0xA0U, // 0xA0
+    XC24_ADDR_PORT2_LOCAL_RW_DATA7  = 0xA1U, // 0xA1
+    XC24_ADDR_PORT3_LOCAL_RW_DATA7  = 0xA2U, // 0xA2
+    XC24_ADDR_PORT4_LOCAL_RW_DATA7  = 0xA3U, // 0xA3
+    XC24_ADDR_PORT5_LOCAL_RW_DATA7  = 0xA4U, // 0xA4
+    XC24_ADDR_PORT6_LOCAL_RW_DATA7  = 0xA5U, // 0xA5
+    XC24_ADDR_PORT7_LOCAL_RW_DATA7  = 0xA6U, // 0xA6
+    XC24_ADDR_PORT8_LOCAL_RW_DATA7  = 0xA7U, // 0xA7
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA8  = 0xA8, // 0xA8
-    XC24_ADDR_PORT2_LOCAL_RW_DATA8  = 0xA9, // 0xA9
-    XC24_ADDR_PORT3_LOCAL_RW_DATA8  = 0xAA, // 0xAA
-    XC24_ADDR_PORT4_LOCAL_RW_DATA8  = 0xAB, // 0xAB
-    XC24_ADDR_PORT5_LOCAL_RW_DATA8  = 0xAC, // 0xAC
-    XC24_ADDR_PORT6_LOCAL_RW_DATA8  = 0xAD, // 0xAD
-    XC24_ADDR_PORT7_LOCAL_RW_DATA8  = 0xAE, // 0xAE
-    XC24_ADDR_PORT8_LOCAL_RW_DATA8  = 0xAF, // 0xAF
+    XC24_ADDR_PORT1_LOCAL_RW_DATA8  = 0xA8U, // 0xA8
+    XC24_ADDR_PORT2_LOCAL_RW_DATA8  = 0xA9U, // 0xA9
+    XC24_ADDR_PORT3_LOCAL_RW_DATA8  = 0xAAU, // 0xAA
+    XC24_ADDR_PORT4_LOCAL_RW_DATA8  = 0xABU, // 0xAB
+    XC24_ADDR_PORT5_LOCAL_RW_DATA8  = 0xACU, // 0xAC
+    XC24_ADDR_PORT6_LOCAL_RW_DATA8  = 0xADU, // 0xAD
+    XC24_ADDR_PORT7_LOCAL_RW_DATA8  = 0xAEU, // 0xAE
+    XC24_ADDR_PORT8_LOCAL_RW_DATA8  = 0xAFU, // 0xAF
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA9  = 0xB0, // 0xB0
-    XC24_ADDR_PORT2_LOCAL_RW_DATA9  = 0xB1, // 0xB1
-    XC24_ADDR_PORT3_LOCAL_RW_DATA9  = 0xB2, // 0xB2
-    XC24_ADDR_PORT4_LOCAL_RW_DATA9  = 0xB3, // 0xB3
-    XC24_ADDR_PORT5_LOCAL_RW_DATA9  = 0xB4, // 0xB4
-    XC24_ADDR_PORT6_LOCAL_RW_DATA9  = 0xB5, // 0xB5
-    XC24_ADDR_PORT7_LOCAL_RW_DATA9  = 0xB6, // 0xB6
-    XC24_ADDR_PORT8_LOCAL_RW_DATA9  = 0xB7, // 0xB7
+    XC24_ADDR_PORT1_LOCAL_RW_DATA9  = 0xB0U, // 0xB0
+    XC24_ADDR_PORT2_LOCAL_RW_DATA9  = 0xB1U, // 0xB1
+    XC24_ADDR_PORT3_LOCAL_RW_DATA9  = 0xB2U, // 0xB2
+    XC24_ADDR_PORT4_LOCAL_RW_DATA9  = 0xB3U, // 0xB3
+    XC24_ADDR_PORT5_LOCAL_RW_DATA9  = 0xB4U, // 0xB4
+    XC24_ADDR_PORT6_LOCAL_RW_DATA9  = 0xB5U, // 0xB5
+    XC24_ADDR_PORT7_LOCAL_RW_DATA9  = 0xB6U, // 0xB6
+    XC24_ADDR_PORT8_LOCAL_RW_DATA9  = 0xB7U, // 0xB7
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA10 = 0xB8, // 0xB8
-    XC24_ADDR_PORT2_LOCAL_RW_DATA10 = 0xB9, // 0xB9
-    XC24_ADDR_PORT3_LOCAL_RW_DATA10 = 0xBA, // 0xBA
-    XC24_ADDR_PORT4_LOCAL_RW_DATA10 = 0xBB, // 0xBB
-    XC24_ADDR_PORT5_LOCAL_RW_DATA10 = 0xBC, // 0xBC
-    XC24_ADDR_PORT6_LOCAL_RW_DATA10 = 0xBD, // 0xBD
-    XC24_ADDR_PORT7_LOCAL_RW_DATA10 = 0xBE, // 0xBE
-    XC24_ADDR_PORT8_LOCAL_RW_DATA10 = 0xBF, // 0xBF
+    XC24_ADDR_PORT1_LOCAL_RW_DATA10 = 0xB8U, // 0xB8
+    XC24_ADDR_PORT2_LOCAL_RW_DATA10 = 0xB9U, // 0xB9
+    XC24_ADDR_PORT3_LOCAL_RW_DATA10 = 0xBAU, // 0xBA
+    XC24_ADDR_PORT4_LOCAL_RW_DATA10 = 0xBBU, // 0xBB
+    XC24_ADDR_PORT5_LOCAL_RW_DATA10 = 0xBCU, // 0xBC
+    XC24_ADDR_PORT6_LOCAL_RW_DATA10 = 0xBDU, // 0xBD
+    XC24_ADDR_PORT7_LOCAL_RW_DATA10 = 0xBEU, // 0xBE
+    XC24_ADDR_PORT8_LOCAL_RW_DATA10 = 0xBFU, // 0xBF
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA11 = 0xC0, // 0xC0
-    XC24_ADDR_PORT2_LOCAL_RW_DATA11 = 0xC1, // 0xC1
-    XC24_ADDR_PORT3_LOCAL_RW_DATA11 = 0xC2, // 0xC2
-    XC24_ADDR_PORT4_LOCAL_RW_DATA11 = 0xC3, // 0xC3
-    XC24_ADDR_PORT5_LOCAL_RW_DATA11 = 0xC4, // 0xC4
-    XC24_ADDR_PORT6_LOCAL_RW_DATA11 = 0xC5, // 0xC5
-    XC24_ADDR_PORT7_LOCAL_RW_DATA11 = 0xC6, // 0xC6
-    XC24_ADDR_PORT8_LOCAL_RW_DATA11 = 0xC7, // 0xC7
+    XC24_ADDR_PORT1_LOCAL_RW_DATA11 = 0xC0U, // 0xC0
+    XC24_ADDR_PORT2_LOCAL_RW_DATA11 = 0xC1U, // 0xC1
+    XC24_ADDR_PORT3_LOCAL_RW_DATA11 = 0xC2U, // 0xC2
+    XC24_ADDR_PORT4_LOCAL_RW_DATA11 = 0xC3U, // 0xC3
+    XC24_ADDR_PORT5_LOCAL_RW_DATA11 = 0xC4U, // 0xC4
+    XC24_ADDR_PORT6_LOCAL_RW_DATA11 = 0xC5U, // 0xC5
+    XC24_ADDR_PORT7_LOCAL_RW_DATA11 = 0xC6U, // 0xC6
+    XC24_ADDR_PORT8_LOCAL_RW_DATA11 = 0xC7U, // 0xC7
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA12 = 0xC8, // 0xC8
-    XC24_ADDR_PORT2_LOCAL_RW_DATA12 = 0xC9, // 0xC9
-    XC24_ADDR_PORT3_LOCAL_RW_DATA12 = 0xCA, // 0xCA
-    XC24_ADDR_PORT4_LOCAL_RW_DATA12 = 0xCB, // 0xCB
-    XC24_ADDR_PORT5_LOCAL_RW_DATA12 = 0xCC, // 0xCC
-    XC24_ADDR_PORT6_LOCAL_RW_DATA12 = 0xCD, // 0xCD
-    XC24_ADDR_PORT7_LOCAL_RW_DATA12 = 0xCE, // 0xCE
-    XC24_ADDR_PORT8_LOCAL_RW_DATA12 = 0xCF, // 0xCF
+    XC24_ADDR_PORT1_LOCAL_RW_DATA12 = 0xC8U, // 0xC8
+    XC24_ADDR_PORT2_LOCAL_RW_DATA12 = 0xC9U, // 0xC9
+    XC24_ADDR_PORT3_LOCAL_RW_DATA12 = 0xCAU, // 0xCA
+    XC24_ADDR_PORT4_LOCAL_RW_DATA12 = 0xCBU, // 0xCB
+    XC24_ADDR_PORT5_LOCAL_RW_DATA12 = 0xCCU, // 0xCC
+    XC24_ADDR_PORT6_LOCAL_RW_DATA12 = 0xCDU, // 0xCD
+    XC24_ADDR_PORT7_LOCAL_RW_DATA12 = 0xCEU, // 0xCE
+    XC24_ADDR_PORT8_LOCAL_RW_DATA12 = 0xCFU, // 0xCF
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA13 = 0xD0, // 0xD0
-    XC24_ADDR_PORT2_LOCAL_RW_DATA13 = 0xD1, // 0xD1
-    XC24_ADDR_PORT3_LOCAL_RW_DATA13 = 0xD2, // 0xD2
-    XC24_ADDR_PORT4_LOCAL_RW_DATA13 = 0xD3, // 0xD3
-    XC24_ADDR_PORT5_LOCAL_RW_DATA13 = 0xD4, // 0xD4
-    XC24_ADDR_PORT6_LOCAL_RW_DATA13 = 0xD5, // 0xD5
-    XC24_ADDR_PORT7_LOCAL_RW_DATA13 = 0xD6, // 0xD6
-    XC24_ADDR_PORT8_LOCAL_RW_DATA13 = 0xD7, // 0xD7
+    XC24_ADDR_PORT1_LOCAL_RW_DATA13 = 0xD0U, // 0xD0
+    XC24_ADDR_PORT2_LOCAL_RW_DATA13 = 0xD1U, // 0xD1
+    XC24_ADDR_PORT3_LOCAL_RW_DATA13 = 0xD2U, // 0xD2
+    XC24_ADDR_PORT4_LOCAL_RW_DATA13 = 0xD3U, // 0xD3
+    XC24_ADDR_PORT5_LOCAL_RW_DATA13 = 0xD4U, // 0xD4
+    XC24_ADDR_PORT6_LOCAL_RW_DATA13 = 0xD5U, // 0xD5
+    XC24_ADDR_PORT7_LOCAL_RW_DATA13 = 0xD6U, // 0xD6
+    XC24_ADDR_PORT8_LOCAL_RW_DATA13 = 0xD7U, // 0xD7
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA14 = 0xD8, // 0xD8
-    XC24_ADDR_PORT2_LOCAL_RW_DATA14 = 0xD9, // 0xD9
-    XC24_ADDR_PORT3_LOCAL_RW_DATA14 = 0xDA, // 0xDA
-    XC24_ADDR_PORT4_LOCAL_RW_DATA14 = 0xDB, // 0xDB
-    XC24_ADDR_PORT5_LOCAL_RW_DATA14 = 0xDC, // 0xDC
-    XC24_ADDR_PORT6_LOCAL_RW_DATA14 = 0xDD, // 0xDD
-    XC24_ADDR_PORT7_LOCAL_RW_DATA14 = 0xDE, // 0xDE
-    XC24_ADDR_PORT8_LOCAL_RW_DATA14 = 0xDF, // 0xDF
+    XC24_ADDR_PORT1_LOCAL_RW_DATA14 = 0xD8U, // 0xD8
+    XC24_ADDR_PORT2_LOCAL_RW_DATA14 = 0xD9U, // 0xD9
+    XC24_ADDR_PORT3_LOCAL_RW_DATA14 = 0xDAU, // 0xDA
+    XC24_ADDR_PORT4_LOCAL_RW_DATA14 = 0xDBU, // 0xDB
+    XC24_ADDR_PORT5_LOCAL_RW_DATA14 = 0xDCU, // 0xDC
+    XC24_ADDR_PORT6_LOCAL_RW_DATA14 = 0xDDU, // 0xDD
+    XC24_ADDR_PORT7_LOCAL_RW_DATA14 = 0xDEU, // 0xDE
+    XC24_ADDR_PORT8_LOCAL_RW_DATA14 = 0xDFU, // 0xDF
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA15 = 0xE0, // 0xE0
-    XC24_ADDR_PORT2_LOCAL_RW_DATA15 = 0xE1, // 0xE1
-    XC24_ADDR_PORT3_LOCAL_RW_DATA15 = 0xE2, // 0xE2
-    XC24_ADDR_PORT4_LOCAL_RW_DATA15 = 0xE3, // 0xE3
-    XC24_ADDR_PORT5_LOCAL_RW_DATA15 = 0xE4, // 0xE4
-    XC24_ADDR_PORT6_LOCAL_RW_DATA15 = 0xE5, // 0xE5
-    XC24_ADDR_PORT7_LOCAL_RW_DATA15 = 0xE6, // 0xE6
-    XC24_ADDR_PORT8_LOCAL_RW_DATA15 = 0xE7, // 0xE7
+    XC24_ADDR_PORT1_LOCAL_RW_DATA15 = 0xE0U, // 0xE0
+    XC24_ADDR_PORT2_LOCAL_RW_DATA15 = 0xE1U, // 0xE1
+    XC24_ADDR_PORT3_LOCAL_RW_DATA15 = 0xE2U, // 0xE2
+    XC24_ADDR_PORT4_LOCAL_RW_DATA15 = 0xE3U, // 0xE3
+    XC24_ADDR_PORT5_LOCAL_RW_DATA15 = 0xE4U, // 0xE4
+    XC24_ADDR_PORT6_LOCAL_RW_DATA15 = 0xE5U, // 0xE5
+    XC24_ADDR_PORT7_LOCAL_RW_DATA15 = 0xE6U, // 0xE6
+    XC24_ADDR_PORT8_LOCAL_RW_DATA15 = 0xE7U, // 0xE7
 
-    XC24_ADDR_PORT1_LOCAL_RW_DATA16 = 0xE8, // 0xE8
-    XC24_ADDR_PORT2_LOCAL_RW_DATA16 = 0xE9, // 0xE9
-    XC24_ADDR_PORT3_LOCAL_RW_DATA16 = 0xEA, // 0xEA
-    XC24_ADDR_PORT4_LOCAL_RW_DATA16 = 0xEB, // 0xEB
-    XC24_ADDR_PORT5_LOCAL_RW_DATA16 = 0xEC, // 0xEC
-    XC24_ADDR_PORT6_LOCAL_RW_DATA16 = 0xED, // 0xED
-    XC24_ADDR_PORT7_LOCAL_RW_DATA16 = 0xEE, // 0xEE
-    XC24_ADDR_PORT8_LOCAL_RW_DATA16 = 0xEF, // 0xEF
+    XC24_ADDR_PORT1_LOCAL_RW_DATA16 = 0xE8U, // 0xE8
+    XC24_ADDR_PORT2_LOCAL_RW_DATA16 = 0xE9U, // 0xE9
+    XC24_ADDR_PORT3_LOCAL_RW_DATA16 = 0xEAU, // 0xEA
+    XC24_ADDR_PORT4_LOCAL_RW_DATA16 = 0xEBU, // 0xEB
+    XC24_ADDR_PORT5_LOCAL_RW_DATA16 = 0xECU, // 0xEC
+    XC24_ADDR_PORT6_LOCAL_RW_DATA16 = 0xEDU, // 0xED
+    XC24_ADDR_PORT7_LOCAL_RW_DATA16 = 0xEEU, // 0xEE
+    XC24_ADDR_PORT8_LOCAL_RW_DATA16 = 0xEFU, // 0xEF
 }xc24_addr_port_local_t;
 
 /* SOFT RESET : default 0x00 */
@@ -1683,10 +1683,7 @@ typedef union _xc24_mirror_regs
 
 extern volatile uint8_t gn_xc_spi_timeout;
 
-extern void XC24_Write_Register(uint16_t in_addr, uint16_t in_data);
 extern uint16_t XC24_Read_Register(uint8_t in_addr);
-extern void XC24_Read_Register_All(void);
-extern void XC24_Dump_All_Register(void);
 
 extern void XC24_Update_Channel_Enable_By_XDIC_ID_Check(void);
 extern void XC24_Init(void);

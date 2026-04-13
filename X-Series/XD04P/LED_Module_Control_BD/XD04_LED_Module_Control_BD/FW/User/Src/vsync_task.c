@@ -12,10 +12,12 @@
 #include "xc24.h"
 #include "config.h"
 
-#define XDIC_LD_MAX             (4095U)
-#define XDIC_LD_LOW_CURR_MODE   (5U)
+#define XDIC_LD_MAX                 (4095U)
+#define XDIC_LD_LOW_CURR_MODE       (5U)
 
-#define XDIC_TEST               (0)
+#define XDIC_PWM_DUTY_MAX           (100.0f)
+#define XDIC_PWM_CURRENT_MAX        (128.0f)
+#define XDIC_PWM_CURRENT_DEFAULT    (10.0f)
 
 static bool gb_xdic_vsync_flag;
 volatile static bool gb_system_active;
@@ -30,7 +32,7 @@ void Vsync_Timer_Start(void)
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
 
-    for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
         gb_xd_led_enable_table[i] = false;
     }
@@ -47,7 +49,7 @@ void Vsync_Timer_Stop(void)
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableIT_UPDATE(TIM8);
 
-    for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
         gb_xd_led_enable_table[i] = false;
     }
@@ -80,13 +82,13 @@ void XDIC_Vsync_Task(void)
         }
         else
         {
-            uint16_t ld_val = (uint16_t)(gf_xd_duty / 100.0f * XDIC_LD_MAX + 0.5f);
+            uint16_t ld_val = (uint16_t)((gf_xd_duty / 100.0f * XDIC_LD_MAX) + 0.5f);
             XC24_IF_Write_LD(ld_val);
         }
         XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
 
         #if 0
-            uint16_t fault_data[6] = {0, };
+            uint16_t fault_data[6] = { 0 };
             fault_data[0] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA1);
             fault_data[1] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA2);
             fault_data[2] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA3);
@@ -116,7 +118,7 @@ void LED_BAR_On_Select(uint8_t in_bar_num)
         uint8_t start_blk = (in_bar_num - 1U);
         for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + (20U * blk)] = true;
+            gb_xd_led_enable_table[start_blk + (20 * blk)] = true;
         }
     }
 }
@@ -135,7 +137,7 @@ void LED_BAR_Off_Select(uint8_t in_bar_num)
         uint8_t start_blk = (in_bar_num - 1U);
         for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + (20U * blk)] = false;
+            gb_xd_led_enable_table[start_blk + (20 * blk)] = false;
         }
     }
 }
@@ -166,32 +168,33 @@ void LED_BLK_Off_Select(uint8_t in_blk_num)
     }
     else if (in_blk_num <= TOTAL_BLOCK_SIZE)
     {
-        gb_xd_led_enable_table[in_blk_num - 1U] = false;
+        gb_xd_led_enable_table[in_blk_num - 1] = false;
     }
 }
 
 void LED_Current_Select(float in_current)
 {
-    if (in_current < 0.0f)
+    float temp_current = in_current;
+    if (temp_current < 0.0f)
     {
-        in_current = 0.0f;
+        temp_current = 0.0f;
     }
-    else if (in_current > 128.0f)
+    else if (temp_current > XDIC_PWM_CURRENT_MAX)
     {
-        in_current = 128.0f;
+        temp_current = XDIC_PWM_CURRENT_MAX;
     }
-    gf_xd_max_current = in_current;
+    gf_xd_max_current = temp_current;
 }
 
 void LED_Current_Increase(void)
 {
-    if (gn_led_current_increase_cnt == 0)
+    if (gn_led_current_increase_cnt == 0U)
     {
         gf_xd_max_current = 0.0f;
     }
     else
     {
-        gf_xd_max_current = (16U * gn_led_current_increase_cnt) - 1U;
+        gf_xd_max_current = ((16U * gn_led_current_increase_cnt) - 1U);
     }
 
     ++gn_led_current_increase_cnt;
@@ -203,15 +206,16 @@ void LED_Current_Increase(void)
 
 void LED_Duty_Select(float in_duty)
 {
-    if (in_duty < 0.0f)
+    float temp_duty = in_duty;
+    if (temp_duty < 0.0f)
     {
-        in_duty = 0.0f;
+        temp_duty = 0.0f;
     }
-    else if (in_duty > 100.0f)
+    else if (temp_duty > XDIC_PWM_DUTY_MAX)
     {
-        in_duty = 100.0f;
+        temp_duty = XDIC_PWM_DUTY_MAX;
     }
-    gf_xd_duty = in_duty;
+    gf_xd_duty = temp_duty;
 }
 
 void LED_System_Init(void)
@@ -240,7 +244,7 @@ void LED_System_Manual_Init(void)
     {
         gb_xd_led_enable_table[i] = true;
     }
-    gf_xd_max_current = 10.0f;
+    gf_xd_max_current = XDIC_PWM_CURRENT_DEFAULT;
 }
 
 void LED_System_Manual_DeInit(void)

@@ -15,10 +15,10 @@
 #define XC24_GENERAL_REG_ENTRY(addr, reg)   { addr, #addr, &gt_xc24_general_regs.reg }
 #define XC24_MIRROR_REG_ENTRY(addr, reg)    { addr, #addr, &gt_xc24_mirror_regs.reg }
 
-#define XC24_OSC_REG_DEFAULT        (64)
-#define XC_SPI_TIMEOUT_MS           (10)
-#define XC24_OTP_PROTECT_DISABLE    (0xA5A)
-#define XC24_OTP_PROTECT_ENABLE     (0x5A5)
+#define XC24_OSC_REG_DEFAULT        (64U)
+#define XC_SPI_TIMEOUT_MS           (10U)
+#define XC24_OTP_PROTECT_DISABLE    (0xA5AU)
+#define XC24_OTP_PROTECT_ENABLE     (0x5A5U)
 
 static SPI_TypeDef *g_hSPIx;
 volatile uint8_t gn_xc_spi_timeout;
@@ -160,7 +160,7 @@ static uint16_t gn_xc_local_rw_buffer[XC_CH_ENABLE_SIZE * XD_DAISY_SIZE]= { 0U }
 
 __STATIC_INLINE bool SPI_Timeout_Handler(void)
 {
-    if (gn_xc_spi_timeout == 0)
+    if (gn_xc_spi_timeout == 0U)
     {
         print(LOG_PC, "SPI Timeout Error\r\n");
         return false;
@@ -173,12 +173,12 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
 
-    if (LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
 
-    for (volatile uint16_t i = 0 ; i < len ; i++)
+    for (volatile uint16_t i = 0U ; i < len ; i++)
     {
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
         {
@@ -191,7 +191,7 @@ __STATIC_INLINE void SPI_Write(SPI_TypeDef *SPIx, uint16_t* p_buffer, uint16_t l
     {
         if (!SPI_Timeout_Handler()) return;
     };
-    us_delay(1);
+    us_delay(1U);
 
     XC_NSCS_HI();
 }
@@ -201,7 +201,7 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
     gn_xc_spi_timeout = XC_SPI_TIMEOUT_MS;
     XC_NSCS_LO();
 
-    if (LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
@@ -211,7 +211,7 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
         volatile uint16_t temp  = LL_SPI_ReceiveData16(SPIx);
     }
 
-    for (volatile uint16_t i = 0 ; i < len ; i++)
+    for (volatile uint16_t i = 0U ; i < len ; i++)
     {
         while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx))
         {
@@ -229,14 +229,14 @@ __STATIC_INLINE void SPI_Read(SPI_TypeDef *SPIx, uint16_t* p_tx_buffer, uint16_t
     {
         if (!SPI_Timeout_Handler()) return;
     }
-    us_delay(1);
+    us_delay(1U);
 
     XC_NSCS_HI();
 }
 
 static const _reg_map_t* XC24_Get_General_Map_Pointer(uint8_t addr)
 {
-    for (uint8_t i = 0; i < sizeof(gt_xc24_general_maps) / sizeof(gt_xc24_general_maps[0]); ++i)
+    for (uint8_t i = 0U ; i < sizeof(gt_xc24_general_maps) / sizeof(gt_xc24_general_maps[0]); ++i)
     {
         if (gt_xc24_general_maps[i].address == addr)
         {
@@ -248,7 +248,7 @@ static const _reg_map_t* XC24_Get_General_Map_Pointer(uint8_t addr)
 
 static const _reg_map_t* XC24_Get_Mirror_Map_Pointer(uint8_t addr)
 {
-    for (uint8_t i = 0; i < sizeof(gt_xc24_mirror_maps) / sizeof(gt_xc24_mirror_maps[0]); ++i)
+    for (uint8_t i = 0U ; i < sizeof(gt_xc24_mirror_maps) / sizeof(gt_xc24_mirror_maps[0]); ++i)
     {
         if (gt_xc24_mirror_maps[i].address == addr)
         {
@@ -269,14 +269,14 @@ static const _reg_map_t* XC24_Find_Register_Map(uint8_t addr)
     return map;
 }
 
-void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
+static void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
 {
-    _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[2] = {0,};
+    _xc24_cmd_t cmd_format = { 0 };
+    uint16_t tx_buffer[2] = { 0 };
 
     cmd_format.code = CMD_CODE_REG_WRITE;
     cmd_format.addr = in_addr;
-    cmd_format.size = 1;
+    cmd_format.size = 1U;
 
     tx_buffer[0] = cmd_format.ALL;
     tx_buffer[1] = in_data;
@@ -291,22 +291,22 @@ void XC24_Write_Register(uint16_t in_addr, uint16_t in_data)
         print(LOG_PC, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
     }
 
-    SPI_Write(g_hSPIx, tx_buffer, 2);
+    SPI_Write(g_hSPIx, tx_buffer, 2U);
 }
 
 uint16_t XC24_Read_Register(uint8_t in_addr)
 {
-    _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[2] = {0, };
-    uint16_t rx_buffer[2] = {0, };
+    _xc24_cmd_t cmd_format = { 0 };
+    uint16_t tx_buffer[2] = { 0 };
+    uint16_t rx_buffer[2] = { 0 };
 
     cmd_format.code = CMD_CODE_REG_READ;
     cmd_format.addr = in_addr;
-    cmd_format.size = 1;
+    cmd_format.size = 1U;
 
     tx_buffer[0] = cmd_format.ALL;
 
-    SPI_Read(g_hSPIx, tx_buffer, rx_buffer, 2);
+    SPI_Read(g_hSPIx, tx_buffer, rx_buffer, 2U);
 
     const _reg_map_t* xc24_map = XC24_Find_Register_Map(in_addr);
     if (xc24_map)
@@ -321,50 +321,40 @@ uint16_t XC24_Read_Register(uint8_t in_addr)
     return rx_buffer[1];
 }
 
-void XC24_Write_Local_Register(uint16_t in_addr, uint16_t in_data)
+static void XC24_Write_Local_Register(uint16_t in_addr, uint16_t in_data)
 {
-    _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[2] = {0,};
+    _xc24_cmd_t cmd_format = { 0 };
+    uint16_t tx_buffer[2] = { 0 };
 
     cmd_format.code = CMD_CODE_REG_WRITE;
     cmd_format.addr = in_addr;
-    cmd_format.size = 1;
+    cmd_format.size = 1U;
 
     tx_buffer[0] = cmd_format.ALL;
     tx_buffer[1] = in_data;
 
-    SPI_Write(g_hSPIx, tx_buffer, 2);
+    SPI_Write(g_hSPIx, tx_buffer, 2U);
     us_delay(10U);
 }
 
-uint16_t XC24_Read_Local_Register(uint8_t in_addr)
+static uint16_t XC24_Read_Local_Register(uint8_t in_addr)
 {
-    _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[2] = {0, };
-    uint16_t rx_buffer[2] = {0, };
+    _xc24_cmd_t cmd_format = { 0 };
+    uint16_t tx_buffer[2] = { 0 };
+    uint16_t rx_buffer[2] = { 0 };
 
     cmd_format.code = CMD_CODE_REG_READ;
     cmd_format.addr = in_addr;
-    cmd_format.size = 1;
+    cmd_format.size = 1U;
 
     tx_buffer[0] = cmd_format.ALL;
 
-    SPI_Read(g_hSPIx, tx_buffer, rx_buffer, 2);
+    SPI_Read(g_hSPIx, tx_buffer, rx_buffer, 2U);
     us_delay(10U);
     return rx_buffer[1];
 }
 
-void XC24_Read_Register_All(void)
-{
-    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
-    {
-        XC24_Read_Register(xc_addr);
-        us_delay(10);
-    }
-    XC24_Dump_All_Register();
-}
-
-void XC24_Dump_All_Register(void)
+static void XC24_Dump_All_Register(void)
 {
     for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
@@ -376,7 +366,17 @@ void XC24_Dump_All_Register(void)
     }
 }
 
-void XC24_Set_OTP_Protect(bool en)
+static void XC24_Read_Register_All(void)
+{
+    for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
+    {
+        XC24_Read_Register(xc_addr);
+        us_delay(10U);
+    }
+    XC24_Dump_All_Register();
+}
+
+static void XC24_Set_OTP_Protect(bool en)
 {
     if (en == true)
     {
@@ -389,15 +389,15 @@ void XC24_Set_OTP_Protect(bool en)
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_PROTECT, gt_xc24_mirror_regs._rF4.ALL);
 }
 
-void XC24_Test_Init_OSC(void)
+static void XC24_Test_Init_OSC(void)
 {
-	gt_xc24_mirror_regs._rF0.test_en = 1;
-    gt_xc24_mirror_regs._rF0.mclk32_o = 1;
-	gt_xc24_mirror_regs._rF0.mclk1_o = 0;
+	gt_xc24_mirror_regs._rF0.test_en = 1U;
+    gt_xc24_mirror_regs._rF0.mclk32_o = 1U;
+	gt_xc24_mirror_regs._rF0.mclk1_o = 0U;
 	XC24_Write_Register(XC24_MIRROR_ADDR_TEST_CONTROL, gt_xc24_mirror_regs._rF0.ALL);
 
-	gt_xc24_general_regs._r1B.spread_range_a = 4;
-	gt_xc24_general_regs._r1B.osc_spread_en = 0;
+	gt_xc24_general_regs._r1B.spread_range_a = 4U;
+	gt_xc24_general_regs._r1B.osc_spread_en = 0U;
 	XC24_Write_Register(XC24_ADDR_CLK_CONTROL_1, gt_xc24_general_regs._r1B.ALL);
 
 	gt_xc24_general_regs._r1C.osc_force_static = XC24_OSC_REG_DEFAULT;
@@ -438,14 +438,14 @@ void XC24_Update_Channel_Enable_By_XDIC_ID_Check(void)
                 gt_xc24_general_regs._r46.ch18_en = (p_xd_id_error_table[17] == true) ? 0U : 1U;
                 gt_xc24_general_regs._r46.ch19_en = (p_xd_id_error_table[18] == true) ? 0U : 1U;
                 gt_xc24_general_regs._r46.ch20_en = (p_xd_id_error_table[19] == true) ? 0U : 1U;
-                gt_xc24_general_regs._r46.ld_size = 20;
-                gt_xc24_general_regs._r46.ld_width = 3;
+                gt_xc24_general_regs._r46.ld_size = 20U;
+                gt_xc24_general_regs._r46.ld_width = 3U;
                 break;
             default :
                 continue;
             }
             XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
-            us_delay(10);
+            us_delay(10U);
         }
     }
 }
@@ -456,7 +456,7 @@ void XC24_Init(void)
 
     XC_VCC_ON();
 
-    LL_mDelay(100);
+    LL_mDelay(100U);
 
     XC_NSCS_HI();
 
@@ -471,48 +471,48 @@ void XC24_Init(void)
             switch (xc_addr)
             {
             case XC24_ADDR_SOFT_RESET:
-                gt_xc24_general_regs._r00.rst1 = 1;
-                gt_xc24_general_regs._r00.rst2 = 1;
-                gt_xc24_general_regs._r00.rst3 = 1;
+                gt_xc24_general_regs._r00.rst1 = 1U;
+                gt_xc24_general_regs._r00.rst2 = 1U;
+                gt_xc24_general_regs._r00.rst3 = 1U;
                 break;
             case XC24_ADDR_AUTO_ENABLE:
-                gt_xc24_general_regs._r08.timeout_en = 1;
-                gt_xc24_general_regs._r08.sync_auto_en = 1;
-                gt_xc24_general_regs._r08.fault_auto_en = 0;
+                gt_xc24_general_regs._r08.timeout_en = 1U;
+                gt_xc24_general_regs._r08.sync_auto_en = 1U;
+                gt_xc24_general_regs._r08.fault_auto_en = 0U;
                 break;
             case XC24_ADDR_LD_TRANSFER_START_POINTER_TH :
-                gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4;
-                gt_xc24_general_regs._r0D.ld_diff_threshold = 4;
+                gt_xc24_general_regs._r0D.ld_trans_start_pointer = 4U;
+                gt_xc24_general_regs._r0D.ld_diff_threshold = 4U;
                 break;
             case XC24_ADDR_LOCAL_RW_POINTER_RESET :
-                gt_xc24_general_regs._r11.local_rd_pointer_rst = 1;
-                gt_xc24_general_regs._r11.local_wr_pointer_rst = 1;
+                gt_xc24_general_regs._r11.local_rd_pointer_rst = 1U;
+                gt_xc24_general_regs._r11.local_wr_pointer_rst = 1U;
                 break;
             case XC24_ADDR_FAULT_AUTO_READ_TIMER :
-                gt_xc24_general_regs._r12.fault_auto_rd_timer = 0xFFFF;
+                gt_xc24_general_regs._r12.fault_auto_rd_timer = 0xFFFFU;
                 break;
             case XC24_ADDR_FAULT_AUTO_READ_EVENT :
-                gt_xc24_general_regs._r13.fault_auto_rd_interval = 1;
-                gt_xc24_general_regs._r13.fault_auto_rd_event = 1;
+                gt_xc24_general_regs._r13.fault_auto_rd_interval = 1U;
+                gt_xc24_general_regs._r13.fault_auto_rd_event = 1U;
                 break;
             case XC24_ADDR_SERIALIZER_CLOCK_GEN :
                 gt_xc24_general_regs._r14.sck_low = XC_SERIAL_CLK_CNT_LOW;
                 gt_xc24_general_regs._r14.sck_high = XC_SERIAL_CLK_CNT_HIGH;
                 break;
             case XC24_ADDR_INTERRUPT_ENABLE :
-                gt_xc24_general_regs._r15.int_fb_en = 1;
-                gt_xc24_general_regs._r15.int_open_en = 1;
-                gt_xc24_general_regs._r15.int_short_en = 1;
-                gt_xc24_general_regs._r15.int_thermal_en = 1;
+                gt_xc24_general_regs._r15.int_fb_en = 1U;
+                gt_xc24_general_regs._r15.int_open_en = 1U;
+                gt_xc24_general_regs._r15.int_short_en = 1U;
+                gt_xc24_general_regs._r15.int_thermal_en = 1U;
                 break;
             case XC24_ADDR_CLK_CONTROL_1:
-                gt_xc24_general_regs._r1B.serializer_clk_sel = 0;
-                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0;
-                gt_xc24_general_regs._r1B.osc_spread_en = 0;
+                gt_xc24_general_regs._r1B.serializer_clk_sel = 0U;
+                gt_xc24_general_regs._r1B.ld_b_rd_clk_sel = 0U;
+                gt_xc24_general_regs._r1B.osc_spread_en = 0U;
                 break;
             case XC24_ADDR_COMMAND_LATENCY:
-                gt_xc24_general_regs._r1F.serial_latency = 0x20;
-                gt_xc24_general_regs._r1F.cmd_latency = 0x40;
+                gt_xc24_general_regs._r1F.serial_latency = 0x20U;
+                gt_xc24_general_regs._r1F.cmd_latency = 0x40U;
                 break;
             case XC24_ADDR_DAISIED_DEVICE_CHANNEL_SIZE1 :
                 gt_xc24_general_regs._r20.daisied_dev_ch_size_1 = XD_CH_SIZE;
@@ -592,40 +592,40 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r41.block_size_ch20 = block_size;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE1 :
-                gt_xc24_general_regs._r45.ch1_en = 1;
-                gt_xc24_general_regs._r45.ch2_en = 1;
-                gt_xc24_general_regs._r45.ch3_en = 1;
-                gt_xc24_general_regs._r45.ch4_en = 1;
-                gt_xc24_general_regs._r45.ch5_en = 1;
-                gt_xc24_general_regs._r45.ch6_en = 1;
-                gt_xc24_general_regs._r45.ch7_en = 1;
-                gt_xc24_general_regs._r45.ch8_en = 1;
-                gt_xc24_general_regs._r45.ch9_en = 1;
-                gt_xc24_general_regs._r45.ch10_en = 1;
-                gt_xc24_general_regs._r45.ch11_en = 1;
-                gt_xc24_general_regs._r45.ch12_en = 1;
-                gt_xc24_general_regs._r45.ch13_en = 1;
-                gt_xc24_general_regs._r45.ch14_en = 1;
-                gt_xc24_general_regs._r45.ch15_en = 1;
-                gt_xc24_general_regs._r45.ch16_en = 1;
+                gt_xc24_general_regs._r45.ch1_en = 1U;
+                gt_xc24_general_regs._r45.ch2_en = 1U;
+                gt_xc24_general_regs._r45.ch3_en = 1U;
+                gt_xc24_general_regs._r45.ch4_en = 1U;
+                gt_xc24_general_regs._r45.ch5_en = 1U;
+                gt_xc24_general_regs._r45.ch6_en = 1U;
+                gt_xc24_general_regs._r45.ch7_en = 1U;
+                gt_xc24_general_regs._r45.ch8_en = 1U;
+                gt_xc24_general_regs._r45.ch9_en = 1U;
+                gt_xc24_general_regs._r45.ch10_en = 1U;
+                gt_xc24_general_regs._r45.ch11_en = 1U;
+                gt_xc24_general_regs._r45.ch12_en = 1U;
+                gt_xc24_general_regs._r45.ch13_en = 1U;
+                gt_xc24_general_regs._r45.ch14_en = 1U;
+                gt_xc24_general_regs._r45.ch15_en = 1U;
+                gt_xc24_general_regs._r45.ch16_en = 1U;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE2 :
-                gt_xc24_general_regs._r46.ch17_en = 1;
-                gt_xc24_general_regs._r46.ch18_en = 1;
-                gt_xc24_general_regs._r46.ch19_en = 1;
-                gt_xc24_general_regs._r46.ch20_en = 1;
-                gt_xc24_general_regs._r46.ld_size = 20;
-                gt_xc24_general_regs._r46.ld_width = 3;
+                gt_xc24_general_regs._r46.ch17_en = 1U;
+                gt_xc24_general_regs._r46.ch18_en = 1U;
+                gt_xc24_general_regs._r46.ch19_en = 1U;
+                gt_xc24_general_regs._r46.ch20_en = 1U;
+                gt_xc24_general_regs._r46.ld_size = 20U;
+                gt_xc24_general_regs._r46.ld_width = 3U;
                 break;
             default :
                 continue;
             }
             XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
-            us_delay(10);
+            us_delay(10U);
         }
     }
-    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30);
-    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+    XC24_Write_Register(XC24_ADDR_SOFT_RESET, 0x30U);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2U);
 
     print(LOG_PC, " ...XC24 Initial Done...\r\n");
     XC24_Read_Register_All();
@@ -643,12 +643,12 @@ void XC24_DeInit(void)
             switch (xc_addr)
             {
             case XC24_ADDR_SOFT_RESET:
-                gt_xc24_general_regs._r00.rst1 = 1;
-                gt_xc24_general_regs._r00.rst2 = 1;
-                gt_xc24_general_regs._r00.rst3 = 1;
+                gt_xc24_general_regs._r00.rst1 = 1U;
+                gt_xc24_general_regs._r00.rst2 = 1U;
+                gt_xc24_general_regs._r00.rst3 = 1U;
                 break;
             case XC24_ADDR_GLOBAL_WRITE_DATA :
-                gt_xc24_general_regs._r60.ALL = 0; // To reset SPI CLK, MOSI
+                gt_xc24_general_regs._r60.ALL = 0U; // To reset SPI CLK, MOSI
                 break;
             default :
                 continue;
@@ -668,7 +668,7 @@ void XC24_Test_Init(void)
 
     XC_VCC_ON();
 
-    LL_mDelay(20);
+    LL_mDelay(20U);
 
     XC_NSCS_HI();
 
@@ -680,16 +680,15 @@ void XC24_Test_Init(void)
             switch (xc_addr)
             {
             case XC24_ADDR_SOFT_RESET:
-                gt_xc24_general_regs._r00.rst1 = 1;
-                gt_xc24_general_regs._r00.rst2 = 1;
-                gt_xc24_general_regs._r00.rst3 = 1;
-                break;
+                gt_xc24_general_regs._r00.rst1 = 1U;
+                gt_xc24_general_regs._r00.rst2 = 1U;
+                gt_xc24_general_regs._r00.rst3 = 1U;
                 break;
             default :
                 continue;
             }
             XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
-            us_delay(10);
+            us_delay(10U);
         }
     }
 
@@ -701,17 +700,17 @@ void XC24_Test_Init(void)
             switch (xc_addr)
             {
             case XC24_MIRROR_ADDR_TEST_CONTROL:
-                gt_xc24_mirror_regs._rF0.test_en = 1;
+                gt_xc24_mirror_regs._rF0.test_en = 1U;
                 break;
             default :
                 continue;
             }
             XC24_Write_Register(map->address, *((uint16_t*)(map->reg_ptr)));
-            us_delay(10);
+            us_delay(10U);
         }
     }
     XC24_Set_OTP_Protect(false);
-    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2);
+    XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2U);
     XC24_Test_Init_OSC();
     XC24_Read_Register_All();
     print(LOG_PC, " ...XC24 Test Initial Done...\r\n");
@@ -721,24 +720,24 @@ void XC24_Test_Init(void)
 
 void XC24_IF_IdGen_Command(void)
 {
-    gt_xc24_general_regs._r04.ALL = 0;
-    gt_xc24_general_regs._r04.start = 1;
+    gt_xc24_general_regs._r04.ALL = 0U;
+    gt_xc24_general_regs._r04.start = 1U;
     XC24_Write_Register(XC24_ADDR_ID_GEN, gt_xc24_general_regs._r04.ALL);
     us_delay(XDIC_IDGEN_DELAY);
 }
 
 void XC24_IF_SyncGen_Command(void)
 {
-    gt_xc24_general_regs._r07.ALL = 0;
-    gt_xc24_general_regs._r07.start = 1;
+    gt_xc24_general_regs._r07.ALL = 0U;
+    gt_xc24_general_regs._r07.start = 1U;
     XC24_Write_Register(XC24_ADDR_SYNC_GEN, gt_xc24_general_regs._r07.ALL);
     us_delay(XDIC_SYNCGEN_DELAY);
 }
 
 uint16_t XC24_IF_Fault_Read_Command(void)
 {
-    gt_xc24_general_regs._r05.ALL = 0;
-    gt_xc24_general_regs._r05.start = 1;
+    gt_xc24_general_regs._r05.ALL = 0U;
+    gt_xc24_general_regs._r05.start = 1U;
     XC24_Write_Register(XC24_ADDR_FAULT_READ, gt_xc24_general_regs._r05.ALL);
     us_delay(XDIC_FAULT_READ_DELAY + XDIC_FAULT_RECV_DELAY);
 
@@ -749,20 +748,20 @@ uint16_t XC24_IF_Fault_Read_Command(void)
 
 void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
 {
-    gt_xc24_general_regs._r01.ALL = 0;
-    gt_xc24_general_regs._r01.start = 1;
+    gt_xc24_general_regs._r01.ALL = 0U;
+    gt_xc24_general_regs._r01.start = 1U;
     gt_xc24_general_regs._r01.addr = in_XDIC_addr;
 
     XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE_DATA, in_XDIC_data);
-    us_delay(1);
+    us_delay(1U);
 
     XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE, gt_xc24_general_regs._r01.ALL);
-    us_delay(XDIC_WRITE_DELAY + 20);
+    us_delay(XDIC_WRITE_DELAY + 20U);
 }
 
 uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 {
-    for (uint8_t seg = 0 ; seg < 3 ; ++seg)
+    for (uint8_t seg = 0U ; seg < 3U ; ++seg)
     {
         XC24_Write_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1, 0U);
         XC24_Write_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2, 0U);
@@ -784,14 +783,14 @@ uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
         
         LL_mDelay(1U);
 
-        gt_xc24_general_regs._r11.ALL = 0;
-        gt_xc24_general_regs._r11.local_wr_pointer_rst = 1;
-        gt_xc24_general_regs._r11.local_rd_pointer_rst = 1;
+        gt_xc24_general_regs._r11.ALL = 0U;
+        gt_xc24_general_regs._r11.local_wr_pointer_rst = 1U;
+        gt_xc24_general_regs._r11.local_rd_pointer_rst = 1U;
         XC24_Write_Register(XC24_ADDR_LOCAL_RW_POINTER_RESET, gt_xc24_general_regs._r11.ALL);
         us_delay(10U);
 
-        gt_xc24_general_regs._r03.ALL = 0;
-        gt_xc24_general_regs._r03.start = 1;
+        gt_xc24_general_regs._r03.ALL = 0U;
+        gt_xc24_general_regs._r03.start = 1U;
         gt_xc24_general_regs._r03.ch_seg = seg;
         gt_xc24_general_regs._r03.addr = in_XDIC_addr;
         XC24_Write_Register(XC24_ADDR_LOCAL_READ, gt_xc24_general_regs._r03.ALL);
@@ -799,31 +798,31 @@ uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 
         LL_mDelay(2U);
 
-        gn_xc_local_rw_buffer[seg * 16 + 0] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
-        gn_xc_local_rw_buffer[seg * 16 + 1] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16U + 0] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16U + 1] = XC24_Read_Local_Register(XC24_ADDR_PORT1_LOCAL_RW_DATA2);
 
-        gn_xc_local_rw_buffer[seg * 16 + 2] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA1);
-        gn_xc_local_rw_buffer[seg * 16 + 3] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16U + 2] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16U + 3] = XC24_Read_Local_Register(XC24_ADDR_PORT2_LOCAL_RW_DATA2);
 
-        gn_xc_local_rw_buffer[seg * 16 + 4] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA1);
-        gn_xc_local_rw_buffer[seg * 16 + 5] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16U + 4] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16U + 5] = XC24_Read_Local_Register(XC24_ADDR_PORT3_LOCAL_RW_DATA2);
 
-        gn_xc_local_rw_buffer[seg * 16 + 6] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA1);
-        gn_xc_local_rw_buffer[seg * 16 + 7] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA2);
+        gn_xc_local_rw_buffer[seg * 16U + 6] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA1);
+        gn_xc_local_rw_buffer[seg * 16U + 7] = XC24_Read_Local_Register(XC24_ADDR_PORT4_LOCAL_RW_DATA2);
 
-        if (seg < 2)
+        if (seg < 2U)
         {
-            gn_xc_local_rw_buffer[seg * 16 +  8] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA1);
-            gn_xc_local_rw_buffer[seg * 16 +  9] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16U +  8] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16U +  9] = XC24_Read_Local_Register(XC24_ADDR_PORT5_LOCAL_RW_DATA2);
 
-            gn_xc_local_rw_buffer[seg * 16 + 10] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA1);
-            gn_xc_local_rw_buffer[seg * 16 + 11] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16U + 10] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16U + 11] = XC24_Read_Local_Register(XC24_ADDR_PORT6_LOCAL_RW_DATA2);
 
-            gn_xc_local_rw_buffer[seg * 16 + 12] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA1);
-            gn_xc_local_rw_buffer[seg * 16 + 13] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16U + 12] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16U + 13] = XC24_Read_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2);
 
-            gn_xc_local_rw_buffer[seg * 16 + 14] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1);
-            gn_xc_local_rw_buffer[seg * 16 + 15] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2);
+            gn_xc_local_rw_buffer[seg * 16U + 14] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1);
+            gn_xc_local_rw_buffer[seg * 16U + 15] = XC24_Read_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2);
         }
         LL_mDelay(5U);
     }
@@ -833,25 +832,25 @@ uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
 
 void XC24_IF_Write_LD(uint16_t ld_duty)
 {
-    _xc24_cmd_t cmd_format = {0, };
-    uint16_t tx_buffer[1 + TOTAL_BLOCK_SIZE] = {0,};
+    _xc24_cmd_t cmd_format = { 0 };
+    uint16_t tx_buffer[1 + TOTAL_BLOCK_SIZE] = { 0 };
 
     cmd_format.code = CMD_CODE_LD_TRANS;
-    cmd_format.addr = 0;
+    cmd_format.addr = 0U;
     cmd_format.size = XD_DAISY_SIZE * XD_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
 
-    if (gf_xd_max_current == 0)
+    if (gf_xd_max_current == 0U)
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             tx_buffer[i + 1] = 0;
         }
     }
     else
     {
-        for (uint8_t i = 0 ; i < TOTAL_BLOCK_SIZE ; ++i)
+        for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
             if (gb_xd_led_enable_table[i])
             {
@@ -859,28 +858,28 @@ void XC24_IF_Write_LD(uint16_t ld_duty)
             }
             else
             {
-                tx_buffer[i + 1] = 0;
+                tx_buffer[i + 1] = 0U;
             }
         }
     }
 
-    SPI_Write(g_hSPIx, tx_buffer, 1 + TOTAL_BLOCK_SIZE);
+    SPI_Write(g_hSPIx, tx_buffer, 1U + TOTAL_BLOCK_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 
 void XC24_Turn_Off_Sync_Auto(void)
 {
-    gt_xc24_general_regs._r08.timeout_en = 1;
-    gt_xc24_general_regs._r08.sync_auto_en = 0;
-    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    gt_xc24_general_regs._r08.timeout_en = 1U;
+    gt_xc24_general_regs._r08.sync_auto_en = 0U;
+    gt_xc24_general_regs._r08.fault_auto_en = 0U;
     XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
 void XC24_Turn_On_Sync_Auto(void)
 {
-    gt_xc24_general_regs._r08.timeout_en = 1;
-    gt_xc24_general_regs._r08.sync_auto_en = 1;
-    gt_xc24_general_regs._r08.fault_auto_en = 0;
+    gt_xc24_general_regs._r08.timeout_en = 1U;
+    gt_xc24_general_regs._r08.sync_auto_en = 1U;
+    gt_xc24_general_regs._r08.fault_auto_en = 0U;
     XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
 }
 
