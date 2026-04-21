@@ -640,6 +640,7 @@ static void sal_manchester_encoding(uint64_t data, uint8_t* p, uint8_t size)
 
 void sal_init(void)
 {
+    _sal_single_ended_info_t _sal_info_ = {0, };
     uint8_t mosi_temp = 0xFF;
 
     //decode_mode_set((decode_mode_t)DECODE_TEST_V_TRIM);
@@ -657,14 +658,17 @@ void sal_init(void)
     LL_SPI_SetMode(SPI1, LL_SPI_MODE_MASTER);
     spi_write(&mosi_temp, 1);
 
-    sal_reset();
+    sal_make_mcu_crc(true);
     us_delay(300);
+
+    sal_reset();
+    LL_mDelay(10-1);
 
     sal_clear_error();
-    us_delay(300);
+    LL_mDelay(10-1);
 
     sal_initiates();
-    us_delay(300);
+    LL_mDelay(10-1);
 
     sal_change_power_mode(1);
     us_delay(300);
@@ -676,6 +680,12 @@ void sal_init(void)
     {
         *(p_buffer + idx) = ((255 << 16) | (255 << 8) | (255 << 0));
     }
+
+    _sal_info_.dev_id = BROADCAST;
+    _sal_info_.command = CMD_SAL_SET_RGB;
+    _sal_info_.data_size = 24;
+    _sal_info_.data = ((255UL << 16) | (255UL << 8) | 255UL);
+    sal_write_reg_single_ended(&_sal_info_);
 
     gb_demo_start_flag = true;
 }
@@ -1636,7 +1646,7 @@ void sal_demo_process(void)
         if (tick >= 100)
         {
             tick = 0;
-            sal_temperature_compensation();
+            //sal_temperature_compensation();
         }
     }
 
