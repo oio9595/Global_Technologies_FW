@@ -123,9 +123,8 @@ static fb_level_t gt_xd_fb_level;
 
 float gf_xd_max_current;
 float gf_xd_duty;
-bool gb_led_low_current_mode;
 
-static uint8_t gn_xd_daisy_chain_size = XD_DAISY_SIZE;
+static uint8_t gn_xd_daisy_chain_size = 2U;
 
 static bool gb_xd_id_error_channel[XC_CH_ENABLE_SIZE] = {true}; // if true, mismatch
 
@@ -268,7 +267,7 @@ void XDIC_Set_Daisy_Chain_Size(uint8_t daisy_chain_size)
 bool* XDIC_Get_ID_Error_Channel_Table(void)
 {
     return gb_xd_id_error_channel;
-} 
+}
 
 static void XDIC_ID_Check(void)
 {
@@ -423,17 +422,139 @@ void XDIC_DeInit(void)
 
     gf_xd_max_current = 0.0f;
     gf_xd_duty = 0.0f;
-    gb_led_low_current_mode = false;
 }
 
-void LED_Low_Current_Mode(uint8_t on_off)
+static void XDIC_Trim_Param_Init(void)
 {
-    if (on_off)
+    gt_xd_dev_max_curr_level = DEV_MAX_CURR_LEVEL_128mA;
+    gt_xd_short_level = SHORT_LEVEL_70V;
+    gt_xd_fb_level = FB_LEVEL_0V4;
+}
+
+static void XDIC_Trim_Init(void)
+{
+    XDIC_VCC_ON();
+    LL_mDelay(100U);
+
+    XDIC_Trim_Param_Init();
+
+    XDIC_Write_General_Reg(XDIC_ADDR_RESET_ID, XDIC_RESET_VALUE);
+    XC24_IF_IdGen_Command();
+
+    for (xdic_addr_t xdic_addr = XDIC_ADDR_RESET_ID ; xdic_addr < XDIC_ADDR_MAX ; ++xdic_addr)
     {
-        gb_led_low_current_mode = true;
+        const _reg_map_t* map = XDIC_Get_General_Map_Pointer(xdic_addr);
+        if (map)
+        {
+            switch (xdic_addr)
+            {
+            case XDIC_ADDR_CHANNEL_ENABLE :
+                gt_xdic_general_regs._r03.val = 0U;
+                break;
+            case XDIC_ADDR_FAULT_LEVEL :
+                gt_xdic_general_regs._r06.fb_level = gt_xd_fb_level;
+                gt_xdic_general_regs._r06.short_level = gt_xd_short_level;
+                gt_xdic_general_regs._r06.dev_max_curr_level = gt_xd_dev_max_curr_level;
+                break;
+            case XDIC_ADDR_FAULT_CONTROL :
+                gt_xdic_general_regs._r07.timeout_en = 1U;
+                break;
+            case XDIC_ADDR_MAX_CURRENT_VREF :
+                gt_xdic_general_regs._r08.max_curr_vref = 0U;
+                break;
+            case XDIC_ADDR_SERIAL_BAUDRATE :
+                gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
+                gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
+                break;
+            case XDIC_ADDR_SERIAL_LATENCY :
+                gt_xdic_general_regs._r26.serial_latency = 60U;
+                break;
+            case XDIC_ADDR_OTP_OP_MODE :
+                gt_xdic_general_regs._r3F.test_en = 1U;
+                break;
+            default :
+                continue;
+            }
+            XDIC_Write_General_Reg(xdic_addr, *((uint16_t*)(map->reg_ptr)));
+        }
+        else
+        {
+            print(LOG_PC, "ERROR: Register 0x%02X not initialized (map missing)\r\n", xdic_addr);
+        }
+    }
+    XDIC_Read_All_Registers();
+}
+
+static void XDIC_Trim_Enable_Output_Current(bool en)
+{
+    if (en)
+    {
+        gt_xdic_general_regs._r3F.pwm_full_o = 1U;
+        XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, *((uint16_t*)(&gt_xdic_general_regs._r3F)));
     }
     else
     {
-        gb_led_low_current_mode = false;
+        gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+        XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, *((uint16_t*)(&gt_xdic_general_regs._r3F)));
+    }
+}
+
+static void XDIC_Trim_Select_Output_Channel(uint8_t ch)
+{
+    uint16_t channel_enable = 0U;
+    if (ch == XD_CH_MAX)
+    {
+        channel_enable = XDIC_CHANNEL_ENABLE_MAX;
+    }
+    else
+    {
+        channel_enable = (1U << ch);
+    }
+
+    XDIC_Trim_Enable_Output_Current(false);
+    XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF, 0x100U);
+    XDIC_Write_General_Reg(XDIC_ADDR_CHANNEL_ENABLE, channel_enable);
+    XDIC_Trim_Enable_Output_Current(true);
+}
+
+void XDIC_Test_CH_Dependency(void)
+{
+    XC24_Init();
+    XDIC_Trim_Init();
+
+    for (uint8_t daisy = 0U ; daisy < 2U ; ++daisy)
+    {
+        for (XD_CH_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+        {
+            XDIC_Trim_Select_Output_Channel(xd_ch);
+            LL_mDelay(1500U-1U);
+
+            XDIC_Trim_Select_Output_Channel(XD_CH_MAX);
+            LL_mDelay(1500U-1U);
+        }
+    }
+
+    XDIC_DeInit();
+    XC24_DeInit();
+}
+
+void XDIC_Test_Set_Scan_No(uint8_t scan_no)
+{
+    if (scan_no == 0U)
+    {
+        gt_xdic_general_regs._r01.scan_no = 0U;
+    }
+    else
+    {
+        gt_xdic_general_regs._r01.scan_no = 3U;
+    }
+    XDIC_Write_General_Reg(XDIC_ADDR_LD_CONTROL, *((uint16_t*)(&gt_xdic_general_regs._r01)));
+}
+
+void XDIC_Test_Set_Line_Delay(uint16_t line_delay)
+{
+    for (uint8_t ch = 0U ; ch < XD_CH_SIZE ; ++ch)
+    {
+        XDIC_Write_General_Reg(XDIC_ADDR_DELAY_CH_01 + ch, line_delay);
     }
 }

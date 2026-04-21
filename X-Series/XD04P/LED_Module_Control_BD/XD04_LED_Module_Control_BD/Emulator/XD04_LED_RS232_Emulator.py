@@ -6,7 +6,7 @@ import pyautogui
 import pygetwindow as gw
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout, QSpinBox,
-    QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox, QMessageBox, QInputDialog
+    QLabel, QLineEdit, QRadioButton, QShortcut, QFrame, QComboBox, QMessageBox, QInputDialog, QSizePolicy
 )
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
@@ -14,8 +14,11 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 import serial
 import serial.tools.list_ports
 
-VERSION_INFO = "GUI Version 1.0"
+VERSION_INFO = "GUI Version 2.0"
 WINDOW_TITLE = "XD04 LED Control B'D RS232 Emulator"
+
+PACKET_VALID = 0xA5
+PACKET_INVALID = 0x5A
 
 CMD_INITIAL = 0x00
 CMD_QUIT = 0xFF
@@ -33,14 +36,18 @@ commands = {
     "0x00 (Initial)": 0x00,
     "0xFF (Quit)": 0xFF,
     "0xF0 (Status)": 0xF0,
-    "0x01 (Current)": 0x01,
     "0x10 (Bar On Select)": 0x10,
     "0x20 (Bar Off Select)": 0x20,
     "0x40 (Block On Select)": 0x40,
     "0x80 (Block Off Select)": 0x80,
+    "0x01 (Current)": 0x01,
     "0x02 (Low Current Mode)": 0x02,
     "0x04 (Duty)": 0x04,
     "0x08 (Model Select)": 0x08,
+    "0xA0 (Test CH Dependency)": 0xA0,
+    "0xA1 (Test SCAN_No.)": 0xA1,
+    "0xA2 (Test Line Delay)": 0xA2,
+    "0xA3 (Test)": 0xA3,
 }
 
 class MacroApp(QWidget):
@@ -103,14 +110,29 @@ class MacroApp(QWidget):
             else:
                 self.log("⚠️ 사용자가 COM 포트를 선택하지 않았습니다.")
 
+    def deinit_serial(self):
+        self.thread_running = False
+
+        if self.read_thread and self.read_thread.is_alive():
+            self.read_thread.join()
+
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+
+        self.ser = None
+        self.log("UART 포트 닫기 성공!")
+
     def init_ui(self):
         layout = QVBoxLayout()
 
         self.gui_version = QLabel(VERSION_INFO)
         self.ser_con_btn = QPushButton("Connect COM Port")
         self.ser_con_btn.clicked.connect(self.init_serial)
+        self.ser_dis_con_btn = QPushButton("Disconnect COM Port")
+        self.ser_dis_con_btn.clicked.connect(self.deinit_serial)
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.gui_version)
+        info_layout.addWidget(self.ser_dis_con_btn)
         info_layout.addWidget(self.ser_con_btn)
 
         # Packet 설정
@@ -131,7 +153,7 @@ class MacroApp(QWidget):
         command_ver_layout = QVBoxLayout()
         command_ver_layout.addWidget(QLabel("COMMAND"))
         self.command_cb = QComboBox()
-        self.command_cb.addItems(commands.keys())        
+        self.command_cb.addItems(commands.keys())
         self.command_cb.setMaxVisibleItems(15)
         self.commands = commands
         command_ver_layout.addWidget(self.command_cb)
@@ -156,7 +178,8 @@ class MacroApp(QWidget):
 
         self.sop_cb.setFixedWidth(80)
         self.length_label.setFixedWidth(80)
-        self.command_cb.setFixedWidth(200)
+        self.command_cb.setFixedWidth(300)
+        self.command_cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.data_spin.setFixedWidth(120)
         self.checksum_label.setFixedWidth(80)
         self.eop_cb.setFixedWidth(80)
@@ -172,12 +195,9 @@ class MacroApp(QWidget):
         self.normal_button.clicked.connect(self.send_normal)
         self.sequence_test = QPushButton("Sequence Test")
         self.sequence_test.clicked.connect(self.send_sequence_test)
-        self.half_packet = QPushButton("Abnormal - Half Packet")
-        self.half_packet.clicked.connect(self.send_half_packet)
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.normal_button)
         btn_layout.addWidget(self.sequence_test)
-        btn_layout.addWidget(self.half_packet)
 
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
@@ -372,25 +392,7 @@ class MacroApp(QWidget):
                 QApplication.processEvents()
                 time.sleep(INTERVAL_DELAY)
 
-
                 self.log("Repeat Done!!!")
-            except ValueError:
-                self.log("⚠️ Invalid Value.")
-                return
-        else :
-            self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
-
-    def send_half_packet(self):
-        if self.thread_running :
-            try:
-                sop_val = int(self.sop_cb.currentText(), 16)
-                length_val = int(self.length_label.text().strip())
-                # command_val = int(self.command_cb.currentText(), 16)
-                command_text = self.command_cb.currentText()
-                command_val = self.commands[command_text]
-                packet = bytes([sop_val, length_val, command_val])
-                self.ser.write(packet)
-                self.log(f"📤 Tx Half Packet \t{[f'{b:02X}' for b in packet]}")
             except ValueError:
                 self.log("⚠️ Invalid Value.")
                 return
@@ -408,15 +410,18 @@ class MacroApp(QWidget):
                         if len(data) == 6:
                             calc_checksum = sum(data[:4]) & 0xFF
                             recv_checksum = data[4]
+                            packet_status = data[3]
                             if calc_checksum == recv_checksum:
-                                result = f"✅\r\n"
+                                if packet_status == PACKET_VALID:
+                                    result = f"✅\r\n"
+                                else:
+                                    result = f"⚠️ (Packet Invalid)\r\n"
                             else:
                                 result = f"❌ Rx Checksum Error (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
                             text_str = data.decode(errors="ignore")
                             self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | {result}")
                         else:
                             self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | (Length Error)")
-
                 time.sleep(0.05)  # CPU 점유율 방지
             except Exception as e:
                 # self.log(f"⚠️ 수신 오류: {e}")

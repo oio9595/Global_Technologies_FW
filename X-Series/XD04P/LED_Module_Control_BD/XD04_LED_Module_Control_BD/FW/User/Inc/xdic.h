@@ -532,7 +532,6 @@ typedef union tag_XDIC_GENERAL_REG_T
 
 extern float gf_xd_max_current;
 extern float gf_xd_duty;
-extern bool gb_led_low_current_mode;
 
 extern void XDIC_Write_General_Reg(uint8_t addr, uint16_t data);
 extern uint16_t* XDIC_Read_General_Reg(uint8_t addr);
@@ -546,7 +545,10 @@ extern bool* XDIC_Get_ID_Error_Channel_Table(void);
 extern void XDIC_Param_Init(void);
 extern void XDIC_Init(void);
 extern void XDIC_DeInit(void);
-extern void LED_Low_Current_Mode(uint8_t on_off);
+
+extern void XDIC_Test_CH_Dependency(void);
+extern void XDIC_Test_Set_Scan_No(uint8_t scan_no);
+extern void XDIC_Test_Set_Line_Delay(uint16_t line_delay);
 
 #ifdef __cplusplus
 }

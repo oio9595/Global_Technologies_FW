@@ -1,4 +1,4 @@
-/** @file vsync_task.c
+    /** @file vsync_task.c
  *
  * @brief
  *
@@ -8,6 +8,7 @@
  #define __VSYNC_TASK_C__
 
 #include "main.h"
+#include "vsync_task.h"
 #include "xdic.h"
 #include "xc24.h"
 #include "config.h"
@@ -16,15 +17,28 @@
 #define XDIC_LD_LOW_CURR_MODE       (5U)
 
 #define XDIC_PWM_DUTY_MAX           (100.0f)
-#define XDIC_PWM_CURRENT_MAX        (128.0f)
-#define XDIC_PWM_CURRENT_DEFAULT    (10.0f)
+#define XDIC_CURRENT_MAX            (128.0f)
+#define XDIC_CURRENT_DEFAULT        (10.0f)
+#define XDIC_LD_SCAN_TEST_AT_0      (256)
 
-static bool gb_xdic_vsync_flag;
-volatile static bool gb_system_active;
+#define LINE_DELAY_TABLE_SIZE       (13)
 
-bool gb_xd_led_enable_table[TOTAL_BLOCK_SIZE] = {false};
+#define SEC_TO_VSYNC_CNT(sec)       ((uint16_t)(120.0f * ((float)(sec))))
+
+static bool gb_led_vsync_flag;
+
+bool gb_led_enable_table[TOTAL_BLOCK_SIZE] = {false};
 
 static uint8_t gn_led_current_increase_cnt;
+
+static bool gb_led_low_current_mode;
+static bool gb_led_test_mode_scan_no;
+static bool gb_led_test_mode_line_delay;
+const uint16_t gn_line_delay_table[LINE_DELAY_TABLE_SIZE] =
+{
+    0U, 1U, 2U, 4U, 8U, 16U, 32U, 64U, 128U, 256U, 512U, 1024U, 2048U
+};
+
 
 void Vsync_Timer_Start(void)
 {
@@ -34,12 +48,10 @@ void Vsync_Timer_Start(void)
 
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gb_xd_led_enable_table[i] = false;
+        gb_led_enable_table[i] = false;
     }
     gf_xd_max_current = 0.0f;
     gn_led_current_increase_cnt = 0U;
-
-    gb_system_active = true;
 }
 
 void Vsync_Timer_Stop(void)
@@ -51,23 +63,21 @@ void Vsync_Timer_Stop(void)
 
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gb_xd_led_enable_table[i] = false;
+        gb_led_enable_table[i] = false;
     }
     gf_xd_max_current = 0.0f;
     gn_led_current_increase_cnt = 0U;
-
-    gb_system_active = false;
 }
 
 void Vsync_Update_Handler(void)
 {
     LL_TIM_ClearFlag_UPDATE(TIM8);
-    gb_xdic_vsync_flag = true;
+    gb_led_vsync_flag = true;
 }
 
-void XDIC_Vsync_Task(void)
+void Vsync_Task(void)
 {
-    if (gb_xdic_vsync_flag)
+    if (gb_led_vsync_flag)
     {
         us_delay(10U);
         XC24_Turn_Off_Sync_Auto();
@@ -76,31 +86,130 @@ void XDIC_Vsync_Task(void)
         XC24_Turn_On_Sync_Auto();
 
         us_delay(3500U);
-        if (gb_led_low_current_mode)
+
+        if (gb_led_test_mode_scan_no == true)
         {
-            XC24_IF_Write_LD(XDIC_LD_LOW_CURR_MODE);
+            static uint16_t vsync_cnt = 0;
+            static uint8_t scan_no_test_phase = 0U;
+            static uint16_t ld_scan_test_val = 0U;
+            static uint8_t check_channel = 0U;
+            ++vsync_cnt;
+            switch (scan_no_test_phase)
+            {
+                case 0U : // go to x8
+                    if (vsync_cnt >= SEC_TO_VSYNC_CNT(0.1f))
+                    {
+                        XDIC_Test_Set_Scan_No(3U);
+                        ld_scan_test_val = (XDIC_LD_SCAN_TEST_AT_0 >> 3U);
+                        gf_xd_max_current = XDIC_CURRENT_DEFAULT;
+                        scan_no_test_phase = 1U;
+                        vsync_cnt = 0U;
+                    }
+                    break;
+                case 1U : // off
+                    if (vsync_cnt >= SEC_TO_VSYNC_CNT(1.0f))
+                    {
+                        ld_scan_test_val = 0U;
+                        gf_xd_max_current = 0U;
+                        scan_no_test_phase = 2U;
+                        vsync_cnt = 0U;
+                    }
+                    break;
+                case 2U : // go to x1
+                    if (vsync_cnt >= SEC_TO_VSYNC_CNT(0.1f))
+                    {
+                        XDIC_Test_Set_Scan_No(0U);
+                        ld_scan_test_val = (XDIC_LD_SCAN_TEST_AT_0 >> 0U);
+                        gf_xd_max_current = XDIC_CURRENT_DEFAULT;
+                        scan_no_test_phase = 3U;
+                        vsync_cnt = 0U;
+                    }
+                    break;
+                case 3U : // off
+                    if (vsync_cnt >= SEC_TO_VSYNC_CNT(1.0f))
+                    {
+                        ld_scan_test_val = 0U;
+                        gf_xd_max_current = 0U;
+                        scan_no_test_phase = 0U;
+                        vsync_cnt = 0U;
+                        ++check_channel;
+                        if (check_channel >= 8U)
+                        {
+                            vsync_cnt = 0;
+                            scan_no_test_phase = 0U;
+                            ld_scan_test_val = 0U;
+                            check_channel = 0U;
+                            LED_System_DeInit();
+                        }
+                    }
+                    break;
+            }
+            XC24_IF_Write_LD(ld_scan_test_val);
+            XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
         }
         else
         {
-            uint16_t ld_val = (uint16_t)((gf_xd_duty / 100.0f * XDIC_LD_MAX) + 0.5f);
-            XC24_IF_Write_LD(ld_val);
+            if (gb_led_test_mode_line_delay)
+            {
+                static uint16_t vsync_cnt = 0;
+                static uint16_t line_delay_table_idx = 0;
+                ++vsync_cnt;
+                if (vsync_cnt > SEC_TO_VSYNC_CNT(0.5f))
+                {
+                    XDIC_Test_Set_Line_Delay(gn_line_delay_table[line_delay_table_idx]);
+                    ++line_delay_table_idx;
+                    if (line_delay_table_idx >= LINE_DELAY_TABLE_SIZE)
+                    {
+                        line_delay_table_idx = 0U;
+                        LED_System_DeInit();
+                    }
+                    vsync_cnt = 0U;
+                }
+            }
+            if (gb_led_low_current_mode)
+            {
+                XC24_IF_Write_LD(XDIC_LD_LOW_CURR_MODE);
+            }
+            else
+            {
+                uint16_t ld_val = (uint16_t)((gf_xd_duty / 100.0f * XDIC_LD_MAX) + 0.5f);
+                XC24_IF_Write_LD(ld_val);
+            }
+            XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
         }
-        XDIC_Update_Max_Current_Vref(gf_xd_max_current, gb_led_low_current_mode);
+        gb_led_vsync_flag = false;
+    }
+}
 
-        #if 0
-            uint16_t fault_data[6] = { 0 };
-            fault_data[0] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA1);
-            fault_data[1] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA2);
-            fault_data[2] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA3);
-            fault_data[3] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA4);
-            fault_data[4] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA5);
-            fault_data[5] = XC24_Read_Register(XC24_ADDR_GLOBAL_FAULT_READ_DATA6);
+void LED_Low_Current_Mode(uint8_t on_off)
+{
+    if (on_off)
+    {
+        gb_led_low_current_mode = true;
+    }
+    else
+    {
+        gb_led_low_current_mode = false;
+    }
+}
 
-            print(LOG_PC, "FAULT: {[0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X]}\r\n",
-                fault_data[0], fault_data[1], fault_data[2], fault_data[3], fault_data[4], fault_data[5]);
-        #endif
+void LED_Enable_Scan_No_Test(bool en)
+{
+    gb_led_test_mode_scan_no = en;
+    gf_xd_max_current = XDIC_CURRENT_DEFAULT;
+}
 
-        gb_xdic_vsync_flag = false;
+void LED_Enable_Line_Delay_Test(bool en)
+{
+    gb_led_test_mode_line_delay = en;
+    gf_xd_max_current = XDIC_CURRENT_DEFAULT;
+    if (en == true)
+    {
+        gf_xd_duty = 25.0f;
+    }
+    else
+    {
+        gf_xd_duty = 100.0f;
     }
 }
 
@@ -110,7 +219,7 @@ void LED_BAR_On_Select(uint8_t in_bar_num)
     {
         for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
-            gb_xd_led_enable_table[i] = true;
+            gb_led_enable_table[i] = true;
         }
     }
     else if (in_bar_num <= 20U)
@@ -118,7 +227,7 @@ void LED_BAR_On_Select(uint8_t in_bar_num)
         uint8_t start_blk = (in_bar_num - 1U);
         for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + (20 * blk)] = true;
+            gb_led_enable_table[start_blk + (20 * blk)] = true;
         }
     }
 }
@@ -129,7 +238,7 @@ void LED_BAR_Off_Select(uint8_t in_bar_num)
     {
         for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
-            gb_xd_led_enable_table[i] = false;
+            gb_led_enable_table[i] = false;
         }
     }
     else if (in_bar_num <= 20U)
@@ -137,7 +246,7 @@ void LED_BAR_Off_Select(uint8_t in_bar_num)
         uint8_t start_blk = (in_bar_num - 1U);
         for (uint8_t blk = 0U ; blk < 8U ; ++blk)
         {
-            gb_xd_led_enable_table[start_blk + (20 * blk)] = false;
+            gb_led_enable_table[start_blk + (20 * blk)] = false;
         }
     }
 }
@@ -148,12 +257,12 @@ void LED_BLK_On_Select(uint8_t in_blk_num)
     {
         for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
-            gb_xd_led_enable_table[i] = true;
+            gb_led_enable_table[i] = true;
         }
     }
     else if (in_blk_num <= TOTAL_BLOCK_SIZE)
     {
-        gb_xd_led_enable_table[in_blk_num - 1U] = true;
+        gb_led_enable_table[in_blk_num - 1U] = true;
     }
 }
 
@@ -163,12 +272,12 @@ void LED_BLK_Off_Select(uint8_t in_blk_num)
     {
         for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
-            gb_xd_led_enable_table[i] = false;
+            gb_led_enable_table[i] = false;
         }
     }
     else if (in_blk_num <= TOTAL_BLOCK_SIZE)
     {
-        gb_xd_led_enable_table[in_blk_num - 1] = false;
+        gb_led_enable_table[in_blk_num - 1] = false;
     }
 }
 
@@ -179,9 +288,9 @@ void LED_Current_Select(float in_current)
     {
         temp_current = 0.0f;
     }
-    else if (temp_current > XDIC_PWM_CURRENT_MAX)
+    else if (temp_current > XDIC_CURRENT_MAX)
     {
-        temp_current = XDIC_PWM_CURRENT_MAX;
+        temp_current = XDIC_CURRENT_MAX;
     }
     gf_xd_max_current = temp_current;
 }
@@ -229,6 +338,9 @@ void LED_System_Init(void)
 void LED_System_DeInit(void)
 {
     Vsync_Timer_Stop();
+    LED_Low_Current_Mode(false);
+    LED_Enable_Scan_No_Test(false);
+    LED_Enable_Line_Delay_Test(false);
     XDIC_DeInit();
     XC24_DeInit();
 }
@@ -242,14 +354,17 @@ void LED_System_Manual_Init(void)
 
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gb_xd_led_enable_table[i] = true;
+        gb_led_enable_table[i] = true;
     }
-    gf_xd_max_current = XDIC_PWM_CURRENT_DEFAULT;
+    gf_xd_max_current = XDIC_CURRENT_DEFAULT;
 }
 
 void LED_System_Manual_DeInit(void)
 {
     Vsync_Timer_Stop();
+    LED_Low_Current_Mode(false);
+    LED_Enable_Scan_No_Test(false);
+    LED_Enable_Line_Delay_Test(false);
     XDIC_DeInit();
     XC24_DeInit();
 }

@@ -852,7 +852,7 @@ void XC24_IF_Write_LD(uint16_t ld_duty)
     {
         for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
         {
-            if (gb_xd_led_enable_table[i])
+            if (gb_led_enable_table[i])
             {
                 tx_buffer[i + 1] = ld_duty;
             }

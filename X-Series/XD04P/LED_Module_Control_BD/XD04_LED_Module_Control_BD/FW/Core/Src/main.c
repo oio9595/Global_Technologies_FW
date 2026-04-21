@@ -47,6 +47,9 @@
 #define PACKET_SIZE_EXCEPT_DATA_FIELD   5U   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
 #define PACKET_SIZE_SOP_TO_COMMAND      3U   // SOP(1) + LEN(1) + CMD(1)
 
+#define INVALID_PACKET     0U
+#define VALID_PACKET       1U
+
 enum tag_PROTOCOL_LIST
 {
     SOP                     = 0xA5U, // 0xA5
@@ -54,14 +57,17 @@ enum tag_PROTOCOL_LIST
     CMD_INIT                = 0x00U, // 0x00
     CMD_QUIT                = 0xFFU, // 0xFF
     CMD_STATUS              = 0xF0U, // 0xF0
-    CMD_CURRENT             = 0x01U, // 0x01
     CMD_BAR_ON_SELECT       = 0x10U, // 0x10
     CMD_BAR_OFF_SELECT      = 0x20U, // 0x20
     CMD_BLK_ON_SELECT       = 0x40U, // 0x40
     CMD_BLK_OFF_SELECT      = 0x80U, // 0x80
+    CMD_CURRENT             = 0x01U, // 0x01
     CMD_LOW_CURRENT_MODE    = 0x02U, // 0x02
     CMD_DUTY                = 0x04U, // 0x04
     CMD_MODEL_SELECT        = 0x08U, // 0x08
+    CMD_TEST_CH_DEPENDENCY  = 0xA0U, // 0xA0
+    CMD_TEST_SCAN_NO        = 0xA1U, // 0xA1
+    CMD_TEST_LINE_DELAY     = 0xA2U, // 0xA2
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
@@ -243,6 +249,34 @@ uint8_t comm_rx_pop(void)
     return ret;
 }
 
+bool comm_is_valid_command(uint8_t in_cmd)
+{
+    bool ret = false;
+    switch (in_cmd)
+    {
+        case CMD_INIT:
+        case CMD_QUIT:
+        case CMD_STATUS:
+        case CMD_CURRENT:
+        case CMD_BAR_ON_SELECT:
+        case CMD_BAR_OFF_SELECT:
+        case CMD_BLK_ON_SELECT:
+        case CMD_BLK_OFF_SELECT:
+        case CMD_LOW_CURRENT_MODE:
+        case CMD_DUTY:
+        case CMD_MODEL_SELECT:
+        case CMD_TEST_CH_DEPENDENCY:
+        case CMD_TEST_SCAN_NO:
+        case CMD_TEST_LINE_DELAY:
+            ret = true;
+            break;
+        default:
+            ret = false;
+            break;
+    }
+    return ret;
+}
+
 static uint8_t comm_get_rx_available(void)
 {
     if (gt_ring_buffer.head > gt_ring_buffer.tail)
@@ -281,7 +315,7 @@ static void comm_tx_response(uint8_t status)
 
 static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 {
-    uint8_t ret = 0U;
+    uint8_t ret = INVALID_PACKET;
     rx_packet_t temp_packet = { 0 };
 
     if (gt_ring_buffer.head != gt_ring_buffer.tail)
@@ -290,7 +324,7 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
         {
             ++gt_ring_buffer.tail;
             gt_ring_buffer.tail &= (RX_BUFF_SIZE - 1U);
-            ret = 0U;
+            ret = INVALID_PACKET;
         }
         else // If SOP
         {
@@ -315,7 +349,7 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                 temp_packet.eop = comm_rx_pop();
 
                 uint8_t checksum = comm_rx_calc_checksum(&temp_packet.sop, (PACKET_SIZE_SOP_TO_COMMAND + temp_packet.length));
-                if ((checksum == temp_packet.checksum) && (temp_packet.eop == EOP))
+                if ((checksum == temp_packet.checksum) && (temp_packet.eop == EOP) && comm_is_valid_command(temp_packet.command))
                 {
                     p_packet->sop = temp_packet.sop;
                     p_packet->length = temp_packet.length;
@@ -329,18 +363,18 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 
                     print(LOG_PC, "\r\n\r\n%u\r\n\r\n", length);
 
-                    comm_tx_response(1U);
+                    comm_tx_response(VALID_PACKET);
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X]}\r\n",
                         temp_packet.sop, temp_packet.length, temp_packet.command, \
                         temp_packet.data[0], temp_packet.data[1], temp_packet.data[2], temp_packet.data[3], temp_packet.data[4], \
                         temp_packet.checksum, temp_packet.eop);
-                    ret = 1U;
+                    ret = VALID_PACKET;
                 }
                 else
                 {
-                    comm_tx_response(0U);
+                    comm_tx_response(INVALID_PACKET);
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X]}\r\n",
@@ -353,10 +387,10 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
 
             if (0U == gn_uart_rx_timeout) // Timeout
             {
-                comm_tx_response(0U);
+                comm_tx_response(INVALID_PACKET);
                 gt_ring_buffer.tail = gt_ring_buffer.head;
                 gb_uart_rx_timeout_enable = false;
-                ret = 0U;
+                ret = INVALID_PACKET;
             }
         }
     }
@@ -427,8 +461,23 @@ static void Uart_Task(void)
                 XDIC_Set_Daisy_Chain_Size(p_packet->data[0]);
                 print(LOG_PC, "CMD_MODEL_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            case CMD_TEST_CH_DEPENDENCY:
+                XDIC_Test_CH_Dependency();
+                print(LOG_PC, "CMD_TEST_CH_DEPENDENCY\r\n");
+                break;
+            case CMD_TEST_SCAN_NO:
+                LED_System_Init();
+                LED_BAR_On_Select(0U);
+                LED_Enable_Scan_No_Test(p_packet->data[0]);
+                print(LOG_PC, "CMD_TEST_SCAN_NO.\r\n");
+                break;
+            case CMD_TEST_LINE_DELAY:
+                LED_System_Init();
+                LED_BAR_On_Select(0U);
+                LED_Enable_Line_Delay_Test(p_packet->data[0]);
+                print(LOG_PC, "CMD_TEST_LINE_DELAY\r\n");
+                break;
         }
-
         ++gt_rx_packet_buffer.idx;
         gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1U);
     }
@@ -559,7 +608,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     Uart_Task();
     Key_Task();
-    XDIC_Vsync_Task();
+    Vsync_Task();
   }
   /* USER CODE END 3 */
 }
