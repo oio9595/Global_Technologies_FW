@@ -24,39 +24,39 @@ typedef enum tag_XDIC_CHANNEL_T
 typedef enum tag_XDIC_DEV_MAX_CURRENT_LEVEL_T
 {
     DEV_MAX_CURR_LEVEL_8mA = 0U, // 3b'000
-    DEV_MAX_CURR_LEVEL_16mA,    // 3b'001
-    DEV_MAX_CURR_LEVEL_24mA,    // 3b'010
-    DEV_MAX_CURR_LEVEL_32mA,    // 3b'011
-    DEV_MAX_CURR_LEVEL_48mA,    // 3b'100
-    DEV_MAX_CURR_LEVEL_64mA,    // 3b'101
-    DEV_MAX_CURR_LEVEL_92mA,    // 3b'110
-    DEV_MAX_CURR_LEVEL_128mA,   // 3b'111
+    DEV_MAX_CURR_LEVEL_16mA,     // 3b'001
+    DEV_MAX_CURR_LEVEL_24mA,     // 3b'010
+    DEV_MAX_CURR_LEVEL_32mA,     // 3b'011
+    DEV_MAX_CURR_LEVEL_48mA,     // 3b'100
+    DEV_MAX_CURR_LEVEL_64mA,     // 3b'101
+    DEV_MAX_CURR_LEVEL_92mA,     // 3b'110
+    DEV_MAX_CURR_LEVEL_128mA,    // 3b'111
     DEV_MAX_CURR_LEVEL_MAX,
 } dev_max_curr_level_t;
 
 typedef enum tag_XDIC_SHORT_LEVEL_T
 {
     SHORT_LEVEL_6V = 0U, // 3b'000
-    SHORT_LEVEL_8V,     // 3b'001
-    SHORT_LEVEL_12V,    // 3b'010
-    SHORT_LEVEL_16V,    // 3b'011
-    SHORT_LEVEL_24V,    // 3b'100
-    SHORT_LEVEL_32V,    // 3b'101
-    SHORT_LEVEL_48V,    // 3b'110
-    SHORT_LEVEL_70V,    // 3b'111
+    SHORT_LEVEL_8V,      // 3b'001
+    SHORT_LEVEL_12V,     // 3b'010
+    SHORT_LEVEL_16V,     // 3b'011
+    SHORT_LEVEL_24V,     // 3b'100
+    SHORT_LEVEL_32V,     // 3b'101
+    SHORT_LEVEL_48V,     // 3b'110
+    SHORT_LEVEL_70V,     // 3b'111
     SHORT_LEVEL_MAX,
 } short_level_t;
 
 typedef enum tag_XDIC_FB_LEVEL_T
 {
     FB_LEVEL_0V4 = 0U,   // 3b'000
-    FB_LEVEL_0V6,       // 3b'001
-    FB_LEVEL_0V8,       // 3b'010
-    FB_LEVEL_1V0,       // 3b'011
-    FB_LEVEL_1V2,       // 3b'100
-    FB_LEVEL_1V4,       // 3b'101
-    FB_LEVEL_1V6,       // 3b'110
-    FB_LEVEL_1V8,       // 3b'111
+    FB_LEVEL_0V6,        // 3b'001
+    FB_LEVEL_0V8,        // 3b'010
+    FB_LEVEL_1V0,        // 3b'011
+    FB_LEVEL_1V2,        // 3b'100
+    FB_LEVEL_1V4,        // 3b'101
+    FB_LEVEL_1V6,        // 3b'110
+    FB_LEVEL_1V8,        // 3b'111
     FB_LEVEL_MAX,
 } fb_level_t;
 

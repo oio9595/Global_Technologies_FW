@@ -1,4 +1,4 @@
-    /** @file vsync_task.c
+/** @file vsync_task.c
  *
  * @brief
  *

@@ -1,4 +1,4 @@
-    /** @file xdic.c
+/** @file xdic.c
  *
  * @brief
  *

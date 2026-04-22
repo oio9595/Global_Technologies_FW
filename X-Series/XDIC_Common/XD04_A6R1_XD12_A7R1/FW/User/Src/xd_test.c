@@ -22,7 +22,7 @@ typedef void (*func_t)(void);
 #define XDIC_ERROR_RATE         (0.026f) // 2.6%
 #define XDIC_VREF_TARGET        (2.2f)
 #define XDIC_OSC_TARGET         (39.36f)
-#define XDIC_OSC_ERROR_RATE     (0.03f) // 2.0%
+#define XDIC_OSC_ERROR_RATE     (0.03f) // 3.0%
 #define XDIC_LDO_SWEEP_TARGET   (0.0015f) // 1.5mV
 
 /* XD12 Current Spec */
