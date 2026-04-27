@@ -227,11 +227,11 @@ void XDIC_Vsync_Task(void)
 {
     if (gb_xdic_vsync_flag)
     {
-        if (IS_XC24_Support())
+        if (IS_XC24R_Support())
         {
-            XC24_Turn_Off_Sync_Auto();
+            XC24R_Turn_Off_Sync_Auto();
             us_delay(100);
-            XC24_Turn_On_Sync_Auto();
+            XC24R_Turn_On_Sync_Auto();
         }
 
         us_delay(1500);

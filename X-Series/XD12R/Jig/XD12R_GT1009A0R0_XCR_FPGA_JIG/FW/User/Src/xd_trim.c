@@ -1240,7 +1240,6 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_STOP:
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
-                JigBD_IF_XC_VCC_EN(PWR_OFF);
                 gn_task_delay = 100;
                 gt_xd_trim_step = XD_TRIM_STEP_REBOOT;
                 break;
@@ -1276,7 +1275,6 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_PWR_OFF:
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
-                JigBD_IF_XC_VCC_EN(PWR_OFF);
                 Vsync_Timer_Stop();
                 XDIC_Display_Mirror_Regs();
                 gt_xd_trim_step = XD_TRIM_STEP_NONE;
@@ -1407,7 +1405,6 @@ void XD_Screen_Task(void)
         case XD_SCREEN_STEP_STOP :
             JigBD_IF_VLED_9V_EN(PWR_OFF);
             JigBD_IF_XD_VCC_EN(PWR_OFF);
-            JigBD_IF_XC_VCC_EN(PWR_OFF);
             print(LOG_INFO, "======== SCREEN DONE ========\r\n");
             gt_xd_screen_step = XD_SCREEN_STEP_NONE;
             break;

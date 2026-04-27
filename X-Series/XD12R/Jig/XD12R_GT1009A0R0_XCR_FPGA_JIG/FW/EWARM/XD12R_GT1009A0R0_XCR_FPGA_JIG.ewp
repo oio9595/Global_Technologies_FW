@@ -1180,9 +1180,6 @@
                 <name>$PROJ_DIR$\..\User\Inc\xc24.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\User\Inc\xc_trim.h</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\User\Inc\xd_trim.h</name>
             </file>
             <file>
@@ -1202,9 +1199,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\User\Src\xc24.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\User\Src\xc_trim.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\User\Src\xd_trim.c</name>

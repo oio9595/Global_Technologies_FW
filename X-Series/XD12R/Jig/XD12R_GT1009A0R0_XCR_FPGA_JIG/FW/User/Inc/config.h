@@ -53,11 +53,11 @@ extern "C" {
 #define XDIC_SERIAL_CLK_CNT_LOW     (16U)
 #define XDIC_SERIAL_CLK_CNT_HIGH    (34U)
 
-#define XC24_MCLK_INTERNAL          (0x00U)
-#define XC24_MCLK_EXTERNAL          (0x01U)
-#define XC24_MCLK_MODE              XC24_MCLK_EXTERNAL
+#define XC24R_MCLK_INTERNAL          (0x00U)
+#define XC24R_MCLK_EXTERNAL          (0x01U)
+#define XC24R_MCLK_MODE              XC24R_MCLK_EXTERNAL
 
-#if (XC24_MCLK_MODE == XC24_MCLK_INTERNAL)
+#if (XC24R_MCLK_MODE == XC24R_MCLK_INTERNAL)
     #define XC_SERIAL_CLK_CNT_LOW       (8U)
     #define XC_SERIAL_CLK_CNT_HIGH      (17U)
 #else

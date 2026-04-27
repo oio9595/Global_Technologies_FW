@@ -50,8 +50,8 @@
 #define XDIC_MCLK_FLL_ENABLE        (0U)
 #define XDIC_MCLK_FLL_DISABLE       (1U)
 
-#define XDIC_MCLK_LSB_MASK          (0xFFFU) //LSB 12-bit
-#define XDIC_MCLK_MSB_MASK          (0x1FFU) //MSB  9-bit
+#define XDIC_MCLK_LSB_MASK          (0xFFFU) // LSB 12-bit
+#define XDIC_MCLK_MSB_MASK          (0x1FFU) // MSB  9-bit
 
 #define XDIC_WR_PWM_DIV_VREF        (0xAAAU)
 #define XDIC_WR_OTHERS              (0x555U)

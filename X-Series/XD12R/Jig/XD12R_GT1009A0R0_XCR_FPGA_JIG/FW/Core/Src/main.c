@@ -32,7 +32,6 @@
 #include "ads124s08.h"
 #include "vsync_task.h"
 #include "xdic.h"
-#include "xc_trim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -244,13 +243,11 @@ static void comm_print_help(void)
 
     print(LOG_INFO, "\n\r  help / ?\t\t : Show command help");
     print(LOG_INFO, "\n\r  jig_ic_start\t\t : Start timer for frequency input capture");
-    print(LOG_INFO, "\n\r  jig_ic_stop\t\t : Stop input capture and print measured frequency");
     print(LOG_INFO, "\n\r  jig_vref_start\t : Start MCU ADC");
 
     print(LOG_INFO, "\n\r  jig_ch_sel [d]\t : Select output channel (0 ~ XD_CH_MAX)");
     print(LOG_INFO, "\n\r  jig_xd_vcc [u]\t : XD VCC On/Off (1=On, 0=Off)");
     print(LOG_INFO, "\n\r  jig_xd_vcc_level [u]\t : XD VCC level (0=5V, 1=5.7V)");
-    print(LOG_INFO, "\n\r  jig_xc_vcc [u]\t : XC VCC On/Off (1=On, 0=Off)");
     print(LOG_INFO, "\n\r  jig_vled [u]\t\t : VLED 9V On/Off (1=On, 0=Off)");
     print(LOG_INFO, "\n\r  jig_gain [u]\t\t : Set current gain (0 ~ GAIN_MAX-1)");
     print(LOG_INFO, "\n\r  jig_vsync [d]\t\t : Start/Stop Vsync (1=Start, 0=Stop)");
@@ -268,8 +265,6 @@ static void comm_print_help(void)
     print(LOG_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to trim register [x] (HEX)");
     print(LOG_INFO, "\n\r  xd_ldim [d]\t\t : Set LDIM value [0 ~ 65535]");
     print(LOG_INFO, "\n\r  xd_ldim\t\t : Show current LDIM value");
-    print(LOG_INFO, "\n\r  xd_fbi [x]\t\t : Set FBI pin (1=HI, 0=LO)");
-    print(LOG_INFO, "\n\r  xd_fbo\t\t : Read FBO pin status");
     print(LOG_INFO, "\n\r  xd_ch [d]\t\t : Set XDIC channel (0 ~ XD_CH_MAX)");
 
     print(LOG_INFO, "\n\r  xd_debug\t\t : Initialize XD debug environment");
@@ -280,16 +275,16 @@ static void comm_print_help(void)
     print(LOG_INFO, "\n\r  xd_trim_gain [x]\t : Trim gain and fix LD to 6<<12");
     print(LOG_INFO, "\n\r  xd_osc_debug\t\t : Auto scan OSC trim values");
 
-    print(LOG_INFO, "\n\r  xc_debug\t\t : Initialize XC24");
-    print(LOG_INFO, "\n\r  xc_r [x]\t\t : Read register [x] of XC24 (HEX)");
-    print(LOG_INFO, "\n\r  xc_w [x] [y]\t\t : Write [y] to register [x] of XC24 (HEX)");
-    print(LOG_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24");
-    print(LOG_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24 usage (0/1)");
+    print(LOG_INFO, "\n\r  xc_debug\t\t : Initialize XC24R");
+    print(LOG_INFO, "\n\r  xc_r1 [x]\t\t : Read register [x] of XC24R (HEX)");
+    print(LOG_INFO, "\n\r  xc_w1 [x] [y]\t\t : Write [y] to register [x] of XC24R (HEX)");
+    print(LOG_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24R");
+    print(LOG_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24R usage (0/1)");
 
     print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC trim process");
     print(LOG_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
     print(LOG_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
-    print(LOG_INFO, "\n\r  xc_trim_start / 4\t : Start XC24 trim process");
+    print(LOG_INFO, "\n\r  xc_trim_start / 4\t : Start XC24R trim process");
 
     print(LOG_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
     print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
@@ -304,9 +299,9 @@ static void comm_init(void)
     print(LOG_INFO, "\n\r--------------------------------------");
     print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24R_Support() ? "XC24R ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24R"), ANSI_FONT_NONE);
     print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24R OTP WRITE ENABLE" : "XC24R OTP WRITE DISABLE"), ANSI_FONT_NONE);
     print(LOG_INFO, "\n\r--------------------------------------\r\n");
 }
 /* USER CODE END 0 */
@@ -358,10 +353,9 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-    USE_XC24(false);
+    USE_XC24R(false);
     XD_Trim_IF_Set_OTP_Enable(false);
-    XC_Trim_IF_Set_OTP_Enable(false);
-    XC24_Start_MCLK_Oscillation(false);
+    XC24R_Start_MCLK_Oscillation(false);
     JigBD_IF_Link_DMA_With_Buffer();
 
     XD_Trim_Calculate_Spec();
@@ -1574,8 +1568,15 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
         {
-            print(LOG_INFO, "\r\n Output CH sel - [%u]\r\n", u32_recv_param[0]);
-            JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
+            if (u32_recv_param[0] > (XD_CH_MAX + 1))
+            {
+                print(LOG_ERROR, "\r\n Out of CH SEL [%d] [0 - %d]\r\n", u32_recv_param[0], XD_CH_MAX);
+            }
+            else
+            {
+                print(LOG_INFO, "\r\n XD CH SEL - [%d]\r\n", u32_recv_param[0]);
+                JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
+            }
         }
         else if (Command_Param_is_("jig_xd_vcc", "%u", &u32_recv_param[0]))
         {
@@ -1603,32 +1604,6 @@ static void TaskDebugUart(void)
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
             }
         }
-        else if (Command_Param_is_("jig_xc_vcc", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XC VCC On\r\n");
-                JigBD_IF_XC_VCC_EN(PWR_ON);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XC VCC Off\r\n");
-                JigBD_IF_XC_VCC_EN(PWR_OFF);
-            }
-        }
-        else if (Command_Param_is_("jig_xc_vcc_level", "%u", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0])
-            {
-                print(LOG_INFO, "\r\n XC VCC [5.7V]\r\n");
-                JigBD_IF_XC_VCC_Level(PWR_ON_5V5);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XC VCC [5V]\r\n");
-                JigBD_IF_XC_VCC_Level(PWR_ON_5V0);
-            }
-        }
         else if (Command_Param_is_("jig_vled", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0])
@@ -1640,18 +1615,6 @@ static void TaskDebugUart(void)
             {
                 print(LOG_INFO, "\r\n VLED_Disable\r\n");
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
-            }
-        }
-        else if (Command_Param_is_("jig_ch_sel", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] > (XD_CH_MAX + 1))
-            {
-                print(LOG_ERROR, "\r\n Out of CH SEL [%d] [0 - %d]\r\n", u32_recv_param[0], XD_CH_MAX);
-            }
-            else
-            {
-                print(LOG_INFO, "\r\n XD CH SEL - [%d]\r\n", u32_recv_param[0]);
-                JigBD_IF_Select_Output_Ch(u32_recv_param[0]);
             }
         }
         else if (Command_Param_is_("jig_gain", "%u", &u32_recv_param[0]))
@@ -1914,63 +1877,21 @@ static void TaskDebugUart(void)
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
-            XC24_Init();
+            XC24R_Init();
         }
-        else if (Command_is_("xc_trim_debug"))
-        {
-            XC24_Trim_Init();
-        }
-        else if (Command_Param_is_("xc_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if (Command_Param_is_("xc_w1", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             print(LOG_INFO, "\r\n XC Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
-            XC24_Write_Register((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            XC24R_Write_Group1_Register((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
         else if (Command_is_("xc_r_all"))
         {
-            XC24_Read_Register_All();
+            XC24R_Read_Register_All();
         }
-        else if (Command_Param_is_("xc_r", "%x", &u32_recv_param[0]))
+        else if (Command_Param_is_("xc_r1", "%x", &u32_recv_param[0]))
         {
-            uint16_t ret = XC24_Read_Register((uint8_t)u32_recv_param[0]);
+            uint16_t ret = XC24R_Read_Group1_Register((uint8_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
-        }
-        else if (Command_is_("xc_trim_ldo"))
-        {
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO);
-            LL_mDelay(1);
-            ADS114S08_Set_Start(1U);
-            ADS114S08_Wait_Done();
-
-            uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
-            float vctl_ldo_level = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V; // Dac out convert to V
-            print(LOG_INFO, "Screen  LDO_ADC [%u] -> LDO_LEVEL : %.3f\r\n", ext_adc_value, vctl_ldo_level);
-        }
-        else if (Command_is_("xc_trim_osc"))
-        {
-            XC24_Trim_Init_OSC();
-            LL_mDelay(1);
-            JigBD_IF_Start_Input_Capture();
-            JigBD_IF_Wait_Input_Capture_Done();
-            JigBD_IF_Stop_Input_Capture();
-            float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XC24_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-            print(LOG_INFO, "Screen  OSC : %.3f\r\n", osc_freq);
-        }
-        else if (Command_is_("xc_trim_dac"))
-        {
-            XC24_Trim_Init_DAC_Gain();
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC);
-            uint16_t dac_input[4] = {248, 1241, 2482, 3723};
-            for (uint8_t i = 0 ; i < 4 ; ++i)
-            {
-                XC24_Write_Register(XC24_ADDR_CURRENT_TARGET_DAC, dac_input[i]);
-                LL_mDelay(1);
-                ADS114S08_Set_Start(1U);
-                ADS114S08_Wait_Done();
-
-                uint16_t ext_adc_value = ADS114S08_Get_ADC_Value();
-                float dac_val = (float)(ADC_VOLT_PER_STEP * ext_adc_value) / CONST_mV_TO_V;
-                print(LOG_INFO, "%u, %.4f\r\n", dac_input[i], dac_val);
-            }
         }
         else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
         {
@@ -1978,12 +1899,12 @@ static void TaskDebugUart(void)
             {
                 if (u32_recv_param[0])
                 {
-                    USE_XC24(true);
+                    USE_XC24R(true);
                     print(LOG_INFO, "\r\n SUPPORT_XC24\r\n");
                 }
                 else
                 {
-                    USE_XC24(false);
+                    USE_XC24R(false);
                     print(LOG_INFO, "\r\n NOT_SUPPORT_XC24\r\n");
                 }
             }

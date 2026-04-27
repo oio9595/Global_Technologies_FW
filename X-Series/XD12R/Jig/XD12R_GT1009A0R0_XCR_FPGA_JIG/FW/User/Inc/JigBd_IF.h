@@ -26,10 +26,10 @@ extern "C" {
 #define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max  40mA
 
 #define XDIC_INTERNAL_DIVIDER       (64)
-#define XC24_INTERNAL_DIVIDER       (32)
+#define XC24R_INTERNAL_DIVIDER       (32)
 #define JIG_FREQUENCY_DIVIDER       (128)
 #define XDIC_CONST_FREQ_DIVIDE      (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
-#define XC24_CONST_FREQ_DIVIDE      (XC24_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
+#define XC24R_CONST_FREQ_DIVIDE      (XC24R_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 
 #define XD_TIMEOUT_MS               (2)
 
@@ -52,14 +52,11 @@ extern volatile bool gb_timer_input_capture_done;
 /* BEGIN - INTERFACE FUNCTIONS */
 extern void us_delay(uint32_t n_delay);
 extern void JigBD_IF_Detect_XC24(void);
-extern void JigBD_IF_XC_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_EN(uint8_t on);
 extern void JigBD_IF_XD_VCC_Level(power_volt_t pwr);
-extern void JigBD_IF_XC_VCC_Level(power_volt_t pwr);
 extern void JigBD_IF_VLED_9V_EN(uint8_t on);
 
 extern float JigBD_IF_XD_ICC(void);
-extern float JigBD_IF_XC_ICC(void);
 
 extern void JigBD_IF_Change_Current_Gain(current_gain_t gain);
 extern void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch);

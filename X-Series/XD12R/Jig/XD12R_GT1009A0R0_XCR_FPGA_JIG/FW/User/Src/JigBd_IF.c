@@ -88,29 +88,10 @@ void us_delay(uint32_t n_delay)
 
 void JigBD_IF_Detect_XC24(void)
 {
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_Init();
+        XC24R_Init();
     }
-}
-
-void JigBD_IF_XC_VCC_EN(uint8_t on)
-{
-    if (on == PWR_ON)
-    {
-        LL_GPIO_ResetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
-    }
-    else
-    {
-        if (IS_XC24_Support())
-        {
-            XC24_Write_Register(XC24_ADDR_GLOBAL_WRITE_DATA, 0x00);
-        }
-        XC_NSCS_LO();
-        XC24_Start_MCLK_Oscillation(false);
-        LL_GPIO_SetOutputPin(XC24_VCC_EN_GPIO_Port, XC24_VCC_EN_Pin);
-    }
-    LL_mDelay(10);
 }
 
 void JigBD_IF_XD_VCC_EN(uint8_t on)
@@ -118,12 +99,12 @@ void JigBD_IF_XD_VCC_EN(uint8_t on)
     if (on == PWR_ON)
     {
         /* VCC_EN : ON, LOW */
-        LL_GPIO_ResetOutputPin(XDIC_VCC_EN_GPIO_Port, XDIC_VCC_EN_Pin);
+        LL_GPIO_ResetOutputPin(XD_VCC_EN_GPIO_Port, XD_VCC_EN_Pin);
     }
     else
     {
         /* VCC_EN : OFF, HIGH */
-        LL_GPIO_SetOutputPin(XDIC_VCC_EN_GPIO_Port, XDIC_VCC_EN_Pin);
+        LL_GPIO_SetOutputPin(XD_VCC_EN_GPIO_Port, XD_VCC_EN_Pin);
     }
     LL_mDelay(10);
 }
@@ -133,30 +114,14 @@ void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
     uint32_t pin_mask = 0;
     if (pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
     {
-        pin_mask |= (XDIC_5_7V_Pin << 16);   /* reset */
+        pin_mask |= (XD_5V5_Pin << 16);   /* reset */
     }
     else if (pwr == PWR_ON_5V5) /*5.0V off, 5.7V On */
     {
-        pin_mask |= (XDIC_5_7V_Pin <<  0);   /* set */
+        pin_mask |= (XD_5V5_Pin <<  0);   /* set */
     }
 
-    WRITE_REG(XDIC_5_7V_GPIO_Port->BSRR, pin_mask);
-    LL_mDelay(10);
-}
-
-void JigBD_IF_XC_VCC_Level(power_volt_t pwr)
-{
-    uint32_t pin_mask = 0;
-    if (pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
-    {
-        pin_mask |= (XC24_5V5_Pin << 16);   /* reset */
-    }
-    else if (pwr == PWR_ON_5V5) /*5.0V off, 5.7V On */
-    {
-        pin_mask |= (XC24_5V5_Pin <<  0);   /* set */
-    }
-
-    WRITE_REG(XC24_5V5_GPIO_Port->BSRR, pin_mask);
+    WRITE_REG(XD_5V5_GPIO_Port->BSRR, pin_mask);
     LL_mDelay(10);
 }
 
@@ -198,33 +163,6 @@ float JigBD_IF_XD_ICC(void)
     }
     print(LOG_INFO, "\r\n XD ICC Current : %.3f [mA]\r\n", icc);
 
-    return icc;
-}
-
-float JigBD_IF_XC_ICC(void)
-{
-    float icc = 0;
-    uint16_t icc_adc[2] = {0, };
-
-    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_P);
-    ADS114S08_Set_Start(1U);
-    ADS114S08_Wait_Done();
-    icc_adc[0] = ADS114S08_Get_ADC_Value();
-
-    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_N);
-    ADS114S08_Set_Start(1U);
-    ADS114S08_Wait_Done();
-    icc_adc[1] = ADS114S08_Get_ADC_Value();
-
-    if (icc_adc[0] > icc_adc[1])
-    {
-        icc = ((icc_adc[0] - icc_adc[1]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
-    }
-    else
-    {
-        icc = ((icc_adc[1] - icc_adc[0]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
-    }
-    print(LOG_INFO, "\r\n XC ICC Current : %.3f [mA]\r\n", icc);
     return icc;
 }
 
@@ -594,7 +532,6 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
-    us_delay(XDIC_WRITE_DELAY);
 }
 
 static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
@@ -697,7 +634,6 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
-    us_delay(XDIC_LD_TRANS_DELAY);
 }
 
 static uint16_t MCU_IF_Fault_Read_Command(void)
@@ -763,7 +699,6 @@ static void MCU_IF_IdGen_Command()
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
-    us_delay(XDIC_IDGEN_DELAY);
 }
 
 static void MCU_IF_SyncGen_Command()
@@ -782,27 +717,27 @@ static void MCU_IF_SyncGen_Command()
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
-    us_delay(XDIC_SYNCGEN_DELAY);
 }
 
 void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data)
 {
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_IF_Write_XDIC(in_addr, in_data);
+        XC24R_IF_Write_XDIC(in_addr, in_data);
     }
     else
     {
         MCU_IF_Write_XDIC(in_addr, in_data);
     }
+    us_delay(XDIC_WRITE_DELAY);
 }
 
 uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
 {
     uint16_t ret = 0;
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        ret = XC24_IF_Read_XDIC(in_addr);
+        ret = XC24R_IF_Read_XDIC(in_addr);
     }
     else
     {
@@ -813,22 +748,23 @@ uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
 
 void JigBD_IF_Write_LD_Command(uint16_t* p_in_LD_data)
 {
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_IF_Write_LD(p_in_LD_data);
+        XC24R_IF_Write_LD(p_in_LD_data);
     }
     else
     {
         MCU_IF_Write_LD(p_in_LD_data);
     }
+    us_delay(XDIC_LD_TRANS_DELAY);
 }
 
 uint16_t JigBD_IF_Fault_Read_Command(void)
 {
     uint16_t ret = 0;
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        ret = XC24_IF_Fault_Read_Command();
+        ret = XC24R_IF_Fault_Read_Command();
     }
     else
     {
@@ -840,9 +776,9 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
 void JigBD_IF_Reset_Command(void)
 {
     uint16_t data = (1 << 11);
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_IF_Write_XDIC(XDIC_ADDR_RESET_ID, data);
+        XC24R_IF_Write_XDIC(XDIC_ADDR_RESET_ID, data);
     }
     else
     {
@@ -853,26 +789,28 @@ void JigBD_IF_Reset_Command(void)
 
 void JigBD_IF_IdGen_Command(void)
 {
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_IF_IdGen_Command();
+        XC24R_IF_IdGen_Command();
     }
     else
     {
         MCU_IF_IdGen_Command();
     }
+    us_delay(XDIC_IDGEN_DELAY);
 }
 
 void JigBD_IF_SyncGen_Command(void)
 {
-    if (IS_XC24_Support())
+    if (IS_XC24R_Support())
     {
-        XC24_IF_SyncGen_Command();
+        XC24R_IF_SyncGen_Command();
     }
     else
     {
         MCU_IF_SyncGen_Command();
     }
+    us_delay(XDIC_SYNCGEN_DELAY);
 }
 
 /*** end of file ***/
