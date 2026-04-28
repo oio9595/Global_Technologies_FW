@@ -100,9 +100,9 @@ static void ADS114S08_Dump_Registers(void)
 
  __STATIC_INLINE uint8_t xferWord(SPI_TypeDef *SPIx, uint8_t tx)
 {
-    uint8_t rx = 0;
+    uint8_t rx = 0U;
 
-    if (LL_SPI_IsEnabled(SPIx) != 1)
+    if (LL_SPI_IsEnabled(SPIx) != true)
     {
       /* Enable SPI peripheral */
         LL_SPI_Enable(SPIx);
@@ -121,14 +121,14 @@ static void ADS114S08_Dump_Registers(void)
 
 static uint8_t ADS114S08_Read_Register(uint8_t reg_addr)
 {
-    uint8_t TxBuffer[3] = {0, };
-    uint8_t RxBuffer[3] = {0, };
+    uint8_t TxBuffer[3] = { 0 };
+    uint8_t RxBuffer[3] = { 0 };
 
-    TxBuffer[0] = (CMD_RREG | (reg_addr & 0x1F));
+    TxBuffer[0] = (CMD_RREG | (reg_addr & 0x1FU));
 
     ADS_CS_LO();
 
-    for(uint8_t i = 0 ; i < 3 ; ++i)
+    for(uint8_t i = 0U ; i < 3U ; ++i)
     {
         RxBuffer[i] = xferWord(gp_SPI, TxBuffer[i]);
     }
@@ -140,9 +140,9 @@ static uint8_t ADS114S08_Read_Register(uint8_t reg_addr)
 
 static int32_t ADS114S08_Get_RData(void)
 {
-    uint8_t TxBuffer[3] = {0, };
-    uint8_t RxBuffer[3] = {0, };
-    int32_t iData = 0;
+    uint8_t TxBuffer[3] = { 0 };
+    uint8_t RxBuffer[3] = { 0 };
+    int32_t iData = 0U;
 
     TxBuffer[0] = CMD_RDATA;
 
@@ -163,8 +163,8 @@ static void ADS114S08_Write_Register(uint8_t reg_addr, uint8_t reg_data)
 {
     uint8_t TxBuffer[3];
 
-    TxBuffer[0] = (CMD_WREG | (reg_addr & 0x1F));
-    TxBuffer[1] = 0x00;
+    TxBuffer[0] = (CMD_WREG | (reg_addr & 0x1FU));
+    TxBuffer[1] = 0x00U;
     TxBuffer[2] = reg_data;
 
     ADS_CS_LO();
@@ -248,8 +248,8 @@ void ADS114S08_Set_Start(uint8_t b_set)
 {
     if (b_set)
     {
-        gb_ads114s08_drdy_done = 0;
-        gn_ads114s08_adc_temp = 0;
+        gb_ads114s08_drdy_done = false;
+        gn_ads114s08_adc_temp = 0U;
         gn_adc_read_count = ADS114S08_READ_COUNT;
         ADS114S08_Set_CMD(CMD_START);
     }
@@ -261,14 +261,14 @@ void ADS114S08_Set_Start(uint8_t b_set)
 
 void ADS114S08_Wait_Done(void)
 {
-    gn_ads114s08_read_timeout = 15; // 2000SPS * 16 EA = 8ms
+    gn_ads114s08_read_timeout = 15U; // 2000SPS * 16 EA = 8ms
     while(1)
     {
         if (gb_ads114s08_drdy_done)
         {
             break;
         }
-        if (gn_ads114s08_read_timeout == 0)
+        if (gn_ads114s08_read_timeout == 0U)
         {
             print(LOG_ERROR, "%s timeout\r\n", __func__);
             break;
@@ -283,11 +283,11 @@ static void ADS114S08_Get_ADC_Offset()
     JigBD_IF_Change_Current_Gain(GAIN_LOW);
     JigBD_IF_VLED_9V_EN(PWR_ON);
 
-    for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+    for (uint8_t ch = 0U ; ch < XD_CH_MAX ; ++ch)
     {
         JigBD_IF_Select_Output_Ch(ch);
         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT);
-        LL_mDelay(10);
+        LL_mDelay(10U);
 
         ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
@@ -303,7 +303,7 @@ void ADS114S08_Init(void)
     gp_SPI = SPI2;
 
     ADS114S08_Reset();
-    LL_mDelay(1);
+    LL_mDelay(1U);
 
     for (uint8_t reg = REG_ADDR_ID ; reg < REG_ADDR_MAX ; ++reg)
     {
@@ -311,15 +311,15 @@ void ADS114S08_Init(void)
         print(LOG_DEBUG, "reg[0x%02X] = 0x%02X\r\n", reg, *(&gt_ads114s08_regs.id.value + reg));
     }
 
-    gt_ads114s08_regs.status.u.fl_por = 0x00; /* clear POR flag */
-    gt_ads114s08_regs.status.u.rdy = 0x00; /* clear device ready flag */
+    gt_ads114s08_regs.status.u.fl_por = 0x00U; /* clear POR flag */
+    gt_ads114s08_regs.status.u.rdy = 0x00U; /* clear device ready flag */
     ADS114S08_Write_Register(REG_ADDR_STATUS, gt_ads114s08_regs.status.value);
 
     gt_ads114s08_regs.datarate.u.dr = ADS_SPS_2000; /* 2000 SPS */
     ADS114S08_Write_Register(REG_ADDR_DATARATE, gt_ads114s08_regs.datarate.value);
 
     ADS114S08_Get_ADC_Offset();
-    gn_ads114s08_init_flag = 1;
+    gn_ads114s08_init_flag = true;
 
 #ifdef USE_DISPLAY_DEVICE_REGS
     ADS114S08_Dump_Registers();
@@ -329,7 +329,7 @@ void ADS114S08_Init(void)
 
 void ADC_DRDY_INT_Handler(void)
 {
-    uint16_t temp = 0;
+    uint16_t temp = 0U;
     temp = ADS114S08_Get_RData();
 
     if (temp > 32767U)
@@ -345,7 +345,7 @@ void ADC_DRDY_INT_Handler(void)
 
     if (gn_adc_read_count == 0U)
     {
-        gb_ads114s08_drdy_done = 1U;
+        gb_ads114s08_drdy_done = true;
         ADS114S08_Set_Start(0U);    /* stop continuous conversion */
     }
 }
@@ -365,7 +365,7 @@ uint16_t ADS114S08_Get_ADC_Value(void)
 
 float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
-	float ret = 0;
+	float ret = 0.0f;
 	switch (gain)
 	{
 		case GAIN_HIGH :
@@ -383,7 +383,7 @@ float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 
 uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
 {
-	uint16_t ret = 0;
+	uint16_t ret = 0U;
 	switch (gain)
 	{
 		case GAIN_HIGH :

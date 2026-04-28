@@ -83,7 +83,7 @@ void us_delay(uint32_t n_delay)
     {
     }
     LL_TIM_DisableCounter(TIM12);
-    TIM12->CNT = 0;
+    TIM12->CNT = 0U;
 }
 
 void JigBD_IF_Detect_XC24(void)
@@ -111,18 +111,18 @@ void JigBD_IF_XD_VCC_EN(uint8_t on)
 
 void JigBD_IF_XD_VCC_Level(power_volt_t pwr)
 {
-    uint32_t pin_mask = 0;
+    uint32_t pin_mask = 0U;
     if (pwr == PWR_ON_5V0) /*5.0V on, 5.7V off */
     {
-        pin_mask |= (XD_5V5_Pin << 16);   /* reset */
+        pin_mask |= (XD_5V5_Pin << 16U);   /* reset */
     }
     else if (pwr == PWR_ON_5V5) /*5.0V off, 5.7V On */
     {
-        pin_mask |= (XD_5V5_Pin <<  0);   /* set */
+        pin_mask |= (XD_5V5_Pin <<  0U);   /* set */
     }
 
     WRITE_REG(XD_5V5_GPIO_Port->BSRR, pin_mask);
-    LL_mDelay(10);
+    LL_mDelay(10U);
 }
 
 void JigBD_IF_VLED_9V_EN(uint8_t on)
@@ -140,8 +140,8 @@ void JigBD_IF_VLED_9V_EN(uint8_t on)
 
 float JigBD_IF_XD_ICC(void)
 {
-    float icc = 0;
-    uint16_t icc_adc[2] = {0, };
+    float icc = 0.0f;
+    uint16_t icc_adc[2] = { 0 };
 
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P);
     ADS114S08_Set_Start(1U);
@@ -296,7 +296,7 @@ void JigBD_IF_Select_Output_Ch(uint8_t in_output_ch)
 /* BEGIN - Internal ADC ******************************************/
 void JigBD_IF_Start_MCU_ADC(void)
 {
-    uint32_t u32_InternalADC = 0;
+    uint32_t u32_InternalADC = 0U;
     for (uint8_t cnt = 0 ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
@@ -354,8 +354,8 @@ void JigBD_IF_Start_Input_Capture(void)
 
     LL_GPIO_ResetOutputPin(XD_FREQ_RESET_GPIO_Port, XD_FREQ_RESET_Pin);
 
-    gb_timer_input_capture_activated = 1;
-    gb_timer_input_capture_done = 0;
+    gb_timer_input_capture_activated = true;
+    gb_timer_input_capture_done = false;
 }
 
 void JigBD_IF_Wait_Input_Capture_Done(void)
@@ -371,8 +371,8 @@ void JigBD_IF_Wait_Input_Capture_Done(void)
 
 void JigBD_IF_Stop_Input_Capture(void)
 {
-    gb_timer_input_capture_activated = 0;
-    gb_timer_input_capture_done = 0;
+    gb_timer_input_capture_activated = false;
+    gb_timer_input_capture_done = false;
 
     LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_2);
     LL_GPIO_SetOutputPin(XD_FREQ_RESET_GPIO_Port, XD_FREQ_RESET_Pin);
@@ -387,14 +387,14 @@ float JigBD_IF_Get_Input_Capture_Freq(void)
 
 void JigBD_IF_Calculate_Input_Capture_Freq(void)
 {
-    if (gb_timer_input_capture_activated == 1)
+    if (gb_timer_input_capture_activated == true)
     {
-        float f_freq = 0;
-        float f_freq_avg = 0;
-        uint32_t delta = 0;
-        uint32_t n_count = 0;
+        float f_freq = 0.0f;
+        float f_freq_avg = 0.0f;
+        uint32_t delta = 0U;
+        uint32_t n_count = 0U;
 
-        for (uint32_t i = 1 ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
+        for (uint32_t i = 1U ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
         {
             if (gn_input_capture_cnt[i + 1] > gn_input_capture_cnt[i + 0])
             {
@@ -421,7 +421,7 @@ uint16_t JigBD_IF_Calculate_XDIC_Divided_Freq(double in_freq) //input must be 'M
     if (u32_rtn_val > 65535) //2^16-1
     {
         print(LOG_ERROR, "\r\nERROR: %s (%lf) INPUT TOO BIG\r\n", __func__, in_freq);
-        return 0;
+        return 0U;
     }
 
     return (uint16_t)u32_rtn_val;
@@ -444,18 +444,18 @@ static uint16_t Get_Nth_Bit(uint64_t x, int n)
 
 static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 {
-    uint32_t freq_count_sum = 0;
-    uint32_t count = 0;
+    uint32_t freq_count_sum = 0U;
+    uint32_t count = 0U;
 
-    float f_tim1_count_avg = 0;
-    float f_input_frequency = 0;
-    uint16_t logic_1_duty_cnt_min = 0;
-    uint16_t logic_1_duty_cnt_max = 0;
+    float f_tim1_count_avg = 0.0f;
+    float f_input_frequency = 0.0f;
+    uint16_t logic_1_duty_cnt_min = 0U;
+    uint16_t logic_1_duty_cnt_max = 0U;
 
     const uint16_t* p_rising = gn_serialize_rx_risingBuffer;
     const uint16_t* p_falling = gn_serialize_rx_fallingBuffer;
 
-    for (uint16_t i = 1 ; i < len ; ++i)
+    for (uint16_t i = 1U ; i < len ; ++i)
     {
         freq_count_sum += p_rising[i];
         ++count;
@@ -471,20 +471,20 @@ static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 
     if (pdata)
     {
-        uint32_t n_xdic_response = 0;
+        uint32_t n_xdic_response = 0U;
 
-        for (volatile uint16_t j = 0 ; j < len ; ++j)
+        for (volatile uint16_t j = 0U ; j < len ; ++j)
         {
             if ((p_falling[j] > logic_1_duty_cnt_min) && (p_falling[j] < logic_1_duty_cnt_max))
             {
-                n_xdic_response |= (1U << ((len - 1) - j));
+                n_xdic_response |= (1U << ((len - 1U) - j));
             }
         }
 
         *pdata = n_xdic_response;
     }
 
-    if (f_tim1_count_avg > 0)
+    if (f_tim1_count_avg > 0.0f)
     {
         f_input_frequency = (APB1_TIM_FREQ / f_tim1_count_avg);
     }
@@ -494,41 +494,41 @@ static float Decode_Input_Response(uint32_t* pdata, uint16_t len)
 
 void MCU_IF_Set_XDIC_Channel(uint8_t in_channel)
 {
-    if (in_channel < (XDIC_CH_SIZE + 1))
+    if (in_channel < (XDIC_CH_SIZE + 1U))
     {
         gn_xdic_dimming_channel = in_channel;
     }
     else
     {
-        gn_xdic_dimming_channel = 0;
+        gn_xdic_dimming_channel = 0U;
     }
 }
 
 void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 {
-    uint16_t pwm_length = 0;
+    uint16_t pwm_length = 0U;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
 
-        for (uint8_t j = 0 ; j < SERIAL_ADDR_SIZE ; ++j)
+        for (uint8_t j = 0U ; j < SERIAL_ADDR_SIZE ; ++j)
         {
             gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
 
-        for (uint8_t k = 0 ; k < SERIAL_DATA_SIZE ; ++k)
+        for (uint8_t k = 0U ; k < SERIAL_DATA_SIZE ; ++k)
         {
             gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_data, SERIAL_DATA_SIZE - k)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
@@ -536,30 +536,30 @@ void MCU_IF_Write_XDIC(uint8_t in_addr, uint16_t in_data)
 
 static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 {
-    uint32_t pwm_length = 0;
+    uint32_t pwm_length = 0U;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
 
-        for (uint8_t j = 0 ; j < SERIAL_ADDR_SIZE ; ++j)
+        for (uint8_t j = 0U ; j < SERIAL_ADDR_SIZE ; ++j)
         {
             gn_serialize_tx_buffer[pwm_length++] = ((Get_Nth_Bit((uint16_t)in_addr, SERIAL_ADDR_SIZE - j)) ? gn_mcu_serializer_bit_1 : gn_mcu_serializer_bit_0);
         }
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     DEBUG_HI();
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
 
-    uint32_t n_response = 0;
+    uint32_t n_response = 0U;
 
     DEBUG_LO();
     if (true == Serialize_Rx_Start(XDIC_READ_RECV_BITS))
@@ -583,25 +583,25 @@ static uint16_t MCU_IF_Read_XDIC(uint8_t in_addr)
 
 void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 {
-    uint16_t pwm_length = 0;
+    uint16_t pwm_length = 0U;
     uint64_t LD_data_Odd = p_in_LD_data[0];
-    uint64_t LD_data_Even = ((uint64_t)p_in_LD_data[1] << 14) | ((uint64_t)p_in_LD_data[2] << 0);
+    uint64_t LD_data_Even = ((uint64_t)p_in_LD_data[1] << 14U) | ((uint64_t)p_in_LD_data[2] << 0U);
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
 
-        for (uint8_t j = 0 ; j < XDIC_CH_SIZE ; ++j)
+        for (uint8_t j = 0U ; j < XDIC_CH_SIZE ; ++j)
         {
-            bool write_data = (gn_xdic_dimming_channel == 0) || ((gn_xdic_dimming_channel - 1) == j);
-            if (j % 2 == 0) // For Red
+            bool write_data = (gn_xdic_dimming_channel == 0U) || ((gn_xdic_dimming_channel - 1U) == j);
+            if (j % 2U == 0U) // For Red
             {
-                for (uint8_t k = 0 ; k < SERIAL_ODD_SIZE ; ++k)
+                for (uint8_t k = 0U ; k < SERIAL_ODD_SIZE ; ++k)
                 {
                     if (write_data)
                     {
@@ -615,7 +615,7 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
             }
             else // For Green & Blue
             {
-                for (uint8_t k = 0 ; k < SERIAL_EVEN_SIZE ; ++k)
+                for (uint8_t k = 0U ; k < SERIAL_EVEN_SIZE ; ++k)
                 {
                     if (write_data)
                     {
@@ -630,7 +630,7 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
         }
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
@@ -638,12 +638,12 @@ void MCU_IF_Write_LD(uint16_t* p_in_LD_data)
 
 static uint16_t MCU_IF_Fault_Read_Command(void)
 {
-    uint32_t pwm_length = 0;
-    static uint32_t read_msg_error_count = 0;
+    uint32_t pwm_length = 0U;
+    static uint32_t read_msg_error_count = 0U;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
@@ -651,16 +651,16 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
 
-    uint32_t n_response = 0;
+    uint32_t n_response = 0U;
 
     if (true == Serialize_Rx_Start(XDIC_FAULT_RECV_BITS))
     {
-        if((read_msg_error_count % 20) == 0)
+        if((read_msg_error_count % 20U) == 0U)
         {
             print(LOG_ERROR, "Rx Timeout!!!\r\n");
         }
@@ -673,7 +673,7 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
         print(LOG_DEBUG, "FAULT DATA(0x%02X):[%1.3fMHz, CODE : 0x%01X, DATA - 0x%01X]\r\n",\
         n_response, f_frequency, ((n_response >> 4U) & 0x0FU), ((n_response >> 0U) & 0x0FU));
 
-        read_msg_error_count = 0;
+        read_msg_error_count = 0U;
     }
 
     us_delay(XDIC_FAULT_RECV_DELAY);
@@ -683,11 +683,11 @@ static uint16_t MCU_IF_Fault_Read_Command(void)
 
 static void MCU_IF_IdGen_Command()
 {
-    uint16_t pwm_length = 0;
+    uint16_t pwm_length = 0U;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_1;
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
@@ -695,7 +695,7 @@ static void MCU_IF_IdGen_Command()
         gn_serialize_tx_buffer[pwm_length++] = gn_mcu_serializer_bit_0;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
@@ -703,17 +703,17 @@ static void MCU_IF_IdGen_Command()
 
 static void MCU_IF_SyncGen_Command()
 {
-    uint16_t pwm_length = 0;
+    uint16_t pwm_length = 0U;
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
-    for (uint8_t i = 0 ; i < XDIC_DAISY_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_DAISY_SIZE ; ++i)
     {
         memcpy(&gn_serialize_tx_buffer[pwm_length], SyncGen_Pattern, sizeof(SyncGen_Pattern));
-        pwm_length += 4;
+        pwm_length += 4U;
     }
 
-    gn_serialize_tx_buffer[pwm_length++] = 0;
+    gn_serialize_tx_buffer[pwm_length++] = 0U;
 
     Serialize_Tx_Start(pwm_length);
     while (gb_pwm_dma_tx_flag) {}
@@ -734,7 +734,7 @@ void JigBD_IF_Write_Command(uint8_t in_addr, uint16_t in_data)
 
 uint16_t JigBD_IF_Read_Command(uint8_t in_addr)
 {
-    uint16_t ret = 0;
+    uint16_t ret = 0U;
     if (IS_XC24R_Support())
     {
         ret = XC24R_IF_Read_XDIC(in_addr);
@@ -761,7 +761,7 @@ void JigBD_IF_Write_LD_Command(uint16_t* p_in_LD_data)
 
 uint16_t JigBD_IF_Fault_Read_Command(void)
 {
-    uint16_t ret = 0;
+    uint16_t ret = 0U;
     if (IS_XC24R_Support())
     {
         ret = XC24R_IF_Fault_Read_Command();
@@ -775,7 +775,7 @@ uint16_t JigBD_IF_Fault_Read_Command(void)
 
 void JigBD_IF_Reset_Command(void)
 {
-    uint16_t data = (1 << 11);
+    uint16_t data = (1U << 11U);
     if (IS_XC24R_Support())
     {
         XC24R_IF_Write_XDIC(XDIC_ADDR_RESET_ID, data);

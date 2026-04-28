@@ -324,7 +324,7 @@ static void XDIC_Set_Register_Type(uint8_t reg_type)
 
 static const _reg_map_t* XDIC_Get_General_Map_Pointer(uint8_t addr)
 {
-    for (uint8_t i = 0; i < sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0]); ++i)
+    for (uint8_t i = 0U ; i < sizeof(gt_xdic_general_maps) / sizeof(gt_xdic_general_maps[0]); ++i)
     {
         if (gt_xdic_general_maps[i].address == addr)
         {
@@ -398,7 +398,7 @@ uint16_t XDIC_Get_General_Reg(uint8_t addr)
 
 static const _reg_map_t* XDIC_Get_Mirror_Map_Pointer(uint8_t addr)
 {
-    for (uint8_t i = 0; i < sizeof(gt_xdic_mirror_maps) / sizeof(gt_xdic_mirror_maps[0]); ++i)
+    for (uint8_t i = 0U ; i < sizeof(gt_xdic_mirror_maps) / sizeof(gt_xdic_mirror_maps[0]); ++i)
     {
         if (gt_xdic_mirror_maps[i].address == addr)
         {
@@ -461,8 +461,8 @@ uint16_t XDIC_Get_Mirror_Reg(uint8_t addr)
 
 void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val)
 {
-    uint16_t reg_val = 0;
-    uint16_t reg_form_value = 0;
+    uint16_t reg_val = 0U;
+    uint16_t reg_form_value = 0U;
     switch(in_trim_mode)
     {
         case XD_TRIM_IBN_2uA:
@@ -939,7 +939,7 @@ void XDIC_Init(void)
         }
     }
 
-    //XDIC_Set_Delay_CH();
+    XDIC_Set_Delay_CH();
     XDIC_Read_All_Registers();
 
     print(LOG_INFO, "==================== XDIC Initialization Result ====================\r\n");
@@ -1092,7 +1092,7 @@ float XDIC_Get_Max_Current_Level(void)
     float f_rtn = 0.0f;
 
     uint16_t max_curr_level = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_LEVEL);
-    dev_max_curr_level_t dev_max_curr_lvl = (dev_max_curr_level_t)(max_curr_level & 0x00F);
+    dev_max_curr_level_t dev_max_curr_lvl = (dev_max_curr_level_t)(max_curr_level & 0x00FU);
 
     switch (dev_max_curr_lvl)
     {
@@ -1149,7 +1149,7 @@ float XDIC_Get_FB_Level(void)
     float f_rtn = 0.0f;
 
     uint16_t fb_level = XDIC_Read_General_Reg(XDIC_ADDR_FB_LEVEL);
-    fb_level_t fb_level_ch = (fb_level_t)(fb_level & 0x007);
+    fb_level_t fb_level_ch = (fb_level_t)(fb_level & 0x007U);
     print(LOG_INFO, "XDIC FB Level Reg Value : 0x%03X, Level : %d\r\n", fb_level, fb_level_ch);
 
     switch (fb_level_ch)
@@ -1201,7 +1201,7 @@ float XDIC_Get_Short_Level(void)
     float f_rtn = 0.0f;
 
     uint16_t short_level = XDIC_Read_General_Reg(XDIC_ADDR_SHORT_LEVEL);
-    short_level_t short_level_ch = (short_level_t)(short_level & 0x007);
+    short_level_t short_level_ch = (short_level_t)(short_level & 0x007U);
     print(LOG_INFO, "XDIC Short Level Reg Value : 0x%03X, Level : %d\r\n", short_level, short_level_ch);
 
     switch (short_level_ch)
@@ -1253,24 +1253,22 @@ void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref)
 
 void XDIC_Set_MCLK_Lock_CNT(uint32_t in_mclk_lock_cnt)
 {
-    gt_xdic_general_regs._r1A.fllcnt = ((in_mclk_lock_cnt & XDIC_MCLK_LSB_MASK) >>  0);
-    gt_xdic_general_regs._r1B.fllcnt = ((in_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12);
+    gt_xdic_general_regs._r1A.fllcnt = ((in_mclk_lock_cnt & XDIC_MCLK_LSB_MASK) >>  0U);
+    gt_xdic_general_regs._r1B.fllcnt = ((in_mclk_lock_cnt & XDIC_MCLK_MSB_MASK) >> 12U);
 
     XDIC_Write_General_Reg(XDIC_ADDR_FLL_CONTROL_1, gt_xdic_general_regs._r1A.val);
     XDIC_Write_General_Reg(XDIC_ADDR_FLL_CONTROL_2, gt_xdic_general_regs._r1B.val);
-
-    LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 }
 
 static void XDIC_Set_OSC_Manual_Enable(bool en)
 {
     if (en == true)
     {
-        gt_xdic_general_regs._r23.osc_fll_man_e = 1;
+        gt_xdic_general_regs._r23.osc_fll_man_e = 1U;
     }
     else
     {
-        gt_xdic_general_regs._r23.osc_fll_man_e = 0;
+        gt_xdic_general_regs._r23.osc_fll_man_e = 0U;
     }
     XDIC_Write_General_Reg(XDIC_ADDR_OSC_FLL_MANUAL_2, gt_xdic_general_regs._r23.val);
 }
@@ -1292,7 +1290,7 @@ static void XDIC_Set_OSC_Manual(uint16_t osc_manual)
 void XDIC_Overwrite_Mirror_Regs(void)
 {
     uint16_t u16_otp_crc = XDIC_Get_Mirror_Reg(XDIC_MIRROR_ADDR_OTP_CRC);
-    if (u16_otp_crc != 0)
+    if (u16_otp_crc != 0U)
     {
         print(LOG_INFO, "XDIC Already Trimmed!!!!\r\n");
     }
@@ -1332,8 +1330,8 @@ void XDIC_Save_Mirror_Regs(void)
 
 uint64_t XDIC_Compare_Mirror_Regs(void)
 {
-    uint64_t ret = 0;
-    uint16_t u16_reg_val = 0;
+    uint64_t ret = 0U;
+    uint16_t u16_reg_val = 0U;
 
     for (xdic_mirror_addr_t mirror_addr = XDIC_MIRROR_ADDR_DAC_OFS ; mirror_addr < XDIC_MIRROR_ADDR_MAX ; ++mirror_addr)
     {
@@ -1355,101 +1353,94 @@ uint64_t XDIC_Compare_Mirror_Regs(void)
 
 void XDIC_Trim_Init_IBN_2uA(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
 void XDIC_Trim_Init_DAC_LDO_1V5(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 1;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 1U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
 void XDIC_Trim_Init_DIG_LDO_1V5(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 2;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 2U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
 void XDIC_Trim_Init_DAC_A_OFS(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 3;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 3U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    gt_xdic_general_regs._r0B.max_curr_vref = 300;
+    gt_xdic_general_regs._r0B.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF1, gt_xdic_general_regs._r0B.val);
 
-    gt_xdic_general_regs._r0C.max_curr_vref = 300;
+    gt_xdic_general_regs._r0C.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF2, gt_xdic_general_regs._r0C.val);
 
-    gt_xdic_general_regs._r0D.max_curr_vref = 300;
+    gt_xdic_general_regs._r0D.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF3, gt_xdic_general_regs._r0D.val);
-
-#if 0
-    uint16_t r0B_vref = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF1);
-    uint16_t r0C_vref = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF2);
-    uint16_t r0D_vref = XDIC_Read_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF3);
-    print(LOG_INFO, "VREF1 : %u, VREF2 : %u, VREF3 : %u\r\n", r0B_vref, r0C_vref, r0D_vref);
-#endif
 }
 
 void XDIC_Trim_Init_DAC_B_OFS(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 4;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 4U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
-    gt_xdic_general_regs._r0B.max_curr_vref = 300;
+    gt_xdic_general_regs._r0B.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF1, gt_xdic_general_regs._r0B.val);
 
-    gt_xdic_general_regs._r0C.max_curr_vref = 300;
+    gt_xdic_general_regs._r0C.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF2, gt_xdic_general_regs._r0C.val);
 
-    gt_xdic_general_regs._r0D.max_curr_vref = 300;
+    gt_xdic_general_regs._r0D.max_curr_vref = 300U;
     XDIC_Write_General_Reg(XDIC_ADDR_MAX_CURRENT_VREF3, gt_xdic_general_regs._r0D.val);
 }
 
 void XDIC_Trim_Init_FLL_LDO_1V5(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 5;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 5U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
 void XDIC_Trim_Init_OSC(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 1;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 1U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
     XDIC_Set_OSC_Manual_Enable(true);
-    XDIC_Set_OSC_Manual(0x8000);
+    XDIC_Set_OSC_Manual(0x8000U);
 }
 
 void XDIC_Trim_Init_CH_GAIN_ODD(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 1;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
     XDIC_Set_Max_Current_Level(XDIC_GAIN_ODD_MAX_CURRENT_LVL);
@@ -1458,10 +1449,10 @@ void XDIC_Trim_Init_CH_GAIN_ODD(void)
 
 void XDIC_Trim_Init_CH_GAIN_EVEN(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 1;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
     XDIC_Set_Max_Current_Level(XDIC_GAIN_EVEN_MAX_CURRENT_LVL);
@@ -1470,10 +1461,10 @@ void XDIC_Trim_Init_CH_GAIN_EVEN(void)
 
 void XDIC_Trim_Init_CH_OFS_ODD(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 1;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
     XDIC_Set_Max_Current_Level(XDIC_OFS_ODD_MAX_CURRENT_LVL);
@@ -1482,10 +1473,10 @@ void XDIC_Trim_Init_CH_OFS_ODD(void)
 
 void XDIC_Trim_Init_CH_OFS_EVEN(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 1;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 1U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 
     XDIC_Set_Max_Current_Level(XDIC_OFS_EVEN_MAX_CURRENT_LVL);
@@ -1494,19 +1485,19 @@ void XDIC_Trim_Init_CH_OFS_EVEN(void)
 
 void XDIC_Trim_Init_UVOV_1P5(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 6;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 6U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
 void XDIC_Trim_Init_UVOV_VDD(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 7;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 0;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 7U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 0U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
 }
 
@@ -1578,7 +1569,7 @@ void XDIC_Trim_Partial_CH_GAIN(void)
     JigBD_IF_VLED_9V_EN(PWR_ON);
     JigBD_IF_Change_Current_Gain(current_gain);
 
-    for (uint8_t i = 0 ; i < XDIC_CH_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_CH_SIZE ; ++i)
     {
         JigBD_IF_Select_Output_Ch(i);
 
@@ -1610,7 +1601,7 @@ void XDIC_Trim_Partial_CH_OFS(void)
     JigBD_IF_VLED_9V_EN(PWR_ON);
     JigBD_IF_Change_Current_Gain(current_gain);
 
-    for (uint8_t i = 0 ; i < XDIC_CH_SIZE ; ++i)
+    for (uint8_t i = 0U ; i < XDIC_CH_SIZE ; ++i)
     {
         JigBD_IF_Select_Output_Ch(i);
 
@@ -1660,10 +1651,10 @@ void XDIC_Trim_Partial_UVOV_VDD(void)
 
 void XDIC_Trim_Show_OSC(void)
 {
-    gt_xdic_general_regs._r3F.test_en = 1;
-    gt_xdic_general_regs._r3F.test_ana_en = 0;
-    gt_xdic_general_regs._r3F.pwm_full_o = 0;
-    gt_xdic_general_regs._r3F.mclk64_o = 1;
+    gt_xdic_general_regs._r3F.test_en = 1U;
+    gt_xdic_general_regs._r3F.test_ana_en = 0U;
+    gt_xdic_general_regs._r3F.pwm_full_o = 0U;
+    gt_xdic_general_regs._r3F.mclk64_o = 1U;
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_OP_MODE, gt_xdic_general_regs._r3F.val);
     LL_GPIO_ResetOutputPin(XD_FREQ_RESET_GPIO_Port, XD_FREQ_RESET_Pin);
 }
@@ -1685,11 +1676,11 @@ void XDIC_Set_OTP_PG_Start(bool en)
 {
     if (en == true)
     {
-        gt_xdic_general_regs._r3D.otp_pg_start = 1;
+        gt_xdic_general_regs._r3D.otp_pg_start = 1U;
     }
     else
     {
-        gt_xdic_general_regs._r3D.otp_pg_start = 0;
+        gt_xdic_general_regs._r3D.otp_pg_start = 0U;
     }
     XDIC_Write_General_Reg(XDIC_ADDR_OTP_RD_PROG, gt_xdic_general_regs._r3D.val);
 }

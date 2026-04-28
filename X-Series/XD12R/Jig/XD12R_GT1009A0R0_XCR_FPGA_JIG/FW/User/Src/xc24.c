@@ -510,7 +510,7 @@ void XC24R_Write_Group2_Register(xc24r_addr_grp2_t in_addr, uint16_t in_data)
         print(LOG_ERROR, "ERROR: %s - addr(0x%02X) Not Found !!\r\n", __func__, in_addr);
     }
 
-    SPI_Write(SPI1, tx_buffer, 2);
+    SPI_Write(SPI1, tx_buffer, 2U);
 }
 
 uint16_t XC24R_Read_Group2_Register(xc24r_addr_grp2_t in_addr)
@@ -656,6 +656,34 @@ void XC24R_Start_MCLK_Oscillation(bool en)
     LL_mDelay(10U);
 }
 
+void XC24R_Start_FLLSync_Oscillation(bool en)
+{
+    if (en)
+    {
+        LL_GPIO_InitTypeDef GPIO_InitStruct = {0, };
+
+        GPIO_InitStruct.Pin = FPGA_FLLSYNC_Pin;
+        GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+        GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+        GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
+        LL_GPIO_Init(FPGA_FLLSYNC_GPIO_Port, &GPIO_InitStruct);
+    }
+    else
+    {
+        LL_GPIO_InitTypeDef GPIO_InitStruct = {0, };
+
+        GPIO_InitStruct.Pin = FPGA_FLLSYNC_Pin;
+        GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+        LL_GPIO_Init(FPGA_FLLSYNC_GPIO_Port, &GPIO_InitStruct);
+        LL_GPIO_ResetOutputPin(FPGA_FLLSYNC_GPIO_Port, FPGA_FLLSYNC_Pin);
+    }
+    LL_mDelay(10U);
+}
+
 /* BEGIN - INTERFACE FUNCTIONS ******************************************************************/
 
 bool IS_XC24R_Support(void)
@@ -704,7 +732,7 @@ void XC24R_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
 
 uint16_t XC24R_IF_Read_XDIC(uint8_t in_XDIC_addr)
 {
-    uint16_t u16_XDIC_data = 0;
+    uint16_t u16_XDIC_data = 0U;
 
     gt_xc24r_group1_regs._r10.bit.local_rd_pointer_rst = 1U;
     gt_xc24r_group1_regs._r10.bit.local_wr_pointer_rst = 1U;
@@ -727,16 +755,16 @@ void XC24R_IF_Write_LD(uint16_t* p_in_LD_data)
     uint16_t tx_buffer[1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE] = {0,};
 
     cmd_format.bit.code = CMD_CODE_LD_TRANS;
-    cmd_format.bit.addr = 0;
+    cmd_format.bit.addr = 0U;
     cmd_format.bit.size = XDIC_DAISY_SIZE * XDIC_CH_SIZE;
 
     tx_buffer[0] = cmd_format.ALL;
-    for (uint16_t i = 0 ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE) ; ++i)
+    for (uint16_t i = 0U ; i < (XDIC_DAISY_SIZE * XDIC_CH_SIZE) ; ++i)
     {
         tx_buffer[i + 1] = p_in_LD_data[i];
     }
 
-    SPI_Write(SPI1, tx_buffer, 1 + XDIC_DAISY_SIZE * XDIC_CH_SIZE);
+    SPI_Write(SPI1, tx_buffer, 1U + XDIC_DAISY_SIZE * XDIC_CH_SIZE);
 }
 
 void XC24R_Turn_Off_Sync_Auto(void)

@@ -41,8 +41,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RX_PACKET_SIZE  64
-#define RX_BUFF_SIZE    32
+#define RX_PACKET_SIZE  64U
+#define RX_BUFF_SIZE    32U
 
 typedef void (*func_t)(void);
 
@@ -87,32 +87,32 @@ static uint8_t gn_key_task_tick;
 
 static void btn_process(void)
 {
-    if (gn_key_task_tick == 0)
+    if (gn_key_task_tick == 0U)
     {
         gt_key_info.now_state = LL_GPIO_IsInputPinSet(B1_GPIO_Port, B1_Pin);
         if (gt_key_info.now_state != gt_key_info.prev_state)
         {
-            if (gt_key_info.now_state == 0)
+            if (gt_key_info.now_state == 0U)
             {
             }
             else
             {
                 // Button Released
-                if (gt_key_info.press_cnt >= 30)
+                if (gt_key_info.press_cnt >= 30U)
                 {
                     if (gt_key_info.function[gt_key_info.odd_even] != NULL)
                     {
                         gt_key_info.function[gt_key_info.odd_even]();
                     }
-                    gt_key_info.odd_even ^= 1;
+                    gt_key_info.odd_even ^= 1U;
                 }
-                gt_key_info.press_cnt = 0;
+                gt_key_info.press_cnt = 0U;
             }
             gt_key_info.prev_state = gt_key_info.now_state;
         }
         else
         {
-            if (gt_key_info.now_state == 0)
+            if (gt_key_info.now_state == 0U)
             {
                 // Button Pressed
                 ++gt_key_info.press_cnt;
@@ -122,7 +122,7 @@ static void btn_process(void)
                 // nothing
             }
         }
-        gn_key_task_tick = 10; //10ms
+        gn_key_task_tick = 10U; //10ms
     }
 }
 
@@ -142,8 +142,6 @@ static RX_UART_t gt_rx_uart;
 
 static bool gb_xd_run_trim_task;
 static bool gb_xd_run_screen_task;
-
-static bool gb_xc_run_trim_task;
 
 static LOG_LV_T gt_log_lv = LOG_INFO;
 /* USER CODE END PV */
@@ -181,10 +179,6 @@ void sys_tick_handler(void)
     if (gb_xd_run_screen_task == false)
     {
         gb_xd_run_screen_task = true;
-    }
-    if (gb_xc_run_trim_task == false)
-    {
-        gb_xc_run_trim_task = true;
     }
     if (gn_xd_rx_timeout)
     {
@@ -284,7 +278,6 @@ static void comm_print_help(void)
     print(LOG_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC trim process");
     print(LOG_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
     print(LOG_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
-    print(LOG_INFO, "\n\r  xc_trim_start / 4\t : Start XC24R trim process");
 
     print(LOG_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
     print(LOG_INFO, "\n\r  reset\t\t\t : Reset MCU");
@@ -294,15 +287,14 @@ static void comm_print_help(void)
 
 static void comm_init(void)
 {
-    print(LOG_INFO, "\n\r--------------------------------------");
-    print(LOG_INFO, "\n\r    [GT-XD12R GT1009A0R0 JIG]");
-    print(LOG_INFO, "\n\r--------------------------------------");
+    print(LOG_INFO, "\n\r---------------------------------------------------");
+    print(LOG_INFO, "\n\r    [GT-XD12R GT1009A0R0 with XC24R (FPGA) JIG]    ");
+    print(LOG_INFO, "\n\r---------------------------------------------------");
     print(LOG_INFO, "\n\r - Author: xxx@glbltech.com");
     print(LOG_INFO, "\n\r - Build : %s", __DATE__);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24R_Support() ? "XC24R ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24R"), ANSI_FONT_NONE);
+    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24R_Support() ? "XC24R Ver. FPGA IS SELECTED!" : "NOT SUPPORT XC24R"), ANSI_FONT_NONE);
     print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24R OTP WRITE ENABLE" : "XC24R OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    print(LOG_INFO, "\n\r--------------------------------------\r\n");
+    print(LOG_INFO, "\n\r---------------------------------------------------");
 }
 /* USER CODE END 0 */
 
@@ -354,10 +346,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     USE_XC24R(false);
-    XD_Trim_IF_Set_OTP_Enable(false);
     XC24R_Start_MCLK_Oscillation(false);
+    XC24R_Start_FLLSync_Oscillation(false);
+
     JigBD_IF_Link_DMA_With_Buffer();
 
+    XD_Trim_IF_Set_OTP_Enable(false);
     XD_Trim_Calculate_Spec();
     ADS114S08_Init();
 
@@ -1499,26 +1493,20 @@ static void JigTestMainTask(void)
         XD_Screen_Task();
         gb_xd_run_screen_task = false;
     }
-
-    if (gb_xc_run_trim_task)
-    {
-        XC_Trim_Task();
-        gb_xc_run_trim_task = false;
-    }
 }
 
 static uint8_t comm_get_rx_packet(rx_packet_t** pData)
 {
-    uint8_t ret = 0;
+    uint8_t ret = 0U;
 
     if (gt_rx_uart.RxInCnt != gt_rx_uart.RxOutCnt)
     {
         *pData = gt_rx_uart.Rxbuff + gt_rx_uart.RxOutCnt;
 
         ++gt_rx_uart.RxOutCnt;
-        gt_rx_uart.RxOutCnt &= (uint16_t)(RX_BUFF_SIZE -1);
+        gt_rx_uart.RxOutCnt &= (uint16_t)(RX_BUFF_SIZE - 1);
 
-        ret = 1;
+        ret = 1U;
     }
 
     return ret;
@@ -1530,12 +1518,12 @@ static void TaskDebugUart(void)
 
     if (comm_get_rx_packet(&p_data))
     {
-        char str_in[RX_PACKET_SIZE + 1] = {0, };
-        uint32_t u32_recv_param[6] = {0, };
-        double lf_recv_param[6] = {0, };
+        char str_in[RX_PACKET_SIZE + 1] = { 0 };
+        uint32_t u32_recv_param[6] = { 0 };
+        double lf_recv_param[6] = { 0 };
 
         memcpy(str_in, p_data->buffer, p_data->length);
-        p_data->length = 0;
+        p_data->length = 0U;
 
         if (Command_is_("help") || Command_is_("?"))
         {
@@ -1873,7 +1861,6 @@ static void TaskDebugUart(void)
             XDIC_Trim_Show_OSC();
             print(LOG_INFO, "\r\n OK\r\n");
         }
-
 /* ----------------- command list - xc ----------------- */
         else if (Command_is_("xc_debug"))
         {
@@ -1881,8 +1868,13 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xc_w1", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            print(LOG_INFO, "\r\n XC Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
-            XC24R_Write_Group1_Register((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            print(LOG_INFO, "\r\n XC GRP1 Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
+            XC24R_Write_Group1_Register((xc24r_addr_grp1_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+        }
+        else if (Command_Param_is_("xc_w2", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            print(LOG_INFO, "\r\n XC GRP2 Write : 0x%02X - 0x%02X\r\n", u32_recv_param[0], u32_recv_param[1]);
+            XC24R_Write_Group2_Register((xc24r_addr_grp2_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
         else if (Command_is_("xc_r_all"))
         {
@@ -1890,8 +1882,13 @@ static void TaskDebugUart(void)
         }
         else if (Command_Param_is_("xc_r1", "%x", &u32_recv_param[0]))
         {
-            uint16_t ret = XC24R_Read_Group1_Register((uint8_t)u32_recv_param[0]);
-            print(LOG_INFO, "\r\n XC Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
+            uint16_t ret = XC24R_Read_Group1_Register((xc24r_addr_grp1_t)u32_recv_param[0]);
+            print(LOG_INFO, "\r\n XC GRP1 Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
+        }
+        else if (Command_Param_is_("xc_r2", "%x", &u32_recv_param[0]))
+        {
+            uint16_t ret = XC24R_Read_Group2_Register((xc24r_addr_grp2_t)u32_recv_param[0]);
+            print(LOG_INFO, "\r\n XC GRP2 Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
         else if (Command_Param_is_("xc_use", "%d", &u32_recv_param[0]))
         {
@@ -1938,11 +1935,6 @@ static void TaskDebugUart(void)
             print(LOG_INFO, "Trim Vsync start\r\n");
 #endif
             XDIC_Set_LD_Data(0x100, 0x100, 0x100);
-        }
-        else if (Command_is_("xc_trim_start") || Command_is_("4"))
-        {
-            print(LOG_INFO, "\r\n XC Trim Start \r\n");
-            XC_Trim_IF_Trim_Start();
         }
         else if (Command_Param_is_("log_lv", "%d", &u32_recv_param[0]))
         {
@@ -1991,17 +1983,17 @@ void comm_rx_handler(uint8_t rx)
 
     if ((rx == '\n') || (rx == '\r'))
     {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1U))
         {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = 0;
+            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = 0U;
         }
         else
         {
-            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
+            gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0U;
         }
 
         ++gt_rx_uart.RxInCnt;
-        gt_rx_uart.RxInCnt &= (uint16_t)(RX_BUFF_SIZE - 1);
+        gt_rx_uart.RxInCnt &= (uint16_t)(RX_BUFF_SIZE - 1U);
     }
     else if (rx == UART_BACKSPACE)
     {
@@ -2014,26 +2006,26 @@ void comm_rx_handler(uint8_t rx)
     }
     else
     {
-        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+        if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length < (RX_PACKET_SIZE - 1U))
         {
             gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length] = rx;
             ++gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].length;
 
-            if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[0] == 0x1B)
+            if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[0] == 0x1BU)
             {
-                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[1] == 0x5B)
+                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[1] == 0x5BU)
                 {
-                    if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[2] == 0x41)
+                    if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[2] == 0x41U)
                     {
                         print(LOG_INFO, "\r\n\r\n");
                         /* copy */
-                        for (uint8_t i = 0 ; i < 64 ; ++i)
+                        for (uint8_t i = 0U ; i < RX_PACKET_SIZE ; ++i)
                         {
                             if (gt_rx_uart.RxInCnt)
                             {
-                                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i])
+                                if (gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt - 1].buffer[i])
                                 {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt-1].buffer[i];
+                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt - 1].buffer[i];
                                     print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
                                 }
                                 else
@@ -2044,9 +2036,9 @@ void comm_rx_handler(uint8_t rx)
                             }
                             else
                             {
-                                if (gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i])
+                                if (gt_rx_uart.Rxbuff[RX_BUFF_SIZE - 1].buffer[i])
                                 {
-                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[RX_BUFF_SIZE-1].buffer[i];
+                                    gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i] = gt_rx_uart.Rxbuff[RX_BUFF_SIZE - 1].buffer[i];
                                     print(LOG_INFO, "%c", gt_rx_uart.Rxbuff[gt_rx_uart.RxInCnt].buffer[i]);
                                 }
                                 else

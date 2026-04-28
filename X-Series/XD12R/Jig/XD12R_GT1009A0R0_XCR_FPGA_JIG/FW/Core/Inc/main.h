@@ -67,8 +67,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define VA_GENERIC(_1, _2, _3, _4, _5, _6,x, ...) x
-// #define Command_Param_is_(x, ...) (sscanf(str_in, x, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
+#define VA_GENERIC(_1, _2, _3, _4, _5, _6, x, ...) x
 #define Command_Param_is_(a, b, ...) (sscanf(str_in, a b, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
 #define Command_is_(x) (strncmp(str_in, x, strlen(x)) == 0)
 /* USER CODE END EM */

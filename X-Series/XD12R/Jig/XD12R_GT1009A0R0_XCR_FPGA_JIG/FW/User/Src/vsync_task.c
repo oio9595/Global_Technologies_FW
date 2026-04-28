@@ -53,7 +53,7 @@ static bool gb_vsync_for_trim;
 
 void Svsync_Timer_Start(void)
 {
-    gn_svsync_count = 0;
+    gn_svsync_count = 0U;
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH1);
 
@@ -185,9 +185,9 @@ uint16_t* XDIC_Get_LD_Data(void)
 
 void XDIC_Get_Fault_Status(void)
 {
-    uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0F);
-    static uint8_t prev_fault_status = 0xFF;
-    static uint16_t vsync_tick = 0;
+    uint8_t now_fault_status = (JigBD_IF_Fault_Read_Command() & 0x0FU);
+    static uint8_t prev_fault_status = 0xFFU;
+    static uint16_t vsync_tick = 0U;
 
     if (now_fault_status != prev_fault_status)
     {
@@ -197,7 +197,7 @@ void XDIC_Get_Fault_Status(void)
         }
         else
         {
-            char msg[55] = {0, };
+            char msg[55] = { 0 };
             snprintf(msg, sizeof(msg), "\r\n [%u] XD FAULT Detected [ ", vsync_tick);
             if (now_fault_status & FAULT_MASK_FB1)
             {

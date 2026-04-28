@@ -238,7 +238,7 @@ void DMA1_Stream2_IRQHandler(void)
         LL_TIM_DisableCounter(TIM5);
         JigBD_IF_Calculate_Input_Capture_Freq();
 
-        gb_timer_input_capture_done = 1;
+        gb_timer_input_capture_done = true;
     }
     else if (LL_DMA_IsActiveFlag_TE2(DMA1) == 1)
     {

@@ -2400,6 +2400,7 @@ extern void XC24R_Dump_All_Register(void);
 extern void XC24R_Init(void);
 
 extern void XC24R_Start_MCLK_Oscillation(bool en);
+extern void XC24R_Start_FLLSync_Oscillation(bool en);
 extern bool IS_XC24R_Support(void);
 extern void USE_XC24R(bool b_support);
 

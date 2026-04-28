@@ -86,7 +86,7 @@ typedef struct tag_XDIC_SCREEN_PARAM_T
 
 typedef enum tag_TRIM_ADJUST_TYPE_T
 {
-    ADJ_NONE = 0,
+    ADJ_NONE = 0U,
     ADJ_PLUS,
     ADJ_MINUS,
     ADJ_DEFAULT,
@@ -283,12 +283,12 @@ static uint8_t XD_Trim_Check_Valid_Step(uint16_t in_step, uint8_t in_channel, ui
 
 static void XD_Trim_Algorithm_Clear_Buffer_Channel(trim_algo_param_t *ptr_Param)
 {
-    ptr_Param->u8_loop_cnt = 0;
-    ptr_Param->trim_saved_cnt = 0;
+    ptr_Param->u8_loop_cnt = 0U;
+    ptr_Param->trim_saved_cnt = 0U;
     for (int i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
     {
-        ptr_Param->trim_saved_data[i].u16_saved_adc = 0;
-        ptr_Param->trim_saved_data[i].u16_saved_reg = 0;
+        ptr_Param->trim_saved_data[i].u16_saved_adc = 0U;
+        ptr_Param->trim_saved_data[i].u16_saved_reg = 0U;
     }
 }
 
@@ -298,10 +298,10 @@ static void XD_Trim_Algorithm_Clear_Buffer_All(trim_algo_param_t *ptr_Param)
 
     for (int i = 0 ; i < XD_CH_MAX ; ++i)
     {
-        ptr_Param->adc_cur[i] = 0;
-        ptr_Param->adc_pre[i] = 0;
-        ptr_Param->adjust_amount[i] = 0;
-        ptr_Param->value[i] = 0;
+        ptr_Param->adc_cur[i] = 0U;
+        ptr_Param->adc_pre[i] = 0U;
+        ptr_Param->adjust_amount[i] = 0U;
+        ptr_Param->value[i] = 0U;
         ptr_Param->trim_adjust_flag[i] = ADJ_DEFAULT;
     }
 }
@@ -311,8 +311,8 @@ static void XD_Trim_Param_Algorithm_Init(void)
     for (xd_trim_mode_t i_trim_mode = XD_TRIM_START ; i_trim_mode < XD_TRIM_MAX ; ++i_trim_mode)
     {
         current_gain_t temp_gain_level = GAIN_LOW;
-        uint16_t u16_tmp_trim_range_adc_min = 0;
-        uint16_t u16_tmp_trim_range_adc_max = 0;
+        uint16_t u16_tmp_trim_range_adc_min = 0U;
+        uint16_t u16_tmp_trim_range_adc_max = 0U;
 
         double d_tmp_min = gt_xdic_trim_condition[i_trim_mode].f_target_min;
         double d_tmp_max = gt_xdic_trim_condition[i_trim_mode].f_target_max;
@@ -412,21 +412,21 @@ static void XD_Trim_Param_Algorithm_Init(void)
 
 static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 {
-    uint16_t u16_adc_range_min = 0;
-    uint16_t u16_adc_range_max = 0;
-    uint16_t u16_adc_range_target = 0;
-    uint8_t channel = 0;
-    uint8_t u8_loop_cnt = 0;
-    uint8_t u8_CH_MAX = 0;
-    uint16_t u16_adc_cur = 0;
-    uint16_t u16_adc_pre = 0;
-    uint16_t u16_substitute_value = 0;
+    uint16_t u16_adc_range_min = 0U;
+    uint16_t u16_adc_range_max = 0U;
+    uint16_t u16_adc_range_target = 0U;
+    uint8_t channel = 0U;
+    uint8_t u8_loop_cnt = 0U;
+    uint8_t u8_CH_MAX = 0U;
+    uint16_t u16_adc_cur = 0U;
+    uint16_t u16_adc_pre = 0U;
+    uint16_t u16_substitute_value = 0U;
     uint8_t u8_rtn_val = TRIM_ALGORITHM_CONTINUE;
     double temp_value = 0;
     const char *str_trim_result = gs_trim_algorithm_result[0];
 
-    static uint16_t u16_reg_saved[12] = {0, };
-    static uint16_t u16_data_gap[12] = {0, };
+    static uint16_t u16_reg_saved[12] = { 0 };
+    static uint16_t u16_data_gap[12] = { 0 };
 
     u16_adc_range_min = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_min;
     u16_adc_range_max = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].u16_trim_range_adc_max;
@@ -445,8 +445,8 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
 
     if (channel < u8_CH_MAX)
     {
-        uint8_t temp_saved_cnt = 0;
-        uint16_t u16_adc_per_register = 0;
+        uint8_t temp_saved_cnt = 0U;
+        uint16_t u16_adc_per_register = 0U;
         current_gain_t temp_current_gain = ptr_Param->trim_adc_trange[ptr_Param->trim_mode].current_gain;
 
         if (ptr_Param->trim_mode == XD_TRIM_OSC)
@@ -463,13 +463,13 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         }
         temp_value = ptr_Param->value[channel];
 
-        if (u8_loop_cnt != 1) // Initial adc per register
+        if (u8_loop_cnt != 1U) // Initial adc per register
         {
             u16_adc_per_register = (uint16_t)(((float)(abs(u16_adc_pre - u16_adc_cur)) / ptr_Param->adjust_amount[channel]) + 0.5f);
         }
         else
         {
-            u16_adc_per_register = 0;
+            u16_adc_per_register = 0U;
         }
 
         // Copy current ADC to previous ADC
@@ -482,15 +482,15 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_PLUS;
             str_trim_result = gs_trim_algorithm_result[2];
-            if (u16_adc_per_register == 0)
+            if (u16_adc_per_register == 0U)
             {
                 if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN_ODD || ptr_Param->trim_mode == XD_TRIM_CH_GAIN_EVEN ||ptr_Param->trim_mode == XD_TRIM_CH_OFS_ODD || ptr_Param->trim_mode == XD_TRIM_CH_OFS_EVEN)
                 {
-                    ptr_Param->adjust_amount[channel] = 10;
+                    ptr_Param->adjust_amount[channel] = 10U;
                 }
                 else
                 {
-                    ptr_Param->adjust_amount[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1U;
                 }
             }
             else
@@ -500,16 +500,16 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
                     uint16_t adjust_mount = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
                     if (XD_Trim_Check_Valid_Step(adjust_mount, channel, ADJ_PLUS, ptr_Param->trim_mode))
                     {
-                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1);
+                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1U);
                     }
                     else
                     {
-                        ptr_Param->adjust_amount[channel] = 1;
+                        ptr_Param->adjust_amount[channel] = 1U;
                     }
                 }
                 else
                 {
-                    ptr_Param->adjust_amount[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1U;
                 }
             }
 
@@ -526,34 +526,34 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_MINUS;
             str_trim_result = gs_trim_algorithm_result[1];
-            if (u16_adc_per_register == 0)
+            if (u16_adc_per_register == 0U)
             {
                 if (ptr_Param->trim_mode == XD_TRIM_CH_GAIN_ODD || ptr_Param->trim_mode == XD_TRIM_CH_GAIN_EVEN ||ptr_Param->trim_mode == XD_TRIM_CH_OFS_ODD || ptr_Param->trim_mode == XD_TRIM_CH_OFS_EVEN)
                 {
-                    ptr_Param->adjust_amount[channel] = 10;
+                    ptr_Param->adjust_amount[channel] = 10U;
                 }
                 else
                 {
-                    ptr_Param->adjust_amount[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1U;
                 }
             }
             else
             {
-                if (u16_adc_cur - u16_adc_range_target >= u16_adc_per_register * 2)
+                if (u16_adc_cur - u16_adc_range_target >= u16_adc_per_register * 2U)
                 {
                     uint16_t adjust_mount = (uint16_t)(((float)(abs(u16_adc_cur - u16_adc_range_target)) / u16_adc_per_register) + 0.5f);
                     if (XD_Trim_Check_Valid_Step(adjust_mount, channel, ADJ_MINUS, ptr_Param->trim_mode))
                     {
-                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1);
+                        ptr_Param->adjust_amount[channel] = (adjust_mount ? adjust_mount : 1U);
                     }
                     else
                     {
-                        ptr_Param->adjust_amount[channel] = 1;
+                        ptr_Param->adjust_amount[channel] = 1U;
                     }
                 }
                 else
                 {
-                    ptr_Param->adjust_amount[channel] = 1;
+                    ptr_Param->adjust_amount[channel] = 1U;
                 }
             }
 
@@ -570,17 +570,17 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         {
             ptr_Param->trim_adjust_flag[channel] = ADJ_NONE;
             str_trim_result = gs_trim_algorithm_result[0];
-            ptr_Param->adjust_amount[channel] = 0;
+            ptr_Param->adjust_amount[channel] = 0U;
 
-            for (int i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
+            for (uint8_t i = 0U ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
             {
                 if (ptr_Param->trim_saved_data[i].u16_saved_reg == u16_substitute_value) //If there is an 2 times matched
                 {
                     // Write Register
-                    print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[i].u16_saved_reg);
+                    print(LOG_DEBUG, "********Trim Done(%u, %u)********\r\n", (channel + 1U), ptr_Param->trim_saved_data[i].u16_saved_reg);
                     XDIC_Write_Substitute_Value_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[i].u16_saved_reg);
                     u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[i].u16_saved_reg;
-                    u16_data_gap[ptr_Param->u8_channel_cur] = 0;
+                    u16_data_gap[ptr_Param->u8_channel_cur] = 0U;
                     ++ptr_Param->u8_channel_cur;
                     XD_Trim_Algorithm_Clear_Buffer_Channel(ptr_Param);
                     u8_rtn_val = TRIM_ALGORITHM_DONE_CHANNEL; // Done - Channel
@@ -603,7 +603,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         uint16_t u16_adc_gap_closest = 0xFFFFU;
         uint16_t u16_adc_gap_temp = 0U;
         uint8_t u8_closest_adc_index = TRIM_REGISTER_SAVED_CNT;
-        for (uint8_t i = 0 ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
+        for (uint8_t i = 0U ; i < TRIM_REGISTER_SAVED_CNT ; ++i)
         {
             u16_adc_gap_temp = abs(ptr_Param->trim_saved_data[i].u16_saved_adc - u16_adc_range_target);
             if (u16_adc_gap_temp < u16_adc_gap_closest)
@@ -622,7 +622,7 @@ static uint8_t XD_Trim_Algorithm_Body(trim_algo_param_t *ptr_Param)
         else
         {
             // Write Register
-            print(LOG_DEBUG, "********Trim Done(%d,%d)********\r\n",channel + 1, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
+            print(LOG_DEBUG, "********Trim Done(%u, %u)********\r\n", (channel + 1U), ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             XDIC_Write_Substitute_Value_By_Trim_Mode(channel, ptr_Param->trim_mode, ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg);
             u16_reg_saved[ptr_Param->u8_channel_cur] = ptr_Param->trim_saved_data[u8_closest_adc_index].u16_saved_reg;
             u16_data_gap[ptr_Param->u8_channel_cur] = u16_adc_gap_closest;
@@ -721,68 +721,68 @@ void XD_Trim_Calculate_Spec(void)
         switch(mode)
         {
             case XD_TRIM_IBN_2uA:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_IBN_2uA_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_IBN_2uA_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_IBN_2uA_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_IBN_2uA_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_DAC_LDO_1V5:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_LDO_1V5_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_LDO_1V5_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_LDO_1V5_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_LDO_1V5_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_DIG_LDO_1V5:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DIG_LDO_1V5_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DIG_LDO_1V5_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DIG_LDO_1V5_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DIG_LDO_1V5_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_DAC_A_OFS:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_A_OFS_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_A_OFS_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_A_OFS_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_A_OFS_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_DAC_B_OFS:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_B_OFS_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_B_OFS_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_DAC_B_OFS_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_DAC_B_OFS_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_FLL_LDO_1V5:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_FLL_LDO_1V5_TARGET * (1 - XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_FLL_LDO_1V5_TARGET * (1 + XDIC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_FLL_LDO_1V5_TARGET * (1.0f - XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_FLL_LDO_1V5_TARGET * (1.0f + XDIC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_OSC:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OSC_TARGET * (1 - XDIC_OSC_ERR_RATE));
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OSC_TARGET * (1 + XDIC_OSC_ERR_RATE));
-                gt_xdic_trim_condition[mode].u16_p1 = 0;
-                gt_xdic_trim_condition[mode].u16_p2 = 0;
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OSC_TARGET * (1.0f - XDIC_OSC_ERR_RATE));
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OSC_TARGET * (1.0f + XDIC_OSC_ERR_RATE));
+                gt_xdic_trim_condition[mode].u16_p1 = 0U;
+                gt_xdic_trim_condition[mode].u16_p2 = 0U;
                 break;
             case XD_TRIM_CH_GAIN_ODD:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_ODD_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_ODD_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_ODD_TARGET * (1.0f - XDIC_GAIN_ERR_RATE)) / 1000U; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_ODD_TARGET * (1.0f + XDIC_GAIN_ERR_RATE)) / 1000U; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_GAIN_ODD_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_GAIN_ODD_P2;
                 break;
             case XD_TRIM_CH_GAIN_EVEN:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_EVEN_TARGET * (1 - XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_EVEN_TARGET * (1 + XDIC_GAIN_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_GAIN_EVEN_TARGET * (1.0f - XDIC_GAIN_ERR_RATE)) / 1000U; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_GAIN_EVEN_TARGET * (1.0f + XDIC_GAIN_ERR_RATE)) / 1000U; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_GAIN_EVEN_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_GAIN_EVEN_P2;
                 break;
             case XD_TRIM_CH_OFS_ODD:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_ODD_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_ODD_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_ODD_TARGET * (1.0f - XDIC_OFS_ERR_RATE)) / 1000U; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_ODD_TARGET * (1.0f + XDIC_OFS_ERR_RATE)) / 1000U; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_ODD_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_ODD_P2;
                 break;
             case XD_TRIM_CH_OFS_EVEN:
-                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_EVEN_TARGET * (1 - XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
-                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_EVEN_TARGET * (1 + XDIC_OFS_ERR_RATE)) / 1000; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_min = (XDIC_OFS_EVEN_TARGET * (1.0f - XDIC_OFS_ERR_RATE)) / 1000U; // Convert to A
+                gt_xdic_trim_condition[mode].f_target_max = (XDIC_OFS_EVEN_TARGET * (1.0f + XDIC_OFS_ERR_RATE)) / 1000U; // Convert to A
                 gt_xdic_trim_condition[mode].u16_p1 = XDIC_OFS_EVEN_P1;
                 gt_xdic_trim_condition[mode].u16_p2 = XDIC_OFS_EVEN_P2;
                 break;
@@ -792,9 +792,9 @@ void XD_Trim_Calculate_Spec(void)
 
 void XD_Display_Screen_Result(void)
 {
-    for (uint8_t point = 0 ; point < XDIC_SCREEN_POINT_SIZE ; ++point)
+    for (uint8_t point = 0U ; point < XDIC_SCREEN_POINT_SIZE ; ++point)
     {
-        for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+        for (uint8_t ch = 0U ; ch < XD_CH_MAX ; ++ch)
         {
             print(LOG_INFO, "%7.3f,", gt_xd_screen_param[point].f_measured[ch]);
         }
@@ -808,12 +808,12 @@ void XD_Trim_Task(void)
 {
     if (gt_xd_trim_step != XD_TRIM_STEP_NONE)
     {
-        uint8_t channel = 0;
-        uint16_t u16_tmp_adc_cur = 0;
+        uint8_t channel = 0U;
+        uint16_t u16_tmp_adc_cur = 0U;
         xd_trim_mode_t t_trim_search_mode_next = XD_TRIM_MAX;
-        uint8_t trim_algorithm_result = 0;
-        uint8_t u8_tmp_channel_max = 0;
-        uint16_t u16_substitute_value = 0;
+        uint8_t trim_algorithm_result = 0U;
+        uint8_t u8_tmp_channel_max = 0U;
+        uint16_t u16_substitute_value = 0U;
         uint64_t u64_tmp_xd_otp_burn_result = 0xFFFFFFFFFFFFFFFFULL;
         if (gn_task_delay)
         {
@@ -836,13 +836,13 @@ void XD_Trim_Task(void)
                 gt_xd_trim_step = XD_TRIM_STEP_IC_PWR;
                 break;
             case XD_TRIM_STEP_IC_PWR:
-                gn_task_delay = 10;
+                gn_task_delay = 10U;
                 gt_xd_trim_step = XD_TRIM_STEP_ACTIVATE_END;
                 break;
             case XD_TRIM_STEP_ACTIVATE_END:
                 XDIC_Trim_Init();
                 JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_task_delay = 10;
+                gn_task_delay = 10U;
                 gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                 break;
             case XD_TRIM_STEP_CHANGE_OUTPUT_INIT:
@@ -932,17 +932,17 @@ void XD_Trim_Task(void)
                 case XD_TRIM_DAC_A_OFS:
                 case XD_TRIM_DAC_B_OFS:
                 case XD_TRIM_FLL_LDO_1V5:
-                    gn_task_delay = 50;
+                    gn_task_delay = 50U;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
                     break;
                 case XD_TRIM_OSC:
                     JigBD_IF_Start_Input_Capture();
-                    gn_task_delay = 10;
+                    gn_task_delay = 10U;
                     gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_DONE;
                     break;
                 case XD_TRIM_CH_GAIN_ODD:
                 case XD_TRIM_CH_GAIN_EVEN:
-                    if (gn_slope_cnt == 0)
+                    if (gn_slope_cnt == 0U)
                     {
                         XDIC_Set_Max_Curr_Vref(gt_xdic_trim_condition[gt_xd_trim_search_mode].u16_p1);
                     }
@@ -1008,9 +1008,9 @@ void XD_Trim_Task(void)
                 case XD_TRIM_CH_OFS_EVEN:
                     gn_slope_adc[gn_xd_adc_channel][gn_slope_cnt] = ADS114S08_Get_ADC_Value();
                     ++gn_slope_cnt;
-                    if (gn_slope_cnt >= 2)
+                    if (gn_slope_cnt >= 2U)
                     {
-                        gn_slope_cnt = 0;
+                        gn_slope_cnt = 0U;
                         gt_xd_trim_step = XD_TRIM_STEP_CHECK;
                     }
                     else
@@ -1116,13 +1116,13 @@ void XD_Trim_Task(void)
                         print(LOG_INFO, "\t  Next trim_search_mode \r\n");
                         gt_xd_trim_step = XD_TRIM_STEP_CHANGE_OUTPUT_INIT;
                     }
-                    gn_xd_adc_channel = 0;
+                    gn_xd_adc_channel = 0U;
                     gt_xd_trim_search_mode = t_trim_search_mode_next;
                 }
                 break;
             case XD_TRIM_STEP_CHANGE_REGISTER:
-                channel = 0;
-                u16_substitute_value = 0;
+                channel = 0U;
+                u16_substitute_value = 0U;
                 switch(gt_xd_trim_search_mode)
                 {
                 case XD_TRIM_IBN_2uA:
@@ -1215,7 +1215,7 @@ void XD_Trim_Task(void)
                 {
                     JigBD_IF_XD_VCC_Level(PWR_ON_5V5);
                     print(LOG_INFO, "\r\n OTP WRITE - ENABLE!! \r\n");
-                    gn_task_delay = 100;
+                    gn_task_delay = 100U;
                     gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM_START;
                 }
                 else
@@ -1227,26 +1227,26 @@ void XD_Trim_Task(void)
             case XD_TRIM_STEP_E2P_PROGRAM_START:
                 print(LOG_INFO, "\r\n OTP WRITE - START!! \r\n");
                 XDIC_Set_OTP_PG_Start(true);
-                gn_task_delay = 1000;
+                gn_task_delay = 1000U;
                 gt_xd_trim_step = XD_TRIM_STEP_E2P_PROGRAM_END;
                 break;
             case XD_TRIM_STEP_E2P_PROGRAM_END:
                 print(LOG_INFO, "\r\n OTP WRITE - DONE!! \r\n");
                 XDIC_Set_OTP_PG_Start(false);
                 JigBD_IF_XD_VCC_Level(PWR_ON_5V0);
-                gn_task_delay = 10;
+                gn_task_delay = 10U;
                 gt_xd_trim_step = XD_TRIM_STEP_STOP;
                 break;
             case XD_TRIM_STEP_STOP:
                 JigBD_IF_VLED_9V_EN(PWR_OFF);
                 JigBD_IF_XD_VCC_EN(PWR_OFF);
-                gn_task_delay = 100;
+                gn_task_delay = 100U;
                 gt_xd_trim_step = XD_TRIM_STEP_REBOOT;
                 break;
             case XD_TRIM_STEP_REBOOT:
                 XDIC_Trim_Init();
                 JigBD_IF_VLED_9V_EN(PWR_ON);
-                gn_task_delay = 100;
+                gn_task_delay = 100U;
                 gt_xd_trim_step = XD_TRIM_STEP_COMPARE;
                 break;
             case XD_TRIM_STEP_COMPARE:
@@ -1302,8 +1302,8 @@ void XD_Screen_Task(void)
             gt_screen_gain = GAIN_HIGH;
             JigBD_IF_Change_Current_Gain(gt_screen_gain);
 
-            gn_xd_adc_channel = 0;
-            gn_task_delay = 10;
+            gn_xd_adc_channel = 0U;
+            gn_task_delay = 10U;
             gt_xd_screen_step = XD_SCREEN_STEP_SETUP;
             break;
         case XD_SCREEN_STEP_SETUP :
@@ -1321,11 +1321,11 @@ void XD_Screen_Task(void)
                 print(LOG_INFO, "data,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,  io_8,  io_9,  io_10,  io_11,  io_12\r\n");
             break;
         case XD_SCREEN_STEP_SET_MAX_CURR_LVL :
-            gn_xd_screen_ana = 0;
+            gn_xd_screen_ana = 0U;
             XDIC_Set_Max_Current_Level(((dev_max_curr_level_t)(gn_xd_max_curr_lvl_cnt)));
             print(LOG_INFO, "max_curr, %.3f\r\n", XDIC_Get_Max_Current_Level());
             Trim_Vsync_Timer_Start();
-            LL_mDelay(50);
+            LL_mDelay(50U);
             Vsync_Timer_Stop();
             gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
             break;
@@ -1355,10 +1355,10 @@ void XD_Screen_Task(void)
             }
             else
             {
-                gn_xd_adc_channel = 0;
+                gn_xd_adc_channel = 0U;
                 gt_xd_screen_step = XD_SCREEN_STEP_CHANGE_OUTPUT;
 
-                for (uint8_t ch = 0 ; ch < XD_CH_MAX ; ++ch)
+                for (uint8_t ch = 0U ; ch < XD_CH_MAX ; ++ch)
                 {
                     gf_screen_current[ch] = JigBD_IF_Convert_Adc_To_Current(gn_screen_adc[ch], gt_screen_gain);
                 }
@@ -1369,7 +1369,7 @@ void XD_Screen_Task(void)
                         gf_screen_current[ 4], gf_screen_current[ 5], gf_screen_current[ 6], gf_screen_current[ 7],
                         gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
-                    if (gn_xd_screen_ana == 4095)
+                    if (gn_xd_screen_ana == 4095U)
                     {
                         if (gn_xd_max_curr_lvl_cnt == DEV_MAX_CURR_LEVEL_16mA)
                         {
@@ -1383,9 +1383,9 @@ void XD_Screen_Task(void)
                     }
 
                     gn_xd_screen_ana += XD_SCREEN_ANA_GAP;
-                    if (gn_xd_screen_ana > 0xFFF)
+                    if (gn_xd_screen_ana > 0xFFFU)
                     {
-                        gn_xd_screen_ana = 4095;
+                        gn_xd_screen_ana = 4095U;
                     }
 
                 #else
@@ -1395,7 +1395,7 @@ void XD_Screen_Task(void)
                         gf_screen_current[ 8], gf_screen_current[ 9], gf_screen_current[10], gf_screen_current[11]);
 
                     ++gn_xd_screen_max_current;
-                    if (gn_xd_screen_max_current > 8)
+                    if (gn_xd_screen_max_current > 8U)
                     {
                         gt_xd_screen_step = XD_SCREEN_STEP_STOP;
                     }
