@@ -294,7 +294,7 @@ typedef enum tag_XC24R_ADDR_GRP1_T
     XC24R_ADDR_GRP1_MIRROR_GATE3_OFFSET          = 0xFDU, // 0xFD
     XC24R_ADDR_GRP1_MIRROR_SV_VAR_CONTROL1       = 0xFEU, // 0xFE
     XC24R_ADDR_GRP1_MIRROR_SV_VAR_CONTROL2       = 0xFFU, // 0xFF
-    XC24R_ADDR_GRP1_MAX                     = 0x100U, // 0x100
+    XC24R_ADDR_GRP1_MAX                          = 0x100U, // 0x100
 } xc24r_addr_grp1_t;
 
 typedef enum tag_XC24R_ADDR_GRP2_T
@@ -319,7 +319,7 @@ typedef enum tag_XC24R_ADDR_GRP2_T
     XC24R_ADDR_GRP2_SOA3_P2_P1                   = 0x10U, // 0x10
     XC24R_ADDR_GRP2_SOA3_P3_P2                   = 0x11U, // 0x11
     XC24R_ADDR_GRP2_ANA_TEST                     = 0x12U, // 0x12
-    XC24R_ADDR_GRP2_MAX                     = 0x13U, // 0x13
+    XC24R_ADDR_GRP2_MAX                          = 0x13U, // 0x13
 } xc24r_addr_grp2_t;
 
 typedef union tag_XC24R_CMD_T
