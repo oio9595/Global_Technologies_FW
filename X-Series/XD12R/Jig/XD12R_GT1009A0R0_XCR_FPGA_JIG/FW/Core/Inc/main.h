@@ -173,11 +173,11 @@ extern void sys_tick_handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-#define FREQ_IN_IC_LENGTH       (512)
+#define FREQ_IN_IC_LENGTH       (512U)
 
 #define TIM5_FREQ               (90000000.0f)
 
-#define UART_BACKSPACE          (0x08)
+#define UART_BACKSPACE          (0x08U)
 
 #define XD_CH_SEL_1_HI()        XD_CH_SEL1_GPIO_Port->BSRR = XD_CH_SEL1_Pin <<  0U
 #define XD_CH_SEL_1_LO()        XD_CH_SEL1_GPIO_Port->BSRR = XD_CH_SEL1_Pin << 16U

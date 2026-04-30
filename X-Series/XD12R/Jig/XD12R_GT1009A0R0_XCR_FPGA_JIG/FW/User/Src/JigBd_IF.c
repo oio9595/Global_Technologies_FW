@@ -394,7 +394,7 @@ void JigBD_IF_Calculate_Input_Capture_Freq(void)
         uint32_t delta = 0U;
         uint32_t n_count = 0U;
 
-        for (uint32_t i = 1U ; i < (FREQ_IN_IC_LENGTH - 1) ; ++i)
+        for (uint32_t i = 1U ; i < (FREQ_IN_IC_LENGTH - 1U) ; ++i)
         {
             if (gn_input_capture_cnt[i + 1] > gn_input_capture_cnt[i + 0])
             {

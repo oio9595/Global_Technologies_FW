@@ -71,7 +71,6 @@ static volatile bool gb_ads114s08_drdy_done;
 
 static uint64_t gn_ads114s08_adc_temp;
 static uint16_t gn_adc_read_count;
-static uint16_t gn_ads114s08_offset[XD_CH_MAX];
 
 volatile uint16_t gn_ads114s08_read_timeout;
 
@@ -179,10 +178,11 @@ static void ADS114S08_Write_Register(uint8_t reg_addr, uint8_t reg_data)
 
 static void ADS114S08_Set_Input(uint8_t input_p, uint8_t input_n)
 {
-    ads114s08_inpmux_t t = {0,};
+    ads114s08_inpmux_t t = { 0 };
+    t.value = 0x00U;
 
-    t.u.muxp = input_p;
-    t.u.muxn = input_n;
+    t.u.muxp = (input_p & 0x0F);
+    t.u.muxn = (input_n & 0x0F);
 
     ADS114S08_Write_Register(REG_ADDR_INPMUX, t.value);
 }
@@ -291,11 +291,9 @@ static void ADS114S08_Get_ADC_Offset()
 
         ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
-        gn_ads114s08_offset[ch] = ADS114S08_Get_ADC_Value();
     }
     JigBD_IF_VLED_9V_EN(PWR_OFF);
     JigBD_IF_Select_Output_Ch(XD_CH_MAX);
-    print(LOG_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X, \r\n", gn_ads114s08_offset[0]);
 }
 
 void ADS114S08_Init(void)
@@ -377,6 +375,9 @@ float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 		case GAIN_LOW :
 			ret = ((float)adc * ADC_CONV_COEFF_LOW);	/* max 0.5mA */
 			break;
+        default:
+            print(LOG_ERROR, "ERROR: %s - Invalid Gain !!\r\n", __func__);
+            break;
 	}
 	return ret; //mA
 }
@@ -395,6 +396,9 @@ uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
 		case GAIN_LOW :
 			ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
 			break;
+        default:
+            print(LOG_ERROR, "ERROR: %s - Invalid Gain !!\r\n", __func__);
+            break;
 	}
 	return ret; //adc
 }

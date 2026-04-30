@@ -26,10 +26,10 @@ extern "C" {
 #define ADC_CONV_COEFF_HIGH         ((ADC_VOLT_PER_STEP * CURRENT_SENSE_RIN) / (CURRENT_SENSE_RO * CURRENT_SENSE_R_HIGH))   // Max  40mA
 
 #define XDIC_INTERNAL_DIVIDER       (64)
-#define XC24R_INTERNAL_DIVIDER       (32)
+#define XC24R_INTERNAL_DIVIDER      (32)
 #define JIG_FREQUENCY_DIVIDER       (128)
 #define XDIC_CONST_FREQ_DIVIDE      (XDIC_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
-#define XC24R_CONST_FREQ_DIVIDE      (XC24R_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
+#define XC24R_CONST_FREQ_DIVIDE     (XC24R_INTERNAL_DIVIDER * JIG_FREQUENCY_DIVIDER)
 
 #define XD_TIMEOUT_MS               (2)
 
@@ -42,9 +42,7 @@ typedef enum tag_CURRENT_GAIN_T
 } current_gain_t;
 
 extern volatile bool gb_pwm_dma_tx_flag;
-extern volatile bool gb_pwm_is_rx_flag;
 extern volatile uint16_t gn_xd_rx_timeout;
-extern volatile bool gb_xd_timeout_event;
 
 extern bool gb_timer_input_capture_activated;
 extern volatile bool gb_timer_input_capture_done;

@@ -54,7 +54,7 @@ extern "C" {
 
 #define ADS114S_VREF            (5000U)  /* 5V */
 #define ADS114S_RESOLUTION      ((1U << (16 - 1)) - 1U)  /* 16bit */
-#define ADC_VOLT_PER_STEP       ((double)ADS114S_VREF / ADS114S_RESOLUTION)
+#define ADC_VOLT_PER_STEP       ((float)ADS114S_VREF / ADS114S_RESOLUTION)
 
 #define ADS_AIN0                (0x00U)
 #define ADS_AIN1                (0x01U)

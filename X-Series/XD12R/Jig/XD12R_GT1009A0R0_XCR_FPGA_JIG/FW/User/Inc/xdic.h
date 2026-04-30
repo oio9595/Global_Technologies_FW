@@ -16,15 +16,15 @@ extern "C" {
 
 #define XDIC_VREF_MAX               (4095)
 
-#define XDIC_REG_LIMIT_IBN_2uA      (31)    /* 5-bit */
-#define XDIC_REG_LIMIT_DAC_LDO_1V5  (31)    /* 5-bit */
-#define XDIC_REG_LIMIT_DIG_LDO_1V5  (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_DAC_A_OFS    (127)   /* 7-bit */
-#define XDIC_REG_LIMIT_DAC_B_OFS    (127)   /* 7-bit */
-#define XDIC_REG_LIMIT_FLL_LDO_1V5  (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_OSC          (15)    /* 4-bit */
-#define XDIC_REG_LIMIT_CH_GAIN      (63)    /* 6-bit */
-#define XDIC_REG_LIMIT_CH_OFS       (255)   /* 8-bit */
+#define XDIC_REG_LIMIT_IBN_2uA      (31U)    /* 5-bit */
+#define XDIC_REG_LIMIT_DAC_LDO_1V5  (31U)    /* 5-bit */
+#define XDIC_REG_LIMIT_DIG_LDO_1V5  (15U)    /* 4-bit */
+#define XDIC_REG_LIMIT_DAC_A_OFS    (127U)   /* 7-bit */
+#define XDIC_REG_LIMIT_DAC_B_OFS    (127U)   /* 7-bit */
+#define XDIC_REG_LIMIT_FLL_LDO_1V5  (15U)    /* 4-bit */
+#define XDIC_REG_LIMIT_OSC          (15U)    /* 4-bit */
+#define XDIC_REG_LIMIT_CH_GAIN      (63U)    /* 6-bit */
+#define XDIC_REG_LIMIT_CH_OFS       (255U)   /* 8-bit */
 
 extern volatile bool gb_xdic_initial_failed;
 
@@ -879,13 +879,13 @@ typedef union tag_XDIC_MIRROR_REG_T
     };
 } _xdic_mirror_regs_t;
 
-extern void XDIC_Write_General_Reg(uint8_t addr, uint16_t data);
-extern uint16_t XDIC_Read_General_Reg(uint8_t addr);
-extern uint16_t XDIC_Get_General_Reg(uint8_t addr);
+extern void XDIC_Write_General_Reg(xdic_addr_t addr, uint16_t data);
+extern uint16_t XDIC_Read_General_Reg(xdic_addr_t addr);
+extern uint16_t XDIC_Get_General_Reg(xdic_addr_t addr);
 
-extern void XDIC_Write_Mirror_Reg(uint8_t addr, uint16_t data);
-extern uint16_t XDIC_Read_Mirror_Reg(uint8_t addr);
-extern uint16_t XDIC_Get_Mirror_Reg(uint8_t addr);
+extern void XDIC_Write_Mirror_Reg(xdic_mirror_addr_t addr, uint16_t data);
+extern uint16_t XDIC_Read_Mirror_Reg(xdic_mirror_addr_t addr);
+extern uint16_t XDIC_Get_Mirror_Reg(xdic_mirror_addr_t addr);
 
 extern void XDIC_Write_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode, uint16_t in_sub_val);
 extern uint16_t XDIC_Get_Substitute_Value_By_Trim_Mode(uint8_t ch_num, xd_trim_mode_t in_trim_mode);
@@ -905,7 +905,6 @@ extern void XDIC_Set_Short_Level(short_level_t in_short_level);
 extern float XDIC_Get_Short_Level(void);
 
 extern void XDIC_Set_Max_Curr_Vref(uint16_t in_max_curr_vref);
-extern void XDIC_Set_MCLK_Lock_CNT(uint32_t in_mclk_lock_cnt);
 
 extern void XDIC_Overwrite_Mirror_Regs(void);
 extern void XDIC_Display_Mirror_Regs(void);

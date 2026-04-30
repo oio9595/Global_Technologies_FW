@@ -1520,7 +1520,7 @@ static void TaskDebugUart(void)
     {
         char str_in[RX_PACKET_SIZE + 1] = { 0 };
         uint32_t u32_recv_param[6] = { 0 };
-        double lf_recv_param[6] = { 0 };
+        double lf_recv_param[6] = { 0.0 };
 
         memcpy(str_in, p_data->buffer, p_data->length);
         p_data->length = 0U;
@@ -1676,7 +1676,7 @@ static void TaskDebugUart(void)
             }
             else
             {
-                XDIC_Write_General_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+                XDIC_Write_General_Reg((xdic_addr_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             }
             print(LOG_INFO, "\r\n OK\r\n");
         }
@@ -1688,19 +1688,19 @@ static void TaskDebugUart(void)
             }
             else
             {
-                uint16_t ret = XDIC_Read_General_Reg((uint8_t)u32_recv_param[0]);
+                uint16_t ret = XDIC_Read_General_Reg((xdic_addr_t)u32_recv_param[0]);
                 print(LOG_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
             }
             print(LOG_INFO, "\r\n OK\r\n");
         }
         else if (Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            XDIC_Write_Mirror_Reg((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            XDIC_Write_Mirror_Reg((xdic_mirror_addr_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
             print(LOG_INFO, "\r\n XD Write : 0x%02X - 0x%02X\r\n", (uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
         }
         else if (Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
         {
-            uint16_t ret = XDIC_Read_Mirror_Reg((uint8_t)u32_recv_param[0]);
+            uint16_t ret = XDIC_Read_Mirror_Reg((xdic_mirror_addr_t)u32_recv_param[0]);
             print(LOG_INFO, "\r\n XD Read : 0x%02X : 0x%04X\r\n", u32_recv_param[0], ret);
         }
         else if (Command_Param_is_("xd_current", "%d", &u32_recv_param[0]))
@@ -1750,18 +1750,6 @@ static void TaskDebugUart(void)
         else if (Command_is_("xd_short"))
         {
             XDIC_Get_Short_Level();
-        }
-        else if (Command_Param_is_("xd_mclk", "%d", &u32_recv_param[0]))
-        {
-            if (u32_recv_param[0] <= 0x1FFFFF)
-            {
-                XDIC_Set_MCLK_Lock_CNT(u32_recv_param[0]);
-                print(LOG_INFO, "\r\n Set MCLK Lock CNT to %u\r\n", u32_recv_param[0]);
-            }
-            else
-            {
-                print(LOG_ERROR, "\r\n Out of xdic_mclk [%u] [0 - %u]\r\n", u32_recv_param[0], 0x1FFFFF);
-            }
         }
         else if (Command_Param_is_("xd_ldim", "%d %d %d", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
         {
