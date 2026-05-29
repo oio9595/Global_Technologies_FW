@@ -609,6 +609,9 @@ void XDIC_Init(void)
             case XDIC_ADDR_OSC_FLL_MANUAL_2 :
                 gt_xdic_general_regs._r2B.osc_fll_man_e = 0;
                 break;
+            case XDIC_ADDR_WR_PROTECT :
+                gt_xdic_general_regs._r2D.val = 0x155;
+                break;
             default :
                 continue;
             }
