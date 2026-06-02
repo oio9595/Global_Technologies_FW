@@ -42,6 +42,11 @@
 #define SERIAL_DECODE_MASK_DATA     (uint32_t)(0xFFF)
 
 #define BOOT_PATTERN_CHANGE_COUNT   (120U)
+
+const static float LED_BRT_COMP_RED            = 0.32f;
+const static float LED_BRT_COMP_GREEN          = 0.80f;
+const static float LED_BRT_COMP_BLUE           = 1.00f;
+
 /* USER CODE END PD */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -249,6 +254,30 @@ static void LED_Update_Buffer_By_Color(void)
                 gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
             }
             break;
+        case LED_COLOR_MAGENTA :
+            for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
+            {
+                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_g = 0U;
+                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+            }
+            break;
+        case LED_COLOR_YELLOW :
+            for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
+            {
+                gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_b = 0U;
+            }
+            break;
+        case LED_COLOR_CYAN :
+            for (uint8_t map_idx = 0 ; map_idx < LED_MAP_SIZE ; ++map_idx)
+            {
+                gt_led_ld_buffer[map_idx].ld_r = 0U;
+                gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+            }
+            break;
         default :
             Print(LOG_ERROR, "\r\n Invalid LED Buffer Update By Color\r\n");
             Error_Handler();
@@ -407,6 +436,67 @@ static void LED_Update_Buffer_By_Pattern(void)
                     gt_led_ld_buffer[map_idx].ld_r = 0U;
                     gt_led_ld_buffer[map_idx].ld_g = 0U;
                     gt_led_ld_buffer[map_idx].ld_b = 0U;
+                }
+            }
+            break;
+        case LED_PATTERN_P6 :
+            for (uint8_t map_idx = 0U ; map_idx < LED_MAP_SIZE ; ++map_idx)
+            {
+                uint8_t row = map_idx / LED_MAP_COL; // 0 ~ 8
+                uint8_t col = map_idx % LED_MAP_COL; // 0 ~ 15
+                if (row < 5U)
+                {
+                    if (col < 4U) //R
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_g = 0U;
+                        gt_led_ld_buffer[map_idx].ld_b = 0U;
+                    }
+                    else if (col < 8U) //G
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = 0U;
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_b = 0U;
+                    }
+                    else if (col < 12U) // B
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = 0U;
+                        gt_led_ld_buffer[map_idx].ld_g = 0U;
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    }
+                    else // W
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    }
+                }
+                else
+                {
+                    if (col < 4U) // W 10%
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent) / 10U;
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent) / 10U;
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent) / 10U;
+                    }
+                    else if (col < 8U) //M
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_g = 0U;
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    }
+                    else if (col < 12U) //Y
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_b = 0U;
+                    }
+                    else // C
+                    {
+                        gt_led_ld_buffer[map_idx].ld_r = 0U;
+                        gt_led_ld_buffer[map_idx].ld_g = LD_DATA(gn_led_brightness_percent);
+                        gt_led_ld_buffer[map_idx].ld_b = LD_DATA(gn_led_brightness_percent);
+                    }
                 }
             }
             break;
@@ -728,9 +818,9 @@ void MCU_IF_Write_LD(void)
     for (uint8_t i = 0U ; i < LED_MAP_SIZE ; ++i)
     {
         uint8_t led_map_index = gt_led_id_map[i];
-        uint16_t LD_data_R = gt_led_ld_buffer[led_map_index].ld_r;
-        uint16_t LD_data_G = gt_led_ld_buffer[led_map_index].ld_g;
-        uint16_t LD_data_B = gt_led_ld_buffer[led_map_index].ld_b;
+        uint16_t LD_data_R = (uint16_t)(gt_led_ld_buffer[led_map_index].ld_r * LED_BRT_COMP_RED);
+        uint16_t LD_data_G = (uint16_t)(gt_led_ld_buffer[led_map_index].ld_g * LED_BRT_COMP_GREEN);
+        uint16_t LD_data_B = (uint16_t)(gt_led_ld_buffer[led_map_index].ld_b * LED_BRT_COMP_BLUE);
 
         if (((LD_data_R & 0x1FFU) == 0U) && (LD_data_R != 0U))
         {

@@ -29,6 +29,9 @@ typedef enum tag_LED_COLOR_TYPE_T
     LED_COLOR_RED,
     LED_COLOR_GREEN,
     LED_COLOR_BLUE,
+    LED_COLOR_MAGENTA,
+    LED_COLOR_YELLOW,
+    LED_COLOR_CYAN,
     LED_COLOR_MAX,
 } led_color_type_t;
 
@@ -40,6 +43,7 @@ typedef enum tag_LED_PATTERN_T
     LED_PATTERN_P3,
     LED_PATTERN_P4,
     LED_PATTERN_P5,
+    LED_PATTERN_P6,
     LED_PATTERN_MAX,
 } led_pattern_t;
 /* USER CODE END PTD */

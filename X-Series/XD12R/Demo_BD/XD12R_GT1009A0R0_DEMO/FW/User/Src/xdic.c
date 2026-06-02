@@ -287,7 +287,7 @@ static void XDIC_Param_Init(void)
         gt_xdic_short_level[i] = SHORT_LEVEL_32V;
     }
 
-    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_32mA; // R
+    gt_xdic_dev_max_curr_level[0] = DEV_MAX_CURR_LEVEL_16mA; // R
     gt_xdic_dev_max_curr_level[1] = DEV_MAX_CURR_LEVEL_16mA; // G
     gt_xdic_dev_max_curr_level[2] = DEV_MAX_CURR_LEVEL_16mA; // B
 }
@@ -413,7 +413,7 @@ void XDIC_Init(void)
     }
     XDIC_Set_Delay_CH();
     XDIC_Dump_All_Registers();
-    LED_Select_Brightness(10U);
+    LED_Select_Brightness(100U);
 }
 /* USER CODE END */
 /*** end of file ***/
