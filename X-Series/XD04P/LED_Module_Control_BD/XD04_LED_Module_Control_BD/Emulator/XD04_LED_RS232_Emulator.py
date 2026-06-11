@@ -21,6 +21,8 @@ PACKET_VALID = 0xA5
 PACKET_INVALID = 0x5A
 
 CMD_INITIAL = 0x00
+CMD_STATUS = 0xF0
+CMD_VERSION = 0xF1
 CMD_QUIT = 0xFF
 CMD_CURRENT = 0x01
 
@@ -36,6 +38,7 @@ commands = {
     "0x00 (Initial)": 0x00,
     "0xFF (Quit)": 0xFF,
     "0xF0 (Status)": 0xF0,
+    "0xF1 (Version)": 0xF1,
     "0x10 (Bar On Select)": 0x10,
     "0x20 (Bar Off Select)": 0x20,
     "0x40 (Block On Select)": 0x40,
@@ -409,13 +412,21 @@ class MacroApp(QWidget):
                         hex_list = [f"{b:02X}" for b in data]
                         if len(data) == 6:
                             calc_checksum = sum(data[:4]) & 0xFF
+                            recv_sop = data[0]
+                            recv_length = data[1]
+                            recv_command = data[2]
+                            recv_data = data[3]
                             recv_checksum = data[4]
-                            packet_status = data[3]
+                            recv_eop = data[5]
                             if calc_checksum == recv_checksum:
-                                if packet_status == PACKET_VALID:
-                                    result = f"✅\r\n"
-                                else:
-                                    result = f"⚠️ (Packet Invalid)\r\n"
+                                if recv_command == CMD_STATUS:
+                                    if recv_data == PACKET_VALID:
+                                        result = f"✅\r\n"
+                                    else:
+                                        result = f"⚠️ (Packet Invalid)\r\n"
+                                elif recv_command == CMD_VERSION:
+                                    result = f"✅ Version: {recv_data}\r\n"
+                                    pass
                             else:
                                 result = f"❌ Rx Checksum Error (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
                             text_str = data.decode(errors="ignore")

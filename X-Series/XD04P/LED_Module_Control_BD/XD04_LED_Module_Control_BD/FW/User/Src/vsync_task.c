@@ -65,6 +65,7 @@ void Vsync_Timer_Stop(void)
     {
         gb_led_enable_table[i] = false;
     }
+    gb_led_vsync_flag = false;
     gf_xd_max_current = 0.0f;
     gn_led_current_increase_cnt = 0U;
 }

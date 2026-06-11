@@ -37,6 +37,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// "26. 06. 11 - Version Code Update : 0x01
+#define FW_VERSION_CODE     (1U)
+
 #define PRINT_BUFF_SIZE     256U
 #define RX_BUFF_SIZE        256U // must be 2^n
 #define RX_PACKET_SIZE      32U  // must be 2^n
@@ -57,6 +60,7 @@ enum tag_PROTOCOL_LIST
     CMD_INIT                = 0x00U, // 0x00
     CMD_QUIT                = 0xFFU, // 0xFF
     CMD_STATUS              = 0xF0U, // 0xF0
+    CMD_VERSION             = 0xF1U, // 0xF1
     CMD_BAR_ON_SELECT       = 0x10U, // 0x10
     CMD_BAR_OFF_SELECT      = 0x20U, // 0x20
     CMD_BLK_ON_SELECT       = 0x40U, // 0x40
@@ -257,6 +261,7 @@ bool comm_is_valid_command(uint8_t in_cmd)
         case CMD_INIT:
         case CMD_QUIT:
         case CMD_STATUS:
+        case CMD_VERSION:
         case CMD_CURRENT:
         case CMD_BAR_ON_SELECT:
         case CMD_BAR_OFF_SELECT:
@@ -286,6 +291,17 @@ static uint8_t comm_get_rx_available(void)
     else
     {
         return (gt_ring_buffer.head + RX_BUFF_SIZE) - gt_ring_buffer.tail;
+    }
+}
+
+static void comm_tx_response_version(void)
+{
+    uint8_t response[PACKET_SIZE] = { SOP, 0x01U, CMD_VERSION, FW_VERSION_CODE, 0x00U, 0x5AU };
+    response[4] = response[0] + response[1] + response[2] + response[3];
+
+    for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
+    {
+        UART_PutChar(response[i]);
     }
 }
 
@@ -361,9 +377,14 @@ static uint8_t comm_get_rx_packet(rx_packet_t* p_packet)
                     p_packet->checksum = temp_packet.checksum;
                     p_packet->eop = temp_packet.eop;
 
-                    print(LOG_PC, "\r\n\r\n%u\r\n\r\n", length);
-
-                    comm_tx_response(VALID_PACKET);
+                    if (temp_packet.command == CMD_VERSION)
+                    {
+                        comm_tx_response_version();
+                    }
+                    else
+                    {
+                        comm_tx_response(VALID_PACKET);
+                    }
                     print(LOG_PC, "Recv Packet: {[0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, \
                         0x%02X, 0x%02X]}\r\n",
@@ -416,6 +437,9 @@ static void Uart_Task(void)
                 break;
             case CMD_STATUS:
                 print(LOG_PC, "CMD_STATUS\r\n");
+                break;
+            case CMD_VERSION:
+                print(LOG_PC, "CMD_VERSION\r\n");
                 break;
             case CMD_CURRENT:
                 LED_Current_Select((float)(p_packet->data[0]));

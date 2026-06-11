@@ -384,9 +384,11 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
                 gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
+                /*
             case XDIC_ADDR_SERIAL_LATENCY :
                 gt_xdic_general_regs._r26.serial_latency = 60U;
                 break;
+                */
             case XDIC_ADDR_MCLK_LOCK_1 :
                 gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & MCLK_LSB_MASK) >>  0U);
                 break;
