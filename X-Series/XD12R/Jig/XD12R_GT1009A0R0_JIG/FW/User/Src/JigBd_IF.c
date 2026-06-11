@@ -196,7 +196,8 @@ float JigBD_IF_XD_ICC(void)
     {
         icc = ((icc_adc[1] - icc_adc[0]) * ADC_VOLT_PER_STEP) / CURRENT_SENSE_R_ICC;
     }
-    print(LOG_INFO, "\r\n XD ICC Current : %.3f [mA]\r\n", icc);
+    //print(LOG_INFO, "\r\n XD ICC Current : %.3f [mA]\r\n", icc);
+    print(LOG_INFO, "%.3f, ", icc);
 
     return icc;
 }

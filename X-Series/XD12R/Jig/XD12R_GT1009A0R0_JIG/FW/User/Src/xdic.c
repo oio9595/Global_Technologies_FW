@@ -1565,7 +1565,8 @@ void XDIC_Trim_Partial_OSC(void)
     JigBD_IF_Wait_Input_Capture_Done();
     JigBD_IF_Stop_Input_Capture();
     float osc_freq = JigBD_IF_Get_Input_Capture_Freq() * XDIC_CONST_FREQ_DIVIDE / CONST_MHz_TO_Hz;
-    print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
+    //print(LOG_INFO, "\r\n OSC Freq : %.3f [MHz]\r\n", osc_freq);
+    print(LOG_INFO, "\r\n %.3f, ", osc_freq);
 }
 
 void XDIC_Trim_Partial_CH_GAIN(void)
@@ -1582,12 +1583,25 @@ void XDIC_Trim_Partial_CH_GAIN(void)
     {
         JigBD_IF_Select_Output_Ch(i);
 
-        XDIC_Set_Max_Curr_Vref(1500U); // XDIC_GAIN_P1
+        if (i % 2U == 0U)
+        {
+            XDIC_Set_Max_Current_Level(XDIC_GAIN_ODD_MAX_CURRENT_LVL);
+        }
+        else
+        {
+            XDIC_Set_Max_Current_Level(XDIC_GAIN_EVEN_MAX_CURRENT_LVL);
+        }
+        LL_mDelay(99);
+        Trim_Vsync_Timer_Start();
+        LL_mDelay(99);
+        Vsync_Timer_Stop();
+
+        XDIC_Set_Max_Curr_Vref(2000U); // XDIC_GAIN_P1
         ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][0] = ADS114S08_Get_ADC_Value();
 
-        XDIC_Set_Max_Curr_Vref(300U); // XDIC_GAIN_P2
+        XDIC_Set_Max_Curr_Vref(500U); // XDIC_GAIN_P2
         ADS114S08_Set_Start(1U);
         ADS114S08_Wait_Done();
         iout_adc[i][1] = ADS114S08_Get_ADC_Value();
@@ -1596,7 +1610,8 @@ void XDIC_Trim_Partial_CH_GAIN(void)
         float iout_avg = JigBD_IF_Convert_Adc_To_Current(adc_average, current_gain);
         iout_float[i][0] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][0], current_gain);
         iout_float[i][1] = JigBD_IF_Convert_Adc_To_Current(iout_adc[i][1], current_gain);
-        print(LOG_INFO, "GAIN CH[%d] : Delta %.3f, P1 %.3f, P2 %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
+        //print(LOG_INFO, "GAIN CH[%d] : Delta %.3f, P1 %.3f, P2 %.3f\r\n", (i + 1), iout_avg, iout_float[i][0], iout_float[i][1]);
+        print(LOG_INFO, "%.3f, ", iout_avg);
     }
 }
 

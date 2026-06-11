@@ -1879,6 +1879,18 @@ static void TaskDebugUart(void)
 #endif
             XDIC_Set_LD_Data(0x100, 0x100, 0x100);
         }
+        else if (Command_is_("xd_measure_start") || Command_is_("5"))
+        {
+            XDIC_Trim_Init();
+
+            Trim_Vsync_Timer_Start();
+            LL_mDelay(999);
+            Vsync_Timer_Stop();
+
+            XDIC_Trim_Partial_OSC();
+            JigBD_IF_XD_ICC();
+            XDIC_Trim_Partial_CH_GAIN();
+        }
         else if (Command_is_("xc_trim_start") || Command_is_("4"))
         {
             print(LOG_INFO, "\r\n XC Trim Start \r\n");
