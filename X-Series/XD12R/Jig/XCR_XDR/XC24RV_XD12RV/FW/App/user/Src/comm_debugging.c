@@ -178,9 +178,10 @@ static void comm_print_startup(void)
 {
     comm_UART_Printf(LOG_LV_INFO, "\n\r--------------------------------------");
     comm_UART_Printf(LOG_LV_INFO, "\n\r    [JIG for GT-XCR&XDR]");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - Author: xxx@glbltech.com");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - Build : %s", __DATE__);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - Author  : xxx@glbltech.com");
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - Build   : %s", __DATE__);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - INFO - XCR : %s, XDR : %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);

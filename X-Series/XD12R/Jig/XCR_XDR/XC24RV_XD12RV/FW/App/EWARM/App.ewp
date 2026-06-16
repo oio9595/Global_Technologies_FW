@@ -670,7 +670,7 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
+                <prebuild>py "$PROJ_DIR$\..\..\Prebuild\prebuild.py"</prebuild>
                 <postbuild></postbuild>
             </data>
         </settings>
