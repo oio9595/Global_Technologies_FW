@@ -1,5 +1,9 @@
-
 #include "main.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "drv_xdr12.h"
+#include "ldim_conversion.h"
 
 #define SVSYNC_VSYNC_FREQ       (50000U)    /* 20us */
 
@@ -146,7 +150,7 @@ void tim_vsync_out_process(void)
         uint16_t gn_global_ldim_red = gn_xcr_ldim_block_conversion_index;
         uint16_t gn_global_ldim_green = gn_xcr_ldim_block_conversion_index;
         uint16_t gn_global_ldim_blue = gn_xcr_ldim_block_conversion_index;
-        
+
         ldim_set_ldim_rgb(gn_xcr_ldim_block_conversion_index, gn_global_ldim_red, gn_global_ldim_green, gn_global_ldim_blue);
         ++gn_xcr_ldim_block_conversion_index;
         if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
@@ -156,7 +160,7 @@ void tim_vsync_out_process(void)
 
             uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
             uint16_t len = ldim_get_xcr_ld_transfer_size();
-            
+
             xcr24_set_ld_transfer(p, len);
         }
     }

@@ -22,6 +22,14 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "drv_gpio.h"
+#include "drv_timer.h"
+#include "drv_xdr12.h"
+#include "drv_xcr24.h"
+
+#include "comm_debugging.h"
+#include "framework.h"
+#include "ads124s08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

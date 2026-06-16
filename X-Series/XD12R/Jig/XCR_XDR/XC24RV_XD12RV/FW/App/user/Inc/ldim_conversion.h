@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ldim_conversion.h
  * Author: GT
  * for XCR24 & XDR12 ES2
@@ -12,7 +12,11 @@
 extern "C" {
 #endif
 
-#include "main.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "drv_xcr24.h"
+#include "drv_xdr12.h"
 
 #define LDIM_BLK_SIZE    (XCR_CH_SIZE * (XDR_DAISY_LENGTH * (XDR_CH_LENGTH / 2U)))
 

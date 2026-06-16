@@ -1,4 +1,5 @@
 #include "fw_internal.h"
+#include "main.h"
 
 #define NUM_OF_THREAD	(16U)
 
@@ -50,7 +51,7 @@ static THREAD_ID fw_begin_thread_trig_ex(bool (*const f)(struct thread_data*), u
 
     if(index == NUM_OF_THREAD)
     {
-        return INVALID_THREAD_ID; 
+        return INVALID_THREAD_ID;
     }
 
     do

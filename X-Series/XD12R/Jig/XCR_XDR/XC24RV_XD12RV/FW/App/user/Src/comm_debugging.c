@@ -10,9 +10,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "main.h"
-
 #include "drv_comm.h"
+#include "drv_timer.h"
+
+#include "version.h"
+#include "framework.h"
+#include "comm_debugging.h"
+#include "ldim_conversion.h"
 
 #define CLI_KEY_BACK        0x08
 #define CLI_KEY_DEL         0x7F
@@ -176,6 +180,7 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r    [JIG for GT-XCR&XDR]");
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Author: xxx@glbltech.com");
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Build : %s", __DATE__);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - INFO - XCR : %s, XDR : %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
@@ -293,7 +298,7 @@ void comm_debugging_process(void)
             extern bool gb_xcr_ldim_start;
 
             gb_xcr_ldim_start = true;
-            
+
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xcr_ldim_stop")))
@@ -301,7 +306,7 @@ void comm_debugging_process(void)
             extern bool gb_xcr_ldim_start;
 
             gb_xcr_ldim_start = false;
-            
+
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xcr_ldim_force")))

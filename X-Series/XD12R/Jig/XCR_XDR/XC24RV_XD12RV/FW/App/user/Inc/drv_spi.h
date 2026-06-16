@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   drv_spi.h
  * Author: GT
  *
@@ -24,4 +24,4 @@ uint8_t spi_read8(SPI_TypeDef *SPIx, const uint8_t* out, uint8_t* in, uint16_t l
 }
 #endif
 
-#endif
+#endif

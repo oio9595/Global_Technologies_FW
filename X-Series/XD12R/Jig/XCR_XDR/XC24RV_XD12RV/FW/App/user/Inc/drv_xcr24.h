@@ -12,13 +12,9 @@
 extern "C" {
 #endif
 
-#include "main.h"
-
-#include "drv_spi.h"
-
-#include "xcr24_struct.h"
-#include "xdr12_struct.h"
-
+#include <stdint.h>
+#include <stdbool.h>
+#include "xcr_struct.h"
 
 #define XCR_LD_WIDTH            (LD_WIDTH3)
 #define XCR_CH_SIZE             (24U)

@@ -1,5 +1,3 @@
-
-
 #define XD_TYPE_XDR12R      (0U)
 #define XD_TYPE_XDR12D      (1U)
 #define XD_TYPE_IC601       (2U)
@@ -12,7 +10,7 @@
     #elif (XD_REVISION == 1)
         #include "xdr12r_es1_struct.h"
     #else
-        #error "Invalid XD12R_REVIRSION"
+        #error "Invalid XD12R_REVISION"
     #endif
 
 #elif (XD_MODEL_TYPE == XD_TYPE_XDR12D)  /* XDR12D for VD */
@@ -22,7 +20,7 @@
     #elif (XD_REVISION == 1)
         #include "xdr12d_es1_struct.h"
     #else
-        #error "Invalid XD12D_REVIRSION"
+        #error "Invalid XD12D_REVISION"
     #endif
 
 #elif (XD_MODEL_TYPE == XD_TYPE_IC601)  /* IC601 for Mobis*/
@@ -32,10 +30,10 @@
     #elif (XD_REVISION == 1)
         #include "ic601_es1_struct.h"
     #else
-        #error "Invalid IC601_REVIRSION"
+        #error "Invalid IC601_REVISION"
     #endif
 
 #else
-    #error "Invlid XD_MODEL_TYPE"
+    #error "Invalid XD_MODEL_TYPE"
 #endif
 

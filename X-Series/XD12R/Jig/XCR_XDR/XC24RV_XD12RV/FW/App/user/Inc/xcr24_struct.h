@@ -13,6 +13,6 @@
 #elif (XC_MODEL_TYPE == XC_TYPE_IC603)  /* IC603 for Mobis */
     #include "ic603_struct.h"
 #else
-    #error "Invlid XC_MODEL_TYPE"
+    #error "Invalid XC_MODEL_TYPE"
 #endif
 

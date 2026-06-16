@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   drv_gpio.c
  * Author: GT
  *
@@ -157,6 +157,3 @@ void gpio_set_demux_channel_selection(XD_CH_t output_ch)
         break;
     }
 }
-
-
-

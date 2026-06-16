@@ -44,16 +44,6 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "framework.h"
-
-#include "drv_gpio.h"
-#include "drv_xcr24.h"
-#include "drv_xdr12.h"
-#include "ads124s08.h"
-
-#include "comm_debugging.h"
-#include "ldim_conversion.h"
-#include "drv_timer.h"
 
 /* USER CODE END Includes */
 

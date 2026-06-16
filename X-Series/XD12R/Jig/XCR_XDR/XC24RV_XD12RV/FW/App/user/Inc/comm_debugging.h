@@ -9,6 +9,9 @@
 #ifndef __COMM_DEBUGGING_H__
 #define __COMM_DEBUGGING_H__
 
+#include <stdint.h>
+#include <stdbool.h>
+
 typedef enum __LOG_LEVEL__
 {
     LOG_LV_DEBUG = 0,

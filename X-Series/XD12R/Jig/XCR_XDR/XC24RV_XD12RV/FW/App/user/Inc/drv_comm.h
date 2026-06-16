@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   drv_comm.h
  * Author: GT
  *

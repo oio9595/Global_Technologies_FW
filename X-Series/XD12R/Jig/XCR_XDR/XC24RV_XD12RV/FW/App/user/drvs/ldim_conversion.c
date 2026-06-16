@@ -1,16 +1,10 @@
-
-#include "drv_xdr12.h"
-#include "drv_xcr24.h"
-
-#include "comm_debugging.h"
-
 #include "crc.h"
-
+#include "drv_xcr24.h"
 #include "ldim_conversion.h"
 
 #define COLOR_NUM       (3U)    /* R/G/B */
 
-#define XCR_LDIM_BURST_SIZE     (1U + (XCR_CH_SIZE * COLOR_NUM * XD_LINE_LENGTH) + 1U)  /* HDR + Payload + crc16 */ 
+#define XCR_LDIM_BURST_SIZE     (1U + (XCR_CH_SIZE * COLOR_NUM * XD_LINE_LENGTH) + 1U)  /* HDR + Payload + crc16 */
 #define XDR_LDIM_BURST_SIZE     (XCR_LDIM_BURST_SIZE)
 
 const static uint8_t gn_Block_Map[LDIM_BLK_SIZE][2U] = /* Front View : { xcr_ch, xdr_daised_ch } */

@@ -35,11 +35,8 @@
  */
 
 /* Also include device specific header */
-
-#include "main.h"
 #include "drv_spi.h"
 #include "ads124s08.h"
-//#include "xdic.h"
 #include "comm_debugging.h"
 
 #define USE_DISPLAY_DEVICE_REGS
@@ -58,6 +55,19 @@
 #define CMD_RDATA               (0x12U) /* or 0x13 */
 #define CMD_RREG                (0x20U) /* Read nnnnn registers starting at address rrrrr */
 #define CMD_WREG                (0x40U) /* Write nnnnn registers starting at address rrrrr */
+
+#define LTC_R_RIN               (2200.0f)
+#define LTC_R_ROUT              (3300.0f)
+#define LTC_R_RS_HIGH           (13.0f)
+#define LTC_R_RS_MID            (200.0f)
+#define LTC_R_RS_LOW            (3900.0f)
+
+#define ADC_VREF                (5000.0f) /* mV */
+#define ADC_RES                 (32767U) /* mV */
+#define mVOLTAGE_PER_ADC        (ADC_VREF / (float)ADC_RES)
+#define ADC_CONV_COEFF_HIGH     (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
+#define ADC_CONV_COEFF_MID      (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))
+#define ADC_CONV_COEFF_LOW      (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_LOW * LTC_R_ROUT)))
 
 typedef enum tag_REG_ADDR_T
 {
@@ -537,30 +547,27 @@ uint16_t ADS114S08_Get_ADC_Value(void)
     return (uint16_t)((float)gn_ads114s08_adc_temp / ADS114S08_READ_COUNT + 0.5f);
 }
 
-float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, uint8_t gain)
+float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
 	float ret = 0;
-#if 0
 	switch (gain)
 	{
 		case GAIN_HIGH :
-			ret = ((float)adc * ADC_CONV_COEFF_HIGH);	/* max  40mA */
+			ret = ((float)adc * ADC_CONV_COEFF_HIGH);
 			break;
 		case GAIN_MID :
-			ret = ((float)adc * ADC_CONV_COEFF_MID);	/* max  10mA */
+			ret = ((float)adc * ADC_CONV_COEFF_MID);
 			break;
 		case GAIN_LOW :
-			ret = ((float)adc * ADC_CONV_COEFF_LOW);	/* max 0.5mA */
+			ret = ((float)adc * ADC_CONV_COEFF_LOW);
 			break;
 	}
-#endif
 	return ret; //mA
 }
 
-uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, uint8_t gain)
+uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
 {
 	uint16_t ret = 0;
-#if 0
 	switch (gain)
 	{
 		case GAIN_HIGH :
@@ -573,6 +580,5 @@ uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, uint8_t gain)
 			ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
 			break;
 	}
-#endif
 	return ret; //adc
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   drv_spi.c
  * Author: GT
  *
@@ -6,6 +6,7 @@
  */
 
 #include "drv_spi.h"
+#include <stdbool.h>
 
 __STATIC_INLINE bool spi_timeout(uint32_t tick, const uint32_t timeout)
 {

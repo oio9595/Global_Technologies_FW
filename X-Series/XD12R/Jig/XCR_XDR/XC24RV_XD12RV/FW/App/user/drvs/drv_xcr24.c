@@ -1,13 +1,11 @@
-
-
-#include "drv_xdr12.h"
-#include "drv_xcr24.h"
-#include "drv_spi.h"
-
-#include "comm_debugging.h"
-#include "ldim_conversion.h"
+#include <stdio.h>
+#include <string.h>
 
 #include "crc.h"
+#include "drv_spi.h"
+#include "drv_xcr24.h"
+#include "drv_xdr12.h"
+#include "comm_debugging.h"
 
 #define SPI_PACKET_DEBUG        (1U)
 

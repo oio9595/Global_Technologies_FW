@@ -1,4 +1,3 @@
-
 #include "crc.h"
 
 /* CRC-8 SAE J1850 (Polynomial = 0x1D, Initial value = 0xFF, final XOR = 0xFF, non-reflected) */
@@ -70,7 +69,7 @@ uint16_t Calculate_CRC16_CCITT_False(const uint16_t *pData, const uint32_t lengt
 uint8_t Calculate_crc8_sae(const uint8_t *data, uint32_t length)
 {
     /* 초기값 0xFF 설정 */
-    uint8_t crc = 0xFFU; 
+    uint8_t crc = 0xFFU;
 
     const uint8_t *end = (data + length);
 
@@ -97,7 +96,7 @@ uint8_t Calculate_crc8_sae_bit_oriented(const uint8_t *data, uint32_t total_bits
     for(uint32_t i = 0; i < full_bytes; ++i)
     {
         crc ^= data[i]; /* Non-reflected: 입력 바이트를 CRC에 직접 XOR */
-        
+
         for(uint32_t bit = 0; bit < 8U; ++bit)
         {
             if(crc & 0x80U)
@@ -116,7 +115,7 @@ uint8_t Calculate_crc8_sae_bit_oriented(const uint8_t *data, uint32_t total_bits
     {
         /* 자투리 비트가 담긴 마지막 바이트 가져오기 */
         uint8_t last_byte = data[full_bytes];
-        
+
         /* 남은 비트 개수만큼만 최상위 비트(MSB)부터 한 비트씩 밀어 넣음 */
         for(uint32_t bit = 0; bit < remaining_bits; ++bit)
         {

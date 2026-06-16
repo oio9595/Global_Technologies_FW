@@ -883,18 +883,19 @@ typedef enum _xd12r_mirror_addr_
     XD12R_MIRROR1 = 0,              /* 0x00 */
     XD12R_MIRROR2,                  /* 0x01 */
     XD12R_MIRROR3,                  /* 0x02 */
-    XD12R_MIRROR_OFS_CH01,          /* 0x03 */
-    XD12R_MIRROR_OFS_CH02,          /* 0x04 */
-    XD12R_MIRROR_OFS_CH03,          /* 0x05 */
-    XD12R_MIRROR_OFS_CH04,          /* 0x06 */
-    XD12R_MIRROR_OFS_CH05,          /* 0x07 */
-    XD12R_MIRROR_OFS_CH06,          /* 0x08 */
-    XD12R_MIRROR_OFS_CH07,          /* 0x09 */
-    XD12R_MIRROR_OFS_CH08,          /* 0x0A */
-    XD12R_MIRROR_OFS_CH09,          /* 0x0B */
-    XD12R_MIRROR_OFS_CH10,          /* 0x0C */
-    XD12R_MIRROR_OFS_CH11,          /* 0x0D */
-    XD12R_MIRROR_OFS_CH12,          /* 0x0E */
+    XD12R_MIRROR4,                  /* 0x03 */
+    XD12R_MIRROR_OFS_CH01,          /* 0x04 */
+    XD12R_MIRROR_OFS_CH02,          /* 0x05 */
+    XD12R_MIRROR_OFS_CH03,          /* 0x06 */
+    XD12R_MIRROR_OFS_CH04,          /* 0x07 */
+    XD12R_MIRROR_OFS_CH05,          /* 0x08 */
+    XD12R_MIRROR_OFS_CH06,          /* 0x09 */
+    XD12R_MIRROR_OFS_CH07,          /* 0x0A */
+    XD12R_MIRROR_OFS_CH08,          /* 0x0B */
+    XD12R_MIRROR_OFS_CH09,          /* 0x0C */
+    XD12R_MIRROR_OFS_CH10,          /* 0x0D */
+    XD12R_MIRROR_OFS_CH11,          /* 0x0E */
+    XD12R_MIRROR_OFS_CH12,          /* 0x0F */
 
     XD12R_MIRROR_GAIN_CH01 = 0x10,  /* 0x10 */
     XD12R_MIRROR_GAIN_CH02,         /* 0x11 */
@@ -949,7 +950,19 @@ typedef union tag_XDR12_MIRROR3
     }bit;
 }_v_xdr12_mirror3_t;
 
-/* OFS_CHx (0x03 ~ 0x0F) : default 0x080 */
+/* MIRROR4 (0x03) : default 0x080 */
+typedef union tag_XDR12_MIRROR4
+{
+    uint16_t ALL;
+    struct
+    {
+        uint16_t ldo_ctl        :  4;
+        uint16_t ldo_osc_ctl    :  4;
+        uint16_t                :  8;
+    }bit;
+}_v_xdr12_mirror4_t;
+
+/* OFS_CHx (0x04 ~ 0x0F) : default 0x080 */
 typedef union tag_XDR12_OFS_CHx
 {
     uint16_t ALL;
@@ -1001,7 +1014,7 @@ typedef union _xdr12_mirror_regs
         _v_xdr12_mirror1_t      _r00;
         _v_xdr12_mirror2_t      _r01;
         _v_xdr12_mirror3_t      _r02;
-        _v_xdr12_ofs_chx_t      _r03;
+        _v_xdr12_mirror4_t      _r03;
         _v_xdr12_ofs_chx_t      _r04;
         _v_xdr12_ofs_chx_t      _r05;
         _v_xdr12_ofs_chx_t      _r06;

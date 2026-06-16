@@ -40,7 +40,9 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include <stdbool.h>
+#include "drv_gpio.h"
 
 #define ADS_AIN0                (0x00U)
 #define ADS_AIN1                (0x01U)
@@ -80,8 +82,8 @@ extern bool ADS114S08_Wait_Done(void);
 extern void ADC_DRDY_INT_Handler(void);
 extern uint16_t ADS114S08_Get_ADC_Value(void);
 
-extern float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, uint8_t gain);
-extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, uint8_t gain);
+extern float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
+extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain);
 
 #ifdef __cplusplus
 }

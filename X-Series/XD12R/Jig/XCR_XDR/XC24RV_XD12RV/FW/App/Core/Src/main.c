@@ -21,7 +21,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 
+#include "drv_xcr24.h"
+#include "drv_xdr12.h"
+#include "drv_comm.h"
+#include "drv_timer.h"
+#include "drv_gpio.h"
+
+#include "comm_debugging.h"
+#include "ads124s08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -162,7 +171,7 @@ void mcu_peripheral_tim_input_capture_stop(void)
     if(true == gt_input_capture_info.start)
     {
         LL_TIM_DisableCounter(TIM5);
-        
+
         FREQ_MEASURE_RESET_HI();
 
         gt_input_capture_info.start = false;

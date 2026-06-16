@@ -1,18 +1,16 @@
 #ifndef __FRAMEWORK_H__
 #define __FRAMEWORK_H__
 
-#include <stdio.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#define FW_MAJOR_H		0
-#define FW_MAJOR_L		1
-#define FW_MINOR_H		0
-#define FW_MINOR_L		0
-
 /****** THREAD MANAGER *****/
-typedef uint32_t	THREAD_ID;
-#define INVALID_THREAD_ID		(0U)
+typedef uint32_t                THREAD_ID;
+#define INVALID_THREAD_ID       (0U)
 
 typedef enum __MGRSTATUS__
 {
@@ -24,7 +22,6 @@ typedef enum __MGRSTATUS__
 	STATUS_ERROR,
 	STATUS_END
 }MGRSTATUS;
-
 
 /* thread manager */
 struct thread_data
@@ -45,7 +42,6 @@ extern uint32_t get_system_tick(void);
 extern THREAD_ID fw_begin_thread_ex(bool (*const f)(struct thread_data*), uint32_t tout);
 extern THREAD_ID fw_begin_thread(bool (*const f)(struct thread_data*));
 extern void fw_thread_stop(THREAD_ID tid);
-
 
 /* thread를 함수 형태로 사용하기
 BOOL thread1(struct thread_data *tdata)
@@ -77,7 +73,7 @@ typedef enum
 
     MGR_TRIM_INDEX,
 
-    NUMBER_OF_MGRS,    
+    NUMBER_OF_MGRS,
 }mgr_type_t;
 
 #define MGRET_ERR       (0U)
@@ -127,4 +123,7 @@ extern struct manager *__managers[NUMBER_OF_MGRS];
 
 #define MGR_TRIM()  __managers[MGR_TRIM_INDEX]
 
+#ifdef __cplusplus
+}
+#endif
 #endif

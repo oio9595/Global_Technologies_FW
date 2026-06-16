@@ -12,8 +12,9 @@
 extern "C" {
 #endif
 
-#include "main.h"
-
+#include <stdint.h>
+#include <stdbool.h>
+#include "drv_gpio.h"
 #include "xdr12_struct.h"
 
 #define LD_TYPE                 	(2U)    /* R/G/B */
@@ -29,6 +30,14 @@ extern "C" {
 #define XDR_SERIAL_CLK_HIGH     	(34U)
 #define XDR_SERIAL_CLK_LOW      	(16U)
 #define XDR_SERIAL_CLK          	((float)XD12R_INTERNAL_MCLK / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
+
+#define XDR_MAX_CURRENT_REF         (0x01F)
+#define XDR_MAX_LDO_DIG             (0x00F)
+#define XDR_MAX_LDO_DAC             (0x01F)
+#define XDR_MAX_LDO_FLL             (0x00F)
+#define XDR_MAX_OSC                 (0x01F)
+#define XDR_MAX_CH_GAIN             (0x07F)
+#define XDR_MAX_CH_OFS              (0x1FF)
 
 typedef enum tag_XD12R_ADDR_TYPE
 {
@@ -60,10 +69,18 @@ void xdr12_trim_init_ldo_dig(void);
 void xdr12_trim_init_ldo_dac(void);
 void xdr12_trim_init_ldo_fll(void);
 void xdr12_trim_init_osc(void);
-void xdr12_trim_ch_gain(void);
-void xdr12_trim_ch_ofs(void);
+void xdr12_trim_init_ch_gain(void);
+void xdr12_trim_init_ch_ofs(void);
 
 void xdr12_trim_set_max_curr_vref(uint16_t vref);
+
+bool xdr12_trim_set_current_ref(uint16_t reg_val);
+bool xdr12_trim_set_ldo_dig(uint16_t reg_val);
+bool xdr12_trim_set_ldo_dac(uint16_t reg_val);
+bool xdr12_trim_set_ldo_fll(uint16_t reg_val);
+bool xdr12_trim_set_osc(uint16_t reg_val);
+bool xdr12_trim_set_ch_gain(uint16_t reg_val, XD_CH_t chx);
+bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx);
 
 #ifdef __cplusplus
 }
