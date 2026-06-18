@@ -606,9 +606,6 @@ void XDIC_Init(void)
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
                 gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
-            case XDIC_ADDR_SERIAL_LATENCY :
-                gt_xdic_general_regs._r26.serial_latency = 60;
-                break;
             case XDIC_ADDR_MCLK_LOCK_1 :
                 gt_xdic_general_regs._r27.mclk_lock_cnt = ((gn_xd_mclk_lock_cnt & XD_MCLK_LSB_MASK) >>  0);
                 break;
@@ -693,8 +690,8 @@ void XDIC_Trim_Init(void)
                 gt_xdic_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
                 gt_xdic_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
-            case XDIC_ADDR_SERIAL_LATENCY :
-                gt_xdic_general_regs._r26.serial_latency = 60;
+            case XDIC_ADDR_WR_PROTECT :
+                gt_xdic_general_regs._r2D.val = 0x155;
                 break;
             case XDIC_ADDR_OTP_OP_MODE :
                 gt_xdic_general_regs._r3F.test_en = 1;
@@ -1064,7 +1061,7 @@ void XDIC_Set_Line_Delay(uint16_t line_delay)
     }
 
     XDIC_Write_General_Reg(0x09, delay_msb_accumulator);
-    
+
 }
 
 void XDIC_Set_Scan_No(uint8_t scan_no)
