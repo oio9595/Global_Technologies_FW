@@ -111,6 +111,8 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define AD_FROM_XDR_GPIO_Port GPIOB
 #define DEMUX_CHSEL_4_Pin LL_GPIO_PIN_1
 #define DEMUX_CHSEL_4_GPIO_Port GPIOB
+#define VLED_DCDC_EN_Pin LL_GPIO_PIN_2
+#define VLED_DCDC_EN_GPIO_Port GPIOB
 #define ADC_SCK_Pin LL_GPIO_PIN_10
 #define ADC_SCK_GPIO_Port GPIOB
 #define DEMUX_CHSEL_3_Pin LL_GPIO_PIN_12
@@ -143,6 +145,12 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define TCK_GPIO_Port GPIOA
 #define XC_5V5_EN_Pin LL_GPIO_PIN_10
 #define XC_5V5_EN_GPIO_Port GPIOC
+#define XCR_FB3_Pin LL_GPIO_PIN_11
+#define XCR_FB3_GPIO_Port GPIOC
+#define XCR_FB2_Pin LL_GPIO_PIN_12
+#define XCR_FB2_GPIO_Port GPIOC
+#define XCR_FB1_Pin LL_GPIO_PIN_2
+#define XCR_FB1_GPIO_Port GPIOD
 #define XD_PWM_IN_Pin LL_GPIO_PIN_3
 #define XD_PWM_IN_GPIO_Port GPIOB
 #define VLED_9V_EN_Pin LL_GPIO_PIN_4

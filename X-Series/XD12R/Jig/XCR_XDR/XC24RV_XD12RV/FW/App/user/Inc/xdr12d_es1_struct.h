@@ -335,8 +335,8 @@ typedef union tag_XD12R_SERIAL_CLK_GEN
     uint16_t ALL;
     struct
     {
-        uint16_t serial_clk_high    : 6;    /* These bits determine the number of MCLK of VDD level in logic high value ‘1’ or the number of MCLK of 0 level in logic low value ‘0’ when the XD12 is driving the DIO pin on read-back.  For more details, refer to Table. 4, Logic high time. */
-        uint16_t serial_clk_low     : 6;    /* These bits determine the number of MCLK of VDD level in logic low value ‘0’ or the number of MCLK of 0 level in logic high value ‘1’ when the XD12 is driving the DIO pin on read-back. For more details, refer to Table. 4, Logic low time. */
+        uint16_t serial_clk_high    : 6;    /* These bits determine the number of MCLK of VDD level in logic high value ï¿½1ï¿½ or the number of MCLK of 0 level in logic low value ï¿½0ï¿½ when the XD12 is driving the DIO pin on read-back.  For more details, refer to Table. 4, Logic high time. */
+        uint16_t serial_clk_low     : 6;    /* These bits determine the number of MCLK of VDD level in logic low value ï¿½0ï¿½ or the number of MCLK of 0 level in logic high value ï¿½1ï¿½ when the XD12 is driving the DIO pin on read-back. For more details, refer to Table. 4, Logic low time. */
         uint16_t                    : 4;    /* reserved */
     }bit;
 }_v_xdr12_serial_clk_gen_t;
@@ -871,4 +871,4 @@ typedef union _xdr12_mirror_regs
 }
 #endif
 
-#endif	/* _XDR12D_ES1_STRUCT_H_ */
+#endif	/* _XDR12D_ES1_STRUCT_H_ */

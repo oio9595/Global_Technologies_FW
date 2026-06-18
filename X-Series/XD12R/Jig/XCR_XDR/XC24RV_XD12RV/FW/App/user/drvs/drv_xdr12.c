@@ -161,6 +161,8 @@ static _v_serdes_fault_readout_command_t gt_xd_fault_readout_command;
 static _v_serdes_sync_gen_command_t gt_xd_syncgen_command[XDR_DAISY_LENGTH];
 static _v_serdes_id_gen_command_t gt_xd_idgen_command[XDR_DAISY_LENGTH];
 
+static void xdr12_trim_enable_write_protect(bool protect_en);
+
 static void start_timeout_timer(uint16_t timeout_us)
 {
     /* Set the Autoreload Register value */
@@ -1197,6 +1199,7 @@ static void xdr12_regs_trim_init_table(void)
         }
         xdr12_write_by_type(addr, _r1->ALL[addr], XD12R_ADDR_TYPE_GENERAL);
     }
+    xdr12_trim_enable_write_protect(false);
 }
 
 bool xdr12_get_use_xcr(void)
@@ -1497,6 +1500,13 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
     xdr12_pwm_out((uint32_t)gn_pwm_out_xd_ld_transfer, (uint32_t)len);
 }
 
+static void xdr12_trim_enable_write_protect(bool protect_en)
+{
+    _v_xdr12_otp_protect_t* _r3E = &gt_xdr12_otp_ctrl_set_regs.reg._r3E;
+    _r3E->bit.protect_en = (protect_en == true) ? XD12R_REG_PROTECT_ENABLE : XD12R_REG_PROTECT_DISABLE;
+    xdr12_write_by_type(XD12R_OTP_PROTECT, _r3E->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
 void xdr12_trim_init_current_ref(void)
 {
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
@@ -1554,13 +1564,10 @@ void xdr12_trim_init_ch_gain(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_channel_enable_t* _r05 = &gt_xdr12_set_regs.reg._r05;
-    _r05->ALL = 0xFFFU;
-    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_GENERAL);
 
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
@@ -1588,13 +1595,10 @@ void xdr12_trim_init_ch_ofs(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_channel_enable_t* _r05 = &gt_xdr12_set_regs.reg._r05;
-    _r05->ALL = 0xFFFU;
-    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_GENERAL);
 
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
@@ -1615,6 +1619,13 @@ void xdr12_trim_init_ch_ofs(void)
     xdr12_write_by_type(XD12R_MAX_CURR_LEVEL, _r0A->ALL, XD12R_ADDR_TYPE_GENERAL);
 #elif (XD_MODEL_TYPE == XD_TYPE_IC601)
 #endif
+}
+
+void xdr12_trim_set_channel_enable(XD_CH_t chx)
+{
+    _v_xdr12_channel_enable_t* _r05 = &gt_xdr12_set_regs.reg._r05;
+    _r05->ALL = (uint16_t)(1U << chx);
+    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_MIRROR);
 }
 
 void xdr12_trim_set_max_curr_vref(uint16_t vref)
@@ -1748,4 +1759,32 @@ bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx)
     }
 
     return ret;
+}
+
+void xdr12_trim_init_efuse(void)
+{
+    gt_xdr12_otp_ctrl_set_regs.reg._r3A.ALL = 0x000U;
+    xdr12_write_by_type(XD12R_OTP_ACCESS1, gt_xdr12_otp_ctrl_set_regs.reg._r3A.ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    gt_xdr12_otp_ctrl_set_regs.reg._r3B.ALL = 0x3FFU;
+    xdr12_write_by_type(XD12R_OTP_ACCESS2, gt_xdr12_otp_ctrl_set_regs.reg._r3B.ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    gt_xdr12_otp_ctrl_set_regs.reg._r3C.ALL = 0x004U;
+    xdr12_write_by_type(XD12R_OTP_WRITE, gt_xdr12_otp_ctrl_set_regs.reg._r3C.ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_trim_start_efuse(void)
+{
+}
+
+void xdr12_trim_save_mirror_register(void)
+{
+}
+
+uint32_t xdr12_trim_verify_mirror_dump(void)
+{
+    for ( ; ; )
+    {
+
+    }
 }

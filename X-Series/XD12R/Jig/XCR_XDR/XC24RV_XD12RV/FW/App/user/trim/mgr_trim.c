@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "framework.h"
 #include "drv_gpio.h"
 #include "drv_xdr12.h"
@@ -33,6 +35,8 @@
 #define XDR_DELAY_DEFAULT           (1U)
 #define XDR_DELAY_MEASURE           (100U)
 #define XDR_DELAY_PWR_ON            (100U)
+#define XDR_DELAY_PWR_OFF           (100U)
+#define XDR_DELAY_EFUSE_DONE        (500U)
 
 typedef struct tag_SAVED_INFO
 {
@@ -92,14 +96,15 @@ typedef enum tag_XDR_TRIM_STEP_T
     XDR_TRIM_STEP_START_MEASURE,
     XDR_TRIM_STEP_GET_MEASURED_VALUE,
     XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER,
-    XDR_TRIM_STEP_EXAMPLE06,
-    XDR_TRIM_STEP_EXAMPLE07,
-    XDR_TRIM_STEP_EXAMPLE08,
-    XDR_TRIM_STEP_EXAMPLE09,
-    XDR_TRIM_STEP_EXAMPLE10,
-    XDR_TRIM_STEP_EXAMPLE11,
-    XDR_TRIM_STEP_STOP,
+    XDR_TRIM_STEP_PREPARE_EFUSE,
+    XDR_TRIM_STEP_START_EFUSE,
+    XDR_TRIM_STEP_END_EFUSE,
+    XDR_TRIM_STEP_PWR_REBOOT,
+    XDR_TRIM_STEP_VERIFY_OTP_DUMP,
+    XDR_TRIM_STEP_LOG_SUMMARY,
+    XDR_TRIM_STEP_PWR_OFF,
     XDR_TRIM_STEP_NONE,
+    XDR_TRIM_STEP_MAX,
 } xdr_trim_step_t;
 
 typedef enum tag_XDR_TRIM_LIST
@@ -122,6 +127,37 @@ static struct{
 
     THREAD_ID   trim_thr;
 }__priv_trim;
+
+static bool gb_xdr_do_efuse;
+
+static const uint8_t* gs_xdr_trim_step[XDR_TRIM_STEP_MAX] =
+{
+    "XDR_TRIM_STEP_PWR_ON",
+    "XDR_TRIM_STEP_INITIAL",
+    "XDR_TRIM_STEP_INITIAL_BY_LIST",
+    "XDR_TRIM_STEP_START_MEASURE",
+    "XDR_TRIM_STEP_GET_MEASURED_VALUE",
+    "XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER",
+    "XDR_TRIM_STEP_PREPARE_EFUSE",
+    "XDR_TRIM_STEP_START_EFUSE",
+    "XDR_TRIM_STEP_END_EFUSE",
+    "XDR_TRIM_STEP_PWR_REBOOT",
+    "XDR_TRIM_STEP_VERIFY_OTP_DUMP",
+    "XDR_TRIM_STEP_LOG_SUMMARY",
+    "XDR_TRIM_STEP_PWR_OFF",
+    "XDR_TRIM_STEP_NONE",
+};
+
+static const uint8_t* gs_xdr_trim_list[XDR_TRIM_LIST_MAX] =
+{
+    "XDR_TRIM_LIST_CURRENT_REF",
+    "XDR_TRIM_LIST_LDO_DIG",
+    "XDR_TRIM_LIST_LDO_DAC",
+    "XDR_TRIM_LIST_LDO_FLL",
+    "XDR_TRIM_LIST_OSC",
+    "XDR_TRIM_LIST_CH_GAIN",
+    "XDR_TRIM_LIST_CH_OFS",
+};
 
 static void xdr_trim_param_init(void)
 {
@@ -225,35 +261,49 @@ static judge_info_t xdr_trim_compare_range(trim_info_t* p_trim_info_t)
 static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, trim_info_t* in_p_now_trim_info)
 {
     bool ret = false;
-    uint16_t reg_val = in_p_now_trim_info->sub_val;
+    uint16_t reg_val = 0U;
     switch(in_trim_list)
     {
         case XDR_TRIM_LIST_CURRENT_REF:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            reg_val = in_p_now_trim_info->sub_val;
             ret = xdr12_trim_set_current_ref(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_DIG:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            if (in_p_now_trim_info->sub_val < 8U)
+            {
+                reg_val = 15U - in_p_now_trim_info->sub_val;
+            }
+            else
+            {
+                reg_val = in_p_now_trim_info->sub_val - 8U;
+            }
             ret = xdr12_trim_set_ldo_dig(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_DAC:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            reg_val = in_p_now_trim_info->sub_val;
             ret = xdr12_trim_set_ldo_dac(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_FLL:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            reg_val = in_p_now_trim_info->sub_val;
             ret = xdr12_trim_set_ldo_fll(reg_val);
             break;
         case XDR_TRIM_LIST_OSC:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            reg_val = in_p_now_trim_info->sub_val;
             ret = xdr12_trim_set_osc(reg_val);
             break;
         case XDR_TRIM_LIST_CH_GAIN:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            reg_val = in_p_now_trim_info->sub_val;
             ret = xdr12_trim_set_ch_gain(reg_val, in_p_now_trim_info->chx);
             break;
         case XDR_TRIM_LIST_CH_OFS:
-            reg_val = reg_val + 1U; // for test, have to be modified
+            if (in_p_now_trim_info->sub_val < 256U)
+            {
+                reg_val = 511U - in_p_now_trim_info->sub_val;
+            }
+            else
+            {
+                reg_val = in_p_now_trim_info->sub_val - 256U;
+            }
             ret = xdr12_trim_set_ch_ofs(reg_val, in_p_now_trim_info->chx);
             break;
     }
@@ -265,33 +315,43 @@ static bool _xcr_trim_thread(struct thread_data* td)
     switch(td->step)
     {
         case XCR_TRIM_STEP_PWR_ON:
+        {
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %u, timeout : %u", __func__, td->id, td->step, td->tout);
             td->step = XCR_TRIM_STEP_EXAMPLE1;
             td->tout = 100;
             break;
+        }
 
         case XCR_TRIM_STEP_EXAMPLE1:
+        {
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
             td->step = XCR_TRIM_STEP_EXAMPLE2;
             td->tout = 250;
             break;
+        }
 
         case XCR_TRIM_STEP_EXAMPLE2:
+        {
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
             td->step = XCR_TRIM_STEP_EXAMPLE3;
             td->tout = 150;
             break;
+        }
 
         case XCR_TRIM_STEP_EXAMPLE3:
+        {
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
             td->step = XCR_TRIM_STEP_NONE;
             td->tout = 500;
             break;
+        }
 
         default:
+        {
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
             __priv_trim.trim_thr = INVALID_THREAD_ID;
             return false;
+        }
     }
 
     return true;
@@ -306,7 +366,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
     {
         case XDR_TRIM_STEP_PWR_ON:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %u, timeout : %u", __func__, td->id, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
             /* Power On Sequence */
             gpio_set_xd_vdd_5v(XD_PWR_ON_5V0);
             td->step = XDR_TRIM_STEP_INITIAL;
@@ -316,7 +376,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_INITIAL:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
             /* XDR Initialization */
             xdr12_trim_init();
             td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
@@ -326,7 +386,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_INITIAL_BY_LIST:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             /* XDR Prepare for Each Trim List */
             switch (*p_now_trim_list)
             {
@@ -346,14 +406,18 @@ static bool _xdr_trim_thread(struct thread_data* td)
                     xdr12_trim_init_osc();
                     break;
                 case XDR_TRIM_LIST_CH_GAIN:
+                    gpio_set_power_9v(PWR_ON);
                     xdr12_trim_init_ch_gain();
                     xdr12_trim_set_max_curr_vref(p_now_trim_info->input[p_now_trim_info->repeat]);
+                    xdr12_trim_set_channel_enable(p_now_trim_info->chx);
                     gpio_set_demux_channel_selection(p_now_trim_info->chx);
                     gpio_set_current_gain(p_now_trim_info->gain);
                     break;
                 case XDR_TRIM_LIST_CH_OFS:
+                    gpio_set_power_9v(PWR_ON);
                     xdr12_trim_init_ch_ofs();
                     xdr12_trim_set_max_curr_vref(p_now_trim_info->input[p_now_trim_info->repeat]);
+                    xdr12_trim_set_channel_enable(p_now_trim_info->chx);
                     gpio_set_demux_channel_selection(p_now_trim_info->chx);
                     gpio_set_current_gain(p_now_trim_info->gain);
                     break;
@@ -365,7 +429,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_START_MEASURE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             /* XDR Input Conditions for Each Trim List & Start Measure */
             switch (*p_now_trim_list)
             {
@@ -392,7 +456,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_GET_MEASURED_VALUE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             float f_converted_value = 0.0f;
             /* XDR Measure */
             switch (*p_now_trim_list)
@@ -448,7 +512,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             /* XDR Compare */
             judge_info_t t_judge = xdr_trim_compare_range(p_now_trim_info);
             if (true == t_judge.in_range)
@@ -472,6 +536,45 @@ static bool _xdr_trim_thread(struct thread_data* td)
             {
                 if (true == xdr_trim_update_register_by_sub_val(*p_now_trim_list, p_now_trim_info))
                 {
+                    td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
+                    td->tout = XDR_DELAY_DEFAULT;
+                }
+                else
+                {
+                    // go to error handling, can't update register, trim thread stop
+                    comm_UART_Printf(LOG_LV_ERROR, "\n\r\tlist : %s Failed to update trim register!", gs_xdr_trim_list[*p_now_trim_list]);
+                    td->step = XDR_TRIM_STEP_PWR_OFF;
+                    td->tout = XDR_DELAY_DEFAULT;
+                }
+            }
+            else
+            {
+                // find best value from saved value and update register
+                if (p_now_trim_info->saved.saved_cnt > 0U)
+                {
+                    float target_value = p_now_trim_info->range.target;
+                    float closest_val = p_now_trim_info->saved.saved_value[0];
+                    uint8_t closest_idx = 0U;
+
+                    float best_diff = fabsf(closest_val - target_value);
+
+                    for (uint8_t idx = 1U; idx < p_now_trim_info->saved.saved_cnt; ++idx)
+                    {
+                        float value = p_now_trim_info->saved.saved_value[idx];
+                        float diff = fabsf(value - target_value);
+
+                        if (diff < best_diff)
+                        {
+                            best_diff = diff;
+                            closest_val = value;
+                            closest_idx = idx;
+                        }
+                    }
+
+                    p_now_trim_info->measure.value[0] = closest_val;
+                    p_now_trim_info->sub_val = p_now_trim_info->saved.sub_val[closest_idx];
+                    xdr_trim_update_register_by_sub_val(*p_now_trim_list, p_now_trim_info);
+
                     if (*p_now_trim_list == XDR_TRIM_LIST_CH_GAIN || *p_now_trim_list == XDR_TRIM_LIST_CH_OFS)
                     {
                         if (p_now_trim_info->chx < (XD_CH_MAX - 1U))
@@ -482,106 +585,117 @@ static bool _xdr_trim_thread(struct thread_data* td)
                         }
                         else
                         {
-                            ++(*p_now_trim_list);
-                            if (*p_now_trim_list < XDR_TRIM_LIST_MAX)
+                            if (++(*p_now_trim_list) < XDR_TRIM_LIST_MAX)
                             {
                                 td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
                             }
                             else
                             {
-                                td->step = XDR_TRIM_STEP_STOP; // must change to step_eFuse
+                                td->step = XDR_TRIM_STEP_PREPARE_EFUSE;
                             }
                             td->tout = XDR_DELAY_DEFAULT;
                         }
                     }
                     else
                     {
-                        ++(*p_now_trim_list);
-                        if (*p_now_trim_list < XDR_TRIM_LIST_MAX)
+                        if (++(*p_now_trim_list) < XDR_TRIM_LIST_MAX)
                         {
                             td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
                         }
                         else
                         {
-                            td->step = XDR_TRIM_STEP_STOP;
+                            td->step = XDR_TRIM_STEP_PREPARE_EFUSE;
                         }
                         td->tout = XDR_DELAY_DEFAULT;
                     }
                 }
-                else
-                {
-                    // go to error handling, can't update register, trim thread stop
-                    comm_UART_Printf(LOG_LV_ERROR, "\n\rFailed to update trim register!");
-                }
+            }
+            break;
+        }
+
+        case XDR_TRIM_STEP_PREPARE_EFUSE:
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            if (gb_xdr_do_efuse)
+            {
+                // save mirror register
+                xdr12_trim_save_mirror_register();
+                // register setting
+                xdr12_trim_init_efuse();
+                //power control
+                gpio_set_xd_vdd_5v(XD_PWR_ON_5V5);
+                td->step = XDR_TRIM_STEP_START_EFUSE;
+                td->tout = XDR_DELAY_DEFAULT;
             }
             else
             {
-                // find best value from saved value and update register
+                // turn off
+                td->step = XDR_TRIM_STEP_PWR_OFF;
+                td->tout = XDR_DELAY_DEFAULT;
             }
-            /* XDR Update Register */
+            break;
+        }
 
-            td->step = XDR_TRIM_STEP_EXAMPLE06;
+        case XDR_TRIM_STEP_START_EFUSE:
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            xdr12_trim_start_efuse();
+            td->step = XDR_TRIM_STEP_END_EFUSE;
+            td->tout = XDR_DELAY_EFUSE_DONE;
+            break;
+        }
+
+        case XDR_TRIM_STEP_END_EFUSE:
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            gpio_set_xd_vdd_5v(XD_PWR_OFF);
+            td->step = XDR_TRIM_STEP_PWR_REBOOT;
+            td->tout = XDR_DELAY_PWR_OFF;
+            break;
+        }
+
+        case XDR_TRIM_STEP_PWR_REBOOT:
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            gpio_set_xd_vdd_5v(XD_PWR_ON_5V0);
+            td->step = XDR_TRIM_STEP_VERIFY_OTP_DUMP;
+            td->tout = XDR_DELAY_PWR_ON;
+            break;
+        }
+
+        case XDR_TRIM_STEP_VERIFY_OTP_DUMP:
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            xdr12_trim_init();
+            if (0U == xdr12_trim_verify_mirror_dump())
+            {
+                // verify OK
+            }
+            else
+            {
+                // verify NG
+            }
+
+            td->step = XDR_TRIM_STEP_LOG_SUMMARY;
             td->tout = XDR_DELAY_DEFAULT;
             break;
         }
 
-        case XDR_TRIM_STEP_EXAMPLE06:
+        case XDR_TRIM_STEP_LOG_SUMMARY:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
-            td->step = XDR_TRIM_STEP_EXAMPLE07;
-            td->tout = XDR_DELAY_DEFAULT;
-            break;
-        }
-
-        case XDR_TRIM_STEP_EXAMPLE07:
-        {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
-            /* XDR Check Remain Trim List */
-            td->step = XDR_TRIM_STEP_EXAMPLE08;
-            td->tout = XDR_DELAY_DEFAULT;
-            break;
-        }
-
-        case XDR_TRIM_STEP_EXAMPLE08:
-        {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
-            /* XDR Prepare for eFuse */
-            td->step = XDR_TRIM_STEP_EXAMPLE09;
-            td->tout = XDR_DELAY_DEFAULT;
-            break;
-        }
-
-        case XDR_TRIM_STEP_EXAMPLE09:
-        {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
-            /* XDR eFuse */
-            td->step = XDR_TRIM_STEP_EXAMPLE10;
-            td->tout = XDR_DELAY_DEFAULT;
-            break;
-        }
-
-        case XDR_TRIM_STEP_EXAMPLE10:
-        {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
-            /* XDR Power Reboot */
-            td->step = XDR_TRIM_STEP_EXAMPLE11;
-            td->tout = XDR_DELAY_DEFAULT;
-            break;
-        }
-
-        case XDR_TRIM_STEP_EXAMPLE11:
-        {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             /* XDR eFuse Check */
-            td->step = XDR_TRIM_STEP_STOP;
+            td->step = XDR_TRIM_STEP_PWR_OFF;
             td->tout = XDR_DELAY_DEFAULT;
             break;
         }
 
-        case XDR_TRIM_STEP_STOP:
+        case XDR_TRIM_STEP_PWR_OFF:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
             /* XDR Power Off */
+            gpio_set_xd_vdd_5v(XD_PWR_OFF);
+            gpio_set_power_9v(PWR_OFF);
             td->step = XDR_TRIM_STEP_NONE;
             td->tout = XDR_DELAY_DEFAULT;
             break;
@@ -589,7 +703,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         default:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, step : %u, timeout : %u", __func__, td->step, td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
             __priv_trim.trim_thr = INVALID_THREAD_ID;
             return false;
         }

@@ -55,6 +55,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+I2C_HandleTypeDef hi2c1;
+
 /* USER CODE BEGIN PV */
 typedef struct tag_INPUT_CAPTURE_INFO
 {
@@ -82,6 +84,7 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 extern void fw_run(void);
@@ -131,14 +134,16 @@ void _system_idle(void)
 
 void mcu_peripheral_adc_start(void)
 {
+    gn_InternalADC = 0U;
     LL_ADC_Enable(ADC1);
-
+    LL_mDelay(1);
     for (uint8_t cnt = 0 ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
         while(!LL_ADC_IsActiveFlag_EOCS(ADC1)) {}
         LL_ADC_ClearFlag_EOCS(ADC1);
         gn_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
+        LL_mDelay(1);
     }
 
     LL_ADC_Disable(ADC1);
@@ -256,6 +261,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM5_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
     fw_run();
@@ -412,6 +418,40 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 400000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -1200,6 +1240,7 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOH);
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOC, LTC_CURRENT_HIGH_Pin|DEMUX_CHSEL_1_Pin);
@@ -1215,7 +1256,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOC, BUFFER_OE_Pin|XC_VCC_EN_Pin|XC_5V5_EN_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(XD_5V5_EN_GPIO_Port, XD_5V5_EN_Pin);
+  LL_GPIO_ResetOutputPin(GPIOB, VLED_DCDC_EN_Pin|XD_5V5_EN_Pin);
 
   /**/
   GPIO_InitStruct.Pin = B1_Pin;
@@ -1241,8 +1282,8 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = DEMUX_CHSEL_4_Pin|DEMUX_CHSEL_3_Pin|XD_5V5_EN_Pin|FREQ_MEASURE_RESET_Pin
-                          |VLED_9V_EN_Pin|XD_VCC_EN_Pin|XCR_NSS_Pin;
+  GPIO_InitStruct.Pin = DEMUX_CHSEL_4_Pin|VLED_DCDC_EN_Pin|DEMUX_CHSEL_3_Pin|XD_5V5_EN_Pin
+                          |FREQ_MEASURE_RESET_Pin|VLED_9V_EN_Pin|XD_VCC_EN_Pin|XCR_NSS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -1257,6 +1298,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
   LL_GPIO_Init(XCR_MCLK_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = XCR_FB3_Pin|XCR_FB2_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = XCR_FB1_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(XCR_FB1_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE4);

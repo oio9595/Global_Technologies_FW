@@ -80,7 +80,6 @@ typedef enum _xd12r_opt_ctrl_addr_
     XD12R_OTP_RD_PROG,      /* 0x3D */
     XD12R_OTP_PROTECT,      /* 0x3E */
     XD12R_OP_MODE,          /* 0x3F */
-
     XD12R_OTP_MAX,
 }xd12_otp_ctrl_addr_t;
 
@@ -126,8 +125,8 @@ typedef enum _fb_level_
 #define FLL_ENABLE          (0U)
 #define FLL_DISABLE         (1U)
 
-#define XD12R_REG_PROTECT_DISABLE    (0x155U)
-#define XD12R_REG_PROTECT_ENABLE     (0x2AAU)
+#define XD12R_REG_PROTECT_DISABLE    (0xA5AU)
+#define XD12R_REG_PROTECT_ENABLE     (0x5A5U)
 
 /* RESET&ID(0x00) : default 0x100 */
 typedef union tag_XD12R_RESET_ID

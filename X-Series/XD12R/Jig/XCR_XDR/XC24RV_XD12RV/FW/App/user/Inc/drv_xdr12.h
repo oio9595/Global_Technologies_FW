@@ -72,6 +72,7 @@ void xdr12_trim_init_osc(void);
 void xdr12_trim_init_ch_gain(void);
 void xdr12_trim_init_ch_ofs(void);
 
+void xdr12_trim_set_channel_enable(XD_CH_t chx);
 void xdr12_trim_set_max_curr_vref(uint16_t vref);
 
 bool xdr12_trim_set_current_ref(uint16_t reg_val);
@@ -81,6 +82,12 @@ bool xdr12_trim_set_ldo_fll(uint16_t reg_val);
 bool xdr12_trim_set_osc(uint16_t reg_val);
 bool xdr12_trim_set_ch_gain(uint16_t reg_val, XD_CH_t chx);
 bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx);
+
+void xdr12_trim_init_efuse(void);
+void xdr12_trim_start_efuse(void);
+
+void xdr12_trim_save_mirror_register(void);
+uint32_t xdr12_trim_verify_mirror_dump(void);
 
 #ifdef __cplusplus
 }
