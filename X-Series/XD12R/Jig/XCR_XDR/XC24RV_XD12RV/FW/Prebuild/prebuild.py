@@ -1,9 +1,16 @@
 import re
 import subprocess
+import sys
 from pathlib import Path
 
+# 1. 명령행 인자 분석 (--minor, --major 확인)
+is_minor_up = "--minor" in sys.argv
+is_major_up = "--major" in sys.argv
+
+# 2. 경로 정의
 script_dir = Path(__file__).resolve().parent
 
+# 상위 폴더로 거슬러 올라가며 .git 폴더 찾기
 git_root_dir = None
 for parent in [script_dir] + list(script_dir.parents):
     if (parent / ".git").is_dir():
@@ -16,6 +23,8 @@ if git_root_dir is None:
 
 version_h = script_dir.parent / "App" / "user" / "Inc" / "version.h"
 
+
+# 3. Git 최신 리비전 번호 및 수정 사항(-dirty) 감지
 try:
     git_rev = (
         subprocess.check_output(
@@ -27,14 +36,14 @@ try:
     )
 
     git_status = (
-            subprocess.check_output(
-                ["git", "status", "--porcelain"],
-                cwd=git_root_dir
-            )
-            .decode("utf-8")
-            .strip()
+        subprocess.check_output(
+            ["git", "status", "--porcelain"],
+            cwd=git_root_dir
         )
-# 수정된 파일이 하나라도 있다면 해시 뒤에 '-dirty'를 붙임
+        .decode("utf-8")
+        .strip()
+    )
+
     if git_status:
         git_rev += "-dirty"
 
@@ -42,18 +51,59 @@ except Exception as e:
     print(f"Warning: Failed to get git revision ({e}). Using 'unknown'")
     git_rev = "unknown"
 
-with open(version_h, "r") as f:
+
+# 4. version.h 파일 읽기
+with open(version_h, "r", encoding="utf-8") as f:
     text = f.read()
 
-m = re.search(r"#define\s+FW_BUILD\s+(\d+)", text)
-if m:
-    num = int(m.group(1)) + 1
-    text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", rf"\g<1>{num}", text)
-    print(f"FW_BUILD has been updated to {num}.")
-else:
-    print("Warning: FW_BUILD not found in version.h")
-    num = "unknown"
 
+# 5. 버전 제어 핵심 로직
+if is_major_up:
+    # --- MAJOR 버전 업인 경우 ---
+    major_match = re.search(r"#define\s+FW_MAJOR\s+(\d+)", text)
+    if major_match:
+        new_major = int(major_match.group(1)) + 1
+        text = re.sub(r"(#define\s+FW_MAJOR\s+)(\d+)", rf"\g<1>{new_major}", text)
+        print(f"[MAJOR UP] FW_MAJOR has been bumped to {new_major}.")
+    else:
+        print("Warning: FW_MAJOR not found in version.h")
+
+    # MAJOR가 올라가면 MINOR와 BUILD는 모두 0으로 리셋하는 것이 일반적입니다.
+    if re.search(r"#define\s+FW_MINOR\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_MINOR\s+)(\d+)", r"\g<1>0", text)
+        print("[MAJOR UP] FW_MINOR has been reset to 0.")
+
+    if re.search(r"#define\s+FW_BUILD\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", r"\g<1>0", text)
+        print("[MAJOR UP] FW_BUILD has been reset to 0.")
+
+elif is_minor_up:
+    # --- MINOR 버전 업인 경우 ---
+    minor_match = re.search(r"#define\s+FW_MINOR\s+(\d+)", text)
+    if minor_match:
+        new_minor = int(minor_match.group(1)) + 1
+        text = re.sub(r"(#define\s+FW_MINOR\s+)(\d+)", rf"\g<1>{new_minor}", text)
+        print(f"[MINOR UP] FW_MINOR has been bumped to {new_minor}.")
+    else:
+        print("Warning: FW_MINOR not found in version.h")
+
+    # MINOR가 올라가면 BUILD는 0으로 리셋
+    if re.search(r"#define\s+FW_BUILD\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", r"\g<1>0", text)
+        print("[MINOR UP] FW_BUILD has been reset to 0.")
+
+else:
+    # --- 일반 모드 (아무 인자도 없을 때) ---
+    build_match = re.search(r"#define\s+FW_BUILD\s+(\d+)", text)
+    if build_match:
+        new_build = int(build_match.group(1)) + 1
+        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", rf"\g<1>{new_build}", text)
+        print(f"[NORMAL MODE] FW_BUILD has been updated to {new_build}.")
+    else:
+        print("Warning: FW_BUILD not found in version.h")
+
+
+# 6. FW_GIT_REV 값 업데이트하기
 if re.search(r"#define\s+FW_GIT_REV\s+", text):
     text = re.sub(r'(#define\s+FW_GIT_REV\s+)("[^"]*")', rf'\g<1>"{git_rev}"', text)
 else:
@@ -61,5 +111,7 @@ else:
 
 print(f"FW_GIT_REV has been updated to \"{git_rev}\".")
 
-with open(version_h, "w") as f:
+
+# 7. 파일 저장
+with open(version_h, "w", encoding="utf-8") as f:
     f.write(text)
