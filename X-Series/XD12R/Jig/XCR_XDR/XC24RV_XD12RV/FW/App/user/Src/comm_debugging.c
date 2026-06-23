@@ -192,7 +192,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    //gt_log_level = LOG_LV_WARN;
+    gt_log_level = LOG_LV_INFO;
 }
 
 void comm_debugging_process(void)
@@ -346,16 +346,6 @@ void comm_debugging_process(void)
         }
 
         /*************** XDR12 *******************/
-        else if(!(strcmp(str_in, "xdr_use_xcr")))
-        {
-            xdr12_set_use_xcr(true);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xdr_no_use_xcr")))
-        {
-            xdr12_set_use_xcr(false);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
         else if(Command_Param_is_("xdr_write", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
@@ -434,19 +424,31 @@ void comm_UART_Printf(LOG_LV_t lv, const char *fmt, ...)
     {
         int len = 0;
         va_list ap;
+        char temp_buf[TX_PACKET_SIZE] = { 0U };
 
         va_start(ap, fmt);
-        len = vsnprintf(gt_uart.Txbuff[gt_uart.TxInCnt].buffer, (TX_PACKET_SIZE - 1), fmt, ap);
+        len = vsnprintf(temp_buf, (TX_PACKET_SIZE - 1), fmt, ap);
         va_end(ap);
 
         if(len > 0)
         {
-            gt_uart.Txbuff[gt_uart.TxInCnt].length = len;
+            int final_len = 0;
+            char* p_dest = gt_uart.Txbuff[gt_uart.TxInCnt].buffer;
+
+            if (lv > LOG_LV_WARN)
+            {
+                final_len = snprintf(p_dest, (TX_PACKET_SIZE - 1U), "%s%s%s", ANSI_FONT_RED, temp_buf, ANSI_FONT_NONE);
+            }
+            else
+            {
+                final_len = snprintf(p_dest, (TX_PACKET_SIZE - 1U), "%s", temp_buf);
+            }
+            gt_uart.Txbuff[gt_uart.TxInCnt].length = final_len;
 
             ++gt_uart.TxInCnt;
-            if(gt_uart.TxInCnt > (TX_BUFF_SIZE -1))
+            if(gt_uart.TxInCnt > (TX_BUFF_SIZE -1U))
             {
-                gt_uart.TxInCnt = 0;
+                gt_uart.TxInCnt = 0U;
             }
         }
     }

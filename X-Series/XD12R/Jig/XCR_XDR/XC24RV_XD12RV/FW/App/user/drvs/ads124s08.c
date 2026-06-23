@@ -356,23 +356,23 @@ volatile uint16_t gn_ads114s08_read_timeout;
 #ifdef USE_DISPLAY_DEVICE_REGS
 static void ADS114S08_Dump_Registers(void)
 {
-    comm_UART_Printf(LOG_LV_INFO, "======== ADS114S08 regs value ========\r\n");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n======== ADS114S08 regs value ========");
 
-    comm_UART_Printf(LOG_LV_INFO, "ID : 0x%X\r\n", gt_ads114s08_regs.regs.id.value);
-    comm_UART_Printf(LOG_LV_INFO, "\tDEV ID : %s\r\n", (gt_ads114s08_regs.regs.id.u.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs.regs.id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
+    comm_UART_Printf(LOG_LV_INFO, "\r\nID : 0x%X", gt_ads114s08_regs.regs.id.value);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tDEV ID : %s", (gt_ads114s08_regs.regs.id.u.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs.regs.id.u.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
 
-    comm_UART_Printf(LOG_LV_INFO, "Device Status : 0x%X\r\n", gt_ads114s08_regs.regs.status.value);
-    comm_UART_Printf(LOG_LV_INFO, "\tPOR : %u\r\n", gt_ads114s08_regs.regs.status.u.fl_por);
-    comm_UART_Printf(LOG_LV_INFO, "\tRDY : %u\r\n", gt_ads114s08_regs.regs.status.u.rdy);
+    comm_UART_Printf(LOG_LV_INFO, "\r\nDevice Status : 0x%X", gt_ads114s08_regs.regs.status.value);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tPOR : %u", gt_ads114s08_regs.regs.status.u.fl_por);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tRDY : %u", gt_ads114s08_regs.regs.status.u.rdy);
 
-    comm_UART_Printf(LOG_LV_INFO, "Data Rate : 0x%X\r\n", gt_ads114s08_regs.regs.datarate.value);
-    comm_UART_Printf(LOG_LV_INFO, "\tDR : %u\r\n", gt_ads114s08_regs.regs.datarate.u.dr);
+    comm_UART_Printf(LOG_LV_INFO, "\r\nData Rate : 0x%X", gt_ads114s08_regs.regs.datarate.value);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tDR : %u", gt_ads114s08_regs.regs.datarate.u.dr);
 
-    comm_UART_Printf(LOG_LV_INFO, "SYS : 0x%X\r\n", gt_ads114s08_regs.regs.sys.value);
-    comm_UART_Printf(LOG_LV_INFO, "\tSENDSTAT : %u\r\n", gt_ads114s08_regs.regs.sys.u.sendstat);
-    comm_UART_Printf(LOG_LV_INFO, "\tCRC : %u\r\n", gt_ads114s08_regs.regs.sys.u.crc);
+    comm_UART_Printf(LOG_LV_INFO, "\r\nSYS : 0x%X", gt_ads114s08_regs.regs.sys.value);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSENDSTAT : %u", gt_ads114s08_regs.regs.sys.u.sendstat);
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\tCRC : %u", gt_ads114s08_regs.regs.sys.u.crc);
 
-    comm_UART_Printf(LOG_LV_INFO, "======================================\r\n");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n======================================");
 }
 #endif
 
@@ -486,7 +486,7 @@ bool ADS114S08_Wait_Done(void)
     {
         if(0U == gn_ads114s08_read_timeout)
         {
-            comm_UART_Printf(LOG_LV_ERROR, "%s timeout\r\n", __func__);
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n%s timeout!!!", __func__);
             return false;
         }
     }
@@ -502,7 +502,7 @@ void ADS114S08_Init(void)
     for(uint8_t reg = REG_ADDR_ID ; reg < REG_ADDR_MAX ; ++reg)
     {
         gt_ads114s08_regs.ALL[reg] = ADS114S08_Read_Register(reg);
-        comm_UART_Printf(LOG_LV_DEBUG, "reg[0x%02X] = 0x%02X\r\n", reg, gt_ads114s08_regs.ALL[reg]);
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nreg[0x%02X] = 0x%02X", reg, gt_ads114s08_regs.ALL[reg]);
     }
 
     gt_ads114s08_regs.regs.status.u.fl_por = 0U; /* clear POR flag */

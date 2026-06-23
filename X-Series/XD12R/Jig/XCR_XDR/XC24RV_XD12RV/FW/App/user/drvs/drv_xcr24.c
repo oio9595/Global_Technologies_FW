@@ -195,8 +195,8 @@ static void xcr24_regs_init_table(void)
         //case XCR_ERR_STATUS:
         //case XCR_CH_CRC_ERR_STATUS:
         //case XCR_CH_TIMEOUT_ERR_STATUS:
-        case XCR_BIST_CONTROL_STATUS:
-            _r1->reg._r1B.bit.BIST_START = 0U;
+        case XCR_BITS_CONTROL_STATUS:
+            _r1->reg._r1B.bit.BITS_START = 0U;
             break;
         case XCR_COMMUNICATION_FAULT_CONTROL:
             _r1->reg._r1C.bit.spi_crc_en = 0U;
@@ -640,7 +640,7 @@ void xcr24_read_all(void)
     xcr24_set_otp_control(XCR_TEST_CONTROL, &gt_xcr24_otp_access.ALL[XCR_TEST_CONTROL], 1U);
 }
 
-void xcr_init_param(void)
+void xcr24_init_param(void)
 {
     gn_xcr_daisied_dev_ch_size = XDR_CH_LENGTH;
 
@@ -1168,7 +1168,7 @@ void xcr24_set_xcr24_gr2_reg(uint16_t addr, const uint16_t* q, uint16_t len)
 
     temp[length++] = cmd.ALL;
 
-    for(uint16_t i=0U ; i<size ; ++i)
+    for(uint16_t i = 0U ; i < size ; ++i)
     {
         temp[length++] = *q++;
     }

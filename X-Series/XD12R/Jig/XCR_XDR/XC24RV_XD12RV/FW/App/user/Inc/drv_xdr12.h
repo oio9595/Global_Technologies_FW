@@ -49,10 +49,7 @@ extern volatile bool gb_xd_pwm_out_flag;
 extern volatile bool gb_xd_pwm_in_flag;
 extern volatile bool gb_xd_pwm_in_timeout;
 
-bool xdr12_get_use_xcr(void);
-void xdr12_set_use_xcr(bool use);
-
-void xdr_init_param(void);
+void xdr12_init_param(void);
 
 void xdr12_reset(void);
 void xdr12_init(void);

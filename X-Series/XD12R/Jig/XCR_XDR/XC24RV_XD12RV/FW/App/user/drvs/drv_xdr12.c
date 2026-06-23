@@ -110,7 +110,6 @@ typedef union tag_SERDES_ID_GEN_CMD
     }bit;
 }_v_serdes_id_gen_command_t;
 
-
 #define XDR_BIT_SYNCGEN         (4U)
 #define XD_HDR_BIT              (4U)
 #define XD_ADDR_BIT             (6U)
@@ -118,7 +117,7 @@ typedef union tag_SERDES_ID_GEN_CMD
 #define XD_DATA_BIT             (12U)
 #define XDR_CMD_WRITE           (XD_HDR_BIT + XD_ADDR_BIT + XD_DATA_BIT)
 #define XDR_CMD_READ            (XD_HDR_BIT + XD_ADDR_BIT)
-#define XDR_RES_READOUT         (XD_HDR_BIT + XD_ID_BIT + XD_DATA_BIT)
+#define XDR_CMD_READOUT         (XD_HDR_BIT + XD_ID_BIT + XD_DATA_BIT)
 
 #define XD_LD_DATA_BIT          (16U)
 #define XDR_LD_TRANSFER         (XD_HDR_BIT + (XD_LD_DATA_BIT * XDR_CH_LENGTH))
@@ -130,27 +129,40 @@ typedef union tag_SERDES_ID_GEN_CMD
 #define PWM_OUT_TAIL_SIZE       (1U)
 #define PWM_OUT_DUMMY_SIZE      (PWM_OUT_HEADER_SIZE + PWM_OUT_TAIL_SIZE)
 
-static _xdr12_regs_t gt_xdr12_set_regs;
-static _xdr12_regs_t gt_xdr12_get_regs[XCR_CH_SIZE][XDR_DAISY_LENGTH];
+#define XDR_CONTROLLED_MCU      (0U)
+#define XDR_CONTROLLED_XCR      (1U)
+#define XDR_CONTROL_TYPE        (XDR_CONTROLLED_MCU)
 
-static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_set_regs;
-static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_get_regs[XCR_CH_SIZE][XDR_DAISY_LENGTH];
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    static _xdr12_regs_t gt_xdr12_set_regs;
+    static _xdr12_regs_t gt_xdr12_get_regs[XDR_DAISY_LENGTH];
 
-static _xdr12_mirror_regs_t gt_xdr12_mirror_set_regs;
-static _xdr12_mirror_regs_t gt_xdr12_mirror_get_regs;
+    static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_set_regs;
+    static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_get_regs[XDR_DAISY_LENGTH];
+
+    static _xdr12_mirror_regs_t gt_xdr12_mirror_set_regs;
+    static _xdr12_mirror_regs_t gt_xdr12_mirror_get_regs[XDR_DAISY_LENGTH];
+#else
+    static _xdr12_regs_t gt_xdr12_set_regs;
+    static _xdr12_regs_t gt_xdr12_get_regs[XCR_CH_SIZE][XDR_DAISY_LENGTH];
+
+    static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_set_regs;
+    static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_get_regs[XCR_CH_SIZE][XDR_DAISY_LENGTH];
+
+    static _xdr12_mirror_regs_t gt_xdr12_mirror_set_regs;
+    static _xdr12_mirror_regs_t gt_xdr12_mirror_get_regs[XCR_CH_SIZE][XDR_DAISY_LENGTH];
+#endif
 
 static uint16_t gn_pwm_out_xd_syncgen[(XDR_DAISY_LENGTH * XDR_BIT_SYNCGEN) + PWM_OUT_DUMMY_SIZE];
 static uint16_t gn_pwm_out_xd_write[(XDR_DAISY_LENGTH * XDR_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
 static uint16_t gn_pwm_out_xd_ld_transfer[(XDR_DAISY_LENGTH * XDR_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
 
-static uint16_t gn_pwm_in_xd_response_freq[(XDR_DAISY_LENGTH * XDR_RES_READOUT) + 1U];
-static uint16_t gn_pwm_in_xd_response_duty[(XDR_DAISY_LENGTH * XDR_RES_READOUT) + 1U];
+static uint16_t gn_pwm_in_xd_response_freq[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 1U];
+static uint16_t gn_pwm_in_xd_response_duty[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 1U];
 
 volatile bool gb_xd_pwm_out_flag;
 volatile bool gb_xd_pwm_in_flag;
 volatile bool gb_xd_pwm_in_timeout;
-
-static bool gb_use_xc_for_xd;
 
 static _v_serdes_write_command_t gt_xd_write_command[XDR_DAISY_LENGTH];
 static _v_serdes_read_command_t gt_xd_read_command[XDR_DAISY_LENGTH];
@@ -235,7 +247,6 @@ static void xdr12_pwm_out(uint32_t mem_addr, uint32_t length)
 {
     gb_xd_pwm_out_flag = true;
     LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, mem_addr);
-
     LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, length);
     LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
     LL_TIM_EnableCounter(TIM1);
@@ -251,7 +262,7 @@ static uint16_t xdr12_make_pwm_out_stream(uint32_t data, uint16_t *p, uint16_t l
     uint32_t bit_data = (uint32_t)(data << (32U - len));
     uint16_t* p_dst = p;
 
-    for(uint8_t i = 0; i < len; i++)
+    for(uint16_t i = 0 ; i < len ; ++i)
     {
         *p_dst++ = (bit_data & 0x80000000UL) ? (uint16_t)PWM_OUT_BIT1 : (uint16_t)PWM_OUT_BIT0;
         bit_data <<= 1U;
@@ -314,6 +325,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
         gt_xd_fault_readout_command.bit.bit_fb = 0U;
 
         pdata[id++] = n_data;
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Fault Recv Packet\r\n\tCMD - 0x%01X, FAULT - 0x%01X", n_header, n_data);
     }
     else        /* read receive format : '1110' + id[4:0] + data[11:0] */
     {
@@ -321,7 +333,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
         uint16_t n_id = 0U;
         uint16_t xdr12_id[XDR_DAISY_LENGTH] = {0, };
 
-        while(((uint32_t)duty_idx + XDR_RES_READOUT) <= len)
+        while(((uint32_t)duty_idx + XDR_CMD_READOUT) <= len)
         {
             if(id >= XDR_DAISY_LENGTH)
             {
@@ -357,7 +369,8 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
             gt_xd_readout_command[id].bit.data = n_data;
 
             pdata[id++] = n_data;
-            duty_idx += XDR_RES_READOUT;
+            duty_idx += XDR_CMD_READOUT;
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Fault Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%01X", n_header, n_id, n_data);
         }
     }
 
@@ -1193,7 +1206,6 @@ static void xdr12_regs_trim_init_table(void)
 
 #elif (XD_MODEL_TYPE == XD_TYPE_IC601)
 #endif
-
         default:
             continue;
         }
@@ -1202,19 +1214,9 @@ static void xdr12_regs_trim_init_table(void)
     xdr12_trim_enable_write_protect(false);
 }
 
-bool xdr12_get_use_xcr(void)
-{
-    return gb_use_xc_for_xd;
-}
-
-void xdr12_set_use_xcr(bool use)
-{
-    gb_use_xc_for_xd = use;
-}
-
 void xdr12_reset(void)
 {
-    _v_xdr12_reset_id_t _r00 = {0, };
+    _v_xdr12_reset_id_t _r00 = { 0U };
 
     _r00.bit.lkg_e = 0U;
     _r00.bit.e_rst = 0U;
@@ -1226,7 +1228,7 @@ void xdr12_reset(void)
 
 void xdr12_idgen(void)
 {
-    if(true == gb_use_xc_for_xd)
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
     {
         _v_id_gen_command_t _r04 = { 0, };
 
@@ -1234,10 +1236,10 @@ void xdr12_idgen(void)
 
         xcr24_set_xcr24_gr1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
     }
-    else
+    #else
     {
         uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
-        uint16_t len = 0;
+        uint16_t len = 0U;
 
         xdr12_pwm_out_done();
 
@@ -1245,15 +1247,16 @@ void xdr12_idgen(void)
         {
             len += xdr12_make_pwm_out_stream(gt_xd_idgen_command[daisy].ALL, &out[len], XDR_BIT_SYNCGEN);
         }
-        out[len++] = 0;
+        out[len++] = 0U;
 
         xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
     }
+    #endif
 }
 
-void xdr_init_param(void)
+void xdr12_init_param(void)
 {
-    for(uint16_t num = 0 ; num < XDR_DAISY_LENGTH ; ++num)
+    for(uint16_t num = 0U ; num < XDR_DAISY_LENGTH ; ++num)
     {
         gt_xd_write_command[num].bit.start = 1U;
         gt_xd_write_command[num].bit.cmd_code = CMD_CODE_WRITE;
@@ -1275,8 +1278,6 @@ void xdr_init_param(void)
 
         gt_xd_idgen_command[num].bit.start = 1U;
         gt_xd_idgen_command[num].bit.cmd_code = CMD_CODE_IDGEN;
-
-        xdr12_make_pwm_out_stream(gt_xd_syncgen_command[num].ALL, &gn_pwm_out_xd_syncgen[(num * XDR_BIT_SYNCGEN)], XDR_BIT_SYNCGEN);
     }
 
     gt_xd_fault_readout_command.bit.start = 1U;
@@ -1304,7 +1305,7 @@ void xdr12_trim_init(void)
 
 static void xdr12_write(uint16_t addr, uint16_t data)
 {
-    if(true == gb_use_xc_for_xd)
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
     {
         _v_global_write_command_t _r01 = { 0, };
 
@@ -1314,10 +1315,10 @@ static void xdr12_write(uint16_t addr, uint16_t data)
         xcr24_set_xcr24_gr1_reg(XCR_GLOBAL_WRITE_DATA, &data, 1U);
         xcr24_set_xcr24_gr1_reg(XCR_GLOBAL_WRITE_COMMAND, &_r01.ALL, 1U);
     }
-    else
+    #else
     {
         uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
-        uint16_t len = 0;
+        uint16_t len = 0U;
 
         xdr12_pwm_out_done();
 
@@ -1325,18 +1326,19 @@ static void xdr12_write(uint16_t addr, uint16_t data)
         {
             gt_xd_write_command[daisy].bit.addr = addr;
             gt_xd_write_command[daisy].bit.data = data;
-
             len += xdr12_make_pwm_out_stream(gt_xd_write_command[daisy].ALL, &out[len], XDR_CMD_WRITE);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Write Packet\r\n\tADDR - 0x%02X, DATA - 0x%03X", gt_xd_write_command->bit.addr, gt_xd_write_command->bit.data);
         }
-        out[len++] = 0;
+        out[len++] = 0U;
 
         xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
     }
+    #endif
 }
 
-static uint16_t xdr12_read(uint16_t addr)
+static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
 {
-    if(true == gb_use_xc_for_xd)
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
     {
         uint16_t buffer[MODEL_XDR_DAISY_SEG_SIZE] = { 0, };
 
@@ -1388,44 +1390,33 @@ static uint16_t xdr12_read(uint16_t addr)
             }
         }
     }
-    else
+    #else
     {
         uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
-        uint16_t len = 0;
+        uint16_t len = 0U;
         uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XD_HDR_BIT + XD_ID_BIT + XD_DATA_BIT);
 
         for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
         {
             gt_xd_read_command[daisy].bit.addr = addr;
-
             len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &out[len], XDR_CMD_READ);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tADDR - 0x%02X", gt_xd_write_command->bit.addr);
         }
-        out[len++] = 0;
+        out[len++] = 0U;
 
         xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
         xdr12_pwm_out_done();
 
-        if(false == xdr12_pwm_in(pwm_in_length, 10U))  /* ???? */
+        if(false == xdr12_pwm_in(pwm_in_length, 100U))
         {
-            uint16_t temp[XDR_DAISY_LENGTH];
-            uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, temp, pwm_in_length);
-            for(uint8_t id = 0 ; id<max_id ; ++id)
-            {
-                if(addr < XD12R_OTP_CTRL_BASE)
-                {
-                    gt_xdr12_get_regs[0][id].ALL[addr] = temp[(max_id - 1U) - id];
-                }
-                else
-                {
-                    gt_xdr12_otp_ctrl_get_regs[0][id].ALL[addr] = temp[(max_id - 1U) - id];
-                }
-            }
+            uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, p_xdr_buffer, pwm_in_length);
         }
         else
         {
             comm_UART_Printf(LOG_LV_ERROR, "%s timeout\r\n", __func__);
         }
     }
+    #endif
 
     return 0U;
 }
@@ -1438,7 +1429,7 @@ static void xdr12_change_addr_type(xd12r_addr_type_t addr_type)
     if (current_type != addr_type)
     {
         _r3F->bit.addr_ext = addr_type;
-        xdr12_write(XD12R_OP_MODE, gt_xdr12_otp_ctrl_set_regs.reg._r3F.ALL);
+        xdr12_write(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, gt_xdr12_otp_ctrl_set_regs.reg._r3F.ALL);
     }
 }
 
@@ -1450,10 +1441,74 @@ void xdr12_write_by_type(uint16_t addr, uint16_t data, xd12r_addr_type_t addr_ty
 
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
 {
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    uint16_t xdr_buffer[XDR_DAISY_LENGTH] = { 0U };
+#else
+    uint16_t xdr_buffer[XCR_CH_SIZE][XDR_DAISY_LENGTH] = { 0U };
+#endif
     xdr12_change_addr_type(addr_type);
-    xdr12_read(addr);
+    xdr12_read(addr, xdr_buffer);
 
-    return 0U;
+    for (uint8_t id = 0U ; id < XDR_DAISY_LENGTH ; ++id)
+    {
+        if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+        {
+            if (addr < XD12R_OTP_CTRL_BASE)
+            {
+                gt_xdr12_get_regs[id].ALL[addr] = xdr_buffer[id];
+            }
+            else
+            {
+                gt_xdr12_otp_ctrl_get_regs[id].ALL[addr] = xdr_buffer[id];
+            }
+        }
+        else
+        {
+            gt_xdr12_mirror_get_regs[id].ALL[addr] = xdr_buffer[id];
+        }
+    }
+
+    return xdr_buffer[0];
+}
+
+uint16_t xdr12_get_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
+{
+    uint16_t ret = 0U;
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+    {
+        if (addr < XD12R_OTP_CTRL_BASE)
+        {
+            ret = gt_xdr12_get_regs[0].ALL[addr];
+        }
+        else
+        {
+            ret = gt_xdr12_otp_ctrl_get_regs[0].ALL[addr];
+        }
+    }
+    else
+    {
+        ret = gt_xdr12_mirror_get_regs[0].ALL[addr];
+    }
+#else
+    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+    {
+        if (addr < XD12R_OTP_CTRL_BASE)
+        {
+            ret = gt_xdr12_get_regs[0][0].ALL[addr];
+        }
+        else
+        {
+            ret = gt_xdr12_otp_ctrl_get_regs[0][0].ALL[addr];
+        }
+    }
+    else
+    {
+        ret = gt_xdr12_mirror_get_regs[0][0].ALL[addr];
+    }
+#endif
+
+    return ret;
 }
 
 void xdr12_pwm_out_syncgen(void)
@@ -1504,7 +1559,7 @@ static void xdr12_trim_enable_write_protect(bool protect_en)
 {
     _v_xdr12_otp_protect_t* _r3E = &gt_xdr12_otp_ctrl_set_regs.reg._r3E;
     _r3E->bit.protect_en = (protect_en == true) ? XD12R_REG_PROTECT_ENABLE : XD12R_REG_PROTECT_DISABLE;
-    xdr12_write_by_type(XD12R_OTP_PROTECT, _r3E->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_PROTECT, _r3E->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_current_ref(void)
@@ -1512,7 +1567,7 @@ void xdr12_trim_init_current_ref(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 0U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_ldo_dig(void)
@@ -1520,7 +1575,7 @@ void xdr12_trim_init_ldo_dig(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 2U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_ldo_dac(void)
@@ -1528,7 +1583,7 @@ void xdr12_trim_init_ldo_dac(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 1U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_ldo_fll(void)
@@ -1536,7 +1591,7 @@ void xdr12_trim_init_ldo_fll(void)
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 5U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_osc(void)
@@ -1545,7 +1600,7 @@ void xdr12_trim_init_osc(void)
     _r3F->bit.test_en = 1U;
     _r3F->bit.test_ana_en = 5U; /* ??? */
     _r3F->bit.mclk64_o = 1U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
     const uint16_t osc_fll_man = 0x8000U; /* 16b' 1000_0000_0000_0000*/
 
@@ -1567,7 +1622,7 @@ void xdr12_trim_init_ch_gain(void)
     _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
@@ -1598,7 +1653,7 @@ void xdr12_trim_init_ch_ofs(void)
     _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
-    xdr12_write_by_type(XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
@@ -1643,13 +1698,14 @@ bool xdr12_trim_set_current_ref(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XDR_MAX_CURRENT_REF)
     {
-        gt_xdr12_mirror_set_regs.reg._r01.bit.iref_ctl = reg_val;
-        xdr12_write_by_type(XD12R_MIRROR2, gt_xdr12_mirror_set_regs.reg._r01.ALL, XD12R_ADDR_TYPE_MIRROR);
+        _v_xdr12_mirror2_t* _r01 = &gt_xdr12_mirror_set_regs.reg._r01;
+        _r01->bit.iref_ctl = reg_val;
+        xdr12_write_by_type(XD12R_MIRROR2, _r01->ALL, XD12R_ADDR_TYPE_MIRROR);
         ret = true;
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid current reference value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid current reference value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1660,13 +1716,14 @@ bool xdr12_trim_set_ldo_dig(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XDR_MAX_LDO_DIG)
     {
-        gt_xdr12_mirror_set_regs.reg._r03.bit.ldo_ctl = reg_val;
-        xdr12_write_by_type(XD12R_MIRROR4, gt_xdr12_mirror_set_regs.reg._r03.ALL, XD12R_ADDR_TYPE_MIRROR);
+        _v_xdr12_mirror4_t* _r03 = &gt_xdr12_mirror_set_regs.reg._r03;
+        _r03->bit.ldo_ctl = reg_val;
+        xdr12_write_by_type(XD12R_MIRROR4, _r03->ALL, XD12R_ADDR_TYPE_MIRROR);
         ret = true;
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid ldo digital value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo digital value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1677,13 +1734,14 @@ bool xdr12_trim_set_ldo_dac(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XDR_MAX_LDO_DAC)
     {
-        gt_xdr12_mirror_set_regs.reg._r02.bit.ldo_dac_ctl = reg_val;
-        xdr12_write_by_type(XD12R_MIRROR3, gt_xdr12_mirror_set_regs.reg._r02.ALL, XD12R_ADDR_TYPE_MIRROR);
+        _v_xdr12_mirror3_t* _r02 = &gt_xdr12_mirror_set_regs.reg._r02;
+        _r02->bit.ldo_dac_ctl = reg_val;
+        xdr12_write_by_type(XD12R_MIRROR3, _r02->ALL, XD12R_ADDR_TYPE_MIRROR);
         ret = true;
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid ldo dac value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo dac value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1694,13 +1752,14 @@ bool xdr12_trim_set_ldo_fll(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XDR_MAX_LDO_FLL)
     {
-        gt_xdr12_mirror_set_regs.reg._r03.bit.ldo_osc_ctl = reg_val;
-        xdr12_write_by_type(XD12R_MIRROR4, gt_xdr12_mirror_set_regs.reg._r03.ALL, XD12R_ADDR_TYPE_MIRROR);
+        _v_xdr12_mirror4_t* _r03 = &gt_xdr12_mirror_set_regs.reg._r03;
+        _r03->bit.ldo_osc_ctl = reg_val;
+        xdr12_write_by_type(XD12R_MIRROR4, _r03->ALL, XD12R_ADDR_TYPE_MIRROR);
         ret = true;
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid ldo fll value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo fll value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1711,13 +1770,14 @@ bool xdr12_trim_set_osc(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XDR_MAX_OSC)
     {
-        gt_xdr12_mirror_set_regs.reg._r02.bit.osc_rctl = reg_val;
-        xdr12_write_by_type(XD12R_MIRROR3, gt_xdr12_mirror_set_regs.reg._r02.ALL, XD12R_ADDR_TYPE_MIRROR);
+        _v_xdr12_mirror3_t* _r02 = &gt_xdr12_mirror_set_regs.reg._r02;
+        _r02->bit.osc_rctl = reg_val;
+        xdr12_write_by_type(XD12R_MIRROR3, _r02->ALL, XD12R_ADDR_TYPE_MIRROR);
         ret = true;
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid osc value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid osc value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1736,7 +1796,7 @@ bool xdr12_trim_set_ch_gain(uint16_t reg_val, XD_CH_t chx)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid ch gain value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ch gain value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1755,7 +1815,7 @@ bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s invalid ch offset value: %u\r\n", __func__, reg_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ch offset value: %u", __func__, reg_val);
     }
 
     return ret;
@@ -1763,28 +1823,51 @@ bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx)
 
 void xdr12_trim_init_efuse(void)
 {
-    gt_xdr12_otp_ctrl_set_regs.reg._r3A.ALL = 0x000U;
-    xdr12_write_by_type(XD12R_OTP_ACCESS1, gt_xdr12_otp_ctrl_set_regs.reg._r3A.ALL, XD12R_ADDR_TYPE_GENERAL);
+    _v_xdr12_otp_access1_t* _r3A = &gt_xdr12_otp_ctrl_set_regs.reg._r3A;
+    _r3A->bit.otp_pg_acc_cycle = 0x000U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS1, _r3A->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-    gt_xdr12_otp_ctrl_set_regs.reg._r3B.ALL = 0x3FFU;
-    xdr12_write_by_type(XD12R_OTP_ACCESS2, gt_xdr12_otp_ctrl_set_regs.reg._r3B.ALL, XD12R_ADDR_TYPE_GENERAL);
+    _v_xdr12_otp_access2_t* _r3B = &gt_xdr12_otp_ctrl_set_regs.reg._r3B;
+    _r3B->bit.otp_pg_acc_cycle = 0x3FFU;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS2, _r3B->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-    gt_xdr12_otp_ctrl_set_regs.reg._r3C.ALL = 0x004U;
-    xdr12_write_by_type(XD12R_OTP_WRITE, gt_xdr12_otp_ctrl_set_regs.reg._r3C.ALL, XD12R_ADDR_TYPE_GENERAL);
+    _v_xdr12_otp_write_t* _r3C = &gt_xdr12_otp_ctrl_set_regs.reg._r3C;
+    _r3C->bit.otp_wsel = 4U;
+    _r3C->bit.otp_rd = 0U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_WRITE, _r3C->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_start_efuse(void)
 {
+    _v_xdr12_otp_rd_prog_t* _r3D = &gt_xdr12_otp_ctrl_set_regs.reg._r3D;
+    _r3D->bit.otp_pg_s = 1U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_RD_PROG, _r3D->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_save_mirror_register(void)
 {
+    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
+    {
+        xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+    }
 }
 
 uint32_t xdr12_trim_verify_mirror_dump(void)
 {
-    for ( ; ; )
+    uint32_t ret = 0U;
+    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
     {
-
+        uint16_t saved_reg = xdr12_get_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        uint16_t mirror_reg = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        if (saved_reg != mirror_reg)
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+                ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+        }
+        else
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+                ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+        }
     }
 }

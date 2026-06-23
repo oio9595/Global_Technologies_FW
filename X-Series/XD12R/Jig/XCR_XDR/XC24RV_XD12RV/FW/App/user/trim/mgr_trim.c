@@ -6,7 +6,9 @@
 #include "comm_debugging.h"
 #include "ads124s08.h"
 
-#define SAVE_INFO_MAX_CNT    (100U)
+#define SEQUENCE_DEBUG 1
+
+#define SAVE_INFO_MAX_CNT                   (10)
 
 #define XDR_DEFAULT_SUB_VAL_CURRENT_REF     (1U << 4U)
 #define XDR_DEFAULT_SUB_VAL_LDO_DIG         (1U << 3U)
@@ -16,7 +18,11 @@
 #define XDR_DEFAULT_SUB_VAL_CH_GAIN         (1U << 6U)
 #define XDR_DEFAULT_SUB_VAL_CH_OFS          (1U << 8U)
 
-#define XDR_TRIM_ERROR_RANGE        (5.0f)      /* 5% */
+#ifdef SEQUENCE_DEBUG
+    #define XDR_TRIM_ERROR_RANGE        (100.0f)      /* 5% */
+#else
+    #define XDR_TRIM_ERROR_RANGE        (5.0f)      /* 5% */
+#endif
 
 #define XDR_TRIM_TGT_CURRENT_REF    (1.4f)      /* 1.4 V */
 #define XDR_TRIM_TGT_LDO_DIG        (1.5f)      /* 1.5 V */
@@ -37,6 +43,7 @@
 #define XDR_DELAY_PWR_ON            (100U)
 #define XDR_DELAY_PWR_OFF           (100U)
 #define XDR_DELAY_EFUSE_DONE        (500U)
+
 
 typedef struct tag_SAVED_INFO
 {
@@ -62,7 +69,8 @@ typedef struct tag_RANGE_INFO
 typedef struct tag_MEASURE_INFO
 {
     uint16_t adc[2];
-    float value[2];
+    float temp_value[2];
+    float value;
 } measure_info_t;
 
 typedef struct tag_TRIM_INFO
@@ -71,10 +79,11 @@ typedef struct tag_TRIM_INFO
     uint8_t repeat;
     XD_CH_t chx;
     current_gain_t gain;
-    measure_info_t measure;
     range_info_t range;
-    saved_info_t saved;
-    uint16_t sub_val;
+    measure_info_t measure[XD_CH_MAX];
+    saved_info_t saved[XD_CH_MAX];
+    uint16_t sub_val[XD_CH_MAX];
+    uint16_t reg_val[XD_CH_MAX];
 } trim_info_t;
 
 /* XCR Trim */
@@ -150,13 +159,13 @@ static const uint8_t* gs_xdr_trim_step[XDR_TRIM_STEP_MAX] =
 
 static const uint8_t* gs_xdr_trim_list[XDR_TRIM_LIST_MAX] =
 {
-    "XDR_TRIM_LIST_CURRENT_REF",
-    "XDR_TRIM_LIST_LDO_DIG",
-    "XDR_TRIM_LIST_LDO_DAC",
-    "XDR_TRIM_LIST_LDO_FLL",
-    "XDR_TRIM_LIST_OSC",
-    "XDR_TRIM_LIST_CH_GAIN",
-    "XDR_TRIM_LIST_CH_OFS",
+    "XDR_CURRENT_REF",
+    "XDR_LDO_DIG",
+    "XDR_LDO_DAC",
+    "XDR_LDO_FLL",
+    "XDR_OSC",
+    "XDR_CH_GAIN",
+    "XDR_CH_OFS",
 };
 
 static void xdr_trim_param_init(void)
@@ -166,37 +175,51 @@ static void xdr_trim_param_init(void)
         switch (trim_list)
         {
             case XDR_TRIM_LIST_CURRENT_REF:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_CURRENT_REF;
+            {
+                __priv_trim.t_trim_info[trim_list].sub_val[0] = XDR_DEFAULT_SUB_VAL_CURRENT_REF;
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_CURRENT_REF;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_CURRENT_REF - (XDR_TRIM_TGT_CURRENT_REF * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_CURRENT_REF + (XDR_TRIM_TGT_CURRENT_REF * XDR_TRIM_ERROR_RANGE / 100.0f);
                 break;
+            }
             case XDR_TRIM_LIST_LDO_DIG:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_LDO_DIG;
+            {
+                __priv_trim.t_trim_info[trim_list].sub_val[0] = XDR_DEFAULT_SUB_VAL_LDO_DIG;
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_LDO_DIG;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_LDO_DIG - (XDR_TRIM_TGT_LDO_DIG * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_LDO_DIG + (XDR_TRIM_TGT_LDO_DIG * XDR_TRIM_ERROR_RANGE / 100.0f);
                 break;
+            }
             case XDR_TRIM_LIST_LDO_DAC:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_LDO_DAC;
+            {
+                __priv_trim.t_trim_info[trim_list].sub_val[0] = XDR_DEFAULT_SUB_VAL_LDO_DAC;
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_LDO_DAC;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_LDO_DAC - (XDR_TRIM_TGT_LDO_DAC * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_LDO_DAC + (XDR_TRIM_TGT_LDO_DAC * XDR_TRIM_ERROR_RANGE / 100.0f);
                 break;
+            }
             case XDR_TRIM_LIST_LDO_FLL:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_LDO_FLL;
+            {
+                __priv_trim.t_trim_info[trim_list].sub_val[0] = XDR_DEFAULT_SUB_VAL_LDO_FLL;
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_LDO_FLL;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_LDO_FLL - (XDR_TRIM_TGT_LDO_FLL * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_LDO_FLL + (XDR_TRIM_TGT_LDO_FLL * XDR_TRIM_ERROR_RANGE / 100.0f);
                 break;
+            }
             case XDR_TRIM_LIST_OSC:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_OSC;
+            {
+                __priv_trim.t_trim_info[trim_list].sub_val[0] = XDR_DEFAULT_SUB_VAL_OSC;
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_OSC;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_OSC - (XDR_TRIM_TGT_OSC * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_OSC + (XDR_TRIM_TGT_OSC * XDR_TRIM_ERROR_RANGE / 100.0f);
                 break;
+            }
             case XDR_TRIM_LIST_CH_GAIN:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_CH_GAIN;
+            {
+                for (uint8_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+                {
+                    __priv_trim.t_trim_info[trim_list].sub_val[xd_ch] = XDR_DEFAULT_SUB_VAL_CH_GAIN;
+                }
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_CH_GAIN;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_CH_GAIN - (XDR_TRIM_TGT_CH_GAIN * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_CH_GAIN + (XDR_TRIM_TGT_CH_GAIN * XDR_TRIM_ERROR_RANGE / 100.0f);
@@ -205,8 +228,13 @@ static void xdr_trim_param_init(void)
                 __priv_trim.t_trim_info[trim_list].input[1] = XDR_TRIM_GAIN_INPUT_2;
                 __priv_trim.t_trim_info[trim_list].gain = GAIN_HIGH;
                 break;
+            }
             case XDR_TRIM_LIST_CH_OFS:
-                __priv_trim.t_trim_info[trim_list].sub_val = XDR_DEFAULT_SUB_VAL_CH_OFS;
+            {
+                for (uint8_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+                {
+                    __priv_trim.t_trim_info[trim_list].sub_val[xd_ch] = XDR_DEFAULT_SUB_VAL_CH_OFS;
+                }
                 __priv_trim.t_trim_info[trim_list].range.target = XDR_TRIM_TGT_CH_OFS;
                 __priv_trim.t_trim_info[trim_list].range.min = XDR_TRIM_TGT_CH_OFS - (XDR_TRIM_TGT_CH_OFS * XDR_TRIM_ERROR_RANGE / 100.0f);
                 __priv_trim.t_trim_info[trim_list].range.max = XDR_TRIM_TGT_CH_OFS + (XDR_TRIM_TGT_CH_OFS * XDR_TRIM_ERROR_RANGE / 100.0f);
@@ -215,6 +243,29 @@ static void xdr_trim_param_init(void)
                 __priv_trim.t_trim_info[trim_list].input[1] = XDR_TRIM_OFS_INPUT_2;
                 __priv_trim.t_trim_info[trim_list].gain = GAIN_HIGH;
                 break;
+            }
+        }
+    }
+}
+
+static void xdr_trim_log_summary(void)
+{
+    for (xdr_trim_list_t list = XDR_TRIM_LIST_CURRENT_REF ; list < XDR_TRIM_LIST_MAX ; ++list)
+    {
+        trim_info_t* info = &__priv_trim.t_trim_info[list];
+        uint8_t max_ch = (list < XDR_TRIM_LIST_CH_GAIN) ? (1U) : ((uint8_t)XD_CH_MAX);
+        for (uint8_t ch = XD_CH_01 ; ch < max_ch ; ++ch)
+        {
+            if (ch == XD_CH_01)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t[REG: %3u] [SUB: %3u] [VAL: %.3f]", \
+                    gs_xdr_trim_list[list], info->reg_val[ch], info->sub_val[ch], info->measure[ch].value);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\t\t\t[REG: %3u] [SUB: %3u] [VAL: %.3f]", \
+                    info->reg_val[ch], info->sub_val[ch], info->measure[ch].value);
+            }
         }
     }
 }
@@ -222,7 +273,7 @@ static void xdr_trim_param_init(void)
 static judge_info_t xdr_trim_compare_range(trim_info_t* p_trim_info_t)
 {
     judge_info_t judge_info = { false , false, false };
-    float measured_value = p_trim_info_t->measure.value[p_trim_info_t->repeat];
+    float measured_value = p_trim_info_t->measure[p_trim_info_t->chx].value;
     float target_value = p_trim_info_t->range.target;
     float min_value = p_trim_info_t->range.min;
     float max_value = p_trim_info_t->range.max;
@@ -235,7 +286,6 @@ static judge_info_t xdr_trim_compare_range(trim_info_t* p_trim_info_t)
         }
         judge_info.up = true;
         judge_info.down = false;
-        comm_UART_Printf(LOG_LV_INFO, "\n\rMeasured value : %.3f is smaller than target. (Target : %.3f, Min : %.3f, Max : %.3f)", measured_value, target_value, min_value, max_value);
     }
     else if (measured_value > target_value)
     {
@@ -245,67 +295,61 @@ static judge_info_t xdr_trim_compare_range(trim_info_t* p_trim_info_t)
         }
         judge_info.up = false;
         judge_info.down = true;
-        comm_UART_Printf(LOG_LV_INFO, "\n\rMeasured value : %.3f is larger than target. (Target : %.3f, Min : %.3f, Max : %.3f)", measured_value, target_value, min_value, max_value);
     }
     else
     {
         judge_info.in_range = true;
         judge_info.up = false;
         judge_info.down = false;
-        comm_UART_Printf(LOG_LV_INFO, "\n\rMeasured value : %.3f is same as target value! (Target : %.3f)", measured_value, target_value);
     }
 
     return judge_info;
 }
 
-static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, trim_info_t* in_p_now_trim_info)
+static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, trim_info_t* in_trim_info)
 {
     bool ret = false;
     uint16_t reg_val = 0U;
+    uint8_t ch = in_trim_info->chx;
+    uint16_t sub_val = in_trim_info->sub_val[ch];
+
     switch(in_trim_list)
     {
         case XDR_TRIM_LIST_CURRENT_REF:
-            reg_val = in_p_now_trim_info->sub_val;
+            reg_val = sub_val;
             ret = xdr12_trim_set_current_ref(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_DIG:
-            if (in_p_now_trim_info->sub_val < 8U)
-            {
-                reg_val = 15U - in_p_now_trim_info->sub_val;
-            }
-            else
-            {
-                reg_val = in_p_now_trim_info->sub_val - 8U;
-            }
+            reg_val = (sub_val < 8U) ? (15U - sub_val) : (sub_val - 8U);
             ret = xdr12_trim_set_ldo_dig(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_DAC:
-            reg_val = in_p_now_trim_info->sub_val;
+            reg_val = sub_val;
             ret = xdr12_trim_set_ldo_dac(reg_val);
             break;
         case XDR_TRIM_LIST_LDO_FLL:
-            reg_val = in_p_now_trim_info->sub_val;
+            reg_val = sub_val;
             ret = xdr12_trim_set_ldo_fll(reg_val);
             break;
         case XDR_TRIM_LIST_OSC:
-            reg_val = in_p_now_trim_info->sub_val;
+            reg_val = sub_val;
             ret = xdr12_trim_set_osc(reg_val);
             break;
         case XDR_TRIM_LIST_CH_GAIN:
-            reg_val = in_p_now_trim_info->sub_val;
-            ret = xdr12_trim_set_ch_gain(reg_val, in_p_now_trim_info->chx);
+            reg_val = sub_val;
+            ret = xdr12_trim_set_ch_gain(reg_val, ch);
             break;
         case XDR_TRIM_LIST_CH_OFS:
-            if (in_p_now_trim_info->sub_val < 256U)
-            {
-                reg_val = 511U - in_p_now_trim_info->sub_val;
-            }
-            else
-            {
-                reg_val = in_p_now_trim_info->sub_val - 256U;
-            }
-            ret = xdr12_trim_set_ch_ofs(reg_val, in_p_now_trim_info->chx);
+            reg_val = (sub_val < 256U) ? (511U - sub_val) : (sub_val - 256U);
+            ret = xdr12_trim_set_ch_ofs(reg_val, ch);
             break;
+        default:
+            comm_UART_Printf(LOG_LV_ERROR, "\n\r%s invalid in_trim_list (%u)", __func__, in_trim_list);
+            break;
+    }
+    if (ret == true)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %u) (SUB: %u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
     }
     return ret;
 }
@@ -359,14 +403,14 @@ static bool _xcr_trim_thread(struct thread_data* td)
 
 static bool _xdr_trim_thread(struct thread_data* td)
 {
-    xdr_trim_list_t* p_now_trim_list = &__priv_trim.t_xdr_trim_list;
-    trim_info_t* p_now_trim_info = &__priv_trim.t_trim_info[*p_now_trim_list];
+    xdr_trim_list_t* list = &__priv_trim.t_xdr_trim_list;
+    trim_info_t* info = &__priv_trim.t_trim_info[*list];
 
     switch(td->step)
     {
         case XDR_TRIM_STEP_PWR_ON:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
             /* Power On Sequence */
             gpio_set_xd_vdd_5v(XD_PWR_ON_5V0);
             td->step = XDR_TRIM_STEP_INITIAL;
@@ -376,7 +420,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_INITIAL:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_xdr_trim_step[td->step], td->tout);
             /* XDR Initialization */
             xdr12_trim_init();
             td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
@@ -386,9 +430,9 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_INITIAL_BY_LIST:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             /* XDR Prepare for Each Trim List */
-            switch (*p_now_trim_list)
+            switch (*list)
             {
                 case XDR_TRIM_LIST_CURRENT_REF:
                     xdr12_trim_init_current_ref();
@@ -408,18 +452,21 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 case XDR_TRIM_LIST_CH_GAIN:
                     gpio_set_power_9v(PWR_ON);
                     xdr12_trim_init_ch_gain();
-                    xdr12_trim_set_max_curr_vref(p_now_trim_info->input[p_now_trim_info->repeat]);
-                    xdr12_trim_set_channel_enable(p_now_trim_info->chx);
-                    gpio_set_demux_channel_selection(p_now_trim_info->chx);
-                    gpio_set_current_gain(p_now_trim_info->gain);
+                    xdr12_trim_set_max_curr_vref(info->input[info->repeat]);
+                    xdr12_trim_set_channel_enable(info->chx);
+                    gpio_set_demux_channel_selection(info->chx);
+                    gpio_set_current_gain(info->gain);
                     break;
                 case XDR_TRIM_LIST_CH_OFS:
                     gpio_set_power_9v(PWR_ON);
                     xdr12_trim_init_ch_ofs();
-                    xdr12_trim_set_max_curr_vref(p_now_trim_info->input[p_now_trim_info->repeat]);
-                    xdr12_trim_set_channel_enable(p_now_trim_info->chx);
-                    gpio_set_demux_channel_selection(p_now_trim_info->chx);
-                    gpio_set_current_gain(p_now_trim_info->gain);
+                    xdr12_trim_set_max_curr_vref(info->input[info->repeat]);
+                    xdr12_trim_set_channel_enable(info->chx);
+                    gpio_set_demux_channel_selection(info->chx);
+                    gpio_set_current_gain(info->gain);
+                    break;
+                default:
+                    comm_UART_Printf(LOG_LV_ERROR, "\n\r%s, %s invalid in_trim_list (%u)", __func__, gs_xdr_trim_step[td->step], *list);
                     break;
             }
             td->step = XDR_TRIM_STEP_START_MEASURE;
@@ -429,9 +476,9 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_START_MEASURE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             /* XDR Input Conditions for Each Trim List & Start Measure */
-            switch (*p_now_trim_list)
+            switch (*list)
             {
                 case XDR_TRIM_LIST_CURRENT_REF:
                 case XDR_TRIM_LIST_LDO_DIG:
@@ -443,10 +490,11 @@ static bool _xdr_trim_thread(struct thread_data* td)
                     mcu_peripheral_tim_input_capture_start();
                     break;
                 case XDR_TRIM_LIST_CH_GAIN:
-                    ADS114S08_Set_Start(true);
-                    break;
                 case XDR_TRIM_LIST_CH_OFS:
                     ADS114S08_Set_Start(true);
+                    break;
+                default:
+                    comm_UART_Printf(LOG_LV_ERROR, "\n\r%s, %s invalid in_trim_list (%u)", __func__, gs_xdr_trim_step[td->step], *list);
                     break;
             }
             td->step = XDR_TRIM_STEP_GET_MEASURED_VALUE;
@@ -456,85 +504,136 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_GET_MEASURED_VALUE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             float f_converted_value = 0.0f;
+            XD_CH_t ch = info->chx;
             /* XDR Measure */
-            switch (*p_now_trim_list)
+            switch (*list)
             {
                 case XDR_TRIM_LIST_CURRENT_REF:
                 case XDR_TRIM_LIST_LDO_DIG:
                 case XDR_TRIM_LIST_LDO_DAC:
                 case XDR_TRIM_LIST_LDO_FLL:
-                    f_converted_value = mcu_peripheral_adc_conversion_to_value(mcu_peripheral_adc_get());
+                    info->measure[ch].value = mcu_peripheral_adc_conversion_to_value(mcu_peripheral_adc_get());
                     td->step = XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
                     break;
                 case XDR_TRIM_LIST_OSC:
-                    f_converted_value = mcu_peripheral_tim_conversion_freq();
+                    info->measure[ch].value = mcu_peripheral_tim_conversion_freq();
                     td->step = XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
                     break;
                 case XDR_TRIM_LIST_CH_GAIN:
-                    if (true == ADS114S08_Wait_Done())
-                    {
-                        f_converted_value = JigBD_IF_Convert_Adc_To_Current(ADS114S08_Get_ADC_Value(), p_now_trim_info->gain);
-                        ++p_now_trim_info->repeat;
-                        if (p_now_trim_info->repeat < 2U)
-                        {
-                            td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
-                        }
-                        else
-                        {
-                            td->step = XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
-                            p_now_trim_info->repeat = 0U;
-                        }
-                    }
-                    break;
                 case XDR_TRIM_LIST_CH_OFS:
                     if (true == ADS114S08_Wait_Done())
                     {
-                        f_converted_value = JigBD_IF_Convert_Adc_To_Current(ADS114S08_Get_ADC_Value(), p_now_trim_info->gain);
-                        ++p_now_trim_info->repeat;
-                        if (p_now_trim_info->repeat < 2U)
+                        f_converted_value = JigBD_IF_Convert_Adc_To_Current(ADS114S08_Get_ADC_Value(), info->gain);
+                        info->measure[ch].temp_value[info->repeat] = f_converted_value;
+                        ++info->repeat;
+
+                        if (info->repeat < 2U)
                         {
                             td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
                         }
                         else
                         {
+                            float val_0 = info->measure[ch].temp_value[0];
+                            float val_1 = info->measure[ch].temp_value[1];
+
+                            if (*list == XDR_TRIM_LIST_CH_GAIN)
+                            {
+                                info->measure[ch].value = fabsf(val_0 - val_1);
+                            }
+                            else
+                            {
+                                info->measure[ch].value = ((val_0 + val_1) / 2.0f);
+                            }
                             td->step = XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
-                            p_now_trim_info->repeat = 0U;
+                            info->repeat = 0U;
                         }
                     }
+
+                    #ifdef SEQUENCE_DEBUG
+                        f_converted_value = JigBD_IF_Convert_Adc_To_Current(ADS114S08_Get_ADC_Value(), info->gain);
+                        info->measure[ch].temp_value[info->repeat] = f_converted_value;
+                        ++info->repeat;
+
+                        if (info->repeat < 2U)
+                        {
+                            td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
+                        }
+                        else
+                        {
+                            float val_0 = info->measure[ch].temp_value[0];
+                            float val_1 = info->measure[ch].temp_value[1];
+
+                            if (*list == XDR_TRIM_LIST_CH_GAIN)
+                            {
+                                info->measure[ch].value = fabsf(val_0 - val_1);
+                            }
+                            else
+                            {
+                                info->measure[ch].value = ((val_0 + val_1) / 2.0f);
+                            }
+                            td->step = XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
+                            info->repeat = 0U;
+                        }
+                    #endif
+                    break;
+                default:
+                    comm_UART_Printf(LOG_LV_ERROR, "\n\r%s, %s invalid in_trim_list (%u)", __func__, gs_xdr_trim_step[td->step], *list);
                     break;
             }
-            p_now_trim_info->measure.value[p_now_trim_info->repeat] = f_converted_value;
-            td->tout = 500;
+            td->tout = XDR_DELAY_DEFAULT;
             break;
         }
 
         case XDR_TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             /* XDR Compare */
-            judge_info_t t_judge = xdr_trim_compare_range(p_now_trim_info);
+            judge_info_t t_judge = xdr_trim_compare_range(info);
+            XD_CH_t ch = info->chx;
+
             if (true == t_judge.in_range)
             {
                 /* In Range - Save Value */
-                p_now_trim_info->saved.saved_value[p_now_trim_info->saved.saved_cnt] = p_now_trim_info->measure.value[p_now_trim_info->repeat];
-                p_now_trim_info->saved.sub_val[p_now_trim_info->saved.saved_cnt] = p_now_trim_info->sub_val;
-                ++p_now_trim_info->saved.saved_cnt;
+                info->saved[ch].saved_value[info->saved[ch].saved_cnt] = info->measure[ch].value;
+                info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
+                ++info->saved[ch].saved_cnt;
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                    gs_xdr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
+                    info->range.target, info->range.min, info->range.max);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✕ OUT_RANGE%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                    gs_xdr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    ANSI_FONT_RED, ANSI_FONT_NONE, \
+                    info->range.target, info->range.min, info->range.max);
             }
 
             if (t_judge.up == true)
             {
-                p_now_trim_info->sub_val += 1U;
+                info->sub_val[ch] += 1U;
+                #ifdef SEQUENCE_DEBUG
+                info->sub_val[ch] -= 1U;
+                #endif
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %u)", \
+                    ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
             else if (t_judge.down == true)
             {
-                p_now_trim_info->sub_val -= 1U;
+                info->sub_val[ch] -= 1U;
+                #ifdef SEQUENCE_DEBUG
+                info->sub_val[ch] += 1U;
+                #endif
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %u)", \
+                    ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
 
-            if (p_now_trim_info->saved.saved_cnt < SAVE_INFO_MAX_CNT)
+            if (info->saved[ch].saved_cnt < SAVE_INFO_MAX_CNT)
             {
-                if (true == xdr_trim_update_register_by_sub_val(*p_now_trim_list, p_now_trim_info))
+                if (true == xdr_trim_update_register_by_sub_val(*list, info))
                 {
                     td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
                     td->tout = XDR_DELAY_DEFAULT;
@@ -542,7 +641,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 else
                 {
                     // go to error handling, can't update register, trim thread stop
-                    comm_UART_Printf(LOG_LV_ERROR, "\n\r\tlist : %s Failed to update trim register!", gs_xdr_trim_list[*p_now_trim_list]);
+                    comm_UART_Printf(LOG_LV_ERROR, "\n\r\tlist : %s Failed to update trim register!", gs_xdr_trim_list[*list]);
                     td->step = XDR_TRIM_STEP_PWR_OFF;
                     td->tout = XDR_DELAY_DEFAULT;
                 }
@@ -550,17 +649,17 @@ static bool _xdr_trim_thread(struct thread_data* td)
             else
             {
                 // find best value from saved value and update register
-                if (p_now_trim_info->saved.saved_cnt > 0U)
+                if (info->saved[ch].saved_cnt > 0U)
                 {
-                    float target_value = p_now_trim_info->range.target;
-                    float closest_val = p_now_trim_info->saved.saved_value[0];
+                    float target_value = info->range.target;
+                    float closest_val = info->saved[ch].saved_value[0];
                     uint8_t closest_idx = 0U;
 
                     float best_diff = fabsf(closest_val - target_value);
 
-                    for (uint8_t idx = 1U; idx < p_now_trim_info->saved.saved_cnt; ++idx)
+                    for (uint8_t idx = 1U; idx < info->saved[ch].saved_cnt; ++idx)
                     {
-                        float value = p_now_trim_info->saved.saved_value[idx];
+                        float value = info->saved[ch].saved_value[idx];
                         float diff = fabsf(value - target_value);
 
                         if (diff < best_diff)
@@ -571,36 +670,25 @@ static bool _xdr_trim_thread(struct thread_data* td)
                         }
                     }
 
-                    p_now_trim_info->measure.value[0] = closest_val;
-                    p_now_trim_info->sub_val = p_now_trim_info->saved.sub_val[closest_idx];
-                    xdr_trim_update_register_by_sub_val(*p_now_trim_list, p_now_trim_info);
+                    info->measure[ch].value = closest_val;
+                    info->sub_val[ch] = info->saved[ch].sub_val[closest_idx];
+                    comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value : %.3f) (Sub_Val : %u)", \
+                        ANSI_FONT_GREEN, ANSI_FONT_NONE, info->measure[ch].value, info->sub_val[ch]);
+                    xdr_trim_update_register_by_sub_val(*list, info);
 
-                    if (*p_now_trim_list == XDR_TRIM_LIST_CH_GAIN || *p_now_trim_list == XDR_TRIM_LIST_CH_OFS)
+                    if (((*list == XDR_TRIM_LIST_CH_GAIN) || (*list == XDR_TRIM_LIST_CH_OFS)) && (ch < (XD_CH_MAX - 1U)))
                     {
-                        if (p_now_trim_info->chx < (XD_CH_MAX - 1U))
-                        {
-                            ++p_now_trim_info->chx;
-                            td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
-                            td->tout = XDR_DELAY_DEFAULT;
-                        }
-                        else
-                        {
-                            if (++(*p_now_trim_list) < XDR_TRIM_LIST_MAX)
-                            {
-                                td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
-                            }
-                            else
-                            {
-                                td->step = XDR_TRIM_STEP_PREPARE_EFUSE;
-                            }
-                            td->tout = XDR_DELAY_DEFAULT;
-                        }
+                        ++info->chx;
+                        td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
+                        comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT CHANNEL>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                        td->tout = XDR_DELAY_DEFAULT;
                     }
                     else
                     {
-                        if (++(*p_now_trim_list) < XDR_TRIM_LIST_MAX)
+                        if (++(*list) < XDR_TRIM_LIST_MAX)
                         {
                             td->step = XDR_TRIM_STEP_INITIAL_BY_LIST;
+                            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT LIST>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
                         }
                         else
                         {
@@ -615,9 +703,10 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_PREPARE_EFUSE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             if (gb_xdr_do_efuse)
             {
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
                 // save mirror register
                 xdr12_trim_save_mirror_register();
                 // register setting
@@ -629,8 +718,9 @@ static bool _xdr_trim_thread(struct thread_data* td)
             }
             else
             {
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
                 // turn off
-                td->step = XDR_TRIM_STEP_PWR_OFF;
+                td->step = XDR_TRIM_STEP_LOG_SUMMARY;
                 td->tout = XDR_DELAY_DEFAULT;
             }
             break;
@@ -638,7 +728,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_START_EFUSE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             xdr12_trim_start_efuse();
             td->step = XDR_TRIM_STEP_END_EFUSE;
             td->tout = XDR_DELAY_EFUSE_DONE;
@@ -647,7 +737,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_END_EFUSE:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             gpio_set_xd_vdd_5v(XD_PWR_OFF);
             td->step = XDR_TRIM_STEP_PWR_REBOOT;
             td->tout = XDR_DELAY_PWR_OFF;
@@ -656,7 +746,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_PWR_REBOOT:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             gpio_set_xd_vdd_5v(XD_PWR_ON_5V0);
             td->step = XDR_TRIM_STEP_VERIFY_OTP_DUMP;
             td->tout = XDR_DELAY_PWR_ON;
@@ -665,15 +755,17 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_VERIFY_OTP_DUMP:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             xdr12_trim_init();
             if (0U == xdr12_trim_verify_mirror_dump())
             {
                 // verify OK
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t%sVerify OK%s", ANSI_FONT_GREEN, ANSI_FONT_NONE);
             }
             else
             {
                 // verify NG
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t%sVerify NG%s", ANSI_FONT_RED, ANSI_FONT_NONE);
             }
 
             td->step = XDR_TRIM_STEP_LOG_SUMMARY;
@@ -683,8 +775,9 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_LOG_SUMMARY:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
-            /* XDR eFuse Check */
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<SUMMARY>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+            xdr_trim_log_summary();
             td->step = XDR_TRIM_STEP_PWR_OFF;
             td->tout = XDR_DELAY_DEFAULT;
             break;
@@ -692,8 +785,8 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case XDR_TRIM_STEP_PWR_OFF:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*p_now_trim_list], td->tout);
-            /* XDR Power Off */
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_xdr_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
             gpio_set_xd_vdd_5v(XD_PWR_OFF);
             gpio_set_power_9v(PWR_OFF);
             td->step = XDR_TRIM_STEP_NONE;

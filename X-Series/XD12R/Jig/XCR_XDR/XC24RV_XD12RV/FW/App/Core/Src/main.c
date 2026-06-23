@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include <string.h>
 
 #include "drv_xcr24.h"
 #include "drv_xdr12.h"
@@ -29,6 +30,7 @@
 #include "drv_timer.h"
 #include "drv_gpio.h"
 
+#include "framework.h"
 #include "comm_debugging.h"
 #include "ads124s08.h"
 /* USER CODE END Includes */
@@ -44,8 +46,9 @@
 #define MCU_ADC_VREF                (3.3f)
 #define MCU_ADC_RESOLUTION          (4095.0f)
 
-#define MCU_TIM_INPUT_CAPTURE_SIZE  (512)
-#define INPUT_CAPTURE_START_OFS     (1)
+#define MCU_TIM_INPUT_CAPTURE_SIZE        (512)
+#define MCU_INPUT_CAPTURE_START_OFS       (1)
+#define MCU_TIM_INPUT_CAPTURE_TIMEOUT_MS  (1000U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -63,6 +66,9 @@ typedef struct tag_INPUT_CAPTURE_INFO
     uint32_t tim_cnt[MCU_TIM_INPUT_CAPTURE_SIZE];
     float tim_freq;
     bool start;
+    bool done;
+    uint32_t timeout_ms;
+    uint32_t start_tick;
 } input_capture_info_t;
 static input_capture_info_t gt_input_capture_info;
 static uint32_t gn_InternalADC;
@@ -101,8 +107,8 @@ void sys_init(void)
     /* Set the Autoreload value */
     LL_TIM_SetAutoReload(TIM1, (uint32_t)TIM1_PERIOD);
 
-    xcr_init_param();
-    xdr_init_param();
+    xcr24_init_param();
+    xdr12_init_param();
 
 #if 0
     LL_TIM_EnableARRPreload(TIM3);
@@ -167,8 +173,17 @@ void mcu_peripheral_tim_input_capture_start(void)
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_2);
     LL_TIM_EnableCounter(TIM5);
 
+    memset(gt_input_capture_info.tim_cnt, 0U, sizeof(gt_input_capture_info.tim_cnt));
+
     gt_input_capture_info.tim_freq = 0.0f;
     gt_input_capture_info.start = true;
+    gt_input_capture_info.done = false;
+    gt_input_capture_info.start_tick = get_system_tick();
+
+    if (gt_input_capture_info.timeout_ms == 0U)
+    {
+        gt_input_capture_info.timeout_ms = MCU_TIM_INPUT_CAPTURE_TIMEOUT_MS;
+    }
 }
 
 void mcu_peripheral_tim_input_capture_stop(void)
@@ -180,11 +195,40 @@ void mcu_peripheral_tim_input_capture_stop(void)
         FREQ_MEASURE_RESET_HI();
 
         gt_input_capture_info.start = false;
+        gt_input_capture_info.done = true;
     }
 }
 
 float mcu_peripheral_tim_conversion_freq(void)
 {
+    uint32_t start = gt_input_capture_info.start_tick;
+    uint32_t timeout = gt_input_capture_info.timeout_ms;
+
+    if ((gt_input_capture_info.start == true) || (gt_input_capture_info.done == false))
+    {
+        if (timeout == 0U)
+        {
+            // wait forever
+            while((gt_input_capture_info.start == true) || (gt_input_capture_info.done == false))
+            {
+                __NOP();
+            }
+        }
+        else
+        {
+            // wait until timeout event occur
+            while (((gt_input_capture_info.start == true) || (gt_input_capture_info.done == false)) && ((get_system_tick() - start) < timeout))
+            {
+                __NOP();
+            }
+            if ((gt_input_capture_info.start == true) || (gt_input_capture_info.done == false))
+            {
+                mcu_peripheral_tim_input_capture_stop();
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nInput Capture Timeout Occur!!!!");
+                return 0.0f;
+            }
+        }
+    }
     uint32_t delta = 0U;
     uint32_t counter = 0U;
 

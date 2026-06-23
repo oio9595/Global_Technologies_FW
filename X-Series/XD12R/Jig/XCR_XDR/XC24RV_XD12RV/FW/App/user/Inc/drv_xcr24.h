@@ -30,7 +30,7 @@ extern "C" {
 
 extern volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
-void xcr_init_param(void);
+void xcr24_init_param(void);
 
 void xcr24_init(void);
 
