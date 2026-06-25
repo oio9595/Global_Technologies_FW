@@ -274,7 +274,7 @@ static void XDIC_Display_Test_Result(void)
             break;
         case XDIC_TEST_LDO_SWEEP:
             judge_result = true;
-            for (uint8_t i = 2 ; i < 64 ; ++i)
+            for (uint8_t i = 2 ; i < 32 ; ++i)
             {
                 if (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i-1] <= XDIC_LDO_SWEEP_TARGET)
                 {
@@ -298,7 +298,7 @@ static void XDIC_Display_Test_Result(void)
                     gt_xdic_trim_condition[test_mode].f_target_min, gt_xdic_trim_condition[test_mode].f_target_max, gs_xdic_test_result[1]);
             }
 
-            for (uint8_t i = 0; i < 64; ++i)
+            for (uint8_t i = 0; i < 32; ++i)
             {
                 bool compare = (i >= 2);
                 if (compare && (gf_xdic_measured_ldo_sweep[i] - gf_xdic_measured_ldo_sweep[i - 1] <= XDIC_LDO_SWEEP_TARGET))
@@ -601,19 +601,21 @@ void XDIC_Test_Task(void)
                     break;
                 case XDIC_TEST_LDO_SWEEP:
                     gf_xdic_measured_ldo_sweep[gn_xdic_measure_count] = JigBD_IF_Convert_MCU_ADC_To_Volt(gn_xdic_temp_adc[0]);
-                    if (gn_xdic_measure_count < 63)
+
+                    if (gf_xdic_measured_ldo_sweep[gn_xdic_measure_count] > 1.65)
+                    {
+                        gn_xdic_measure_count = 0;
+                        gt_xdic_test_mode = XDIC_TEST_MAX;
+                        gt_xdic_test_step = XDIC_TEST_STEP_RESULT;
+                    }
+
+                    if (gn_xdic_measure_count < 31)
                     {
                         ++gn_xdic_measure_count;
                         gt_xdic_test_mode = XDIC_TEST_LDO_SWEEP;
                         gt_xdic_test_step = XDIC_TEST_STEP_CHANGE_OUTPUT;
                     }
                     else
-                    {
-                        gn_xdic_measure_count = 0;
-                        gt_xdic_test_mode = XDIC_TEST_MAX;
-                        gt_xdic_test_step = XDIC_TEST_STEP_RESULT;
-                    }
-                    if (gf_xdic_measured_ldo_sweep[gn_xdic_measure_count] > 1.65)
                     {
                         gn_xdic_measure_count = 0;
                         gt_xdic_test_mode = XDIC_TEST_MAX;
