@@ -231,8 +231,8 @@ void XD12_Init(void)
                 gt_xd12_general_regs._r25.serial_clk_high = XD_SERIAL_CLK_CNT_HIGH;
                 gt_xd12_general_regs._r25.serial_clk_low = XD_SERIAL_CLK_CNT_LOW;
                 break;
-            case XD12_ADDR_SERIAL_LATENCY :
-                gt_xd12_general_regs._r26.serial_latency = 60;
+            case XD12_ADDR_WR_PROTECT :
+                gt_xd12_general_regs._r2D.val = 0x155;
                 break;
             default :
                 continue;
