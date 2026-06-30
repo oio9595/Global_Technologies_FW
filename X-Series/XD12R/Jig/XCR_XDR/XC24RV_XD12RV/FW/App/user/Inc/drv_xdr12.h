@@ -31,14 +31,6 @@ extern "C" {
 #define XDR_SERIAL_CLK_LOW      	(16U)
 #define XDR_SERIAL_CLK          	((float)XD12R_INTERNAL_MCLK / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
 
-#define XDR_MAX_CURRENT_REF         (0x01F)
-#define XDR_MAX_LDO_DIG             (0x00F)
-#define XDR_MAX_LDO_DAC             (0x01F)
-#define XDR_MAX_LDO_FLL             (0x00F)
-#define XDR_MAX_OSC                 (0x01F)
-#define XDR_MAX_CH_GAIN             (0x07F)
-#define XDR_MAX_CH_OFS              (0x1FF)
-
 typedef enum tag_XD12R_ADDR_TYPE
 {
     XD12R_ADDR_TYPE_GENERAL = 0U,

@@ -5,12 +5,20 @@
 #include "comm_debugging.h"
 
 /* XDR/IC602 serializer protocol */
-#define CMD_CODE_WRITE      (0x5U)  /* 0b101 */
-#define CMD_CODE_READ       (0x6U)  /* 0b110 */
-#define CMD_CODE_LDIM       (0x7U)  /* 0b111 */
-#define CMD_CODE_RD_FAULT   (0x2U)  /* 0b010 */
-#define CMD_CODE_SYNCGEN    (0x1U)  /* 0b001 */
-#define CMD_CODE_IDGEN      (0x0U)  /* 0b000 */
+#define CMD_CODE_WRITE      (0x0DU)  /* 0b1101 */
+#define CMD_CODE_READ       (0x0EU)  /* 0b1110 */
+#define CMD_CODE_LDIM       (0x0FU)  /* 0b1111 */
+#define CMD_CODE_RD_FAULT   (0x0AU)  /* 0b1010 */
+#define CMD_CODE_SYNCGEN    (0x09U)  /* 0b1001 */
+#define CMD_CODE_IDGEN      (0x08U)  /* 0b1000 */
+
+#define XDR_MAX_CURRENT_REF (0x01FU)
+#define XDR_MAX_LDO_DIG     (0x00FU)
+#define XDR_MAX_LDO_DAC     (0x01FU)
+#define XDR_MAX_LDO_FLL     (0x00FU)
+#define XDR_MAX_OSC         (0x01FU)
+#define XDR_MAX_CH_GAIN     (0x07FU)
+#define XDR_MAX_CH_OFS      (0x1FFU)
 
 typedef union tag_SERDES_WRITE_CMD
 {
@@ -19,8 +27,7 @@ typedef union tag_SERDES_WRITE_CMD
     {
         uint32_t data       : 12;
         uint32_t addr       :  6;
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 10;   /* reserved */
     }bit;
 }_v_serdes_write_command_t;
@@ -31,8 +38,7 @@ typedef union tag_SERDES_READ_CMD
     struct
     {
         uint32_t addr       :  6;
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 22;   /* reserved */
     }bit;
 }_v_serdes_read_command_t;
@@ -44,8 +50,7 @@ typedef union tag_SERDES_READOUT_CMD
     {
         uint32_t data       : 12;
         uint32_t id         :  5;
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 11;   /* reserved */
     }bit;
 }_v_serdes_readout_command_t;
@@ -56,8 +61,7 @@ typedef union tag_SERDES_LD_TRANSFER_CMD
     struct
     {
         uint32_t ld         : 16;   /* LD * N ea, ch(ld)_size, 12bit for ld_width=0, 14bit ld_width=1 */
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 12;   /* reserved */
     }bit;
 }_v_serdes_ld_transfer_command_t;
@@ -67,8 +71,7 @@ typedef union tag_SERDES_FAULT_READ_CMD
     uint32_t ALL;
     struct
     {
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 28;   /* reserved */
     }bit;
 }_v_serdes_fault_read_command_t;
@@ -82,8 +85,7 @@ typedef union tag_SERDES_FAULT_READOUT_CMD
         uint32_t bit_open   :  1;
         uint32_t bit_short  :  1;
         uint32_t bit_thermal:  1;
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 24;   /* reserved */
     }bit;
 }_v_serdes_fault_readout_command_t;
@@ -93,8 +95,7 @@ typedef union tag_SERDES_SYNC_GEN_CMD
     uint32_t ALL;
     struct
     {
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 28;   /* reserved */
     }bit;
 }_v_serdes_sync_gen_command_t;
@@ -104,23 +105,22 @@ typedef union tag_SERDES_ID_GEN_CMD
     uint32_t ALL;
     struct
     {
-        uint32_t cmd_code   :  3;
-        uint32_t start      :  1;
+        uint32_t cmd_code   :  4;
         uint32_t            : 28;   /* reserved */
     }bit;
 }_v_serdes_id_gen_command_t;
 
 #define XDR_BIT_SYNCGEN         (4U)
-#define XD_HDR_BIT              (4U)
-#define XD_ADDR_BIT             (6U)
-#define XD_ID_BIT               (5U)
-#define XD_DATA_BIT             (12U)
-#define XDR_CMD_WRITE           (XD_HDR_BIT + XD_ADDR_BIT + XD_DATA_BIT)
-#define XDR_CMD_READ            (XD_HDR_BIT + XD_ADDR_BIT)
-#define XDR_CMD_READOUT         (XD_HDR_BIT + XD_ID_BIT + XD_DATA_BIT)
+#define XDR_HDR_BIT             (4U)
+#define XDR_ADDR_BIT            (6U)
+#define XDR_ID_BIT              (5U)
+#define XDR_DATA_BIT            (12U)
+#define XDR_CMD_WRITE           (XDR_HDR_BIT + XDR_ADDR_BIT + XDR_DATA_BIT)
+#define XDR_CMD_READ            (XDR_HDR_BIT + XDR_ADDR_BIT)
+#define XDR_CMD_READOUT         (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT)
 
-#define XD_LD_DATA_BIT          (16U)
-#define XDR_LD_TRANSFER         (XD_HDR_BIT + (XD_LD_DATA_BIT * XDR_CH_LENGTH))
+#define XDR_LD_DATA_BIT          (16U)
+#define XDR_LD_TRANSFER         (XDR_HDR_BIT + (XDR_LD_DATA_BIT * XDR_CH_LENGTH))
 
 #define PWM_OUT_BIT0            (((TIM1_PERIOD + 1U) * 1) / 3U)
 #define PWM_OUT_BIT1            (((TIM1_PERIOD + 1U) * 2) / 3U)
@@ -172,8 +172,6 @@ static _v_serdes_fault_read_command_t gt_xd_fault_read_command[XDR_DAISY_LENGTH]
 static _v_serdes_fault_readout_command_t gt_xd_fault_readout_command;
 static _v_serdes_sync_gen_command_t gt_xd_syncgen_command[XDR_DAISY_LENGTH];
 static _v_serdes_id_gen_command_t gt_xd_idgen_command[XDR_DAISY_LENGTH];
-
-static void xdr12_trim_enable_write_protect(bool protect_en);
 
 static void start_timeout_timer(uint16_t timeout_us)
 {
@@ -292,9 +290,9 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
         ++count;
     }
 
-    const uint32_t avg_freq = sum_freq / count;
-    const uint16_t logic_1_min = (uint16_t)(avg_freq >> 1U);
-    const uint16_t logic_1_max = (uint16_t)((avg_freq * 84U) / 100U);
+    const uint32_t avg_freq = sum_freq / count; // average counter
+    const uint16_t logic_1_min = (uint16_t)(avg_freq >> 1U);            // duty : 50%
+    const uint16_t logic_1_max = (uint16_t)((avg_freq * 84U) / 100U);   // duty : 84%
 
     uint16_t id = 0;
     uint16_t header[XDR_DAISY_LENGTH] = {0, };
@@ -319,10 +317,11 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
         n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << 1U);
         n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << 0U);
 
-        gt_xd_fault_readout_command.bit.bit_thermal = 0U;
-        gt_xd_fault_readout_command.bit.bit_short = 0U;
-        gt_xd_fault_readout_command.bit.bit_open = 0U;
-        gt_xd_fault_readout_command.bit.bit_fb = 0U;
+        gt_xd_fault_readout_command.bit.cmd_code = n_header;
+        gt_xd_fault_readout_command.bit.bit_thermal = ((n_data >> 3U) & 0x01U);
+        gt_xd_fault_readout_command.bit.bit_short = ((n_data >> 2U) & 0x01U);
+        gt_xd_fault_readout_command.bit.bit_open = ((n_data >> 1U) & 0x01U);
+        gt_xd_fault_readout_command.bit.bit_fb = ((n_data >> 0U) & 0x01U);
 
         pdata[id++] = n_data;
         comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Fault Recv Packet\r\n\tCMD - 0x%01X, FAULT - 0x%01X", n_header, n_data);
@@ -331,7 +330,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
     {
         uint16_t duty_idx = 0;
         uint16_t n_id = 0U;
-        uint16_t xdr12_id[XDR_DAISY_LENGTH] = {0, };
+        uint16_t xdr12_id[XDR_DAISY_LENGTH] = { 0U };
 
         while(((uint32_t)duty_idx + XDR_CMD_READOUT) <= len)
         {
@@ -365,6 +364,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
                 n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << (uint16_t)bit);
             }
 
+            gt_xd_readout_command[id].bit.cmd_code = n_header;
             gt_xd_readout_command[id].bit.id = n_id;
             gt_xd_readout_command[id].bit.data = n_data;
 
@@ -385,412 +385,303 @@ static void xdr12_regs_init_table(void)
     {
         switch(addr)
         {
-#if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
-        case XD12R_RESET_ID:
-            _r1->reg._r00.bit.lkg_e = 0U;
-            _r1->reg._r00.bit.e_rst = 0U;
-            _r1->reg._r00.bit.vs_rst = 0U;
-            _r1->reg._r00.bit.rst = 0U;
-            break;
-        case XD12R_LD_CONTROL:
-            _r1->reg._r01.bit.ld_mode = 0U;
-            _r1->reg._r01.bit.ld_dir = 0U;
-            _r1->reg._r01.bit.ld_res = 0U;
-            _r1->reg._r01.bit.syncmode = 0U;
-            _r1->reg._r01.bit.delay_mode_en = 0U;
-            _r1->reg._r01.bit.sv_no = XDR_SV_NO;
-            break;
-        case XD12R_LD_SIZE:
-            _r1->reg._r02.bit.ld_size = 0U;
-            break;
-        case XD12R_PWMCLK_DIV1_2:
-            _r1->reg._r03.bit.pwmclk_div1 = 0U;
-            _r1->reg._r03.bit.pwmclk_div2 = 0U;
-            break;
-        case XD12R_PWMCLK_DIV2_3:
-            _r1->reg._r04.bit.pwmclk_div2 = 0U;
-            _r1->reg._r04.bit.pwmclk_div3 = 0U;
-            break;
-        case XD12R_CHANNEL_ENABLE:
-            _r1->reg._r05.bit.ch1_en = 0U;
-            _r1->reg._r05.bit.ch2_en = 0U;
-            _r1->reg._r05.bit.ch3_en = 0U;
-            _r1->reg._r05.bit.ch4_en = 0U;
-            _r1->reg._r05.bit.ch5_en = 0U;
-            _r1->reg._r05.bit.ch6_en = 0U;
-            _r1->reg._r05.bit.ch7_en = 0U;
-            _r1->reg._r05.bit.ch8_en = 0U;
-            _r1->reg._r05.bit.ch9_en = 0U;
-            _r1->reg._r05.bit.ch10_en = 0U;
-            _r1->reg._r05.bit.ch11_en = 0U;
-            _r1->reg._r05.bit.ch12_en = 0U;
-            break;
-        case XD12R_FAULT_CONTROL:
-            _r1->reg._r06.bit.o_off_e = 0U;
-            _r1->reg._r06.bit.s_off_e = 0U;
-            _r1->reg._r06.bit.t_off_e = 0U;
-            _r1->reg._r06.bit.o_det_e = 0U;
-            _r1->reg._r06.bit.s_det_e = 0U;
-            _r1->reg._r06.bit.o_fb_e = 0U;
-            _r1->reg._r06.bit.fb_mode = 0U;
-            _r1->reg._r06.bit.auto_fault_fb_no = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE0:
-            _r1->reg._r07.bit.ch7_ld_type = 0U;
-            _r1->reg._r07.bit.ch8_ld_type = 0U;
-            _r1->reg._r07.bit.ch9_ld_type = 0U;
-            _r1->reg._r07.bit.ch10_ld_type = 0U;
-            _r1->reg._r07.bit.ch11_ld_type = 0U;
-            _r1->reg._r07.bit.ch12_ld_type = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE1:
-            _r1->reg._r08.bit.ch1_ld_type = 0U;
-            _r1->reg._r08.bit.ch2_ld_type = 0U;
-            _r1->reg._r08.bit.ch3_ld_type = 0U;
-            _r1->reg._r08.bit.ch4_ld_type = 0U;
-            _r1->reg._r08.bit.ch5_ld_type = 0U;
-            _r1->reg._r08.bit.ch6_ld_type = 0U;
-            break;
-        //case XD12R_FAULT_STATUS0:
-        case XD12R_MAX_CURR_VREF1:
-            _r1->reg._r0A.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF2:
-            _r1->reg._r0B.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF3:
-            _r1->reg._r0C.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF4:
-            _r1->reg._r0D.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF5:
-            _r1->reg._r0E.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_DELAY_CH1_2:
-            _r1->reg._r10.bit.delay_ch1 = 0U;   /* CH1 */
-            _r1->reg._r10.bit.delay_ch2 = 0U;   /* CH2 */
-            break;
-        case XD12R_DELAY_CH3_4:
-            _r1->reg._r11.bit.delay_ch3 = 0U;   /* CH3 */
-            _r1->reg._r11.bit.delay_ch4 = 0U;   /* CH4 */
-            break;
-        case XD12R_DELAY_CH5_6:
-            _r1->reg._r12.bit.delay_ch5 = 0U;   /* CH5 */
-            _r1->reg._r12.bit.delay_ch6 = 0U;   /* CH6 */
-            break;
-        case XD12R_DELAY_CH7_8:
-            _r1->reg._r13.bit.delay_ch7 = 0U;   /* CH7 */
-            _r1->reg._r13.bit.delay_ch8 = 0U;   /* CH8 */
-            break;
-        case XD12R_DELAY_CH9_10:
-            _r1->reg._r14.bit.delay_ch9 = 0U;   /* CH9 */
-            _r1->reg._r14.bit.delay_ch10 = 0U;   /* CH10 */
-            break;
-        case XD12R_DELAY_CH11_12:
-            _r1->reg._r15.bit.delay_ch11 = 0U;   /* CH11 */
-            _r1->reg._r15.bit.delay_ch12 = 0U;   /* CH12 */
-            break;
-        case XD12R_FB_LEVEL:
-            _r1->reg._r16.bit.fb1_level = 0U;
-            _r1->reg._r16.bit.fb2_level = 0U;
-            _r1->reg._r16.bit.fb3_level = 0U;
-            _r1->reg._r16.bit.fb4_level = 0U;
-            break;
-        case XD12R_FB_SHORT_LEVEL:
-            _r1->reg._r17.bit.fb5_level = 0U;
-            _r1->reg._r17.bit.short1_level = 0U;
-            _r1->reg._r17.bit.short2_level = 0U;
-            _r1->reg._r17.bit.short3_level = 0U;
-            break;
-        case XD12R_SHORT_LEVEL:
-            _r1->reg._r18.bit.short4_level = 0U;
-            _r1->reg._r18.bit.short5_level = 0U;
-            break;
-        case XD12R_MAX_CURRENT_LEVEL1:
-            _r1->reg._r19.bit.max_curr1_level = 0U;
-            _r1->reg._r19.bit.max_curr2_level = 0U;
-            _r1->reg._r19.bit.max_curr3_level = 0U;
-            break;
-        case XD12R_MAX_CURRENT_LEVEL2:
-            _r1->reg._r1A.bit.max_curr4_level = 0U;
-            _r1->reg._r1A.bit.max_curr5_level = 0U;
-            break;
-        case XD12R_PARITY_RD_EN:
-            _r1->reg._r1B.bit.reg_rd_en = 0U;
-            _r1->reg._r1B.bit.parity_e = 0U;
-            break;
-        case XD12R_SERIAL_CLK_GEN:
-            _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
-            _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
-            break;
-        case XD12R_SERIAL_LATENCY:
-            _r1->reg._r1D.bit.serial_latency = 128U;
-            break;
-        case XD12R_V_MASK:
-            _r1->reg._r1E.bit.v_mask = 0U;
-            break;
-        case XD12R_SV_MASK:
-            _r1->reg._r1F.bit.sv_mask = 0U;
-            _r1->reg._r1F.bit.sv_mask_en = 0U;
-            break;
-        case XD12R_RSTCNT:
-            _r1->reg._r20.bit.rstcnt = 0U;
-            break;
-        case XD12R_TIMEOUT:
-            _r1->reg._r21.bit.timeout = 1023U;
-            break;
-        case XD12R_FLLCNT1:
-            _r1->reg._r22.bit.fllcnt = 0U;
-            break;
-        case XD12R_FLLCNT2:
-            _r1->reg._r23.bit.fllcnt = 50U;
-            _r1->reg._r23.bit.fll_range = 2U;
-            _r1->reg._r23.bit.fll_en = 1U;
-            break;
-        case XD12R_WR_PROTECT:
-            _r1->reg._r24.bit.wr_protect = 0x555U;
-            break;
-        case XD12R_NF_CONTROL:
-            _r1->reg._r25.bit.DGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.DGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.BBKN_EN = 0U;
-            _r1->reg._r25.bit.SGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.SGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.O_EMI_REJ_EN = 0U;
-            _r1->reg._r25.bit.BBKN_TH = 0U;
-            break;
-        case XD12R_CHOP_EN:
-            _r1->reg._r26.bit.CHOP_BGR_EN = 1U;
-            _r1->reg._r26.bit.CHOP_DAC_EN = 1U;
-            _r1->reg._r26.bit.CHOP_OSC_EN = 1U;
-            _r1->reg._r26.bit.CHOP_OSCLDO_EN = 1U;
-            _r1->reg._r26.bit.CHOP_DRV_EN = 1U;
-            _r1->reg._r26.bit.CHOP_EN = 1U;
-            break;
-        case XD12R_TEMP:
-            _r1->reg._r27.bit.flt_gain = 1U;
-            _r1->reg._r27.bit.o_slew = 2U;
-            _r1->reg._r27.bit.flt_ctl = 2U;
-            _r1->reg._r27.bit.dac_rng = 0U;
-            _r1->reg._r27.bit.ov_swap_en = 0U;
-            _r1->reg._r27.bit.ofs_temp = 8U;
-            break;
-        case XD12R_OSC_FLL_MAN1:
-            _r1->reg._r28.bit.osc_fll_man = 0U;
-            break;
-        case XD12R_OSC_FLL_MAN2:
-            _r1->reg._r29.bit.osc_fll_man = 8U;
-            _r1->reg._r29.bit.osc_fll_err_range = 0U;
-            _r1->reg._r29.bit.osc_man_en = 1U;
-            break;
-        case XD12R_OSC_SPREAD:
-            _r1->reg._r2A.bit.SPRD_GAIN = 0U;
-            _r1->reg._r2A.bit.SPRD_SPD = 0U;
-            _r1->reg._r2A.bit.SPRD_EN = 0U;
-            break;
-        case XD12R_CLOCK_GATE_EN:
-            _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
-            break;
-
-#elif (XD_MODEL_TYPE == XD_TYPE_XDR12D)
-
-        case XD12R_RESET_ID:
-            _r1->reg._r00.bit.rsi_e = 0U;
-            _r1->reg._r00.bit.lkg_e = 0U;
-            _r1->reg._r00.bit.e_rst = 0U;
-            _r1->reg._r00.bit.vs_rst = 0U;
-            _r1->reg._r00.bit.rst = 0U;
-            break;
-        case XD12R_LD_CONTROL:
-            _r1->reg._r01.bit.ld_mode = 0U;
-            _r1->reg._r01.bit.ld_dir = 0U;
-            _r1->reg._r01.bit.ld_res = 0U;
-            _r1->reg._r01.bit.ov_t_e = 0;
-            _r1->reg._r01.bit.pwmclk_div = 0;
-            break;
-        case XD12R_LD_SIZE:
-            _r1->reg._r02.bit.ld_size = 0U;
-            break;
-        case XD12R_CHANNEL_ENABLE:
-            _r1->reg._r05.bit.ch1_en = 0U;
-            _r1->reg._r05.bit.ch2_en = 0U;
-            _r1->reg._r05.bit.ch3_en = 0U;
-            _r1->reg._r05.bit.ch4_en = 0U;
-            _r1->reg._r05.bit.ch5_en = 0U;
-            _r1->reg._r05.bit.ch6_en = 0U;
-            _r1->reg._r05.bit.ch7_en = 0U;
-            _r1->reg._r05.bit.ch8_en = 0U;
-            _r1->reg._r05.bit.ch9_en = 0U;
-            _r1->reg._r05.bit.ch10_en = 0U;
-            _r1->reg._r05.bit.ch11_en = 0U;
-            _r1->reg._r05.bit.ch12_en = 0U;
-            break;
-        case XD12R_FAULT_CONTROL:
-            _r1->reg._r06.bit.o_off_e = 0U;
-            _r1->reg._r06.bit.s_off_e = 0U;
-            _r1->reg._r06.bit.t_off_e = 0U;
-            _r1->reg._r06.bit.o_det_e = 0U;
-            _r1->reg._r06.bit.s_det_e = 0U;
-            _r1->reg._r06.bit.o_fb_e = 0U;
-            _r1->reg._r06.bit.fb_mode = 0U;
-            _r1->reg._r06.bit.o_slew = 0U;
-            _r1->reg._r06.bit.parity_e = 0U;
-            break;
-        case XD12R_FB_LEVEL:
-            _r1->reg._r07.bit.fb1_level = 0U;
-            _r1->reg._r07.bit.fb2_level = 0U;
-            _r1->reg._r07.bit.fb3_level = 0U;
-            break;
-        case XD12R_SHORT_LEVEL:
-            _r1->reg._r08.bit.short1_level = 0U;
-            _r1->reg._r08.bit.short2_level = 0U;
-            _r1->reg._r08.bit.short3_level = 0U;
-            break;
-
-        //case XD12R_FAULT_STATUS0:
-        case XD12R_MAX_CURR_LEVEL:
-            _r1->reg._r0A.bit.max_curr1_level = 0U;
-            _r1->reg._r0A.bit.max_curr2_level = 0U;
-            _r1->reg._r0A.bit.max_curr3_level = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF1:
-            _r1->reg._r0B.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF2:
-            _r1->reg._r0C.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF3:
-            _r1->reg._r0D.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE1:
-            _r1->reg._r0E.bit.ch7_ld_type = 0U;
-            _r1->reg._r0E.bit.ch8_ld_type = 0U;
-            _r1->reg._r0E.bit.ch9_ld_type = 0U;
-            _r1->reg._r0E.bit.ch10_ld_type = 0U;
-            _r1->reg._r0E.bit.ch11_ld_type = 0U;
-            _r1->reg._r0E.bit.ch12_ld_type = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE2:
-            _r1->reg._r0F.bit.ch1_ld_type = 0U;
-            _r1->reg._r0F.bit.ch2_ld_type = 0U;
-            _r1->reg._r0F.bit.ch3_ld_type = 0U;
-            _r1->reg._r0F.bit.ch4_ld_type = 0U;
-            _r1->reg._r0F.bit.ch5_ld_type = 0U;
-            _r1->reg._r0F.bit.ch6_ld_type = 0U;
-            break;
-        case XD12R_DELAY_CH1:
-            _r1->reg._r10.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH2:
-            _r1->reg._r11.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH3:
-            _r1->reg._r12.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH4:
-            _r1->reg._r13.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH5:
-            _r1->reg._r14.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH6:
-            _r1->reg._r15.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH7:
-            _r1->reg._r16.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH8:
-            _r1->reg._r17.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH9:
-            _r1->reg._r18.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH10:
-            _r1->reg._r19.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH11:
-            _r1->reg._r1A.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH12:
-            _r1->reg._r1B.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_SERIAL_CLK_GEN:
-            _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
-            _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
-            break;
-        case XD12R_SERIAL_LATENCY:
-            _r1->reg._r1D.bit.serial_latency = 128U;
-            break;
-
-        case XD12R_RSTCNT:
-            _r1->reg._r20.bit.rstcnt = 0U;
-            break;
-        case XD12R_TIMEOUT:
-            _r1->reg._r21.bit.timeout = 1023U;
-            break;
-        case XD12R_FLLCNT1:
-            _r1->reg._r22.bit.fllcnt = 0U;
-            break;
-        case XD12R_FLLCNT2:
-            _r1->reg._r23.bit.fllcnt = 50U;
-            _r1->reg._r23.bit.fll_range = 2U;
-            _r1->reg._r23.bit.fll_en = 1U;
-            break;
-        case XD12R_WR_PROTECT:
-            _r1->reg._r24.bit.wr_protect = 0x555U;
-            break;
-        case XD12R_NF_CONTROL:
-            _r1->reg._r25.bit.DGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.DGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.BBKN_EN = 0U;
-            _r1->reg._r25.bit.BBKN_TH = 0U;
-            break;
-        case XD12R_CHOP_EN:
-            _r1->reg._r26.bit.CHOP_BGR_EN = 0U;
-            _r1->reg._r26.bit.CHOP_DAC_EN = 0U;
-            _r1->reg._r26.bit.CHOP_OSC_EN = 0U;
-            _r1->reg._r26.bit.CHOP_OSCLDO_EN = 0U;
-            _r1->reg._r26.bit.CHOP_DRV_EN = 0U;
-            _r1->reg._r26.bit.CHOP_EN = 0U;
-            break;
-        case XD12R_TEMP:
-            _r1->reg._r27.bit.flt_gain = 1U;
-            _r1->reg._r27.bit.o_slew = 2U;
-            _r1->reg._r27.bit.flt_ctl = 2U;
-            _r1->reg._r27.bit.dac_rng = 0U;
-            _r1->reg._r27.bit.ofs_temp = 8U;
-            break;
-        case XD12R_OSC_FLL_MAN1:
-            _r1->reg._r28.bit.osc_fll_man = 0U;
-            break;
-        case XD12R_OSC_FLL_MAN2:
-            _r1->reg._r29.bit.osc_fll_man = 8U;
-            _r1->reg._r29.bit.osc_fll_err_range = 0U;
-            _r1->reg._r29.bit.osc_man_en = 1U;
-            break;
-        case XD12R_OSC_SPREAD:
-            _r1->reg._r2A.bit.SPRD_GAIN = 0U;
-            _r1->reg._r2A.bit.SPRD_SPD = 0U;
-            _r1->reg._r2A.bit.SPRD_EN = 0U;
-            break;
-        case XD12R_CLOCK_GATE_EN:
-            _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
-            break;
-
-#elif (XD_MODEL_TYPE == XD_TYPE_IC601)
-#endif
-
-        default:
-            continue;
+            case XD12R_RESET_ID:
+            {
+                _r1->reg._r00.bit.lkg_e = 0U;
+                _r1->reg._r00.bit.e_rst = 0U;
+                _r1->reg._r00.bit.vs_rst = 0U;
+                _r1->reg._r00.bit.rst = 0U;
+                break;
+            }
+            case XD12R_LD_CONTROL:
+            {
+                _r1->reg._r01.bit.ld_mode = 0U;
+                _r1->reg._r01.bit.ld_dir = 0U;
+                _r1->reg._r01.bit.ld_res = 0U;
+                _r1->reg._r01.bit.syncmode = 0U;
+                _r1->reg._r01.bit.delay_mode_en = 0U;
+                _r1->reg._r01.bit.sv_no = XDR_SV_NO;
+                break;
+            }
+            case XD12R_LD_SIZE:
+            {
+                _r1->reg._r02.bit.ld_size = 0U;
+                break;
+            }
+            case XD12R_PWMCLK_DIV1_2:
+            {
+                _r1->reg._r03.bit.pwmclk_div1 = 0U;
+                _r1->reg._r03.bit.pwmclk_div2 = 0U;
+                break;
+            }
+            case XD12R_PWMCLK_DIV2_3:
+            {
+                _r1->reg._r04.bit.pwmclk_div2 = 0U;
+                _r1->reg._r04.bit.pwmclk_div3 = 0U;
+                break;
+            }
+            case XD12R_CHANNEL_ENABLE:
+            {
+                _r1->reg._r05.bit.ch1_en = 0U;
+                _r1->reg._r05.bit.ch2_en = 0U;
+                _r1->reg._r05.bit.ch3_en = 0U;
+                _r1->reg._r05.bit.ch4_en = 0U;
+                _r1->reg._r05.bit.ch5_en = 0U;
+                _r1->reg._r05.bit.ch6_en = 0U;
+                _r1->reg._r05.bit.ch7_en = 0U;
+                _r1->reg._r05.bit.ch8_en = 0U;
+                _r1->reg._r05.bit.ch9_en = 0U;
+                _r1->reg._r05.bit.ch10_en = 0U;
+                _r1->reg._r05.bit.ch11_en = 0U;
+                _r1->reg._r05.bit.ch12_en = 0U;
+                break;
+            }
+            case XD12R_FAULT_CONTROL:
+            {
+                _r1->reg._r06.bit.o_off_e = 0U;
+                _r1->reg._r06.bit.s_off_e = 0U;
+                _r1->reg._r06.bit.t_off_e = 0U;
+                _r1->reg._r06.bit.o_det_e = 0U;
+                _r1->reg._r06.bit.s_det_e = 0U;
+                _r1->reg._r06.bit.o_fb_e = 0U;
+                _r1->reg._r06.bit.fb_mode = 0U;
+                _r1->reg._r06.bit.auto_fault_fb_no = 0U;
+                break;
+            }
+            case XD12R_CHx_LD_TYPE0:
+            {
+                _r1->reg._r07.bit.ch7_ld_type = 0U;
+                _r1->reg._r07.bit.ch8_ld_type = 0U;
+                _r1->reg._r07.bit.ch9_ld_type = 0U;
+                _r1->reg._r07.bit.ch10_ld_type = 0U;
+                _r1->reg._r07.bit.ch11_ld_type = 0U;
+                _r1->reg._r07.bit.ch12_ld_type = 0U;
+                break;
+            }
+            case XD12R_CHx_LD_TYPE1:
+            {
+                _r1->reg._r08.bit.ch1_ld_type = 0U;
+                _r1->reg._r08.bit.ch2_ld_type = 0U;
+                _r1->reg._r08.bit.ch3_ld_type = 0U;
+                _r1->reg._r08.bit.ch4_ld_type = 0U;
+                _r1->reg._r08.bit.ch5_ld_type = 0U;
+                _r1->reg._r08.bit.ch6_ld_type = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF1:
+            {
+                _r1->reg._r0A.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF2:
+            {
+                _r1->reg._r0B.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF3:
+            {
+                _r1->reg._r0C.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF4:
+            {
+                _r1->reg._r0D.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF5:
+            {
+                _r1->reg._r0E.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_DELAY_CH1_2:
+            {
+                _r1->reg._r10.bit.delay_ch1 = 0U;   /* CH1 */
+                _r1->reg._r10.bit.delay_ch2 = 0U;   /* CH2 */
+                break;
+            }
+            case XD12R_DELAY_CH3_4:
+            {
+                _r1->reg._r11.bit.delay_ch3 = 0U;   /* CH3 */
+                _r1->reg._r11.bit.delay_ch4 = 0U;   /* CH4 */
+                break;
+            }
+            case XD12R_DELAY_CH5_6:
+            {
+                _r1->reg._r12.bit.delay_ch5 = 0U;   /* CH5 */
+                _r1->reg._r12.bit.delay_ch6 = 0U;   /* CH6 */
+                break;
+            }
+            case XD12R_DELAY_CH7_8:
+            {
+                _r1->reg._r13.bit.delay_ch7 = 0U;   /* CH7 */
+                _r1->reg._r13.bit.delay_ch8 = 0U;   /* CH8 */
+                break;
+            }
+            case XD12R_DELAY_CH9_10:
+            {
+                _r1->reg._r14.bit.delay_ch9 = 0U;   /* CH9 */
+                _r1->reg._r14.bit.delay_ch10 = 0U;   /* CH10 */
+                break;
+            }
+            case XD12R_DELAY_CH11_12:
+            {
+                _r1->reg._r15.bit.delay_ch11 = 0U;   /* CH11 */
+                _r1->reg._r15.bit.delay_ch12 = 0U;   /* CH12 */
+                break;
+            }
+            case XD12R_FB_LEVEL:
+            {
+                _r1->reg._r16.bit.fb1_level = 0U;
+                _r1->reg._r16.bit.fb2_level = 0U;
+                _r1->reg._r16.bit.fb3_level = 0U;
+                _r1->reg._r16.bit.fb4_level = 0U;
+                break;
+            }
+            case XD12R_FB_SHORT_LEVEL:
+            {
+                _r1->reg._r17.bit.fb5_level = 0U;
+                _r1->reg._r17.bit.short1_level = 0U;
+                _r1->reg._r17.bit.short2_level = 0U;
+                _r1->reg._r17.bit.short3_level = 0U;
+                break;
+            }
+            case XD12R_SHORT_LEVEL:
+            {
+                _r1->reg._r18.bit.short4_level = 0U;
+                _r1->reg._r18.bit.short5_level = 0U;
+                break;
+            }
+            case XD12R_MAX_CURRENT_LEVEL1:
+            {
+                _r1->reg._r19.bit.max_curr1_level = 0U;
+                _r1->reg._r19.bit.max_curr2_level = 0U;
+                _r1->reg._r19.bit.max_curr3_level = 0U;
+                break;
+            }
+            case XD12R_MAX_CURRENT_LEVEL2:
+            {
+                _r1->reg._r1A.bit.max_curr4_level = 0U;
+                _r1->reg._r1A.bit.max_curr5_level = 0U;
+                break;
+            }
+            case XD12R_PARITY_RD_EN:
+            {
+                _r1->reg._r1B.bit.reg_rd_en = 0U;
+                _r1->reg._r1B.bit.parity_e = 0U;
+                break;
+            }
+            case XD12R_SERIAL_CLK_GEN:
+            {
+                _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
+                _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
+                break;
+            }
+            case XD12R_SERIAL_LATENCY:
+            {
+                _r1->reg._r1D.bit.serial_latency = 0xC8;
+                break;
+            }
+            case XD12R_V_MASK:
+            {
+                _r1->reg._r1E.bit.v_mask = 0U;
+                break;
+            }
+            case XD12R_SV_MASK:
+            {
+                _r1->reg._r1F.bit.sv_mask = 0U;
+                _r1->reg._r1F.bit.sv_mask_en = 0U;
+                break;
+            }
+            case XD12R_RSTCNT:
+            {
+                _r1->reg._r20.bit.rstcnt = 0U;
+                break;
+            }
+            case XD12R_TIMEOUT:
+            {
+                _r1->reg._r21.bit.timeout = 1023U;
+                break;
+            }
+            case XD12R_FLLCNT1:
+            {
+                _r1->reg._r22.bit.fllcnt = 0U;
+                break;
+            }
+            case XD12R_FLLCNT2:
+            {
+                _r1->reg._r23.bit.fllcnt = 50U;
+                _r1->reg._r23.bit.fll_range = 2U;
+                _r1->reg._r23.bit.fll_en = 1U;
+                break;
+            }
+            case XD12R_WR_PROTECT:
+            {
+                _r1->reg._r24.bit.wr_protect = 0x555U;
+                break;
+            }
+            case XD12R_NF_CONTROL:
+            {
+                _r1->reg._r25.bit.DGRJT_EN1 = 0U;
+                _r1->reg._r25.bit.DGRJT_EN2 = 0U;
+                _r1->reg._r25.bit.BBKN_EN = 0U;
+                _r1->reg._r25.bit.SGRJT_EN1 = 0U;
+                _r1->reg._r25.bit.SGRJT_EN2 = 0U;
+                _r1->reg._r25.bit.O_EMI_REJ_EN = 0U;
+                _r1->reg._r25.bit.BBKN_TH = 0U;
+                break;
+            }
+            case XD12R_CHOP_EN:
+            {
+                _r1->reg._r26.bit.CHOP_BGR_EN = 1U;
+                _r1->reg._r26.bit.CHOP_DAC_EN = 1U;
+                _r1->reg._r26.bit.CHOP_OSC_EN = 1U;
+                _r1->reg._r26.bit.CHOP_OSCLDO_EN = 1U;
+                _r1->reg._r26.bit.CHOP_DRV_EN = 1U;
+                _r1->reg._r26.bit.CHOP_EN = 1U;
+                break;
+            }
+            case XD12R_TEMP:
+            {
+                _r1->reg._r27.bit.flt_gain = 1U;
+                _r1->reg._r27.bit.o_slew = 2U;
+                _r1->reg._r27.bit.flt_ctl = 2U;
+                _r1->reg._r27.bit.dac_rng = 0U;
+                _r1->reg._r27.bit.ov_swap_en = 0U;
+                _r1->reg._r27.bit.ofs_temp = 8U;
+                break;
+            }
+            case XD12R_OSC_FLL_MAN1:
+            {
+                _r1->reg._r28.bit.osc_fll_man = 0U;
+                break;
+            }
+            case XD12R_OSC_FLL_MAN2:
+            {
+                _r1->reg._r29.bit.osc_fll_man = 8U;
+                _r1->reg._r29.bit.osc_fll_err_range = 0U;
+                _r1->reg._r29.bit.osc_man_en = 1U;
+                break;
+            }
+            case XD12R_OSC_SPREAD:
+            {
+                _r1->reg._r2A.bit.SPRD_GAIN = 0U;
+                _r1->reg._r2A.bit.SPRD_SPD = 0U;
+                _r1->reg._r2A.bit.SPRD_EN = 0U;
+                break;
+            }
+            case XD12R_CLOCK_GATE_EN:
+            {
+                _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
         }
-
         xdr12_write_by_type(addr, _r1->ALL[addr], XD12R_ADDR_TYPE_GENERAL);
     }
 }
@@ -805,413 +696,322 @@ static void xdr12_regs_trim_init_table(void)
     {
         switch(addr)
         {
-#if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
-        case XD12R_RESET_ID:
-            _r1->reg._r00.bit.lkg_e = 0U;
-            _r1->reg._r00.bit.e_rst = 0U;
-            _r1->reg._r00.bit.vs_rst = 0U;
-            _r1->reg._r00.bit.rst = 0U;
-            break;
-        case XD12R_LD_CONTROL:
-            _r1->reg._r01.bit.ld_mode = 0U;
-            _r1->reg._r01.bit.ld_dir = 0U;
-            _r1->reg._r01.bit.ld_res = 0U;
-            _r1->reg._r01.bit.syncmode = 0U;
-            _r1->reg._r01.bit.delay_mode_en = 0U;
-            _r1->reg._r01.bit.sv_no = XDR_SV_NO;
-            break;
-        case XD12R_LD_SIZE:
-            _r1->reg._r02.bit.ld_size = 0U;
-            break;
-        case XD12R_PWMCLK_DIV1_2:
-            _r1->reg._r03.bit.pwmclk_div1 = 0U;
-            _r1->reg._r03.bit.pwmclk_div2 = 0U;
-            break;
-        case XD12R_PWMCLK_DIV2_3:
-            _r1->reg._r04.bit.pwmclk_div2 = 0U;
-            _r1->reg._r04.bit.pwmclk_div3 = 0U;
-            break;
-        case XD12R_CHANNEL_ENABLE:
-            _r1->reg._r05.bit.ch1_en = 0U;
-            _r1->reg._r05.bit.ch2_en = 0U;
-            _r1->reg._r05.bit.ch3_en = 0U;
-            _r1->reg._r05.bit.ch4_en = 0U;
-            _r1->reg._r05.bit.ch5_en = 0U;
-            _r1->reg._r05.bit.ch6_en = 0U;
-            _r1->reg._r05.bit.ch7_en = 0U;
-            _r1->reg._r05.bit.ch8_en = 0U;
-            _r1->reg._r05.bit.ch9_en = 0U;
-            _r1->reg._r05.bit.ch10_en = 0U;
-            _r1->reg._r05.bit.ch11_en = 0U;
-            _r1->reg._r05.bit.ch12_en = 0U;
-            break;
-        case XD12R_FAULT_CONTROL:
-            _r1->reg._r06.bit.o_off_e = 0U;
-            _r1->reg._r06.bit.s_off_e = 0U;
-            _r1->reg._r06.bit.t_off_e = 0U;
-            _r1->reg._r06.bit.o_det_e = 0U;
-            _r1->reg._r06.bit.s_det_e = 0U;
-            _r1->reg._r06.bit.o_fb_e = 0U;
-            _r1->reg._r06.bit.fb_mode = 0U;
-            _r1->reg._r06.bit.auto_fault_fb_no = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE0:
-            _r1->reg._r07.bit.ch7_ld_type = 0U;
-            _r1->reg._r07.bit.ch8_ld_type = 0U;
-            _r1->reg._r07.bit.ch9_ld_type = 0U;
-            _r1->reg._r07.bit.ch10_ld_type = 0U;
-            _r1->reg._r07.bit.ch11_ld_type = 0U;
-            _r1->reg._r07.bit.ch12_ld_type = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE1:
-            _r1->reg._r08.bit.ch1_ld_type = 0U;
-            _r1->reg._r08.bit.ch2_ld_type = 0U;
-            _r1->reg._r08.bit.ch3_ld_type = 0U;
-            _r1->reg._r08.bit.ch4_ld_type = 0U;
-            _r1->reg._r08.bit.ch5_ld_type = 0U;
-            _r1->reg._r08.bit.ch6_ld_type = 0U;
-            break;
-        //case XD12R_FAULT_STATUS0:
-        case XD12R_MAX_CURR_VREF1:
-            _r1->reg._r0A.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF2:
-            _r1->reg._r0B.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF3:
-            _r1->reg._r0C.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF4:
-            _r1->reg._r0D.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF5:
-            _r1->reg._r0E.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_DELAY_CH1_2:
-            _r1->reg._r10.bit.delay_ch1 = 0U;   /* CH1 */
-            _r1->reg._r10.bit.delay_ch2 = 0U;   /* CH2 */
-            break;
-        case XD12R_DELAY_CH3_4:
-            _r1->reg._r11.bit.delay_ch3 = 0U;   /* CH3 */
-            _r1->reg._r11.bit.delay_ch4 = 0U;   /* CH4 */
-            break;
-        case XD12R_DELAY_CH5_6:
-            _r1->reg._r12.bit.delay_ch5 = 0U;   /* CH5 */
-            _r1->reg._r12.bit.delay_ch6 = 0U;   /* CH6 */
-            break;
-        case XD12R_DELAY_CH7_8:
-            _r1->reg._r13.bit.delay_ch7 = 0U;   /* CH7 */
-            _r1->reg._r13.bit.delay_ch8 = 0U;   /* CH8 */
-            break;
-        case XD12R_DELAY_CH9_10:
-            _r1->reg._r14.bit.delay_ch9 = 0U;   /* CH9 */
-            _r1->reg._r14.bit.delay_ch10 = 0U;   /* CH10 */
-            break;
-        case XD12R_DELAY_CH11_12:
-            _r1->reg._r15.bit.delay_ch11 = 0U;   /* CH11 */
-            _r1->reg._r15.bit.delay_ch12 = 0U;   /* CH12 */
-            break;
-        case XD12R_FB_LEVEL:
-            _r1->reg._r16.bit.fb1_level = 0U;
-            _r1->reg._r16.bit.fb2_level = 0U;
-            _r1->reg._r16.bit.fb3_level = 0U;
-            _r1->reg._r16.bit.fb4_level = 0U;
-            break;
-        case XD12R_FB_SHORT_LEVEL:
-            _r1->reg._r17.bit.fb5_level = 0U;
-            _r1->reg._r17.bit.short1_level = 0U;
-            _r1->reg._r17.bit.short2_level = 0U;
-            _r1->reg._r17.bit.short3_level = 0U;
-            break;
-        case XD12R_SHORT_LEVEL:
-            _r1->reg._r18.bit.short4_level = 0U;
-            _r1->reg._r18.bit.short5_level = 0U;
-            break;
-        case XD12R_MAX_CURRENT_LEVEL1:
-            _r1->reg._r19.bit.max_curr1_level = 0U;
-            _r1->reg._r19.bit.max_curr2_level = 0U;
-            _r1->reg._r19.bit.max_curr3_level = 0U;
-            break;
-        case XD12R_MAX_CURRENT_LEVEL2:
-            _r1->reg._r1A.bit.max_curr4_level = 0U;
-            _r1->reg._r1A.bit.max_curr5_level = 0U;
-            break;
-        case XD12R_PARITY_RD_EN:
-            _r1->reg._r1B.bit.reg_rd_en = 0U;
-            _r1->reg._r1B.bit.parity_e = 0U;
-            break;
-        case XD12R_SERIAL_CLK_GEN:
-            _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
-            _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
-            break;
-        case XD12R_SERIAL_LATENCY:
-            _r1->reg._r1D.bit.serial_latency = 128U;
-            break;
-        case XD12R_V_MASK:
-            _r1->reg._r1E.bit.v_mask = 0U;
-            break;
-        case XD12R_SV_MASK:
-            _r1->reg._r1F.bit.sv_mask = 0U;
-            _r1->reg._r1F.bit.sv_mask_en = 0U;
-            break;
-        case XD12R_RSTCNT:
-            _r1->reg._r20.bit.rstcnt = 0U;
-            break;
-        case XD12R_TIMEOUT:
-            _r1->reg._r21.bit.timeout = 1023U;
-            break;
-        case XD12R_FLLCNT1:
-            _r1->reg._r22.bit.fllcnt = 0U;
-            break;
-        case XD12R_FLLCNT2:
-            _r1->reg._r23.bit.fllcnt = 50U;
-            _r1->reg._r23.bit.fll_range = 2U;
-            _r1->reg._r23.bit.fll_en = 1U;
-            break;
-        case XD12R_WR_PROTECT:
-            _r1->reg._r24.bit.wr_protect = 0x555U;
-            break;
-        case XD12R_NF_CONTROL:
-            _r1->reg._r25.bit.DGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.DGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.BBKN_EN = 0U;
-            _r1->reg._r25.bit.SGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.SGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.O_EMI_REJ_EN = 0U;
-            _r1->reg._r25.bit.BBKN_TH = 0U;
-            break;
-        case XD12R_CHOP_EN:
-            _r1->reg._r26.bit.CHOP_BGR_EN = 1U;
-            _r1->reg._r26.bit.CHOP_DAC_EN = 1U;
-            _r1->reg._r26.bit.CHOP_OSC_EN = 1U;
-            _r1->reg._r26.bit.CHOP_OSCLDO_EN = 1U;
-            _r1->reg._r26.bit.CHOP_DRV_EN = 1U;
-            _r1->reg._r26.bit.CHOP_EN = 1U;
-            break;
-        case XD12R_TEMP:
-            _r1->reg._r27.bit.flt_gain = 1U;
-            _r1->reg._r27.bit.o_slew = 2U;
-            _r1->reg._r27.bit.flt_ctl = 2U;
-            _r1->reg._r27.bit.dac_rng = 0U;
-            _r1->reg._r27.bit.ov_swap_en = 0U;
-            _r1->reg._r27.bit.ofs_temp = 8U;
-            break;
-        case XD12R_OSC_FLL_MAN1:
-            _r1->reg._r28.bit.osc_fll_man = 0U;
-            break;
-        case XD12R_OSC_FLL_MAN2:
-            _r1->reg._r29.bit.osc_fll_man = 8U;
-            _r1->reg._r29.bit.osc_fll_err_range = 0U;
-            _r1->reg._r29.bit.osc_man_en = 1U;
-            break;
-        case XD12R_OSC_SPREAD:
-            _r1->reg._r2A.bit.SPRD_GAIN = 0U;
-            _r1->reg._r2A.bit.SPRD_SPD = 0U;
-            _r1->reg._r2A.bit.SPRD_EN = 0U;
-            break;
-        case XD12R_CLOCK_GATE_EN:
-            _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
-            break;
-
-#elif (XD_MODEL_TYPE == XD_TYPE_XDR12D)
-
-        case XD12R_RESET_ID:
-            _r1->reg._r00.bit.rsi_e = 0U;
-            _r1->reg._r00.bit.lkg_e = 0U;
-            _r1->reg._r00.bit.e_rst = 0U;
-            _r1->reg._r00.bit.vs_rst = 0U;
-            _r1->reg._r00.bit.rst = 0U;
-            break;
-        case XD12R_LD_CONTROL:
-            _r1->reg._r01.bit.ld_mode = 0U;
-            _r1->reg._r01.bit.ld_dir = 0U;
-            _r1->reg._r01.bit.ld_res = 0U;
-            _r1->reg._r01.bit.ov_t_e = 0;
-            _r1->reg._r01.bit.pwmclk_div = 0;
-            break;
-        case XD12R_LD_SIZE:
-            _r1->reg._r02.bit.ld_size = 0U;
-            break;
-        case XD12R_CHANNEL_ENABLE:
-            _r1->reg._r05.bit.ch1_en = 0U;
-            _r1->reg._r05.bit.ch2_en = 0U;
-            _r1->reg._r05.bit.ch3_en = 0U;
-            _r1->reg._r05.bit.ch4_en = 0U;
-            _r1->reg._r05.bit.ch5_en = 0U;
-            _r1->reg._r05.bit.ch6_en = 0U;
-            _r1->reg._r05.bit.ch7_en = 0U;
-            _r1->reg._r05.bit.ch8_en = 0U;
-            _r1->reg._r05.bit.ch9_en = 0U;
-            _r1->reg._r05.bit.ch10_en = 0U;
-            _r1->reg._r05.bit.ch11_en = 0U;
-            _r1->reg._r05.bit.ch12_en = 0U;
-            break;
-        case XD12R_FAULT_CONTROL:
-            _r1->reg._r06.bit.o_off_e = 0U;
-            _r1->reg._r06.bit.s_off_e = 0U;
-            _r1->reg._r06.bit.t_off_e = 0U;
-            _r1->reg._r06.bit.o_det_e = 0U;
-            _r1->reg._r06.bit.s_det_e = 0U;
-            _r1->reg._r06.bit.o_fb_e = 0U;
-            _r1->reg._r06.bit.fb_mode = 0U;
-            _r1->reg._r06.bit.o_slew = 0U;
-            _r1->reg._r06.bit.parity_e = 0U;
-            break;
-        case XD12R_FB_LEVEL:
-            _r1->reg._r07.bit.fb1_level = 0U;
-            _r1->reg._r07.bit.fb2_level = 0U;
-            _r1->reg._r07.bit.fb3_level = 0U;
-            break;
-        case XD12R_SHORT_LEVEL:
-            _r1->reg._r08.bit.short1_level = 0U;
-            _r1->reg._r08.bit.short2_level = 0U;
-            _r1->reg._r08.bit.short3_level = 0U;
-            break;
-
-        //case XD12R_FAULT_STATUS0:
-        case XD12R_MAX_CURR_LEVEL:
-            _r1->reg._r0A.bit.max_curr1_level = 0U;
-            _r1->reg._r0A.bit.max_curr2_level = 0U;
-            _r1->reg._r0A.bit.max_curr3_level = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF1:
-            _r1->reg._r0B.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF2:
-            _r1->reg._r0C.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_MAX_CURR_VREF3:
-            _r1->reg._r0D.bit.max_curr_vref = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE1:
-            _r1->reg._r0E.bit.ch7_ld_type = 0U;
-            _r1->reg._r0E.bit.ch8_ld_type = 0U;
-            _r1->reg._r0E.bit.ch9_ld_type = 0U;
-            _r1->reg._r0E.bit.ch10_ld_type = 0U;
-            _r1->reg._r0E.bit.ch11_ld_type = 0U;
-            _r1->reg._r0E.bit.ch12_ld_type = 0U;
-            break;
-        case XD12R_CHx_LD_TYPE2:
-            _r1->reg._r0F.bit.ch1_ld_type = 0U;
-            _r1->reg._r0F.bit.ch2_ld_type = 0U;
-            _r1->reg._r0F.bit.ch3_ld_type = 0U;
-            _r1->reg._r0F.bit.ch4_ld_type = 0U;
-            _r1->reg._r0F.bit.ch5_ld_type = 0U;
-            _r1->reg._r0F.bit.ch6_ld_type = 0U;
-            break;
-        case XD12R_DELAY_CH1:
-            _r1->reg._r10.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH2:
-            _r1->reg._r11.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH3:
-            _r1->reg._r12.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH4:
-            _r1->reg._r13.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH5:
-            _r1->reg._r14.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH6:
-            _r1->reg._r15.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH7:
-            _r1->reg._r16.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH8:
-            _r1->reg._r17.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH9:
-            _r1->reg._r18.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH10:
-            _r1->reg._r19.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH11:
-            _r1->reg._r1A.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_DELAY_CH12:
-            _r1->reg._r1B.bit.delay_chx = 0U;   /* CH1 */
-            break;
-        case XD12R_SERIAL_CLK_GEN:
-            _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
-            _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
-            break;
-        case XD12R_SERIAL_LATENCY:
-            _r1->reg._r1D.bit.serial_latency = 128U;
-            break;
-
-        case XD12R_RSTCNT:
-            _r1->reg._r20.bit.rstcnt = 0U;
-            break;
-        case XD12R_TIMEOUT:
-            _r1->reg._r21.bit.timeout = 1023U;
-            break;
-        case XD12R_FLLCNT1:
-            _r1->reg._r22.bit.fllcnt = 0U;
-            break;
-        case XD12R_FLLCNT2:
-            _r1->reg._r23.bit.fllcnt = 50U;
-            _r1->reg._r23.bit.fll_range = 2U;
-            _r1->reg._r23.bit.fll_en = 1U;
-            break;
-        case XD12R_WR_PROTECT:
-            _r1->reg._r24.bit.wr_protect = 0x555U;
-            break;
-        case XD12R_NF_CONTROL:
-            _r1->reg._r25.bit.DGRJT_EN1 = 0U;
-            _r1->reg._r25.bit.DGRJT_EN2 = 0U;
-            _r1->reg._r25.bit.BBKN_EN = 0U;
-            _r1->reg._r25.bit.BBKN_TH = 0U;
-            break;
-        case XD12R_CHOP_EN:
-            _r1->reg._r26.bit.CHOP_BGR_EN = 0U;
-            _r1->reg._r26.bit.CHOP_DAC_EN = 0U;
-            _r1->reg._r26.bit.CHOP_OSC_EN = 0U;
-            _r1->reg._r26.bit.CHOP_OSCLDO_EN = 0U;
-            _r1->reg._r26.bit.CHOP_DRV_EN = 0U;
-            _r1->reg._r26.bit.CHOP_EN = 0U;
-            break;
-        case XD12R_TEMP:
-            _r1->reg._r27.bit.flt_gain = 1U;
-            _r1->reg._r27.bit.o_slew = 2U;
-            _r1->reg._r27.bit.flt_ctl = 2U;
-            _r1->reg._r27.bit.dac_rng = 0U;
-            _r1->reg._r27.bit.ofs_temp = 8U;
-            break;
-        case XD12R_OSC_FLL_MAN1:
-            _r1->reg._r28.bit.osc_fll_man = 0U;
-            break;
-        case XD12R_OSC_FLL_MAN2:
-            _r1->reg._r29.bit.osc_fll_man = 8U;
-            _r1->reg._r29.bit.osc_fll_err_range = 0U;
-            _r1->reg._r29.bit.osc_man_en = 1U;
-            break;
-        case XD12R_OSC_SPREAD:
-            _r1->reg._r2A.bit.SPRD_GAIN = 0U;
-            _r1->reg._r2A.bit.SPRD_SPD = 0U;
-            _r1->reg._r2A.bit.SPRD_EN = 0U;
-            break;
-        case XD12R_CLOCK_GATE_EN:
-            _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
-            _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
-            break;
-
-#elif (XD_MODEL_TYPE == XD_TYPE_IC601)
-#endif
-        default:
-            continue;
+                        case XD12R_RESET_ID:
+            {
+                _r1->reg._r00.bit.lkg_e = 0U;
+                _r1->reg._r00.bit.e_rst = 0U;
+                _r1->reg._r00.bit.vs_rst = 0U;
+                _r1->reg._r00.bit.rst = 0U;
+                break;
+            }
+            case XD12R_LD_CONTROL:
+            {
+                _r1->reg._r01.bit.ld_mode = 0U;
+                _r1->reg._r01.bit.ld_dir = 0U;
+                _r1->reg._r01.bit.ld_res = 0U;
+                _r1->reg._r01.bit.syncmode = 0U;
+                _r1->reg._r01.bit.delay_mode_en = 0U;
+                _r1->reg._r01.bit.sv_no = XDR_SV_NO;
+                break;
+            }
+            case XD12R_LD_SIZE:
+            {
+                _r1->reg._r02.bit.ld_size = 0U;
+                break;
+            }
+            case XD12R_PWMCLK_DIV1_2:
+            {
+                _r1->reg._r03.bit.pwmclk_div1 = 0U;
+                _r1->reg._r03.bit.pwmclk_div2 = 0U;
+                break;
+            }
+            case XD12R_PWMCLK_DIV2_3:
+            {
+                _r1->reg._r04.bit.pwmclk_div2 = 0U;
+                _r1->reg._r04.bit.pwmclk_div3 = 0U;
+                break;
+            }
+            case XD12R_CHANNEL_ENABLE:
+            {
+                _r1->reg._r05.bit.ch1_en = 0U;
+                _r1->reg._r05.bit.ch2_en = 0U;
+                _r1->reg._r05.bit.ch3_en = 0U;
+                _r1->reg._r05.bit.ch4_en = 0U;
+                _r1->reg._r05.bit.ch5_en = 0U;
+                _r1->reg._r05.bit.ch6_en = 0U;
+                _r1->reg._r05.bit.ch7_en = 0U;
+                _r1->reg._r05.bit.ch8_en = 0U;
+                _r1->reg._r05.bit.ch9_en = 0U;
+                _r1->reg._r05.bit.ch10_en = 0U;
+                _r1->reg._r05.bit.ch11_en = 0U;
+                _r1->reg._r05.bit.ch12_en = 0U;
+                break;
+            }
+            case XD12R_FAULT_CONTROL:
+            {
+                _r1->reg._r06.bit.o_off_e = 0U;
+                _r1->reg._r06.bit.s_off_e = 0U;
+                _r1->reg._r06.bit.t_off_e = 0U;
+                _r1->reg._r06.bit.o_det_e = 0U;
+                _r1->reg._r06.bit.s_det_e = 0U;
+                _r1->reg._r06.bit.o_fb_e = 0U;
+                _r1->reg._r06.bit.fb_mode = 0U;
+                _r1->reg._r06.bit.auto_fault_fb_no = 0U;
+                break;
+            }
+            case XD12R_CHx_LD_TYPE0:
+            {
+                _r1->reg._r07.bit.ch7_ld_type = 0U;
+                _r1->reg._r07.bit.ch8_ld_type = 0U;
+                _r1->reg._r07.bit.ch9_ld_type = 0U;
+                _r1->reg._r07.bit.ch10_ld_type = 0U;
+                _r1->reg._r07.bit.ch11_ld_type = 0U;
+                _r1->reg._r07.bit.ch12_ld_type = 0U;
+                break;
+            }
+            case XD12R_CHx_LD_TYPE1:
+            {
+                _r1->reg._r08.bit.ch1_ld_type = 0U;
+                _r1->reg._r08.bit.ch2_ld_type = 0U;
+                _r1->reg._r08.bit.ch3_ld_type = 0U;
+                _r1->reg._r08.bit.ch4_ld_type = 0U;
+                _r1->reg._r08.bit.ch5_ld_type = 0U;
+                _r1->reg._r08.bit.ch6_ld_type = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF1:
+            {
+                _r1->reg._r0A.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF2:
+            {
+                _r1->reg._r0B.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF3:
+            {
+                _r1->reg._r0C.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF4:
+            {
+                _r1->reg._r0D.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_MAX_CURR_VREF5:
+            {
+                _r1->reg._r0E.bit.max_curr_vref = 0U;
+                break;
+            }
+            case XD12R_DELAY_CH1_2:
+            {
+                _r1->reg._r10.bit.delay_ch1 = 0U;   /* CH1 */
+                _r1->reg._r10.bit.delay_ch2 = 0U;   /* CH2 */
+                break;
+            }
+            case XD12R_DELAY_CH3_4:
+            {
+                _r1->reg._r11.bit.delay_ch3 = 0U;   /* CH3 */
+                _r1->reg._r11.bit.delay_ch4 = 0U;   /* CH4 */
+                break;
+            }
+            case XD12R_DELAY_CH5_6:
+            {
+                _r1->reg._r12.bit.delay_ch5 = 0U;   /* CH5 */
+                _r1->reg._r12.bit.delay_ch6 = 0U;   /* CH6 */
+                break;
+            }
+            case XD12R_DELAY_CH7_8:
+            {
+                _r1->reg._r13.bit.delay_ch7 = 0U;   /* CH7 */
+                _r1->reg._r13.bit.delay_ch8 = 0U;   /* CH8 */
+                break;
+            }
+            case XD12R_DELAY_CH9_10:
+            {
+                _r1->reg._r14.bit.delay_ch9 = 0U;   /* CH9 */
+                _r1->reg._r14.bit.delay_ch10 = 0U;   /* CH10 */
+                break;
+            }
+            case XD12R_DELAY_CH11_12:
+            {
+                _r1->reg._r15.bit.delay_ch11 = 0U;   /* CH11 */
+                _r1->reg._r15.bit.delay_ch12 = 0U;   /* CH12 */
+                break;
+            }
+            case XD12R_FB_LEVEL:
+            {
+                _r1->reg._r16.bit.fb1_level = 0U;
+                _r1->reg._r16.bit.fb2_level = 0U;
+                _r1->reg._r16.bit.fb3_level = 0U;
+                _r1->reg._r16.bit.fb4_level = 0U;
+                break;
+            }
+            case XD12R_FB_SHORT_LEVEL:
+            {
+                _r1->reg._r17.bit.fb5_level = 0U;
+                _r1->reg._r17.bit.short1_level = 0U;
+                _r1->reg._r17.bit.short2_level = 0U;
+                _r1->reg._r17.bit.short3_level = 0U;
+                break;
+            }
+            case XD12R_SHORT_LEVEL:
+            {
+                _r1->reg._r18.bit.short4_level = 0U;
+                _r1->reg._r18.bit.short5_level = 0U;
+                break;
+            }
+            case XD12R_MAX_CURRENT_LEVEL1:
+            {
+                _r1->reg._r19.bit.max_curr1_level = 0U;
+                _r1->reg._r19.bit.max_curr2_level = 0U;
+                _r1->reg._r19.bit.max_curr3_level = 0U;
+                break;
+            }
+            case XD12R_MAX_CURRENT_LEVEL2:
+            {
+                _r1->reg._r1A.bit.max_curr4_level = 0U;
+                _r1->reg._r1A.bit.max_curr5_level = 0U;
+                break;
+            }
+            case XD12R_PARITY_RD_EN:
+            {
+                _r1->reg._r1B.bit.reg_rd_en = 0U;
+                _r1->reg._r1B.bit.parity_e = 0U;
+                break;
+            }
+            case XD12R_SERIAL_CLK_GEN:
+            {
+                _r1->reg._r1C.bit.serial_clk_high = XDR_SERIAL_CLK_HIGH;
+                _r1->reg._r1C.bit.serial_clk_low = XDR_SERIAL_CLK_LOW;
+                break;
+            }
+            case XD12R_SERIAL_LATENCY:
+            {
+                _r1->reg._r1D.bit.serial_latency = 0xC8;
+                break;
+            }
+            case XD12R_V_MASK:
+            {
+                _r1->reg._r1E.bit.v_mask = 0U;
+                break;
+            }
+            case XD12R_SV_MASK:
+            {
+                _r1->reg._r1F.bit.sv_mask = 0U;
+                _r1->reg._r1F.bit.sv_mask_en = 0U;
+                break;
+            }
+            case XD12R_RSTCNT:
+            {
+                _r1->reg._r20.bit.rstcnt = 0U;
+                break;
+            }
+            case XD12R_TIMEOUT:
+            {
+                _r1->reg._r21.bit.timeout = 1023U;
+                break;
+            }
+            case XD12R_FLLCNT1:
+            {
+                _r1->reg._r22.bit.fllcnt = 0U;
+                break;
+            }
+            case XD12R_FLLCNT2:
+            {
+                _r1->reg._r23.bit.fllcnt = 50U;
+                _r1->reg._r23.bit.fll_range = 2U;
+                _r1->reg._r23.bit.fll_en = 1U;
+                break;
+            }
+            case XD12R_WR_PROTECT:
+            {
+                _r1->reg._r24.bit.wr_protect = 0x555U;
+                break;
+            }
+            case XD12R_NF_CONTROL:
+            {
+                _r1->reg._r25.bit.DGRJT_EN1 = 0U;
+                _r1->reg._r25.bit.DGRJT_EN2 = 0U;
+                _r1->reg._r25.bit.BBKN_EN = 0U;
+                _r1->reg._r25.bit.SGRJT_EN1 = 0U;
+                _r1->reg._r25.bit.SGRJT_EN2 = 0U;
+                _r1->reg._r25.bit.O_EMI_REJ_EN = 0U;
+                _r1->reg._r25.bit.BBKN_TH = 0U;
+                break;
+            }
+            case XD12R_CHOP_EN:
+            {
+                _r1->reg._r26.bit.CHOP_BGR_EN = 1U;
+                _r1->reg._r26.bit.CHOP_DAC_EN = 1U;
+                _r1->reg._r26.bit.CHOP_OSC_EN = 1U;
+                _r1->reg._r26.bit.CHOP_OSCLDO_EN = 1U;
+                _r1->reg._r26.bit.CHOP_DRV_EN = 1U;
+                _r1->reg._r26.bit.CHOP_EN = 1U;
+                break;
+            }
+            case XD12R_TEMP:
+            {
+                _r1->reg._r27.bit.flt_gain = 1U;
+                _r1->reg._r27.bit.o_slew = 2U;
+                _r1->reg._r27.bit.flt_ctl = 2U;
+                _r1->reg._r27.bit.dac_rng = 0U;
+                _r1->reg._r27.bit.ov_swap_en = 0U;
+                _r1->reg._r27.bit.ofs_temp = 8U;
+                break;
+            }
+            case XD12R_OSC_FLL_MAN1:
+            {
+                _r1->reg._r28.bit.osc_fll_man = 0U;
+                break;
+            }
+            case XD12R_OSC_FLL_MAN2:
+            {
+                _r1->reg._r29.bit.osc_fll_man = 8U;
+                _r1->reg._r29.bit.osc_fll_err_range = 0U;
+                _r1->reg._r29.bit.osc_man_en = 1U;
+                break;
+            }
+            case XD12R_OSC_SPREAD:
+            {
+                _r1->reg._r2A.bit.SPRD_GAIN = 0U;
+                _r1->reg._r2A.bit.SPRD_SPD = 0U;
+                _r1->reg._r2A.bit.SPRD_EN = 0U;
+                break;
+            }
+            case XD12R_CLOCK_GATE_EN:
+            {
+                _r1->reg._r2B.bit.DC_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.FR1_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.FR2_MCLK_EN = 1U;
+                _r1->reg._r2B.bit.OTP_MCLK_EN = 1U;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
         }
         xdr12_write_by_type(addr, _r1->ALL[addr], XD12R_ADDR_TYPE_GENERAL);
     }
-    xdr12_trim_enable_write_protect(false);
+
+    for(xd12_otp_ctrl_addr_t addr = XD12R_OTP_ACCESS1 ; addr < XD12R_OTP_MAX ; ++addr)
+    {
+        switch(addr)
+        {
+            case XD12R_OTP_PROTECT:
+            {
+                _r3->reg._r3E.bit.protect_en = 0xA5AU;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
+        }
+        xdr12_write_by_type(addr, _r3->ALL[addr], XD12R_ADDR_TYPE_GENERAL);
+    }
 }
 
 void xdr12_reset(void)
@@ -1228,15 +1028,7 @@ void xdr12_reset(void)
 
 void xdr12_idgen(void)
 {
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-    {
-        _v_id_gen_command_t _r04 = { 0, };
-
-        _r04.bit.enable = 1U;
-
-        xcr24_set_xcr24_gr1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
-    }
-    #else
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
         uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
@@ -1251,6 +1043,14 @@ void xdr12_idgen(void)
 
         xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
     }
+    #else
+    {
+        _v_id_gen_command_t _r04 = { 0, };
+
+        _r04.bit.enable = 1U;
+
+        xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
+    }
     #endif
 }
 
@@ -1258,29 +1058,21 @@ void xdr12_init_param(void)
 {
     for(uint16_t num = 0U ; num < XDR_DAISY_LENGTH ; ++num)
     {
-        gt_xd_write_command[num].bit.start = 1U;
         gt_xd_write_command[num].bit.cmd_code = CMD_CODE_WRITE;
 
-        gt_xd_read_command[num].bit.start = 1U;
         gt_xd_read_command[num].bit.cmd_code = CMD_CODE_READ;
 
-        gt_xd_readout_command[num].bit.start = 1U;
         gt_xd_readout_command[num].bit.cmd_code = CMD_CODE_READ;
 
-        gt_xd_ld_transfer_command[num].bit.start = 1U;
         gt_xd_ld_transfer_command[num].bit.cmd_code = CMD_CODE_LDIM;
 
-        gt_xd_fault_read_command[num].bit.start = 1U;
         gt_xd_fault_read_command[num].bit.cmd_code = CMD_CODE_RD_FAULT;
 
-        gt_xd_syncgen_command[num].bit.start = 1U;
         gt_xd_syncgen_command[num].bit.cmd_code = CMD_CODE_SYNCGEN;
 
-        gt_xd_idgen_command[num].bit.start = 1U;
         gt_xd_idgen_command[num].bit.cmd_code = CMD_CODE_IDGEN;
     }
 
-    gt_xd_fault_readout_command.bit.start = 1U;
     gt_xd_fault_readout_command.bit.cmd_code = CMD_CODE_RD_FAULT;
 
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)gn_pwm_in_xd_response_duty);
@@ -1291,7 +1083,6 @@ void xdr12_init(void)
 {
     xdr12_reset();
     xdr12_idgen();
-
     xdr12_regs_init_table();
 }
 
@@ -1299,23 +1090,12 @@ void xdr12_trim_init(void)
 {
     xdr12_reset();
     xdr12_idgen();
-
     xdr12_regs_trim_init_table();
 }
 
 static void xdr12_write(uint16_t addr, uint16_t data)
 {
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-    {
-        _v_global_write_command_t _r01 = { 0, };
-
-        _r01.bit.enable = 1U;
-        _r01.bit.addr = addr;
-
-        xcr24_set_xcr24_gr1_reg(XCR_GLOBAL_WRITE_DATA, &data, 1U);
-        xcr24_set_xcr24_gr1_reg(XCR_GLOBAL_WRITE_COMMAND, &_r01.ALL, 1U);
-    }
-    #else
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
         uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
@@ -1333,12 +1113,48 @@ static void xdr12_write(uint16_t addr, uint16_t data)
 
         xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
     }
+    #else
+    {
+        _v_global_write_command_t _r01 = { 0, };
+
+        _r01.bit.enable = 1U;
+        _r01.bit.addr = addr;
+
+        xcr24_write_grp1_reg(XCR_GLOBAL_WRITE_DATA, &data, 1U);
+        xcr24_write_grp1_reg(XCR_GLOBAL_WRITE_COMMAND, &_r01.ALL, 1U);
+    }
     #endif
 }
 
 static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
 {
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    {
+        uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t len = 0U;
+        uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT);
+
+        for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
+        {
+            gt_xd_read_command[daisy].bit.addr = addr;
+            len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &out[len], XDR_CMD_READ);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tADDR - 0x%02X", gt_xd_write_command->bit.addr);
+        }
+        out[len++] = 0U;
+
+        xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out_done();
+
+        if(false == xdr12_pwm_in(pwm_in_length, 100U))
+        {
+            uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, p_xdr_buffer, pwm_in_length);
+        }
+        else
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "%s timeout\r\n", __func__);
+        }
+    }
+    #else
     {
         uint16_t buffer[MODEL_XDR_DAISY_SEG_SIZE] = { 0, };
 
@@ -1390,32 +1206,6 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
             }
         }
     }
-    #else
-    {
-        uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
-        uint16_t len = 0U;
-        uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XD_HDR_BIT + XD_ID_BIT + XD_DATA_BIT);
-
-        for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
-        {
-            gt_xd_read_command[daisy].bit.addr = addr;
-            len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &out[len], XDR_CMD_READ);
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tADDR - 0x%02X", gt_xd_write_command->bit.addr);
-        }
-        out[len++] = 0U;
-
-        xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
-        xdr12_pwm_out_done();
-
-        if(false == xdr12_pwm_in(pwm_in_length, 100U))
-        {
-            uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, p_xdr_buffer, pwm_in_length);
-        }
-        else
-        {
-            comm_UART_Printf(LOG_LV_ERROR, "%s timeout\r\n", __func__);
-        }
-    }
     #endif
 
     return 0U;
@@ -1449,6 +1239,7 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
     xdr12_change_addr_type(addr_type);
     xdr12_read(addr, xdr_buffer);
 
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     for (uint8_t id = 0U ; id < XDR_DAISY_LENGTH ; ++id)
     {
         if (addr_type == XD12R_ADDR_TYPE_GENERAL)
@@ -1467,48 +1258,31 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
             gt_xdr12_mirror_get_regs[id].ALL[addr] = xdr_buffer[id];
         }
     }
-
     return xdr_buffer[0];
-}
-
-uint16_t xdr12_get_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
-{
-    uint16_t ret = 0U;
-#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
-    {
-        if (addr < XD12R_OTP_CTRL_BASE)
-        {
-            ret = gt_xdr12_get_regs[0].ALL[addr];
-        }
-        else
-        {
-            ret = gt_xdr12_otp_ctrl_get_regs[0].ALL[addr];
-        }
-    }
-    else
-    {
-        ret = gt_xdr12_mirror_get_regs[0].ALL[addr];
-    }
 #else
-    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+    for (uint8_t ch = 0U ; ch < XCR_CH_SIZE ; ++ch)
     {
-        if (addr < XD12R_OTP_CTRL_BASE)
+        for (uint8_t id = 0U ; id < XDR_DAISY_LENGTH ; ++id)
         {
-            ret = gt_xdr12_get_regs[0][0].ALL[addr];
-        }
-        else
-        {
-            ret = gt_xdr12_otp_ctrl_get_regs[0][0].ALL[addr];
+            if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+            {
+                if (addr < XD12R_OTP_CTRL_BASE)
+                {
+                    gt_xdr12_get_regs[ch][id].ALL[addr] = xdr_buffer[ch][id];
+                }
+                else
+                {
+                    gt_xdr12_otp_ctrl_get_regs[ch][id].ALL[addr] = xdr_buffer[ch][id];
+                }
+            }
+            else
+            {
+                gt_xdr12_mirror_get_regs[ch][id].ALL[addr] = xdr_buffer[ch][id];
+            }
         }
     }
-    else
-    {
-        ret = gt_xdr12_mirror_get_regs[0][0].ALL[addr];
-    }
+    return xdr_buffer[0][0];
 #endif
-
-    return ret;
 }
 
 void xdr12_pwm_out_syncgen(void)
@@ -1542,7 +1316,7 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
 
         for(uint8_t ch = 0U ; ch < XDR_CH_LENGTH ; ++ch)
         {
-            const uint16_t written = xdr12_make_pwm_out_stream(*p_src++, &out[len], XD_LD_DATA_BIT);
+            const uint16_t written = xdr12_make_pwm_out_stream(*p_src++, &out[len], XDR_LD_DATA_BIT);
             len += written;
         }
     }
@@ -1553,13 +1327,6 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
     }
 
     xdr12_pwm_out((uint32_t)gn_pwm_out_xd_ld_transfer, (uint32_t)len);
-}
-
-static void xdr12_trim_enable_write_protect(bool protect_en)
-{
-    _v_xdr12_otp_protect_t* _r3E = &gt_xdr12_otp_ctrl_set_regs.reg._r3E;
-    _r3E->bit.protect_en = (protect_en == true) ? XD12R_REG_PROTECT_ENABLE : XD12R_REG_PROTECT_DISABLE;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_PROTECT, _r3E->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_init_current_ref(void)
@@ -1705,7 +1472,7 @@ bool xdr12_trim_set_current_ref(uint16_t reg_val)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid current reference value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1723,7 +1490,7 @@ bool xdr12_trim_set_ldo_dig(uint16_t reg_val)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo digital value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1741,7 +1508,7 @@ bool xdr12_trim_set_ldo_dac(uint16_t reg_val)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo dac value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1759,7 +1526,7 @@ bool xdr12_trim_set_ldo_fll(uint16_t reg_val)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ldo fll value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1777,7 +1544,7 @@ bool xdr12_trim_set_osc(uint16_t reg_val)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid osc value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1796,7 +1563,7 @@ bool xdr12_trim_set_ch_gain(uint16_t reg_val, XD_CH_t chx)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ch gain value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1815,7 +1582,7 @@ bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx)
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid ch offset value: %u", __func__, reg_val);
+        FATAL_INVALID_INPUT(reg_val);
     }
 
     return ret;
@@ -1848,7 +1615,7 @@ void xdr12_trim_save_mirror_register(void)
 {
     for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
     {
-        xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        gt_xdr12_mirror_get_regs[0].ALL[mirror_addr] = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
     }
 }
 
@@ -1857,10 +1624,11 @@ uint32_t xdr12_trim_verify_mirror_dump(void)
     uint32_t ret = 0U;
     for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
     {
-        uint16_t saved_reg = xdr12_get_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        uint16_t saved_reg = gt_xdr12_mirror_set_regs.ALL[mirror_addr];
         uint16_t mirror_reg = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
         if (saved_reg != mirror_reg)
         {
+            ret |= (1UL << mirror_addr);
             comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
                 ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
         }
@@ -1870,4 +1638,5 @@ uint32_t xdr12_trim_verify_mirror_dump(void)
                 ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
         }
     }
+    return ret;
 }

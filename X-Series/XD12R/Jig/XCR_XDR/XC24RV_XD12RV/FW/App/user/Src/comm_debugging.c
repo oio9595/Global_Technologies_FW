@@ -229,9 +229,8 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "Timer input capture started\r\n");
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if (Command_is_("jig_ic_get"))
+        else if (Command_is_("jig_ic_stop"))
         {
-            mcu_peripheral_tim_input_capture_stop();
             float freq = mcu_peripheral_tim_conversion_freq();
             comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f MHz\r\n", freq / 1000000.0f);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -242,13 +241,13 @@ void comm_debugging_process(void)
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
 
-            xcr24_set_xcr24_gr1_reg(addr, &param, 1U);
+            xcr24_write_grp1_reg(addr, &param, 1U);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xcr_r", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            xcr24_get_xcr24_gr1_reg((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
 
             //comm_UART_Printf(LOG_LV_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
 
@@ -321,27 +320,27 @@ void comm_debugging_process(void)
         /*************** GPIO ON/OFF *******************/
         else if(!(strcmp(str_in, "power_on")))
         {
-            gpio_set_power_9v(PWR_ON);
+            gpio_set_power_9v(VLED_ON);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "power_off")))
         {
-            gpio_set_power_9v(PWR_OFF);
+            gpio_set_power_9v(VLED_OFF);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_vcc_50_on")))
         {
-            gpio_set_xd_vdd_5v(XD_PWR_ON_5V0);
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_vcc_55_on")))
         {
-            gpio_set_xd_vdd_5v(XD_PWR_ON_5V5);
+            gpio_set_xd_vdd_5v(VCC_ON_5V5);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_vcc_off")))
         {
-            gpio_set_xd_vdd_5v(XD_PWR_OFF);
+            gpio_set_xd_vdd_5v(VCC_OFF);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -460,51 +459,57 @@ void comm_rx_handler(uint8_t rx_data)
 
     switch(rx_data)
     {
-    case '\n':
-    case '\r':
-        if(gt_uart.Rxbuff[gt_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
-        {
-            gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length] = 0;
-        }
-        else
-        {
-            gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
-        }
-
-        ++gt_uart.RxInCnt;
-        if(gt_uart.RxInCnt > (RX_BUFF_SIZE -1))
-        {
-            gt_uart.RxInCnt = 0;
-        }
-        break;
-    case CLI_KEY_BACK:
-    case CLI_KEY_DEL:
-        if(gt_uart.Rxbuff[gt_uart.RxInCnt].length)
-        {
-            //UART_PutChar(CLI_KEY_BACK);
-            UART_PutChar(' ');
-            UART_PutChar(CLI_KEY_BACK);
-
-            --gt_uart.Rxbuff[gt_uart.RxInCnt].length;
-        }
-        break;
-    default:
-        if((rx_data == CLI_KEY_UP) && (gt_uart.Rxbuff[gt_uart.RxInCnt].length > 2) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length-2] == 0x1B) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length -1] == 0x5B))
-        {
-            UART_PutChar('\n');
-            UART_PutChar('\r');
-
-            gt_uart.Rxbuff[gt_uart.RxInCnt].length = 0;
-        }
-        else
+        case '\n':
+        case '\r':
         {
             if(gt_uart.Rxbuff[gt_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
             {
-                gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length] = rx_data;
-                ++gt_uart.Rxbuff[gt_uart.RxInCnt].length;
+                gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length] = 0;
             }
+            else
+            {
+                gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
+            }
+
+            ++gt_uart.RxInCnt;
+            if(gt_uart.RxInCnt > (RX_BUFF_SIZE -1))
+            {
+                gt_uart.RxInCnt = 0;
+            }
+            break;
         }
-        break;
+        case CLI_KEY_BACK:
+        case CLI_KEY_DEL:
+        {
+            if(gt_uart.Rxbuff[gt_uart.RxInCnt].length)
+            {
+                //UART_PutChar(CLI_KEY_BACK);
+                UART_PutChar(' ');
+                UART_PutChar(CLI_KEY_BACK);
+
+                --gt_uart.Rxbuff[gt_uart.RxInCnt].length;
+            }
+            break;
+        }
+        default:
+        {
+            if((rx_data == CLI_KEY_UP) && (gt_uart.Rxbuff[gt_uart.RxInCnt].length > 2) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length-2] == 0x1B) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length -1] == 0x5B))
+            {
+                UART_PutChar('\n');
+                UART_PutChar('\r');
+
+                gt_uart.Rxbuff[gt_uart.RxInCnt].length = 0;
+            }
+            else
+            {
+                if(gt_uart.Rxbuff[gt_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+                {
+                    gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length] = rx_data;
+                    ++gt_uart.Rxbuff[gt_uart.RxInCnt].length;
+                }
+            }
+            break;
+        }
     }
 }
 

@@ -7,7 +7,27 @@
 #include "drv_xdr12.h"
 #include "comm_debugging.h"
 
-#define SPI_PACKET_DEBUG        (1U)
+#define XCR_SPI_HEADER_SIZE     (1U)
+#define XCR_SPI_BURST_MAX_SIZE  (64U)
+#define XCR_SPI_BUFF_MAX_SIZE   (XCR_SPI_HEADER_SIZE + XCR_SPI_BURST_MAX_SIZE)
+
+#define XCR_DAC_TRIM_INPUT      (0xC8U)
+
+#define XCR_MAX_1V5_LDO_DIG     (0x001FU)
+#define XCR_MAX_DAC_3V0         (0x003FU)
+#define XCR_MAX_DAC1_OFS        (0x00FFU)
+#define XCR_MAX_DAC2_OFS        (0x00FFU)
+#define XCR_MAX_DAC3_OFS        (0x00FFU)
+#define XCR_MAX_1V5_LDO_OSC     (0x001FU)
+#define XCR_MAX_OSC_A           (0x001FU)
+#define XCR_MAX_OSC_B           (0x001FU)
+
+typedef enum tag_XCR_RW_GRP
+{
+    XCR_RW_GRP1 = 0U,
+    XCR_RW_GRP2,
+    XCR_RW_GRP_MAX,
+} xcr_rw_grp_t;
 
 volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
@@ -26,6 +46,8 @@ static _xcr_otp_control_regs_t gt_xcr24_otp_access; /* base address 0xF0 */
 #if (XC_MODEL_TYPE == XC_TYPE_XC24R)
 #else
 #endif
+
+static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
 
 static void xcr24_regs_init_table(void)
 {
@@ -393,7 +415,7 @@ static void xcr24_regs_init_table(void)
 #if (XC_MODEL_TYPE == XC_TYPE_XC24R)
             _r1->reg._r41.bit.sv_no_type = 0U;
 #elif (XC_MODEL_TYPE == XC_TYPE_IC603)
-            _r1->reg._r41.bit.sv_no_multipier = 0U;
+            _r1->reg._r41.bit.sv_no_multiplier = 0U;
 #endif
             break;
         case XCR_DAC_NF_CONTROL:
@@ -544,11 +566,9 @@ static void xcr24_regs_init_table(void)
             continue;
         }
 
-        xcr24_set_xcr24_gr1_reg(addr, &_r1->ALL[addr], 1U);
+        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
 
-    gt_xcr24_otp_access.reg._rF0.bit.ADDR_EXT = 1U;
-    xcr24_set_otp_control(XCR_TEST_CONTROL, &gt_xcr24_otp_access.ALL[XCR_TEST_CONTROL], 1U);
     for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
     {
         switch(addr)
@@ -609,10 +629,101 @@ static void xcr24_regs_init_table(void)
             break;
         }
 
-        xcr24_set_xcr24_gr2_reg(addr, &_r2->ALL[addr], 1U);
+        xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
     }
-    gt_xcr24_otp_access.reg._rF0.bit.ADDR_EXT = 0U;
-    xcr24_set_otp_control(XCR_TEST_CONTROL, &gt_xcr24_otp_access.ALL[XCR_TEST_CONTROL], 1U);
+}
+
+static void xcr24_regs_trim_init_table(void)
+{
+    _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
+    _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_otp_access;
+
+    for(xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
+    {
+        switch(addr)
+        {
+            case XCR_RESET:
+            {
+                _r1->reg._r00.bit.rst1 = 0U;
+                _r1->reg._r00.bit.rst2 = 0U;
+                _r1->reg._r00.bit.rst3 = 0U;
+                _r1->reg._r00.bit.vsync_rst_en1 = 1U;
+                _r1->reg._r00.bit.vsync_rst_en2 = 1U;
+                break;
+            }
+            case XCR_LOCAL_RW_POINTER_RESET:
+            {
+                _r1->reg._r10.bit.local_transfer_pointer_rst = 1U;
+                _r1->reg._r10.bit.local_receive_pointer_rst = 1U;
+                break;
+            }
+            case XCR_CLK_CONTROL_1:
+            {
+                _r1->reg._r1B.bit.serializer_skew_en = 0U;
+                _r1->reg._r1B.bit.osc1_spread_en = 0U;
+                _r1->reg._r1B.bit.serializer_clk_sel1 = 0U;
+                _r1->reg._r1B.bit.sprd1_gain = 0U;
+                _r1->reg._r1B.bit.serializer_clk_sel2 = 0U;
+                _r1->reg._r1B.bit.ld_rd_clk_sel = 0U;
+                _r1->reg._r1B.bit.spread1_spd = 0U;
+                break;
+            }
+            case XCR_CLK_CONTROL_2:
+            {
+                _r1->reg._r1C.bit.mclk_mode = 0U;
+                _r1->reg._r1C.bit.osc2_spread_en = 0U;
+                _r1->reg._r1C.bit.sprd2_gain = 0U;
+                _r1->reg._r1C.bit.spread2_spd = 0U;
+                break;
+            }
+            case XCR_SERIALIZER_CLOCK_GEN:
+            {
+                _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
+                _r1->reg._r1D.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
+        }
+        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
+    }
+
+    for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
+    {
+        switch(addr)
+        {
+            case XCR_GRP2_DAC1_FB_VALID_CNT:
+            {
+                _r2->reg._r12.bit.TEST_ANA_EN = 0U;
+                _r2->reg._r12.bit.CHOP_EN_BGR = 0U;
+                _r2->reg._r12.bit.CHOP_EN_OSCLDO = 0U;
+                _r2->reg._r12.bit.CHOP_EN = 0U;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
+        }
+        xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
+    }
+
+    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
+    {
+        switch (addr)
+        {
+            case XCR_TEST_CONTROL:
+                _rotp->reg._rF0.bit.TEST_EN = 1U;
+                // break;
+            case XCR_OTP_PROTECT:
+                _rotp->reg._rF4.bit.PROTECT = 0x0A5AU;
+                break;
+        }
+        xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
+    }
 }
 
 void xcr24_reset(void)
@@ -625,19 +736,35 @@ void xcr24_reset(void)
     _r00.bit.vsync_rst_en1 = 0U;
     _r00.bit.vsync_rst_en2 = 0U;
 
-    xcr24_set_xcr24_gr1_reg(XCR_RESET, &_r00.ALL, 1U);
+    xcr24_write_grp1_reg(XCR_RESET, &_r00.ALL, 1U);
+}
+
+static void xcr24_memory_copy(void)
+{
+/*
+    for (uint8_t i = 0 ; i < XCR_GRP1_MAX ; ++i)
+    {
+        gt_xcr24_get_gr1_regs.ALL[i] = i;
+    }
+    for (uint8_t i = 0 ; i < XCR_GRP2_MAX ; ++i)
+    {
+        gt_xcr24_get_gr2_regs.ALL[i] = (XCR_GRP2_MAX - i);
+    }
+*/
+    memcpy(gt_xcr24_set_gr1_regs.ALL, gt_xcr24_get_gr1_regs.ALL, sizeof(gt_xcr24_get_gr1_regs));
+    memcpy(gt_xcr24_set_gr2_regs.ALL, gt_xcr24_get_gr2_regs.ALL, sizeof(gt_xcr24_get_gr2_regs));
 }
 
 void xcr24_read_all(void)
 {
-    xcr24_get_xcr24_gr1_reg(XCR_RESET +  0U, 56U);
-    xcr24_get_xcr24_gr1_reg(XCR_RESET + 56U, 56U);
+    xcr24_read_grp1_reg(XCR_RESET +  0U, 56U); // 0x00 ~ 0x37, 56EA
+    xcr24_read_grp1_reg(XCR_RESET + 56U, 56U); // 0x38 ~ 0x6F, 56EA
 
-    gt_xcr24_otp_access.reg._rF0.bit.ADDR_EXT = 1U;
-    xcr24_set_otp_control(XCR_TEST_CONTROL, &gt_xcr24_otp_access.ALL[XCR_TEST_CONTROL], 1U);
-    xcr24_get_xcr24_gr2_reg(XCR_GRP2_DAC1_FB_VALID_CNT, 19U);
-    gt_xcr24_otp_access.reg._rF0.bit.ADDR_EXT = 0U;
-    xcr24_set_otp_control(XCR_TEST_CONTROL, &gt_xcr24_otp_access.ALL[XCR_TEST_CONTROL], 1U);
+    xcr24_read_grp2_reg(XCR_GRP2_DAC1_FB_VALID_CNT, 19U); // 0x00 ~ 0x12, 19EA
+
+    xcr24_read_otp_control(XCR_TEST_CONTROL, 10U);
+
+    xcr24_memory_copy();
 }
 
 void xcr24_init_param(void)
@@ -725,11 +852,18 @@ void xcr24_init(void)
 {
     xcr24_reset();
 
-    xcr24_get_otp_control(XCR_TEST_CONTROL, 16U);
-
     xcr24_regs_init_table();
 
     //xcr24_read_all();
+}
+
+void xcr24_trim_init(void)
+{
+    xcr24_reset();
+
+    xcr24_regs_trim_init_table();
+
+    xcr24_read_all();
 }
 
 const _xcr_group1_regs_t* xcr24_get_xcr24_set_gr1_regs(void)
@@ -748,476 +882,319 @@ const _xcr_group2_regs_t* xcr24_get_xcr24_get_gr2_regs(void)
 {
     return &gt_xcr24_get_gr2_regs;
 }
-//const _xd12_regs_t* xcr24_get_xdr12_set_regs(void);
-//ret_xdr12_regs xcr24_get_xdr12_get_regs(void);
 
-void xcr24_get_otp_control(uint16_t addr, uint16_t len)
+void xcr24_read_otp_control(uint16_t addr, uint16_t length)
 {
-    uint16_t temp[64U + 3U] = { 0U, };  /* hdr + crc16 */
-    uint16_t buffer[64U + 3U] = { 0U, };  /* pyload + crc16 */
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t rx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
 
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
-
-    uint16_t size = len;
-
-    if((addr + len) >= XCR_OTP_MAX)
+    if((addr + length) >= XCR_OTP_MAX)
     {
-        size = (XCR_OTP_MAX - addr);
+        burst_size = (XCR_OTP_MAX - addr);
     }
-    if(size > 63U)
+    if(burst_size > 63U)
     {
-        size = 63U;
+        burst_size = 63U;
     }
 
-    length = 1U + 1U + size + 1U;   /* HDR + crc16 + readout + crc16 for readout */
+    uint16_t spi_len = 1U + burst_size; /* HDR + readout */
 
     cmd.bit.code = CMD_CODE1;
     cmd.bit.addr = (OTP_BASE_ADDR + addr);
-    cmd.bit.size = size;
+    cmd.bit.size = burst_size;
 
-    temp[0U] = cmd.ALL;
-    temp[1U] = Calculate_CRC16_CCITT_False(&temp[0U], 1U);
+    tx_buffer[0U] = cmd.ALL;
+
+    if (addr != XCR_TEST_CONTROL)
+    {
+        xcr24_change_rw_grp_type(XCR_RW_GRP1);
+    }
 
     XCR_NSS_LO();
-    uint8_t ret = spi_read(SPI1, temp, buffer, length, 20U);  /* hdr + crc16 + payload + crc16 */
+    uint8_t ret = spi_read(SPI1, tx_buffer, rx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
-    if(1U == ret)
+    if(SPI_TIMEOUT == ret)
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi read timeout\r\n", ANSI_FONT_NONE);
-    }
-    else
-    {
-        uint16_t crc16 = 0U;
-        crc16 = Calculate_CRC16_CCITT_False(&buffer[2U], size);
-
-#if (0U != SPI_PACKET_DEBUG)
-        {
-            char str[128U] = { 0, };
-            const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-            comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) [%x, %x] %x, %u, %x, %4x, %4x\r\n", __func__, addr, len, temp[0U], temp[1U], crc16, length, buffer[length], buffer[0U], buffer[1U]);
-
-            for(uint16_t line = 0U; line < line_cnt ; ++line)
-            {
-                uint16_t cnt = 0U;
-                uint16_t start = (16U * line);
-                uint16_t end = start + 16U;
-
-                if(end > size)
-                {
-                    end = size;
-                }
-
-                for(uint16_t i = start; i < end; ++i)
-                {
-                    cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", buffer[2U + i]);
-                }
-                comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-            }
-        }
-#endif
-
-        if(crc16 == buffer[length])
-        {
-            _xcr_otp_control_regs_t* _r = &gt_xcr24_otp_access;
-            for(uint16_t i=0U ; i<size ; ++i)
-            {
-                _r->ALL[addr + i] = buffer[2U + i];
-            }
-        }
-    }
-}
-
-void xcr24_set_otp_control(uint16_t addr, const uint16_t* q, uint16_t len)
-{
-    uint16_t temp[64U + 2U] = { 0U, };  /* hdr + pyload + crc16 */
-    uint16_t crc16 = 0U;
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
-
-    uint16_t size = len;
-
-    if((addr + len) >= XCR_OTP_MAX)
-    {
-        size = (XCR_OTP_MAX - addr);
-    }
-    if(size > 63U)
-    {
-        size = 63U;
-    }
-
-    cmd.bit.code = CMD_CODE2;
-    cmd.bit.addr = (OTP_BASE_ADDR + addr);
-    cmd.bit.size = size;
-
-    temp[length++] = cmd.ALL;
-
-    for(uint16_t i=0U ; i<size ; ++i)
-    {
-        temp[length++] = *q++;
-    }
-
-    crc16 = Calculate_CRC16_CCITT_False(temp, length);
-
-    temp[length++] = crc16;
-
-#if (0U != SPI_PACKET_DEBUG)
-    {
-        char str[128U] = { 0, };
-        const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-        comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) : %x, %x : %x\r\n", __func__, addr, len, temp[0U], crc16, temp[(length-1U)]);
-
-        for(uint16_t line = 0U; line < line_cnt ; ++line)
-        {
-            uint16_t cnt = 0U;
-            uint16_t start = (16U * line);
-            uint16_t end = start + 16U;
-
-            if(end > size)
-            {
-                end = size;
-            }
-
-            for(uint16_t i = 0; i < size; ++i)
-            {
-                cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", temp[1U + i]);
-            }
-            comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-        }
-    }
-#endif
-
-    XCR_NSS_LO();
-    uint8_t ret = spi_write(SPI1, temp, length, 20U);
-    XCR_NSS_HI();
-
-    if(1U == ret)
-    {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi write timeout\r\n", ANSI_FONT_NONE);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi read timeout");
     }
     else
     {
         _xcr_otp_control_regs_t* _r = &gt_xcr24_otp_access;
-        for(uint16_t i=0U ; i<size ; ++i)
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
-            _r->ALL[addr + i] = temp[1U + i];
+            _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
 }
 
-void xcr24_get_xcr24_gr1_reg(uint16_t addr, uint16_t len)
+void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
 {
-    uint16_t temp[64U + 3U] = { 0U, };  /* hdr + crc16 */
-    uint16_t buffer[64U + 3U] = { 0U, };  /* pyload + crc16 */
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
 
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
-
-    uint16_t size = len;
-
-    if((addr + len) >= XCR_GRP1_MAX)
+    if((addr + length) >= XCR_OTP_MAX)
     {
-        size = (XCR_GRP1_MAX - addr);
+        burst_size = (XCR_OTP_MAX - addr);
     }
-    if(size > 63U)
+    if(burst_size > 63U)
     {
-        size = 63U;
+        burst_size = 63U;
     }
 
-    length = 1U + 1U + size + 1U;   /* HDR + crc16 + readout + crc16 for readout */
+    uint16_t spi_len = 0U;
 
-    cmd.bit.code = CMD_CODE1;
-    cmd.bit.addr = addr;
-    cmd.bit.size = size;
+    cmd.bit.code = CMD_CODE2;
+    cmd.bit.addr = (OTP_BASE_ADDR + addr);
+    cmd.bit.size = burst_size;
 
-    temp[0U] = cmd.ALL;
-    temp[1U] = Calculate_CRC16_CCITT_False(&temp[0U], 1U);
+    tx_buffer[spi_len++] = cmd.ALL;
+
+    for(uint16_t i = 0U ; i < burst_size ; ++i)
+    {
+        tx_buffer[spi_len++] = *q++;
+    }
+
+    if (addr != XCR_TEST_CONTROL)
+    {
+        xcr24_change_rw_grp_type(XCR_RW_GRP1);
+    }
 
     XCR_NSS_LO();
-    uint8_t ret = spi_read(SPI1, temp, buffer, length, 20U);  /* hdr + crc16 + payload + crc16 */
+    uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
-    if(1U == ret)
+    if(SPI_TIMEOUT == ret)
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi read timeout\r\n", ANSI_FONT_NONE);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
     }
     else
     {
-        uint16_t crc16 = 0U;
-        crc16 = Calculate_CRC16_CCITT_False(&buffer[2U], size);
-
-#if (0U != SPI_PACKET_DEBUG)
+        _xcr_otp_control_regs_t* _r = &gt_xcr24_otp_access;
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
-            char str[128U] = { 0, };
-            const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-            comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) [%x, %x] %x, %u, %x, %4x, %4x\r\n", __func__, addr, len, temp[0U], temp[1U], crc16, length, buffer[length], buffer[0U], buffer[1U]);
-
-            for(uint16_t line = 0U; line < line_cnt ; ++line)
-            {
-                uint16_t cnt = 0U;
-                uint16_t start = (16U * line);
-                uint16_t end = start + 16U;
-
-                if(end > size)
-                {
-                    end = size;
-                }
-
-                for(uint16_t i = start; i < end; ++i)
-                {
-                    cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", buffer[2U + i]);
-                }
-                comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-            }
-        }
-#endif
-
-        if(crc16 == buffer[length])
-        {
-            uint16_t* p = &gt_xcr24_get_gr1_regs.ALL[addr];
-            for(uint16_t i = 0U ; i < size ; ++i)
-            {
-                *p++ = buffer[2U + i];
-            }
+            _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
 }
 
-void xcr24_get_xcr24_gr2_reg(uint16_t addr, uint16_t len)
+void xcr24_read_grp1_reg(uint16_t addr, uint16_t length)
 {
-    uint16_t temp[64U + 3U] = { 0U, };  /* hdr + crc16 */
-    uint16_t buffer[64U + 3U] = { 0U, };  /* pyload + crc16 */
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t rx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
 
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
-
-    uint16_t size = len;
-
-    if((addr + len) >= XCR_GRP2_MAX)
+    if((addr + length) >= XCR_GRP1_MAX)
     {
-        size = (XCR_GRP2_MAX - addr);
+        burst_size = (XCR_GRP1_MAX - addr);
     }
-    if(size > 63U)
+    if(burst_size > 63U)
     {
-        size = 63U;
+        burst_size = 63U;
     }
 
-    length = 1U + 1U + size + 1U;   /* HDR + crc16 + readout + crc16 for readout */
+    uint16_t spi_len = 1U + burst_size; /* HDR + readout */
 
     cmd.bit.code = CMD_CODE1;
     cmd.bit.addr = addr;
-    cmd.bit.size = size;
+    cmd.bit.size = burst_size;
 
-    temp[0U] = cmd.ALL;
-    temp[1U] = Calculate_CRC16_CCITT_False(&temp[0U], 1U);
+    tx_buffer[0U] = cmd.ALL;
+
+    xcr24_change_rw_grp_type(XCR_RW_GRP1);
 
     XCR_NSS_LO();
-    uint8_t ret = spi_read(SPI1, temp, buffer, length, 20U);  /* hdr + payload + crc16 */
+    uint8_t ret = spi_read(SPI1, tx_buffer, rx_buffer, spi_len, 20U);  /* hdr + crc16 + payload + crc16 */
     XCR_NSS_HI();
 
-    if(1U == ret)
+    if(SPI_TIMEOUT == ret)
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi read timeout\r\n", ANSI_FONT_NONE);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi read timeout");
     }
     else
     {
-        uint16_t crc16 = 0U;
-        crc16 = Calculate_CRC16_CCITT_False(&buffer[2U], size);
-
-#if (0U != SPI_PACKET_DEBUG)
+        _xcr_group1_regs_t* _r = &gt_xcr24_get_gr1_regs;
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
-            char str[128U] = { 0, };
-            const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-            comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) [%x, %x] %x, %u, %x, %4x, %4x\r\n", __func__, addr, len, temp[0U], temp[1U], crc16, length, buffer[length], buffer[0U], buffer[1U]);
-
-            for(uint16_t line = 0U; line < line_cnt ; ++line)
-            {
-                uint16_t cnt = 0U;
-                uint16_t start = (16U * line);
-                uint16_t end = start + 16U;
-
-                if(end > size)
-                {
-                    end = size;
-                }
-
-                for(uint16_t i = start; i < end; ++i)
-                {
-                    cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", buffer[2U + i]);
-                }
-                comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-            }
-        }
-#endif
-
-        if(crc16 == buffer[length])
-        {
-            uint16_t* p = &gt_xcr24_get_gr2_regs.ALL[addr];
-            for(uint16_t i=0U ; i<size ; ++i)
-            {
-                *p++ = buffer[2U + i];
-            }
+            _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
 }
 
-void xcr24_set_xcr24_gr1_reg(uint16_t addr, const uint16_t* q, uint16_t len)
+void xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
 {
-    uint16_t temp[64U + 2U] = { 0U, };  /* hdr + pyload + crc16 */
-    uint16_t crc16 = 0U;
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t rx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
 
-    uint16_t size = len;
+    if((addr + length) >= XCR_GRP2_MAX)
+    {
+        burst_size = (XCR_GRP2_MAX - addr);
+    }
+    if(burst_size > 63U)
+    {
+        burst_size = 63U;
+    }
 
-    if((addr + len) >= XCR_GRP1_MAX)
+    uint16_t spi_len = 1U + burst_size; /* HDR + readout */
+
+    cmd.bit.code = CMD_CODE1;
+    cmd.bit.addr = addr;
+    cmd.bit.size = burst_size;
+
+    tx_buffer[0U] = cmd.ALL;
+
+    xcr24_change_rw_grp_type(XCR_RW_GRP2);
+
+    XCR_NSS_LO();
+    uint8_t ret = spi_read(SPI1, tx_buffer, rx_buffer, spi_len, 20U);  /* hdr + payload + crc16 */
+    XCR_NSS_HI();
+
+    if(SPI_TIMEOUT == ret)
     {
-        size = (XCR_GRP1_MAX - addr);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi read timeout");
     }
-    if(size > 63U)
+    else
     {
-        size = 63U;
+        _xcr_group2_regs_t* _r = &gt_xcr24_get_gr2_regs;
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        {
+            _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE];
+        }
     }
+}
+
+void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
+{
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
+
+    if((addr + length) >= XCR_GRP1_MAX)
+    {
+        burst_size = (XCR_GRP1_MAX - addr);
+    }
+    if(burst_size > 63U)
+    {
+        burst_size = 63U;
+    }
+
+    uint16_t spi_len = 0U;
 
     cmd.bit.code = CMD_CODE2;
     cmd.bit.addr = addr;
-    cmd.bit.size = size;
+    cmd.bit.size = burst_size;
 
-    temp[length++] = cmd.ALL;
+    tx_buffer[spi_len++] = cmd.ALL;
 
-    for(uint16_t i=0U ; i<size ; ++i)
+    for(uint16_t i = 0U ; i < burst_size ; ++i)
     {
-        temp[length++] = *q++;
+        tx_buffer[spi_len++] = *q++;
     }
 
-    crc16 = Calculate_CRC16_CCITT_False(temp, length);
-
-    temp[length++] = crc16;
-
-#if (0U != SPI_PACKET_DEBUG)
-    {
-        char str[128U] = { 0, };
-        const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-        comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) : %x, %x : %x\r\n", __func__, addr, len, temp[0U], crc16, temp[(length-1U)]);
-
-        for(uint16_t line = 0U; line < line_cnt ; ++line)
-        {
-            uint16_t cnt = 0U;
-            uint16_t start = (16U * line);
-            uint16_t end = start + 16U;
-
-            if(end > size)
-            {
-                end = size;
-            }
-
-            for(uint16_t i = 0; i < size; ++i)
-            {
-                cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", temp[1U + i]);
-            }
-            comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-        }
-    }
-#endif
+    xcr24_change_rw_grp_type(XCR_RW_GRP1);
 
     XCR_NSS_LO();
-    uint8_t ret = spi_write(SPI1, temp, length, 20U);
+    uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
-    if(1U == ret)
+    if(SPI_TIMEOUT == ret)
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi write timeout\r\n", ANSI_FONT_NONE);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
     }
     else
     {
         _xcr_group1_regs_t* _r = &gt_xcr24_set_gr1_regs;
-        for(uint16_t i=0U ; i<size ; ++i)
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
-            _r->ALL[addr + i] = temp[1U + i];
+            _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
 }
 
-void xcr24_set_xcr24_gr2_reg(uint16_t addr, const uint16_t* q, uint16_t len)
+void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
 {
-    uint16_t temp[64U + 2U] = { 0U, };  /* hdr + pyload + crc16 */
-    uint16_t crc16 = 0U;
-    uint16_t length = 0U;
-    _cmd_t cmd = { 0U, };
+    _cmd_t cmd = { 0U };
+    uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
+    uint16_t burst_size = length;
 
-    uint16_t size = len;
+    if((addr + length) >= XCR_OTP_MAX)
+    {
+        burst_size = (XCR_OTP_MAX - addr);
+    }
+    if(burst_size > 63U)
+    {
+        burst_size = 63U;
+    }
 
-    if((addr + len) >= XCR_GRP2_MAX)
-    {
-        size = (XCR_GRP2_MAX - addr);
-    }
-    if(size > 63U)
-    {
-        size = 63U;
-    }
+    uint16_t spi_len = 0U;
 
     cmd.bit.code = CMD_CODE2;
     cmd.bit.addr = addr;
-    cmd.bit.size = size;
+    cmd.bit.size = burst_size;
 
-    temp[length++] = cmd.ALL;
+    tx_buffer[spi_len++] = cmd.ALL;
 
-    for(uint16_t i = 0U ; i < size ; ++i)
+    for(uint16_t i = 0U ; i < burst_size ; ++i)
     {
-        temp[length++] = *q++;
+        tx_buffer[spi_len++] = *q++;
     }
 
-    crc16 = Calculate_CRC16_CCITT_False(temp, length);
-
-    temp[length++] = crc16;
-
-#if (0U != SPI_PACKET_DEBUG)
-    {
-        char str[128U] = { 0, };
-        const uint16_t line_cnt = (uint16_t)((size + 15U) / 16U);
-
-        comm_UART_Printf(LOG_LV_INFO, "\r\n %s(%x, %u) : %x, %x : %x\r\n", __func__, addr, len, temp[0U], crc16, temp[(length-1U)]);
-
-        for(uint16_t line = 0U; line < line_cnt ; ++line)
-        {
-            uint16_t cnt = 0U;
-            uint16_t start = (16U * line);
-            uint16_t end = start + 16U;
-
-            if(end > size)
-            {
-                end = size;
-            }
-
-            for(uint16_t i = 0; i < size; ++i)
-            {
-                cnt += (uint16_t)snprintf(str + cnt, sizeof(str) - cnt, "%4X ", temp[1U + i]);
-            }
-            comm_UART_Printf(LOG_LV_INFO, "%2x : %s\r\n", addr + (line * 16U), str);
-        }
-    }
-#endif
+    xcr24_change_rw_grp_type(XCR_RW_GRP2);
 
     XCR_NSS_LO();
-    uint8_t ret = spi_write(SPI1, temp, length, 20U);
+    uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
-    if(1U == ret)
+    if(SPI_TIMEOUT == ret)
     {
-        comm_UART_Printf(LOG_LV_ERROR, "%s%s%s", ANSI_FONT_RED, "spi write timeout\r\n", ANSI_FONT_NONE);
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
     }
     else
     {
         _xcr_group2_regs_t* _r = &gt_xcr24_set_gr2_regs;
-        for(uint16_t i=0U ; i<size ; ++i)
+        for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
-            _r->ALL[addr + i] = temp[1U + i];
+            _r->ALL[addr + i] = tx_buffer[1U + i];
+        }
+    }
+}
+
+static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    xcr_rw_grp_t now_grp = (xcr_rw_grp_t)(_rF0->bit.ADDR_EXT);
+
+    if (in_grp >= XCR_RW_GRP_MAX)
+    {
+        return;
+    }
+
+    if (now_grp != in_grp)
+    {
+        _rF0->bit.ADDR_EXT = (uint16_t)(in_grp);
+        _cmd_t cmd = { 0U };
+        uint16_t tx_buffer[2] = { 0U };
+
+        cmd.bit.code = CMD_CODE2;
+        cmd.bit.addr = (OTP_BASE_ADDR + XCR_TEST_CONTROL);
+        cmd.bit.size = 1;
+
+        tx_buffer[0] = cmd.ALL;
+        tx_buffer[1] = _rF0->ALL;
+
+        XCR_NSS_LO();
+        uint8_t ret = spi_write(SPI1, tx_buffer, 2, 20U);
+        XCR_NSS_HI();
+
+        if(SPI_TIMEOUT == ret)
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
         }
     }
 }
@@ -1250,25 +1227,25 @@ bool xcr24_read_local(uint16_t ch_seg, uint16_t addr)
 
     _r10.bit.local_transfer_pointer_rst = 1U;
     _r10.bit.local_receive_pointer_rst = 1U;
-    xcr24_set_xcr24_gr1_reg(XCR_LOCAL_RW_POINTER_RESET, &_r10.ALL, 1U);
+    xcr24_write_grp1_reg(XCR_LOCAL_RW_POINTER_RESET, &_r10.ALL, 1U);
 
     _r03.bit.addr = addr;
     _r03.bit.ch_seg = ch_seg;
     _r03.bit.enable = 1U;
-    xcr24_set_xcr24_gr1_reg(XCR_LOCAL_READ_COMMAND, &_r03.ALL, 1U);
+    xcr24_write_grp1_reg(XCR_LOCAL_READ_COMMAND, &_r03.ALL, 1U);
 
     retry = 128U;
     do
     {
         //us_delay(1000); /* TODO : ???*/
-        xcr24_get_xcr24_gr1_reg(XCR_COMMAND_STATUS_1, 1U);
+        xcr24_read_grp1_reg(XCR_COMMAND_STATUS_1, 1U);
     }while((_r14->bit.local_r_doing == 1U) && --retry > 0U);
 
     retry = 128U;
     do
     {
         //us_delay(1000); /* TODO : ???*/
-        xcr24_get_xcr24_gr1_reg(XCR_RECEIVE_STATUS, 1U);
+        xcr24_read_grp1_reg(XCR_RECEIVE_STATUS, 1U);
     }while((_r16->bit.rd_receive_doing == 1U) && --retry > 0U);
 
     return ((_r16->bit.rd_receive_done == 1U) && (_r16->bit.rd_receive_fail == 0U));
@@ -1287,7 +1264,7 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
 
         _r10.bit.local_transfer_pointer_rst = 1U;
         _r10.bit.local_receive_pointer_rst = 1U;
-        xcr24_set_xcr24_gr1_reg(XCR_LOCAL_RW_POINTER_RESET, &_r10.ALL, 1U);
+        xcr24_write_grp1_reg(XCR_LOCAL_RW_POINTER_RESET, &_r10.ALL, 1U);
 
         while(len > 0U)
         {
@@ -1302,12 +1279,12 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
         _r02.bit.addr = addr;
         _r02.bit.ch_seg = ch_seg;
         _r02.bit.enable = 1;
-        xcr24_set_xcr24_gr1_reg(XCR_LOCAL_WRITE_COMMAND, &_r02.ALL, 1U);
+        xcr24_write_grp1_reg(XCR_LOCAL_WRITE_COMMAND, &_r02.ALL, 1U);
 
         do
         {
             //us_delay(1000); /* TODO : ???*/
-            xcr24_get_xcr24_gr1_reg(XCR_COMMAND_STATUS_1, 1U);
+            xcr24_read_grp1_reg(XCR_COMMAND_STATUS_1, 1U);
         }while((_r14->bit.local_r_doing == 1U) && --retry > 0U);
     }
 }
@@ -1333,10 +1310,20 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 
     temp[1U] = crc16;
 
+    xcr24_change_rw_grp_type(XCR_RW_GRP1);
+
     XCR_NSS_LO();
     uint8_t ret = spi_read(SPI1, spi_buffer, temp, (len + 1U + 1U), 20U);  /* hdr + crc16 + payload + crc16 */
     XCR_NSS_HI();
 
+    if(SPI_TIMEOUT == ret)
+    {
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nspi read timeout");
+    }
+    else
+    {
+
+    }
     if(len > 0U && p_data != NULL)
     {
         memcpy(p_data, &temp[1], len * sizeof(uint16_t));
@@ -1370,3 +1357,332 @@ void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
     XCR_NSS_HI();
 }
 
+void xcr24_trim_init_1v5_ldo_dig(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+}
+
+void xcr24_trim_init_dac_3v0(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_current_target_dac1_t* _r44 = &gt_xcr24_set_gr1_regs.reg._r44;
+    _r44->bit.curr_tgt_dac1 = 0xFFF;
+    xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC1, &_r44->ALL, 1U);
+}
+
+void xcr24_trim_init_dac1_ofs(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_current_target_dac1_t* _r44 = &gt_xcr24_set_gr1_regs.reg._r44;
+    _r44->bit.curr_tgt_dac1 = XCR_DAC_TRIM_INPUT;
+    xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC1, &_r44->ALL, 1U);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
+}
+
+void xcr24_trim_init_dac2_ofs(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_current_target_dac2_t* _r45 = &gt_xcr24_set_gr1_regs.reg._r45;
+    _r45->bit.curr_tgt_dac2 = XCR_DAC_TRIM_INPUT;
+    xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC2, &_r45->ALL, 1U);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
+}
+
+void xcr24_trim_init_dac3_ofs(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_current_target_dac3_t* _r46 = &gt_xcr24_set_gr1_regs.reg._r46;
+    _r46->bit.curr_tgt_dac3 = XCR_DAC_TRIM_INPUT;
+    xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC3, &_r46->ALL, 1U);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
+}
+
+void xcr24_trim_init_1v5_ldo_osc(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_ana_test_t* _r12 = &gt_xcr24_set_gr2_regs.reg._r12;
+    _r12->bit.TEST_ANA_EN = 6U;
+    xcr24_write_grp2_reg(XCR_GRP2_ANA_TEST, &_r12->ALL, 1U);
+}
+
+void xcr24_trim_init_osc_a(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK_SEL = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
+    _r65->bit.OSC_MAN_EN_A = 1U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
+
+    _v_osc_fll_man_a2_t* _r66 = &gt_xcr24_set_gr1_regs.reg._r66;
+    _r66->bit.OSC_FLL_MAN_A = 0x8000U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A2, &_r66->ALL, 1U);
+}
+
+void xcr24_trim_init_osc_b(void)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK_SEL = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
+    _r67->bit.OSC_MAN_EN_B = 1U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
+
+    _v_osc_fll_man_b2_t* _r68 = &gt_xcr24_set_gr1_regs.reg._r68;
+    _r68->bit.OSC_FLL_MAN_B = 0x8000U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B2, &_r68->ALL, 1U);
+}
+
+
+bool xcr24_trim_set_1v5_ldo_dig(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_1V5_LDO_DIG)
+    {
+        _v_mirror1_t* _rF5 = &gt_xcr24_otp_access.reg._rF5;
+        _rF5->bit.vctl_ldo = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR1, &_rF5->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_dac_3v0(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_DAC_3V0)
+    {
+        _v_mirror2_t* _rF6 = &gt_xcr24_otp_access.reg._rF6;
+        _rF6->bit.dac_ctl = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_dac1_ofs(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_DAC1_OFS)
+    {
+        _v_mirror2_t* _rF6 = &gt_xcr24_otp_access.reg._rF6;
+        _rF6->bit.dac1_ofs = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_dac2_ofs(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_DAC2_OFS)
+    {
+        _v_mirror3_t* _rF7 = &gt_xcr24_otp_access.reg._rF7;
+        _rF7->bit.dac2_ofs = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_dac3_ofs(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_DAC3_OFS)
+    {
+        _v_mirror3_t* _rF7 = &gt_xcr24_otp_access.reg._rF7;
+        _rF7->bit.dac3_ofs = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_1v5_ldo_osc(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_1V5_LDO_OSC)
+    {
+        _v_mirror4_t* _rF8 = &gt_xcr24_otp_access.reg._rF8;
+        _rF8->bit.ldo_osc_ctl = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_osc_a(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_OSC_A)
+    {
+        _v_mirror4_t* _rF8 = &gt_xcr24_otp_access.reg._rF8;
+        _rF8->bit.osc_rctl = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+bool xcr24_trim_set_osc_b(uint16_t reg_val)
+{
+    bool ret = false;
+    if (reg_val <= XCR_MAX_OSC_B)
+    {
+        _v_mirror5_t* _rF9 = &gt_xcr24_otp_access.reg._rF9;
+        _rF9->bit.osc_rctl2 = reg_val;
+        xcr24_write_otp_control(XCR_MIRROR5, &_rF9->ALL, 1U);
+        ret = true;
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(reg_val);
+    }
+    return ret;
+}
+
+void xcr24_trim_init_efuse(void)
+{
+    /*
+    _v_xdr12_otp_access1_t* _r3A = &gt_xdr12_otp_ctrl_set_regs.reg._r3A;
+    _r3A->bit.otp_pg_acc_cycle = 0x000U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS1, _r3A->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    _v_xdr12_otp_access2_t* _r3B = &gt_xdr12_otp_ctrl_set_regs.reg._r3B;
+    _r3B->bit.otp_pg_acc_cycle = 0x3FFU;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS2, _r3B->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    _v_xdr12_otp_write_t* _r3C = &gt_xdr12_otp_ctrl_set_regs.reg._r3C;
+    _r3C->bit.otp_wsel = 4U;
+    _r3C->bit.otp_rd = 0U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_WRITE, _r3C->ALL, XD12R_ADDR_TYPE_GENERAL);
+    */
+}
+
+void xcr24_trim_start_efuse(void)
+{
+    /*
+    _v_xdr12_otp_rd_prog_t* _r3D = &gt_xdr12_otp_ctrl_set_regs.reg._r3D;
+    _r3D->bit.otp_pg_s = 1U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_RD_PROG, _r3D->ALL, XD12R_ADDR_TYPE_GENERAL);
+    */
+}
+
+void xcr24_trim_save_mirror_register(void)
+{
+    /*
+    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
+    {
+        xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+    }
+        */
+}
+
+uint32_t xcr24_trim_verify_mirror_dump(void)
+{
+    uint32_t ret = 0U;
+    /*
+    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
+    {
+        uint16_t saved_reg = xdr12_get_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        uint16_t mirror_reg = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        if (saved_reg != mirror_reg)
+        {
+            ret |= (1UL << mirror_addr);
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+                ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+        }
+        else
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+                ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+        }
+    }
+    */
+    return ret;
+}
