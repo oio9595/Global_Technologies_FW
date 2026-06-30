@@ -9,7 +9,6 @@ struct manager *__managers[NUMBER_OF_MGRS]=
 {
     &__app_mgr,     /* APP */
     &__det_mgr,     /* DETECTORS (BTN, External IO, ...) */
-
     &__trim_mgr,   /* TRIM for XCR/XDR */
 };
 
