@@ -60,11 +60,15 @@ extern "C" {
 
 #define ADS114S08_CH_XD_IOUT    (ADS_AIN0)
 #define ADS114S08_CH_XC_LDO     (ADS_AIN1)
-#define ADS114S08_CH_XC_DAC     (ADS_AIN2)
-#define ADS114S08_CH_XD_ICC_P   (ADS_AIN3)
-#define ADS114S08_CH_XD_ICC_N   (ADS_AIN4)
-#define ADS114S08_CH_XC_ICC_P   (ADS_AIN8)
-#define ADS114S08_CH_XC_ICC_N   (ADS_AIN9)
+#define ADS114S08_CH_XD_ICC_P   (ADS_AIN2)
+#define ADS114S08_CH_XD_ICC_N   (ADS_AIN3)
+#define ADS114S08_CH_XC_ICC_P   (ADS_AIN4)
+#define ADS114S08_CH_XC_ICC_N   (ADS_AIN5)
+#define ADS114S08_CH_XC_DAC_1   (ADS_AIN6)
+#define ADS114S08_CH_XC_DAC_2   (ADS_AIN7)
+#define ADS114S08_CH_XC_DAC_3   (ADS_AIN8)
+#define ADS114S08_CH_XC_2uA     (ADS_AIN9)
+#define ADS114S08_CH_XC_1V5     (ADS_AIN10)
 
 #define ADS114S_VREF            (5000U)  /* 5V */
 #define ADS114S_RESOLUTION      ((1U << (16 - 1)) - 1U)  /* 16bit */
@@ -84,6 +88,7 @@ extern uint16_t ADS114S08_Get_ADC_Value(void);
 
 extern float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
 extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain);
+extern float JigBD_IF_Convert_Adc_To_mVoltage(uint16_t adc);
 
 #ifdef __cplusplus
 }

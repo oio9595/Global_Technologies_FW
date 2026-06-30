@@ -429,7 +429,7 @@ static void ADS114S08_Get_ADC_Offset()
 {
     comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Start...\r\n");
     gpio_set_current_gain(GAIN_LOW);
-    gpio_set_power_9v(PWR_ON);
+    gpio_set_power_9v(VLED_ON);
 
     for (XD_CH_t output_ch = XD_CH_01 ; output_ch < XD_CH_MAX ; ++output_ch)
     {
@@ -444,7 +444,7 @@ static void ADS114S08_Get_ADC_Offset()
         }
     }
 
-    gpio_set_power_9v(PWR_OFF);
+    gpio_set_power_9v(VLED_OFF);
     gpio_set_demux_channel_selection(XD_CH_MAX);
     comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X, \r\n", gn_ads114s08_offset[0]);
 }
@@ -549,36 +549,64 @@ uint16_t ADS114S08_Get_ADC_Value(void)
 
 float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
-	float ret = 0;
-	switch (gain)
-	{
-		case GAIN_HIGH :
-			ret = ((float)adc * ADC_CONV_COEFF_HIGH);
-			break;
-		case GAIN_MID :
-			ret = ((float)adc * ADC_CONV_COEFF_MID);
-			break;
-		case GAIN_LOW :
-			ret = ((float)adc * ADC_CONV_COEFF_LOW);
-			break;
-	}
-	return ret; //mA
+    float ret = 0;
+    switch (gain)
+    {
+        case GAIN_HIGH:
+        {
+            ret = ((float)adc * ADC_CONV_COEFF_HIGH);
+            break;
+        }
+        case GAIN_MID:
+        {
+            ret = ((float)adc * ADC_CONV_COEFF_MID);
+            break;
+        }
+        case GAIN_LOW:
+        {
+            ret = ((float)adc * ADC_CONV_COEFF_LOW);
+            break;
+        }
+        default:
+        {
+            FATAL_INVALID_INPUT(gain);
+            break;
+        }
+    }
+    return ret; //mA
 }
 
 uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
 {
-	uint16_t ret = 0;
-	switch (gain)
-	{
-		case GAIN_HIGH :
+    uint16_t ret = 0;
+    switch (gain)
+    {
+        case GAIN_HIGH:
+        {
             ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_HIGH + 0.5f); /* mA -> ADC */
-			break;
-		case GAIN_MID :
-			ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_MID + 0.5f); /* mA -> ADC */
-			break;
-		case GAIN_LOW :
-			ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
-			break;
-	}
-	return ret; //adc
+            break;
+        }
+        case GAIN_MID:
+        {
+            ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_MID + 0.5f); /* mA -> ADC */
+            break;
+        }
+        case GAIN_LOW:
+        {
+            ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
+            break;
+        }
+        default:
+        {
+            FATAL_INVALID_INPUT(gain);
+            break;
+        }
+    }
+    return ret; //adc
+}
+
+float JigBD_IF_Convert_Adc_To_mVoltage(uint16_t adc)
+{
+    float ret = ((float)adc * mVOLTAGE_PER_ADC);
+    return ret; //mV
 }

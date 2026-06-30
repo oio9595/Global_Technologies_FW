@@ -14,19 +14,20 @@ extern "C" {
 
 #include "main.h"
 
-typedef enum tag_POWER_STATE_T
+typedef enum tag_VLED_STATE_T
 {
-    PWR_OFF = 0,
-    PWR_ON,
-}power_state_t;
+    VLED_OFF = 0,
+    VLED_ON,
+    VLED_MAX,
+} vled_state_t;
 
-typedef enum tag_XD_VDD_T
+typedef enum tag_VCC_STATE
 {
-    XD_PWR_OFF = 0U,
-    XD_PWR_ON_5V0,
-    XD_PWR_ON_5V5,
-    XD_PWR_MAX,
-}xd_vdd_volt_t;
+    VCC_OFF = 0U,
+    VCC_ON_3V3,
+    VCC_ON_5V5,
+    VCC_MAX,
+} vcc_state_t;
 
 typedef enum tag_XDIC_CHANNEL_T
 {
@@ -84,6 +85,12 @@ typedef enum tag_CURRENT_GAIN_T
 #define XD_5V5_EN_LO()          (XD_5V5_EN_GPIO_Port->BSRR = (XD_5V5_EN_Pin << 16U))
 #define XD_5V5_EN_HI()          (XD_5V5_EN_GPIO_Port->BSRR = (XD_5V5_EN_Pin <<  0U))
 
+#define XC_VCC_EN_LO()          (XC_VCC_EN_GPIO_Port->BSRR = (XC_VCC_EN_Pin << 16U))
+#define XC_VCC_EN_HI()          (XC_VCC_EN_GPIO_Port->BSRR = (XC_VCC_EN_Pin <<  0U))
+
+#define XC_5V5_EN_LO()          (XC_5V5_EN_GPIO_Port->BSRR = (XC_5V5_EN_Pin << 16U))
+#define XC_5V5_EN_HI()          (XC_5V5_EN_GPIO_Port->BSRR = (XC_5V5_EN_Pin <<  0U))
+
 #define FREQ_MEASURE_RESET_LO() (FREQ_MEASURE_RESET_GPIO_Port->BSRR = (FREQ_MEASURE_RESET_Pin << 16U))
 #define FREQ_MEASURE_RESET_HI() (FREQ_MEASURE_RESET_GPIO_Port->BSRR = (FREQ_MEASURE_RESET_Pin <<  0U))
 
@@ -93,8 +100,12 @@ typedef enum tag_CURRENT_GAIN_T
 #define MCO2_ENABLE()           do { LL_GPIO_SetPinMode(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_MODE_ALTERNATE);  LL_GPIO_SetPinPull(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_PULL_NO);      } while(0U)
 #define MCO2_DISABLE()          do { LL_GPIO_SetPinMode(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_MODE_INPUT);      LL_GPIO_SetPinPull(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_PULL_DOWN);    } while(0U)
 
-void gpio_set_power_9v(power_state_t state);
-void gpio_set_xd_vdd_5v(xd_vdd_volt_t state);
+#define FLLSYNC_ENABLE()        do { LL_GPIO_SetPinMode(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_MODE_ALTERNATE);  LL_GPIO_SetPinPull(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_PULL_NO);      } while(0U)
+#define FLLSYNC_DISABLE()       do { LL_GPIO_SetPinMode(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_MODE_INPUT);      LL_GPIO_SetPinPull(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_PULL_NO);      } while(0U)
+
+void gpio_set_power_9v(vled_state_t state);
+void gpio_set_xd_vdd_5v(vcc_state_t state);
+void gpio_set_xc_vdd_5v(vcc_state_t state);
 void gpio_set_current_gain(current_gain_t gain);
 void gpio_set_demux_channel_selection(XD_CH_t output_ch);
 
