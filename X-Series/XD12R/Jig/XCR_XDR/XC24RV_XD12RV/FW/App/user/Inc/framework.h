@@ -113,13 +113,11 @@ struct manager
 
 extern struct manager __app_mgr;
 extern struct manager __det_mgr;
-
 extern struct manager __trim_mgr;
-
 extern struct manager *__managers[NUMBER_OF_MGRS];
 
-#define MGR_APP()	__managers[MGR_APP_INDEX]
-#define MGR_DET()	__managers[MGR_DET_INDEX]
+#define MGR_APP()   __managers[MGR_APP_INDEX]
+#define MGR_DET()   __managers[MGR_DET_INDEX]
 
 #define MGR_TRIM()  __managers[MGR_TRIM_INDEX]
 
