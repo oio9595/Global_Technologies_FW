@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "drv_xdr12.h"
+#include "comm_debugging.h"
 #include "ldim_conversion.h"
 
 #define SVSYNC_VSYNC_FREQ       (50000U)    /* 20us */
@@ -91,16 +92,23 @@ void tim_svsync_out_handler(void)
 
     switch(phase)
     {
-    case SVSYNC_PHASE_GREEN:
-        period = gn_svsync_sub_period;
-        CompareValue = gn_svsync_sub_duty;
-        break;
-    case SVSYNC_PHASE_BLUE:
-        period = gn_svsync_sub_period;
-        CompareValue = gn_svsync_sub_duty;
-        break;
-    default:
-        break;
+        case SVSYNC_PHASE_GREEN:
+        {
+            period = gn_svsync_sub_period;
+            CompareValue = gn_svsync_sub_duty;
+            break;
+        }
+        case SVSYNC_PHASE_BLUE:
+        {
+            period = gn_svsync_sub_period;
+            CompareValue = gn_svsync_sub_duty;
+            break;
+        }
+        default:
+        {
+            FATAL_INVALID_INPUT(phase);
+            break;
+        }
     }
 
     LL_TIM_SetAutoReload(TIM3, period);
