@@ -22,19 +22,19 @@ uint8_t spi_write(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t len, const ui
 {
     uint32_t n_tick = HAL_GetTick();
 
-    if(LL_SPI_IsEnabled(SPIx) != 1U)
+    if(LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
 
     while(len--)
     {
-        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         LL_SPI_TransmitData16(SPIx, *out++);
         n_tick = HAL_GetTick();
     }
 
-    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
     //us_delay(1U);
     user_delay(2U);
 
@@ -45,7 +45,7 @@ uint8_t spi_read(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t* in, uint16_t 
 {
     uint32_t n_tick = HAL_GetTick();
 
-    if(LL_SPI_IsEnabled(SPIx) != 1U)
+    if(LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
@@ -61,14 +61,14 @@ uint8_t spi_read(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t* in, uint16_t 
 
     while(len--)
     {
-        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         LL_SPI_TransmitData16(SPIx, *out++);
-        while(RESET == LL_SPI_IsActiveFlag_RXNE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_RXNE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         *in++ = LL_SPI_ReceiveData16(SPIx);
         n_tick = HAL_GetTick();
     }
 
-    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
     //us_delay(1U);
     user_delay(2U);
 
@@ -79,19 +79,19 @@ uint8_t spi_write8(SPI_TypeDef *SPIx, const uint8_t* out, uint16_t len, const ui
 {
     uint32_t n_tick = HAL_GetTick();
 
-    if(LL_SPI_IsEnabled(SPIx) != 1U)
+    if(LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
 
     while(len--)
     {
-        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         LL_SPI_TransmitData8(SPIx, *out++);
         n_tick = HAL_GetTick();
     }
 
-    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
     //us_delay(1U);
     user_delay(2U);
 
@@ -102,7 +102,7 @@ uint8_t spi_read8(SPI_TypeDef *SPIx, const uint8_t* out, uint8_t* in, uint16_t l
 {
     uint32_t n_tick = HAL_GetTick();
 
-    if(LL_SPI_IsEnabled(SPIx) != 1U)
+    if(LL_SPI_IsEnabled(SPIx) != true)
     {
         LL_SPI_Enable(SPIx);
     }
@@ -118,14 +118,14 @@ uint8_t spi_read8(SPI_TypeDef *SPIx, const uint8_t* out, uint8_t* in, uint16_t l
 
     while(len--)
     {
-        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_TXE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         LL_SPI_TransmitData8(SPIx, *out++);
-        while(RESET == LL_SPI_IsActiveFlag_RXNE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+        while(RESET == LL_SPI_IsActiveFlag_RXNE(SPIx)) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
         *in++ = LL_SPI_ReceiveData8(SPIx);
         n_tick = HAL_GetTick();
     }
 
-    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return 1U; } };
+    while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
     //us_delay(1U);
     user_delay(2U);
 

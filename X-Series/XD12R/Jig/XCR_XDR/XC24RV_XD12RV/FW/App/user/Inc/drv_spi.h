@@ -14,6 +14,8 @@ extern "C" {
 
 #include "main.h"
 
+#define SPI_TIMEOUT 1U
+
 uint8_t spi_write(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t len, const uint32_t timeout);
 uint8_t spi_read(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t* in, uint16_t len, const uint32_t timeout);
 
