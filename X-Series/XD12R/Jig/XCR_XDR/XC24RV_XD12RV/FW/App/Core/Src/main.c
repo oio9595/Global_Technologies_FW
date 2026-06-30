@@ -64,7 +64,7 @@ I2C_HandleTypeDef hi2c1;
 typedef struct tag_INPUT_CAPTURE_INFO
 {
     uint32_t tim_cnt[MCU_TIM_INPUT_CAPTURE_SIZE];
-    float tim_freq;
+    float tim_freq; /* Unit: Hz */
     bool start;
     bool done;
     uint32_t timeout_ms;
@@ -232,7 +232,7 @@ float mcu_peripheral_tim_conversion_freq(void)
     uint32_t delta = 0U;
     uint32_t counter = 0U;
 
-    for(uint16_t i = 1U ; i < MCU_TIM_INPUT_CAPTURE_SIZE; ++i)
+    for(uint16_t i = 2U ; i < MCU_TIM_INPUT_CAPTURE_SIZE; ++i) // skip tim_cnt[0]
     {
         if(gt_input_capture_info.tim_cnt[i] >= gt_input_capture_info.tim_cnt[i-1])
         {
