@@ -133,7 +133,7 @@ void Select_Menu(void)
     uint8_t key = 0;
     uint8_t flag = 0;
     uint8_t enter_menu = 0;
-    
+
     SendString("\n\r Build : ");
     SendString(__DATE__);
 
