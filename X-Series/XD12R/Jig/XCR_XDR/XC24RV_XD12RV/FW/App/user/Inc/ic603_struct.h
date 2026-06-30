@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   IC603_struct.h
  * Author: GT
  *
@@ -1115,8 +1115,8 @@ typedef union tag_BLOCK_SIZE_12
     }bit;
 }_v_block_size_12_t;
 
-/* Name : CHANNEL_ENALBE_1, access : r/w, default : 0x0000, address : 0x35 */
-typedef union tag_CHANNEL_ENALBE_1
+/* Name : CHANNEL_ENABLE_1, access : r/w, default : 0x0000, address : 0x35 */
+typedef union tag_CHANNEL_ENABLE_1
 {
     uint16_t ALL;
     struct
@@ -1138,7 +1138,7 @@ typedef union tag_CHANNEL_ENALBE_1
         uint16_t ch15_en        : 1;     /* ch15_en */
         uint16_t ch16_en        : 1;     /* ch16_en */
     }bit;
-}_v_channel_enalbe_1_t;
+}_v_channel_enable_1_t;
 
 /* Name : CHANNEL_ENABLE_2, access : r/w, default : 0x0000, address : 0x36 */
 typedef union tag_CHANNEL_ENABLE_2
@@ -1287,7 +1287,7 @@ typedef union tag_SVO_NUMBER
     {
         uint16_t sv_no          : 6;    /* sv_no [5:0] */
         uint16_t                : 2;    /* reserved */
-        uint16_t sv_no_multipier : 2;    /* sv_no_multipier [1:0] */
+        uint16_t sv_no_multiplier : 2;    /* sv_no_multiplier [1:0] */
         uint16_t                : 6;    /* reserved */
     }bit;
 }_v_svo_number_t;
@@ -1501,8 +1501,8 @@ typedef union tag_DAC1_DECREMENT_INC_WAIT
     }bit;
 }_v_dac1_decrement_inc_wait_t;
 
-/* Name : DAC1_INCREMENT_HOLD_THRESOLD, access : r/w, default : 0x020A, address : 0x53 */
-typedef union tag_DAC1_INCREMENT_HOLD_THRESOLD
+/* Name : DAC1_INCREMENT_HOLD_THRESHOLD, access : r/w, default : 0x020A, address : 0x53 */
+typedef union tag_DAC1_INCREMENT_HOLD_THRESHOLD
 {
     uint16_t ALL;
     struct
@@ -1511,7 +1511,7 @@ typedef union tag_DAC1_INCREMENT_HOLD_THRESOLD
         uint16_t bit_signed                  : 1;   /* signed */
         uint16_t                         : 6;   /* reserved */
     }bit;
-}_v_dac1_increment_hold_thresold_t;
+}_v_dac1_increment_hold_threshold_t;
 
 /* Name : DAC1_FB_VALID_TIMER, access : r/w, default : 0x0000, address : 0x54 */
 typedef union tag_DAC1_FB_VALID_TIMER
@@ -1581,8 +1581,8 @@ typedef union tag_DAC2_DECREMENT_INC_WAIT
     }bit;
 }_v_dac2_decrement_inc_wait_t;
 
-/* Name : DAC2_INCREMENT_HOLD_THRESOLD, access : r/w, default : 0x020A, address : 0x5A */
-typedef union tag_DAC2_INCREMENT_HOLD_THRESOLD
+/* Name : DAC2_INCREMENT_HOLD_THRESHOLD, access : r/w, default : 0x020A, address : 0x5A */
+typedef union tag_DAC2_INCREMENT_HOLD_THRESHOLD
 {
     uint16_t ALL;
     struct
@@ -1591,7 +1591,7 @@ typedef union tag_DAC2_INCREMENT_HOLD_THRESOLD
         uint16_t bit_signed                  : 1;   /* signed */
         uint16_t                         : 6;   /* reserved */
     }bit;
-}_v_dac2_increment_hold_thresold_t;
+}_v_dac2_increment_hold_threshold_t;
 
 /* Name : DAC2_FB_VALID_TIMER, access : r/w, default : 0x0000, address : 0x5B */
 typedef union tag_DAC2_FB_VALID_TIMER
@@ -1661,8 +1661,8 @@ typedef union tag_DAC3_DECREMENT_INC_WAIT
     }bit;
 }_v_dac3_decrement_inc_wait_t;
 
-/* Name : DAC3_INCREMENT_HOLD_THRESOLD, access : r/w, default : 0x020A, address : 0x61 */
-typedef union tag_DAC3_INCREMENT_HOLD_THRESOLD
+/* Name : DAC3_INCREMENT_HOLD_THRESHOLD, access : r/w, default : 0x020A, address : 0x61 */
+typedef union tag_DAC3_INCREMENT_HOLD_THRESHOLD
 {
     uint16_t ALL;
     struct
@@ -1671,7 +1671,7 @@ typedef union tag_DAC3_INCREMENT_HOLD_THRESOLD
         uint16_t bit_signed                  : 1;   /* signed */
         uint16_t                         : 6;   /* reserved */
     }bit;
-}_v_dac3_increment_hold_thresold_t;
+}_v_dac3_increment_hold_threshold_t;
 
 /* Name : DAC3_FB_VALID_TIMER, access : r/w, default : 0x0000, address : 0x62 */
 typedef union tag_DAC3_FB_VALID_TIMER
@@ -2300,7 +2300,7 @@ typedef union _xcr_Group1_regs
         _v_block_size_10_t                          _r32;
         _v_block_size_11_t                          _r33;
         _v_block_size_12_t                          _r34;
-        _v_channel_enalbe_1_t                       _r35;
+        _v_channel_enable_1_t                       _r35;
         _v_channel_enable_2_t                       _r36;
         _v_fllcnt11_t                               _r37;
         _v_fllcnt12_t                               _r38;
@@ -2330,21 +2330,21 @@ typedef union _xcr_Group1_regs
         _v_dac1_increment_1_t                       _r50;
         _v_dac1_increment_2_hold_limit_t            _r51;
         _v_dac1_decrement_inc_wait_t                _r52;
-        _v_dac1_increment_hold_thresold_t           _r53;
+        _v_dac1_increment_hold_threshold_t           _r53;
         _v_dac1_fb_valid_timer_t                    _r54;
         _v_dac1_min_limit_t                         _r55;
         _v_dac1_max_limit_t                         _r56;
         _v_dac2_increment_1_t                       _r57;
         _v_dac2_increment_2_hold_limit_t            _r58;
         _v_dac2_decrement_inc_wait_t                _r59;
-        _v_dac2_increment_hold_thresold_t           _r5A;
+        _v_dac2_increment_hold_threshold_t           _r5A;
         _v_dac2_fb_valid_timer_t                    _r5B;
         _v_dac2_min_limit_t                         _r5C;
         _v_dac2_max_limit_t                         _r5D;
         _v_dac3_increment_1_t                       _r5E;
         _v_dac3_increment_2_hold_limit_t            _r5F;
         _v_dac3_decrement_inc_wait_t                _r60;
-        _v_dac3_increment_hold_thresold_t           _r61;
+        _v_dac3_increment_hold_threshold_t           _r61;
         _v_dac3_fb_valid_timer_t                    _r62;
         _v_dac3_min_limit_t                         _r63;
         _v_dac3_max_limit_t                         _r64;
