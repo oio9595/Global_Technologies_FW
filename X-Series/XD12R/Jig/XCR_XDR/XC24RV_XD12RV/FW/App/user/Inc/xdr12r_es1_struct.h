@@ -16,7 +16,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-#define XD12R_INTERNAL_MCLK (50000000UL)    /* 50.0MHz */
+#define XD12R_INTERNAL_MCLK (51000000UL)    /* 51.0MHz */
 #define XDR_MODEL_NAME      "XDR12R (MP1)"
 
 /* Register Map */
@@ -85,14 +85,22 @@ typedef enum _xd12r_opt_ctrl_addr_
 
 typedef enum _max_curr_level_
 {
-    CURR_LEVEL_4 = 0U,  /* max 4mA for XD12, max 8mA for XD04 */
-    CURR_LEVEL_8,       /* max 8mA for XD12, max 16mA for XD04 */
-    CURR_LEVEL_12,      /* max 12mA for XD12, max 24mA for XD04 */
-    CURR_LEVEL_16,      /* max 16mA for XD12, max 32mA for XD04 */
-    CURR_LEVEL_24,      /* max 24mA for XD12, max 48mA for XD04 */
-    CURR_LEVEL_32,      /* max 32mA for XD12, max 64mA for XD04 */
-    CURR_LEVEL_46,      /* max 46mA for XD12, max 92mA for XD04 */
-    CURR_LEVEL_64,      /* max 64mA for XD12, max 128mA for XD04 */
+    CURR_LEVEL_4 = 0U,
+    CURR_LEVEL_8,
+    CURR_LEVEL_12,
+    CURR_LEVEL_16,
+    CURR_LEVEL_20,
+    CURR_LEVEL_24,
+    CURR_LEVEL_28,
+    CURR_LEVEL_32,
+    CURR_LEVEL_36,
+    CURR_LEVEL_40,
+    CURR_LEVEL_44,
+    CURR_LEVEL_48,
+    CURR_LEVEL_52,
+    CURR_LEVEL_56,
+    CURR_LEVEL_60,
+    CURR_LEVEL_64,
     CURR_LEVEL_MAX,
 }max_curr_level_t;
 
