@@ -84,6 +84,31 @@ void xcr24_trim_start_efuse(void);
 void xcr24_trim_save_mirror_register(void);
 uint32_t xcr24_trim_verify_mirror_dump(void);
 
+
+void xcr24_test_init_icc_stby(void);
+void xcr24_test_init_icc_actv(void);
+void xcr24_test_init_ldo(void);
+void xcr24_test_init_ldo_fll_a(void);
+void xcr24_test_init_ldo_fll_b(void);
+void xcr24_test_init_fll_a_30m(void);
+void xcr24_test_init_fll_a_35m(void);
+void xcr24_test_init_fll_a_40m(void);
+void xcr24_test_init_fll_b_30m(void);
+void xcr24_test_init_fll_b_35m(void);
+void xcr24_test_init_fll_b_40m(void);
+
+void xcr24_test_start_icc_stby(void);
+void xcr24_test_start_icc_actv(void);
+void xcr24_test_start_ldo(void);
+void xcr24_test_start_ldo_fll_a(void);
+void xcr24_test_start_ldo_fll_b(void);
+void xcr24_test_start_fll_a_30m(void);
+void xcr24_test_start_fll_a_35m(void);
+void xcr24_test_start_fll_a_40m(void);
+void xcr24_test_start_fll_b_30m(void);
+void xcr24_test_start_fll_b_35m(void);
+void xcr24_test_start_fll_b_40m(void);
+
 #ifdef __cplusplus
 }
 #endif

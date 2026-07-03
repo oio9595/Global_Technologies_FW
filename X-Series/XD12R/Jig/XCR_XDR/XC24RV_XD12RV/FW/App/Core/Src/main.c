@@ -160,7 +160,7 @@ uint16_t mcu_peripheral_adc_get(void)
     return (uint16_t)(((float)gn_InternalADC / MCU_ADC_MEASURE_COUNT) + 0.5f);
 }
 
-float mcu_peripheral_adc_conversion_to_value(uint16_t adc_value)
+float mcu_peripheral_adc_conversion_to_voltage(uint16_t adc_value)
 {
   return (float)(adc_value / MCU_ADC_RESOLUTION * MCU_ADC_VREF);
 }

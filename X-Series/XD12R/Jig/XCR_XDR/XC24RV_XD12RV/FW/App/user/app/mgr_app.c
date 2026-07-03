@@ -22,7 +22,9 @@ static bool _power_on_thread(struct thread_data* tdata)
         break;
     case 1:
         MGR_TRIM()->power(true);
-
+        break;
+    case 2:
+        MGR_TEST()->power(true);
         __priv_app.status = STATUS_NORMAL;
         __priv_app.power_on_thr = INVALID_THREAD_ID;
         ret = false;

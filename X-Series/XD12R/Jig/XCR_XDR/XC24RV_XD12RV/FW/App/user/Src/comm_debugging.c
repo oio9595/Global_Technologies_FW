@@ -64,7 +64,7 @@ typedef struct
     tx_packet_t Txbuff[TX_BUFF_SIZE];
 }UART_t;
 
-static LOG_LV_t gt_log_level;
+volatile static LOG_LV_t gt_log_level;
 static UART_t gt_uart;
 bool gb_usart_tx_start_flag;
 
@@ -192,7 +192,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    gt_log_level = LOG_LV_INFO;
+    gt_log_level = LOG_LV_DEBUG;
 }
 
 void comm_debugging_process(void)

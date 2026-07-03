@@ -5,6 +5,7 @@
 #include "drv_spi.h"
 #include "drv_xcr24.h"
 #include "drv_xdr12.h"
+#include "ads124s08.h"
 #include "comm_debugging.h"
 
 #define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (float)(Hz) + 0.5f)
@@ -1559,4 +1560,98 @@ uint32_t xcr24_trim_verify_mirror_dump(void)
         }
     }
     return ret;
+}
+
+void xcr24_test_init_icc_stby(void)
+{
+    /* change adc ch_p, ch_n */
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+}
+
+void xcr24_test_init_icc_actv(void)
+{
+    /* change adc ch_p, ch_n */
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+}
+
+void xcr24_test_init_ldo(void)
+{
+
+}
+void xcr24_test_init_ldo_fll_a(void)
+{
+
+}
+void xcr24_test_init_ldo_fll_b(void)
+{
+
+}
+void xcr24_test_init_fll_a_30m(void)
+{
+
+}
+void xcr24_test_init_fll_a_35m(void)
+{
+
+}
+void xcr24_test_init_fll_a_40m(void)
+{
+
+}
+void xcr24_test_init_fll_b_30m(void)
+{
+
+}
+void xcr24_test_init_fll_b_35m(void)
+{
+
+}
+void xcr24_test_init_fll_b_40m(void)
+{
+
+}
+
+void xcr24_test_start_icc_stby(void)
+{
+}
+
+void xcr24_test_start_icc_actv(void)
+{
+}
+
+void xcr24_test_start_ldo(void)
+{
+
+}
+void xcr24_test_start_ldo_fll_a(void)
+{
+
+}
+void xcr24_test_start_ldo_fll_b(void)
+{
+
+}
+void xcr24_test_start_fll_a_30m(void)
+{
+
+}
+void xcr24_test_start_fll_a_35m(void)
+{
+
+}
+void xcr24_test_start_fll_a_40m(void)
+{
+
+}
+void xcr24_test_start_fll_b_30m(void)
+{
+
+}
+void xcr24_test_start_fll_b_35m(void)
+{
+
+}
+void xcr24_test_start_fll_b_40m(void)
+{
+
 }

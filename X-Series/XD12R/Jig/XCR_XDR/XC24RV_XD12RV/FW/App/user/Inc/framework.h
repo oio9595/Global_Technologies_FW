@@ -70,10 +70,8 @@ typedef enum
 {
     MGR_APP_INDEX = 0U,
     MGR_DET_INDEX,
-
     MGR_TRIM_INDEX,
     MGR_TEST_INDEX,
-
     NUMBER_OF_MGRS,
 }mgr_type_t;
 

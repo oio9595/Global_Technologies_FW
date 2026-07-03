@@ -949,8 +949,6 @@ static void xdr_trim_log_summary(void)
     }
 }
 
-
-
 static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, trim_info_t* in_trim_info)
 {
     bool ret = false;
@@ -1034,7 +1032,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
         case TRIM_STEP_INITIAL:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_trim_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             /* XDR Initialization */
             xdr12_trim_init();
             td->step = TRIM_STEP_INITIAL_BY_LIST;
@@ -1157,7 +1155,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 case XDR_TRIM_LIST_LDO_DAC:
                 case XDR_TRIM_LIST_LDO_FLL:
                 {
-                    info->measure[ch].value = mcu_peripheral_adc_conversion_to_value(mcu_peripheral_adc_get());
+                    info->measure[ch].value = mcu_peripheral_adc_conversion_to_voltage(mcu_peripheral_adc_get());
                     td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
                     break;
                 }

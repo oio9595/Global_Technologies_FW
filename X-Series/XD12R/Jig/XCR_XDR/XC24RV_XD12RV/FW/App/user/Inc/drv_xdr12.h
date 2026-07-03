@@ -123,6 +123,7 @@ void xdr12_trim_init_ch_ofs(void);
 
 void xdr12_trim_set_channel_enable(XD_CH_t chx);
 void xdr12_trim_set_max_curr_vref(uint16_t vref);
+void xdr12_trim_set_max_curr_lvl(uint16_t curr_lvl);
 
 bool xdr12_trim_set_current_ref(uint16_t reg_val);
 bool xdr12_trim_set_ldo_dig(uint16_t reg_val);
@@ -137,6 +138,32 @@ void xdr12_trim_start_efuse(void);
 
 void xdr12_trim_save_mirror_register(void);
 uint32_t xdr12_trim_verify_mirror_dump(void);
+
+void xdr12_test_init_icc_stby(void);
+void xdr12_test_init_icc_actv(void);
+void xdr12_test_init_current_ref(void);
+void xdr12_test_init_ldo_dig(void);
+void xdr12_test_init_ldo_dac(void);
+void xdr12_test_init_ldo_fll(void);
+void xdr12_test_init_osc(void);
+void xdr12_test_init_fll_40M(void);
+void xdr12_test_init_fll_50M(void);
+void xdr12_test_init_fll_60M(void);
+void xdr12_test_init_iout_3P(void);
+void xdr12_test_init_max_sweep(void);
+
+void xdr12_test_start_icc_stby(void);
+void xdr12_test_start_icc_actv(void);
+void xdr12_test_start_current_ref(void);
+void xdr12_test_start_ldo_dig(void);
+void xdr12_test_start_ldo_dac(void);
+void xdr12_test_start_ldo_fll(void);
+void xdr12_test_start_osc(void);
+void xdr12_test_start_fll_40M(void);
+void xdr12_test_start_fll_50M(void);
+void xdr12_test_start_fll_60M(void);
+void xdr12_test_start_iout_3P(void);
+void xdr12_test_start_max_sweep(void);
 
 #ifdef __cplusplus
 }

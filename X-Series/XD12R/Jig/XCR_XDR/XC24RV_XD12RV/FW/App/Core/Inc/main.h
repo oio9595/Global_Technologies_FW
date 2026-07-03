@@ -68,7 +68,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void mcu_peripheral_adc_start(void);
 uint16_t mcu_peripheral_adc_get(void);
-float mcu_peripheral_adc_conversion_to_value(uint16_t adc_value);
+float mcu_peripheral_adc_conversion_to_voltage(uint16_t adc_value);
 
 void mcu_peripheral_tim_input_capture_start(void);
 void mcu_peripheral_tim_input_capture_stop(void);

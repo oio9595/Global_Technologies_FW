@@ -89,6 +89,7 @@ extern uint16_t ADS114S08_Get_ADC_Value(void);
 extern float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain);
 extern uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain);
 extern float JigBD_IF_Convert_Adc_To_mVoltage(uint16_t adc);
+extern float JigBD_IF_Convert_Adc_To_ICC(uint16_t adc);
 
 #ifdef __cplusplus
 }
