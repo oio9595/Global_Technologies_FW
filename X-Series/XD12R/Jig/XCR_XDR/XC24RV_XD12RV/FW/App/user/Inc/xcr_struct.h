@@ -44,10 +44,10 @@ extern "C" {
 #define CH_SEG1     (1U)    /* XC24R CH09 ~ CH16 for Local-write/read command */
 #define CH_SEG2     (2U)    /* XC24R CH17 ~ CH24 for Local-write/read command */
 
-#define LD_WIDTH0   (0U)    /* 0b00, LD width - 24bit : PWM  8bit + PAM 16bit => PWM  8bit + PWM 14bit */
-#define LD_WIDTH1   (1U)    /* 0b01, LD width - 24bit : PWM 12bit + PAM 12bit => PWM 10bit + PWM 11bit */
-#define LD_WIDTH2   (2U)    /* 0b10, LD width - 24bit : PWM 12bit + PAM 112bit => PWM 10bit + PWM 12bit */
-#define LD_WIDTH3   (3U)    /* 0b11, LD width - 16bit : 16bit => LD 16bit */
+#define LD_WIDTH0   (0U)    /* 0b00, Not Supported */
+#define LD_WIDTH1   (1U)    /* 0b01, LD width - 12bit */
+#define LD_WIDTH2   (2U)    /* 0b10, LD width - 14bit */
+#define LD_WIDTH3   (3U)    /* 0b11, LD width - 16bit */
 
 /* Command define */
 typedef enum _xcr_addr_grp1_
@@ -456,7 +456,7 @@ typedef union tag_LD_TRANSFER_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ld_blk         : 3;    /* ld#_blk [2:0] - total ld transmit/dev = ld_type * daisied_dev_ch_size */
+        __IO uint16_t ld_type         : 3;    /* ld#_blk [2:0] - total ld transmit/dev = ld_type * daisied_dev_ch_size */
         uint16_t                : 12;   /* reserved */
         __IO uint16_t enable         : 1;    /* enable */
     }bit;
@@ -2263,7 +2263,6 @@ typedef union tag_ANA_TEST
         uint16_t                : 3;    /* reserved */
     }bit;
 }_v_ana_test_t;
-
 
 typedef union _xcr_Group1_regs
 {

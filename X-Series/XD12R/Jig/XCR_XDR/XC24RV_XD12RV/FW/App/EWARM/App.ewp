@@ -662,7 +662,7 @@
             <data>
                 <extensions></extensions>
                 <cmdline></cmdline>
-                <hasPrio>224</hasPrio>
+                <hasPrio>1</hasPrio>
                 <buildSequence>inputOutputBased</buildSequence>
             </data>
         </settings>
@@ -4464,6 +4464,12 @@
             <name>Src</name>
             <file>
                 <name>$PROJ_DIR$\..\user\Src\comm_debugging.c</name>
+            </file>
+        </group>
+        <group>
+            <name>test</name>
+            <file>
+                <name>$PROJ_DIR$\..\user\test\mgr_test.c</name>
             </file>
         </group>
         <group>

@@ -14,10 +14,9 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "xcr_struct.h"
+#include "xcr24_struct.h"
 
-#define XCR_LD_WIDTH            (LD_WIDTH3)
-#define XCR_CH_SIZE             (24U)
+#define XCR_CH_SIZE             (1U)
 #define XCR_SEG_CH_SIZE       	(8U)
 
 #define MODEL_XCR24_SEG         ((uint16_t)((XCR_CH_SIZE + XCR_SEG_CH_SIZE - 1)  / XCR_SEG_CH_SIZE))     /* make ceiled value */
@@ -42,11 +41,11 @@ const _xcr_group2_regs_t* xcr24_get_xcr24_get_gr2_regs(void);
 //const _xd12_regs_t* xcr24_get_xdr12_set_regs(void);
 //ret_xdr12_regs xcr24_get_xdr12_get_regs(void);
 
-void xcr24_read_otp_control(uint16_t addr, uint16_t length);
+uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length);
 void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length);
 
-void xcr24_read_grp1_reg(uint16_t addr, uint16_t length);
-void xcr24_read_grp2_reg(uint16_t addr, uint16_t length);
+uint16_t xcr24_read_grp1_reg(uint16_t addr, uint16_t length);
+uint16_t xcr24_read_grp2_reg(uint16_t addr, uint16_t length);
 void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 

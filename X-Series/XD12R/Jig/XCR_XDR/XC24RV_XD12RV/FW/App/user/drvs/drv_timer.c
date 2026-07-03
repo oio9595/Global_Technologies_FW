@@ -11,7 +11,7 @@
 #define SVSYNC_PHASE_GREEN      (1U)
 #define SVSYNC_PHASE_BLUE       (0U)
 
-#define SVSYNC_GATING_TIME_US   (21U)
+#define SVSYNC_GATING_TIME_US   (10U)
 #define SVSYNC_CYCLE            (2U)
 #define SVSYNC_SIZE             (XDR_SV_NO)
 #define SVSYNC_TOTAL_CYCLE      (SVSYNC_CYCLE * SVSYNC_SIZE)
@@ -155,22 +155,26 @@ void tim_vsync_out_process(void)
 
     if(true == gb_xcr_ldim_block_conversion_flag)
     {
-        uint16_t gn_global_ldim_red = gn_xcr_ldim_block_conversion_index;
-        uint16_t gn_global_ldim_green = gn_xcr_ldim_block_conversion_index;
-        uint16_t gn_global_ldim_blue = gn_xcr_ldim_block_conversion_index;
-
-        ldim_set_ldim_rgb(gn_xcr_ldim_block_conversion_index, gn_global_ldim_red, gn_global_ldim_green, gn_global_ldim_blue);
+        uint16_t* p_led_color_table = ldim_get_led_color_buffer();
+        ldim_set_ldim_rgb(gn_xcr_ldim_block_conversion_index, \
+            p_led_color_table[COLOR_RED], p_led_color_table[COLOR_GREEN], p_led_color_table[COLOR_BLUE], p_led_color_table[COLOR_CYAN]);
         ++gn_xcr_ldim_block_conversion_index;
         if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
         {
-            gb_xcr_ldim_block_conversion_flag = false;
-            gn_xcr_ldim_block_conversion_index = 0U;
-
+            /*
             uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
             uint16_t len = ldim_get_xcr_ld_transfer_size();
 
             xcr24_set_ld_transfer(p, len);
+            */
+
+            uint16_t* p = ldim_get_xdr_ld_transfer_buffer();
+            uint16_t len = ldim_get_xdr_ld_transfer_size();
+
+            xdr12_ld_transfer(p, len);
+
+            gb_xcr_ldim_block_conversion_flag = false;
+            gn_xcr_ldim_block_conversion_index = 0U;
         }
     }
 }
-

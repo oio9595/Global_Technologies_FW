@@ -284,12 +284,22 @@ void comm_debugging_process(void)
             MGR_TRIM()->cmd(TRIM_CMD_XDR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xcr_test_start")))
+        {
+            MGR_TEST()->cmd(TEST_CMD_XCR_START, NULL);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xdr_test_start")))
+        {
+            MGR_TEST()->cmd(TEST_CMD_XDR_START, NULL);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
 
-        else if(Command_Param_is_("ldim_color", "%x %x %x", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
+        else if(Command_Param_is_("ldim_color", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
         {
             for(uint16_t block = 0U ; block < LDIM_BLK_SIZE ; ++block)
             {
-                ldim_set_ldim_rgb(block, (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2]);
+                ldim_set_ldim_rgb(block, (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }

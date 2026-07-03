@@ -72,6 +72,7 @@ typedef enum
     MGR_DET_INDEX,
 
     MGR_TRIM_INDEX,
+    MGR_TEST_INDEX,
 
     NUMBER_OF_MGRS,
 }mgr_type_t;
@@ -100,6 +101,12 @@ typedef enum
     TRIM_CMD_XDR_START,
 }TrimCommand_t;
 
+typedef enum
+{
+    TEST_CMD_XCR_START = 0U,
+    TEST_CMD_XDR_START,
+}TestCommand_t;
+
 struct manager
 {
     void (*power)(bool on);
@@ -114,12 +121,14 @@ struct manager
 extern struct manager __app_mgr;
 extern struct manager __det_mgr;
 extern struct manager __trim_mgr;
+extern struct manager __test_mgr;
 extern struct manager *__managers[NUMBER_OF_MGRS];
 
 #define MGR_APP()   __managers[MGR_APP_INDEX]
 #define MGR_DET()   __managers[MGR_DET_INDEX]
 
 #define MGR_TRIM()  __managers[MGR_TRIM_INDEX]
+#define MGR_TEST()  __managers[MGR_TEST_INDEX]
 
 #ifdef __cplusplus
 }

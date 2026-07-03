@@ -17,19 +17,79 @@ extern "C" {
 #include "drv_gpio.h"
 #include "xdr12_struct.h"
 
-#define LD_TYPE                 	(2U)    /* R/G/B */
+#define XDR_CH_SIZE         (12U)
 
-#define XDR_DAISY_LENGTH        	(1U)
-#define XDR_CH_LENGTH           	(12U)
-#define XD_LINE_LENGTH          	((XDR_DAISY_LENGTH * XDR_CH_LENGTH) / LD_TYPE)
+#define XDR_TYPE_A          (0U) /* NTS + TS */
+#define XDR_TYPE_B          (1U) /* NTS + NTS + TS */
+#define XDR_TYPE_C          (2U) /* NTS + TS + TS */
+#define XDR_TYPE_D          (3U) /* TS + TS */
+#define XDR_TYPE            XDR_TYPE_B
 
-#define MODEL_XDR_DAISY_SEG_SIZE    (XDR_DAISY_LENGTH * XCR_SEG_CH_SIZE)
+#if (XDR_TYPE == XDR_TYPE_A)
+    #define LED_PER_BLOCK       (3U) /* NTS + TS */
+    #define XDR_CH_PER_BLOCK    (2U)
+    #define BLOCK_PER_XDR       (XDR_CH_SIZE / XDR_CH_PER_BLOCK) /* 6 blocks per XDR */
+    #define XDR_LD_SIZE         (18U) /* TYPE-A; 3[NTS(1) + TS(2)] * 6set */
+    typedef enum tag_COLOR_ORDER
+    {
+        COLOR_RED = 0U,
+        COLOR_GREEN,
+        COLOR_BLUE,
+        COLOR_ORDER_MAX,
+    } color_order_t;
+#elif (XDR_TYPE == XDR_TYPE_B)
+    #define LED_PER_BLOCK       (4U) /* NTS + NTS + TS */
+    #define XDR_CH_PER_BLOCK    (3U)
+    #define BLOCK_PER_XDR       (XDR_CH_SIZE / XDR_CH_PER_BLOCK) /* 4 blocks per XDR */
+    #define XDR_LD_SIZE         (LED_PER_BLOCK * BLOCK_PER_XDR) /* TYPE-B; 4[NTS(1) + NTS(1) + TS(2)] * 4set */
+    typedef enum tag_COLOR_ORDER
+    {
+        COLOR_RED = 0U,
+        COLOR_CYAN,
+        COLOR_GREEN,
+        COLOR_BLUE,
+        COLOR_ORDER_MAX,
+    } color_order_t;
+#elif (XDR_TYPE == XDR_TYPE_C)
+    #define LED_PER_BLOCK       (5U) /* NTS + TS + TS */
+    #define XDR_CH_PER_BLOCK    (3U)
+    #define BLOCK_PER_XDR       (XDR_CH_SIZE / XDR_CH_PER_BLOCK) /* 4 blocks per XDR */
+    #define XDR_LD_SIZE         (20U) /* TYPE-C; 5[NTS(1) + TS(2) + TS(2)] * 4set */
+    typedef enum tag_COLOR_ORDER
+    {
+        COLOR_RED = 0U,
+        COLOR_GREEN,
+        COLOR_BLUE,
+        COLOR_CYAN,
+        COLOR_MAGENTA,
+        COLOR_ORDER_MAX,
+    } color_order_t;
+#elif (XDR_TYPE == XDR_TYPE_D)
+    #define LED_PER_BLOCK       (4U) /* TS + TS */
+    #define XDR_CH_PER_BLOCK    (2U)
+    #define BLOCK_PER_XDR       (XDR_CH_SIZE / XDR_CH_PER_BLOCK) /* 4 blocks per XDR */
+    #define XDR_LD_SIZE         (24U) /* TYPE-D; 4[TS(2) + TS(2)] * 6set */
+    typedef enum tag_COLOR_ORDER
+    {
+        COLOR_GREEN = 0U,
+        COLOR_BLUE,
+        COLOR_ORDER_MAX,
+    } color_order_t;
+#else
+    #error "XDR_TYPE is not defined"
+#endif
+
+#define XDR_DAISY_LENGTH            (1U)
+
+//#define XDR_LD_DATA_12BIT           (12U)
+#define XDR_LD_DATA_14BIT           (14U)
+#define XDR_LD_DATA_BIT             XDR_LD_DATA_14BIT
 
 #define XDR_SV_NO               	(32U)
 
-#define XDR_SERIAL_CLK_HIGH     	(34U)
-#define XDR_SERIAL_CLK_LOW      	(16U)
-#define XDR_SERIAL_CLK          	((float)XD12R_INTERNAL_MCLK / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
+#define XDR_SERIAL_CLK_HIGH     	(17U)
+#define XDR_SERIAL_CLK_LOW      	(8U)
+#define XDR_SERIAL_CLK          	((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
 
 typedef enum tag_XD12R_ADDR_TYPE
 {

@@ -7,6 +7,14 @@
 #include "drv_xdr12.h"
 #include "comm_debugging.h"
 
+#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (float)(Hz) + 0.5f)
+#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (float)(us)) + 0.5f)
+
+#define XCR_SVO_ON_TIME_US      (10U) /* 10us */
+#define XCR_SVO1_OFF_TIME_US    (100U) /* 100us */
+#define XCR_SVO2_OFF_TIME_US    (100U) /* 100us */
+#define XCR_SVO3_OFF_TIME_US    (100U) /* 100us */
+
 #define XCR_SPI_HEADER_SIZE     (1U)
 #define XCR_SPI_BURST_MAX_SIZE  (64U)
 #define XCR_SPI_BUFF_MAX_SIZE   (XCR_SPI_HEADER_SIZE + XCR_SPI_BURST_MAX_SIZE)
@@ -22,6 +30,27 @@
 #define XCR_MAX_OSC_A           (0x001FU)
 #define XCR_MAX_OSC_B           (0x001FU)
 
+#define XCR_FUNCTION_DIS        (0U)
+#define XCR_FUNCTION_EN         (1U)
+
+#if (XDR_LD_DATA_BIT == XDR_LD_DATA_12BIT)
+    #define XCR_LD_WIDTH        (LD_WIDTH1)
+#elif (XDR_LD_DATA_BIT == XDR_LD_DATA_14BIT)
+    #define XCR_LD_WIDTH        (LD_WIDTH2)
+#else
+    #error "Unsupported XDR_LD_DATA_BIT value"
+#endif
+
+#define XCR_SYNCMODE_NONE       (0U)
+#define XCR_SYNCMODE_CMD_SVO    (1U)
+#define XCR_SYNCMODE_VO_SVO     (2U)
+#define XCR_SYNCMODE_RSO_CMD    (3U)
+
+#define XCR_SVO_ACTIVE_NONE     (0U)
+#define XCR_SVO_ACTIVE_NDF      (1U)
+#define XCR_SVO_ACTIVE_23       (2U)
+#define XCR_SVO_ACTIVE_123      (3U)
+
 typedef enum tag_XCR_RW_GRP
 {
     XCR_RW_GRP1 = 0U,
@@ -31,21 +60,19 @@ typedef enum tag_XCR_RW_GRP
 
 volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
-static uint8_t gn_xcr_daisied_dev_ch_size;
-static uint8_t gn_xcr_channel_enable[XCR_CH_SIZE];
-static uint8_t gn_xcr_channel_daisy_size[XCR_CH_SIZE];
-static uint8_t gn_xcr_channel_block_size[XCR_CH_SIZE];
+static uint8_t gn_xcr_daisied_dev_blk_size;
+static uint8_t gn_xcr_channel_enable[24];
+static uint8_t gn_xcr_channel_daisy_size[24];
+static uint8_t gn_xcr_channel_block_size[24];
+static uint32_t gn_xcr_fll_cnt[2];
 
 static _xcr_group1_regs_t gt_xcr24_set_gr1_regs;
 static _xcr_group2_regs_t gt_xcr24_set_gr2_regs;
 static _xcr_group1_regs_t gt_xcr24_get_gr1_regs;
 static _xcr_group2_regs_t gt_xcr24_get_gr2_regs;
 
-static _xcr_otp_control_regs_t gt_xcr24_otp_access; /* base address 0xF0 */
-
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
-#else
-#endif
+static _xcr_otp_control_regs_t gt_xcr24_set_otp_access; /* base address 0xF0 */
+static _xcr_otp_control_regs_t gt_xcr24_get_otp_access; /* base address 0xF0 */
 
 static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
 
@@ -65,99 +92,57 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r00.bit.vsync_rst_en1 = 1U;
             _r1->reg._r00.bit.vsync_rst_en2 = 1U;
             break;
-        //case XCR_GLOBAL_WRITE:
-        //case XCR_LOCAL_WRITE:
-        //case XCR_LOCAL_READ:
-        //case XCR_ID_GEN:
-        //case XCR_FAULT_READ:
-        //case XCR_LD_TRANSFER:
-        //case XCR_SYNC_GEN:
+        case XCR_LD_TRANSFER_COMMAND:
+            _r1->reg._r06.bit.ld_type = LED_PER_BLOCK;
+            break;
+        case XCR_SYNC_GEN_COMMAND:
+            _r1->reg._r07.bit.syncmode = XCR_SYNCMODE_VO_SVO;
+            _r1->reg._r07.bit.enable = XCR_FUNCTION_DIS;
+            break;
         case XCR_COMMAND_AUTO_ENABLE:
-            _r1->reg._r08.bit.sync_auto_en = 0U;
-            _r1->reg._r08.bit.fault_auto_en = 0U;
+            _r1->reg._r08.bit.sync_auto_en = XCR_FUNCTION_DIS;
+            _r1->reg._r08.bit.fault_auto_en = XCR_FUNCTION_EN;
             break;
-        //case XCR_LD_WRITE_POINTER:
-        //case XCR_LD_READ_POINTER:
-        //case XCR_LD_DIFFERENCE_POINTER:
-        case XCR_LD_START_POINTER_TH:
-            _r1->reg._r0C.bit.ld_diff_threshold = 0U;
-            _r1->reg._r0C.bit.int_ld_sign = 0U;
-            _r1->reg._r0C.bit.ld_transfer_start_pointer = 0U;
-            break;
-        //case XCR_LOCAL_WRITE_TRANSFER_POINTER:
-        //case XCR_LOCAL_READ_RECEIVE_POINTER:
-        //case XCR_LOCAL_RW_DIFFERENCE_POINTER:
         case XCR_LOCAL_RW_POINTER_RESET:
             _r1->reg._r10.bit.local_transfer_pointer_rst = 1U;
             _r1->reg._r10.bit.local_receive_pointer_rst = 1U;
             break;
-        case XCR_FAULT_AUTO_READ_INTERVAL:
-            _r1->reg._r11.bit.fault_auto_rd_interval = 0U;
-            break;
-        case XCR_FAULT_AUTO_READ_EVENT:
-            _r1->reg._r12.bit.fault_auto_rd_interval = 0U;
-            _r1->reg._r12.bit.fault_auto_rd_timer_event = 0U;
-            break;
         case XCR_INTERRUPT_ENABLE:
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
-            _r1->reg._r13.bit.int_fb_en = 0U;
-            _r1->reg._r13.bit.int_open_en = 0U;
-            _r1->reg._r13.bit.int_short_en = 0U;
-            _r1->reg._r13.bit.int_thermal_en = 0U;
-            _r1->reg._r13.bit.int_ld_en = 0U;
-            _r1->reg._r13.bit.int_rd_rec_fail_en = 0U;
-            _r1->reg._r13.bit.int_fault_auto_rec_fail_en = 0U;
-            _r1->reg._r13.bit.int_fault_rec_fail_en = 0U;
-            _r1->reg._r13.bit.int_timeout_err_en = 0U;
-            _r1->reg._r13.bit.int_spi_pc_en = 0U;
-            _r1->reg._r13.bit.int_acc_cnt_err_en = 0U;
-            _r1->reg._r13.bit.int_cmd_pc_en = 0U;
-            _r1->reg._r13.bit.int_uv15_en = 0U;
-            _r1->reg._r13.bit.int_ov15_en = 0U;
-            _r1->reg._r13.bit.int_uv50_en = 0U;
-            _r1->reg._r13.bit.int_ov50_en = 0U;
-#elif (XC_MODEL_TYPE == XC_TYPE_IC603)
-            _r1->reg._r13.bit.int_source1_en = 0U;
-            _r1->reg._r13.bit.int_source2_en = 0U;
-            _r1->reg._r13.bit.int_source3_en = 0U;
-            _r1->reg._r13.bit.int_source4_en = 0U;
-            _r1->reg._r13.bit.int_ld_en = 0U;
-            _r1->reg._r13.bit.int_vs_miss_en = 0U;
-            _r1->reg._r13.bit.int_timeout_err_en = 0U;
-            _r1->reg._r13.bit.int_ser_crc_en = 0U;
-            _r1->reg._r13.bit.int_spi_crc_en = 0U;
-            _r1->reg._r13.bit.int_ctrl_mismatch_en = 0U;
-            _r1->reg._r13.bit.int_gate_short_en = 0U;
-            _r1->reg._r13.bit.int_osc_err_en = 0U;
-            _r1->reg._r13.bit.int_ldo_ovuv_en = 0U;
-            _r1->reg._r13.bit.int_bgr_ovuv_en = 0U;
-#endif
+            _r1->reg._r13.bit.int_fb_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_open_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_short_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_thermal_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_ld_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_rd_rec_fail_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_fault_auto_rec_fail_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_fault_rec_fail_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_timeout_err_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_spi_pc_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_acc_cnt_err_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_cmd_pc_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_uv15_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_ov15_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_uv50_en = XCR_FUNCTION_DIS;
+            _r1->reg._r13.bit.int_ov50_en = XCR_FUNCTION_DIS;
             break;
-        //case XCR_COMMAND_STATUS_1:
-        //case XCR_COMMAND_STATUS_2:
-        //case XCR_RECEIVE_STATUS:
-        //case XCR_INTERRUPT_STATUS:
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
-        //case XCR_CMD_PARITY_ERR_STATUS1:
-        //case XCR_CMD_PARITY_ERR_STATUS2:
         case XCR_SPI_FAULT_STATUS_CONTROL:
-            _r1->reg._r1A.bit.spi_parity_err_det_en = 0U;
-            _r1->reg._r1A.bit.spi_acc_cnt_err_det_en = 0U;
+            _r1->reg._r1A.bit.spi_parity_err_det_en = XCR_FUNCTION_DIS;
+            _r1->reg._r1A.bit.spi_acc_cnt_err_det_en = XCR_FUNCTION_DIS;
             break;
         case XCR_CLK_CONTROL_1:
-            _r1->reg._r1B.bit.serializer_skew_en = 0U;
-            _r1->reg._r1B.bit.osc1_spread_en = 0U;
-            _r1->reg._r1B.bit.serializer_clk_sel1 = 0U;
-            _r1->reg._r1B.bit.sprd1_gain = 0U;
-            _r1->reg._r1B.bit.serializer_clk_sel2 = 0U;
-            _r1->reg._r1B.bit.ld_rd_clk_sel = 0U;
-            _r1->reg._r1B.bit.spread1_spd = 0U;
+            _r1->reg._r1B.bit.serializer_skew_en = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.bit.osc1_spread_en = XCR_FUNCTION_EN;
+            _r1->reg._r1B.bit.serializer_clk_sel1 = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.bit.sprd1_gain = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.bit.serializer_clk_sel2 = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.bit.ld_rd_clk_sel = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.bit.spread1_spd = XCR_FUNCTION_DIS;
             break;
         case XCR_CLK_CONTROL_2:
-            _r1->reg._r1C.bit.mclk_mode = 0U;
-            _r1->reg._r1C.bit.osc2_spread_en = 0U;
-            _r1->reg._r1C.bit.sprd2_gain = 0U;
-            _r1->reg._r1C.bit.spread2_spd = 0U;
+            _r1->reg._r1C.bit.mclk_mode = XCR_FUNCTION_DIS;
+            _r1->reg._r1C.bit.osc2_spread_en = XCR_FUNCTION_DIS;
+            _r1->reg._r1C.bit.sprd2_gain = XCR_FUNCTION_DIS;
+            _r1->reg._r1C.bit.spread2_spd = XCR_FUNCTION_DIS;
             break;
         case XCR_SERIALIZER_CLOCK_GEN:
             _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
@@ -171,7 +156,7 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r1F.bit.timeout = 0U;
             break;
         case XCR_DAISIED_DEVICE_CH_SIZE:
-            _r1->reg._r20.bit.daisied_dev_blk_size = gn_xcr_daisied_dev_ch_size;
+            _r1->reg._r20.bit.daisied_dev_blk_size = gn_xcr_daisied_dev_blk_size;
             break;
         case XCR_DAISY_SIZE_1:
             _r1->reg._r21.bit.daisy_size_ch1 = gn_xcr_channel_daisy_size[0U];
@@ -213,78 +198,6 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r28.bit.daisy_size_ch23 = gn_xcr_channel_daisy_size[22U];
             _r1->reg._r28.bit.daisy_size_ch24 = gn_xcr_channel_daisy_size[23U];
             break;
-#elif (XC_MODEL_TYPE == XC_TYPE_IC603)
-        //case XCR_ERR_STATUS:
-        //case XCR_CH_CRC_ERR_STATUS:
-        //case XCR_CH_TIMEOUT_ERR_STATUS:
-        case XCR_BITS_CONTROL_STATUS:
-            _r1->reg._r1B.bit.BITS_START = 0U;
-            break;
-        case XCR_COMMUNICATION_FAULT_CONTROL:
-            _r1->reg._r1C.bit.spi_crc_en = 0U;
-            _r1->reg._r1C.bit.ser_crc_en = 0U;
-            _r1->reg._r1C.bit.vs_miss_en = 0U;
-            break;
-        case XCR_CLK_CONTROL_1:
-            _r1->reg._r1D.bit.serializer_skew_en = 0U;
-            _r1->reg._r1D.bit.osc1_spread_en = 0U;
-            _r1->reg._r1D.bit.serializer_clk_sel1 = 0U;
-            _r1->reg._r1D.bit.sprd1_gain = 0U;
-            _r1->reg._r1D.bit.serializer_clk_sel2 = 0U;
-            _r1->reg._r1D.bit.ld_rd_clk_sel = 0U;
-            _r1->reg._r1D.bit.spread1_spd = 0U;
-            break;
-        case XCR_CLK_CONTROL_2:
-            _r1->reg._r1E.bit.mclk_mode = 0U;
-            _r1->reg._r1E.bit.osc2_spread_en = 0U;
-            _r1->reg._r1E.bit.sprd2_gain = 0U;
-            _r1->reg._r1E.bit.spread2_spd = 0U;
-            break;
-        case XCR_SERIALIZER_CLOCK_GEN:
-            _r1->reg._r1F.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
-            _r1->reg._r1F.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
-            break;
-        case XCR_LATENCY:
-            _r1->reg._r20.bit.cmd_latency = 0U;
-            _r1->reg._r20.bit.serial_latency = 0U;
-            break;
-        case XCR_TIMEOUT:
-            _r1->reg._r21.bit.timeout = 0U;
-            break;
-        case XCR_DAISIED_DEVICE_CH_SIZE:
-            _r1->reg._r22.bit.daisied_dev_ch_size1 = gn_xcr_daisied_dev_ch_size;
-            break;
-        case XCR_DAISY_SIZE_1:
-            _r1->reg._r23.bit.daisy_size_ch1 = gn_xcr_channel_daisy_size[0U];
-            _r1->reg._r23.bit.daisy_size_ch2 = gn_xcr_channel_daisy_size[1U];
-            _r1->reg._r23.bit.daisy_size_ch3 = gn_xcr_channel_daisy_size[2U];
-            break;
-        case XCR_DAISY_SIZE_2:
-            _r1->reg._r24.bit.daisy_size_ch4 = gn_xcr_channel_daisy_size[3U];
-            _r1->reg._r24.bit.daisy_size_ch5 = gn_xcr_channel_daisy_size[4U];
-            _r1->reg._r24.bit.daisy_size_ch6 = gn_xcr_channel_daisy_size[5U];
-            break;
-        case XCR_DAISY_SIZE_3:
-            _r1->reg._r25.bit.daisy_size_ch7 = gn_xcr_channel_daisy_size[6U];
-            _r1->reg._r25.bit.daisy_size_ch8 = gn_xcr_channel_daisy_size[7U];
-            _r1->reg._r25.bit.daisy_size_ch9 = gn_xcr_channel_daisy_size[8U];
-            break;
-        case XCR_DAISY_SIZE_4:
-            _r1->reg._r26.bit.daisy_size_ch10 = gn_xcr_channel_daisy_size[9U];
-            _r1->reg._r26.bit.daisy_size_ch11 = gn_xcr_channel_daisy_size[10U];
-            _r1->reg._r26.bit.daisy_size_ch12 = gn_xcr_channel_daisy_size[11U];
-            break;
-        case XCR_DAISY_SIZE_5:
-            _r1->reg._r27.bit.daisy_size_ch13 = gn_xcr_channel_daisy_size[12U];
-            _r1->reg._r27.bit.daisy_size_ch14 = gn_xcr_channel_daisy_size[13U];
-            _r1->reg._r27.bit.daisy_size_ch15 = gn_xcr_channel_daisy_size[14U];
-            break;
-        case XCR_DAISY_SIZE_6:
-            _r1->reg._r28.bit.daisy_size_ch16 = gn_xcr_channel_daisy_size[15U];
-            //_r1->reg._r28.bit.daisy_size_ch17 = gn_xcr_channel_daisy_size[16U];
-            //_r1->reg._r28.bit.daisy_size_ch18 = gn_xcr_channel_daisy_size[17U];
-            break;
-#endif
         case XCR_BLOCK_SIZE_1:
             _r1->reg._r29.bit.total_blk_size_ch1 = gn_xcr_channel_block_size[0U];
             _r1->reg._r29.bit.total_blk_size_ch2 = gn_xcr_channel_block_size[1U];
@@ -317,24 +230,6 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r30.bit.total_blk_size_ch15 = gn_xcr_channel_block_size[14U];
             _r1->reg._r30.bit.total_blk_size_ch16 = gn_xcr_channel_block_size[15U];
             break;
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
-        case XCR_BLOCK_SIZE_9:
-            _r1->reg._r31.bit.total_blk_size_ch17 = gn_xcr_channel_block_size[16U];
-            _r1->reg._r31.bit.total_blk_size_ch18 = gn_xcr_channel_block_size[17U];
-            break;
-        case XCR_BLOCK_SIZE_10:
-            _r1->reg._r32.bit.total_blk_size_ch19 = gn_xcr_channel_block_size[18U];
-            _r1->reg._r32.bit.total_blk_size_ch20 = gn_xcr_channel_block_size[19U];
-            break;
-        case XCR_BLOCK_SIZE_11:
-            _r1->reg._r33.bit.total_blk_size_ch21 = gn_xcr_channel_block_size[20U];
-            _r1->reg._r33.bit.total_blk_size_ch22 = gn_xcr_channel_block_size[21U];
-            break;
-        case XCR_BLOCK_SIZE_12:
-            _r1->reg._r34.bit.total_blk_size_ch23 = gn_xcr_channel_block_size[22U];
-            _r1->reg._r34.bit.total_blk_size_ch24 = gn_xcr_channel_block_size[23U];
-            break;
-#endif
         case XCR_CHANNEL_ENABLE_1:
             _r1->reg._r35.bit.ch1_en = gn_xcr_channel_enable[0U];
             _r1->reg._r35.bit.ch2_en = gn_xcr_channel_enable[1U];
@@ -354,7 +249,6 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r35.bit.ch16_en = gn_xcr_channel_enable[15U];
             break;
         case XCR_CHANNEL_ENABLE_2:
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
             _r1->reg._r36.bit.ch17_en = gn_xcr_channel_enable[16U];
             _r1->reg._r36.bit.ch18_en = gn_xcr_channel_enable[17U];
             _r1->reg._r36.bit.ch19_en = gn_xcr_channel_enable[18U];
@@ -363,25 +257,24 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r36.bit.ch22_en = gn_xcr_channel_enable[21U];
             _r1->reg._r36.bit.ch23_en = gn_xcr_channel_enable[22U];
             _r1->reg._r36.bit.ch24_en = gn_xcr_channel_enable[23U];
-#endif
             _r1->reg._r36.bit.ch_size = XCR_CH_SIZE;
             _r1->reg._r36.bit.ld_width = XCR_LD_WIDTH;
             break;
         case XCR_FLLCNT11:
-            _r1->reg._r37.bit.fll1cnt = 0U;
+            _r1->reg._r37.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & 0x000FFFU) >>  0U);
             break;
         case XCR_FLLCNT12:
-            _r1->reg._r38.bit.fll1cnt = 0U;
+            _r1->reg._r38.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & 0x1FF000U) >> 12U);;
             _r1->reg._r38.bit.fll1_err_range = 0U;
             _r1->reg._r38.bit.fll1_range = 0U;
             _r1->reg._r38.bit.fllsync = 0U;
             _r1->reg._r38.bit.fll1_en = 0U;
             break;
         case XCR_FLLCNT21:
-            _r1->reg._r39.bit.fll2cnt = 0U;
+            _r1->reg._r39.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & 0x000FFFU) >>  0U);
             break;
         case XCR_FLLCNT22:
-            _r1->reg._r3A.bit.fll2cnt = 0U;
+            _r1->reg._r3A.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & 0x1FF000U) >> 12U);
             _r1->reg._r3A.bit.fll2_err_range = 0U;
             _r1->reg._r3A.bit.fll2_range = 0U;
             _r1->reg._r3A.bit.fllsync = 0U;
@@ -399,31 +292,25 @@ static void xcr24_regs_init_table(void)
             break;
 
         case XCR_SVO_ON:
-            _r1->reg._r3D.bit.svo_on = 0U;
+            _r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
             break;
         case XCR_SVO1_OFF:
-            _r1->reg._r3E.bit.svo1_off = 0U;
+            _r1->reg._r3E.bit.svo1_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
             break;
         case XCR_SVO2_OFF:
-            _r1->reg._r3F.bit.svo2_off = 0U;
+            _r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
             break;
         case XCR_SVO3_OFF:
-            _r1->reg._r40.bit.svo3_off = 0U;
+            _r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
             break;
         case XCR_SVO_NUMBER:
-            _r1->reg._r41.bit.sv_no = 0U;
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
-            _r1->reg._r41.bit.sv_no_type = 0U;
-#elif (XC_MODEL_TYPE == XC_TYPE_IC603)
-            _r1->reg._r41.bit.sv_no_multiplier = 0U;
-#endif
+            _r1->reg._r41.bit.sv_no = XDR_SV_NO;
+            _r1->reg._r41.bit.sv_no_type = XCR_SVO_ACTIVE_23;
             break;
         case XCR_DAC_NF_CONTROL:
             _r1->reg._r42.bit.dgrjt_en = 0U;
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)
             _r1->reg._r42.bit.bbkn_en = 0U;
             _r1->reg._r42.bit.bbkn_th = 0U;
-#endif
             _r1->reg._r42.bit.dac_lvl = 0U;
             break;
 
@@ -637,7 +524,7 @@ static void xcr24_regs_trim_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
-    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_otp_access;
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_access;
 
     for(xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
     {
@@ -741,16 +628,6 @@ void xcr24_reset(void)
 
 static void xcr24_memory_copy(void)
 {
-/*
-    for (uint8_t i = 0 ; i < XCR_GRP1_MAX ; ++i)
-    {
-        gt_xcr24_get_gr1_regs.ALL[i] = i;
-    }
-    for (uint8_t i = 0 ; i < XCR_GRP2_MAX ; ++i)
-    {
-        gt_xcr24_get_gr2_regs.ALL[i] = (XCR_GRP2_MAX - i);
-    }
-*/
     memcpy(gt_xcr24_set_gr1_regs.ALL, gt_xcr24_get_gr1_regs.ALL, sizeof(gt_xcr24_get_gr1_regs));
     memcpy(gt_xcr24_set_gr2_regs.ALL, gt_xcr24_get_gr2_regs.ALL, sizeof(gt_xcr24_get_gr2_regs));
 }
@@ -769,83 +646,86 @@ void xcr24_read_all(void)
 
 void xcr24_init_param(void)
 {
-    gn_xcr_daisied_dev_ch_size = XDR_CH_LENGTH;
+    gn_xcr_daisied_dev_blk_size = BLOCK_PER_XDR;
 
     /* XC24R channel enable */
-    gn_xcr_channel_enable[0U] = 1U;
-    gn_xcr_channel_enable[1U] = 1U;
-    gn_xcr_channel_enable[2U] = 1U;
-    gn_xcr_channel_enable[3U] = 1U;
-    gn_xcr_channel_enable[4U] = 1U;
-    gn_xcr_channel_enable[5U] = 1U;
-    gn_xcr_channel_enable[6U] = 1U;
-    gn_xcr_channel_enable[7U] = 1U;
-    gn_xcr_channel_enable[8U] = 1U;
-    gn_xcr_channel_enable[9U] = 1U;
-    gn_xcr_channel_enable[10U] = 1U;
-    gn_xcr_channel_enable[11U] = 1U;
-    gn_xcr_channel_enable[12U] = 1U;
-    gn_xcr_channel_enable[13U] = 1U;
-    gn_xcr_channel_enable[14U] = 1U;
-    gn_xcr_channel_enable[15U] = 1U;
-    gn_xcr_channel_enable[16U] = 1U;
-    gn_xcr_channel_enable[17U] = 1U;
-    gn_xcr_channel_enable[18U] = 1U;
-    gn_xcr_channel_enable[19U] = 1U;
-    gn_xcr_channel_enable[20U] = 1U;
-    gn_xcr_channel_enable[21U] = 1U;
-    gn_xcr_channel_enable[22U] = 1U;
-    gn_xcr_channel_enable[23U] = 1U;
+    gn_xcr_channel_enable[ 0U] = 1U;
+    gn_xcr_channel_enable[ 1U] = 0U;
+    gn_xcr_channel_enable[ 2U] = 0U;
+    gn_xcr_channel_enable[ 3U] = 0U;
+    gn_xcr_channel_enable[ 4U] = 0U;
+    gn_xcr_channel_enable[ 5U] = 0U;
+    gn_xcr_channel_enable[ 6U] = 0U;
+    gn_xcr_channel_enable[ 7U] = 0U;
+    gn_xcr_channel_enable[ 8U] = 0U;
+    gn_xcr_channel_enable[ 9U] = 0U;
+    gn_xcr_channel_enable[10U] = 0U;
+    gn_xcr_channel_enable[11U] = 0U;
+    gn_xcr_channel_enable[12U] = 0U;
+    gn_xcr_channel_enable[13U] = 0U;
+    gn_xcr_channel_enable[14U] = 0U;
+    gn_xcr_channel_enable[15U] = 0U;
+    gn_xcr_channel_enable[16U] = 0U;
+    gn_xcr_channel_enable[17U] = 0U;
+    gn_xcr_channel_enable[18U] = 0U;
+    gn_xcr_channel_enable[19U] = 0U;
+    gn_xcr_channel_enable[20U] = 0U;
+    gn_xcr_channel_enable[21U] = 0U;
+    gn_xcr_channel_enable[22U] = 0U;
+    gn_xcr_channel_enable[23U] = 0U;
 
-    gn_xcr_channel_daisy_size[0U] = 1U;
-    gn_xcr_channel_daisy_size[1U] = 1U;
-    gn_xcr_channel_daisy_size[2U] = 1U;
-    gn_xcr_channel_daisy_size[3U] = 1U;
-    gn_xcr_channel_daisy_size[4U] = 1U;
-    gn_xcr_channel_daisy_size[5U] = 1U;
-    gn_xcr_channel_daisy_size[6U] = 1U;
-    gn_xcr_channel_daisy_size[7U] = 1U;
-    gn_xcr_channel_daisy_size[8U] = 1U;
-    gn_xcr_channel_daisy_size[9U] = 1U;
-    gn_xcr_channel_daisy_size[10U] = 1U;
-    gn_xcr_channel_daisy_size[11U] = 1U;
-    gn_xcr_channel_daisy_size[12U] = 1U;
-    gn_xcr_channel_daisy_size[13U] = 1U;
-    gn_xcr_channel_daisy_size[14U] = 1U;
-    gn_xcr_channel_daisy_size[15U] = 1U;
-    gn_xcr_channel_daisy_size[16U] = 1U;
-    gn_xcr_channel_daisy_size[17U] = 1U;
-    gn_xcr_channel_daisy_size[18U] = 1U;
-    gn_xcr_channel_daisy_size[19U] = 1U;
-    gn_xcr_channel_daisy_size[20U] = 1U;
-    gn_xcr_channel_daisy_size[21U] = 1U;
-    gn_xcr_channel_daisy_size[22U] = 1U;
-    gn_xcr_channel_daisy_size[23U] = 1U;
+    gn_xcr_channel_daisy_size[ 0U] = XDR_DAISY_LENGTH;
+    gn_xcr_channel_daisy_size[ 1U] = 0U;
+    gn_xcr_channel_daisy_size[ 2U] = 0U;
+    gn_xcr_channel_daisy_size[ 3U] = 0U;
+    gn_xcr_channel_daisy_size[ 4U] = 0U;
+    gn_xcr_channel_daisy_size[ 5U] = 0U;
+    gn_xcr_channel_daisy_size[ 6U] = 0U;
+    gn_xcr_channel_daisy_size[ 7U] = 0U;
+    gn_xcr_channel_daisy_size[ 8U] = 0U;
+    gn_xcr_channel_daisy_size[ 9U] = 0U;
+    gn_xcr_channel_daisy_size[10U] = 0U;
+    gn_xcr_channel_daisy_size[11U] = 0U;
+    gn_xcr_channel_daisy_size[12U] = 0U;
+    gn_xcr_channel_daisy_size[13U] = 0U;
+    gn_xcr_channel_daisy_size[14U] = 0U;
+    gn_xcr_channel_daisy_size[15U] = 0U;
+    gn_xcr_channel_daisy_size[16U] = 0U;
+    gn_xcr_channel_daisy_size[17U] = 0U;
+    gn_xcr_channel_daisy_size[18U] = 0U;
+    gn_xcr_channel_daisy_size[19U] = 0U;
+    gn_xcr_channel_daisy_size[20U] = 0U;
+    gn_xcr_channel_daisy_size[21U] = 0U;
+    gn_xcr_channel_daisy_size[22U] = 0U;
+    gn_xcr_channel_daisy_size[23U] = 0U;
 
-    gn_xcr_channel_block_size[0U] = (gn_xcr_channel_daisy_size[0U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[1U] = (gn_xcr_channel_daisy_size[1U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[2U] = (gn_xcr_channel_daisy_size[2U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[3U] = (gn_xcr_channel_daisy_size[3U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[4U] = (gn_xcr_channel_daisy_size[4U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[5U] = (gn_xcr_channel_daisy_size[5U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[6U] = (gn_xcr_channel_daisy_size[6U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[7U] = (gn_xcr_channel_daisy_size[7U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[8U] = (gn_xcr_channel_daisy_size[8U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[9U] = (gn_xcr_channel_daisy_size[9U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[10U] = (gn_xcr_channel_daisy_size[10U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[11U] = (gn_xcr_channel_daisy_size[11U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[12U] = (gn_xcr_channel_daisy_size[12U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[13U] = (gn_xcr_channel_daisy_size[13U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[14U] = (gn_xcr_channel_daisy_size[14U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[15U] = (gn_xcr_channel_daisy_size[15U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[16U] = (gn_xcr_channel_daisy_size[16U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[17U] = (gn_xcr_channel_daisy_size[17U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[18U] = (gn_xcr_channel_daisy_size[18U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[19U] = (gn_xcr_channel_daisy_size[19U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[20U] = (gn_xcr_channel_daisy_size[20U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[21U] = (gn_xcr_channel_daisy_size[21U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_ch_size);
-    gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_ch_size);
+    gn_xcr_channel_block_size[ 0U] = (gn_xcr_channel_daisy_size[ 0U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 1U] = (gn_xcr_channel_daisy_size[ 1U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 2U] = (gn_xcr_channel_daisy_size[ 2U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 3U] = (gn_xcr_channel_daisy_size[ 3U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 4U] = (gn_xcr_channel_daisy_size[ 4U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 5U] = (gn_xcr_channel_daisy_size[ 5U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 6U] = (gn_xcr_channel_daisy_size[ 6U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 7U] = (gn_xcr_channel_daisy_size[ 7U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 8U] = (gn_xcr_channel_daisy_size[ 8U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[ 9U] = (gn_xcr_channel_daisy_size[ 9U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[10U] = (gn_xcr_channel_daisy_size[10U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[11U] = (gn_xcr_channel_daisy_size[11U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[12U] = (gn_xcr_channel_daisy_size[12U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[13U] = (gn_xcr_channel_daisy_size[13U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[14U] = (gn_xcr_channel_daisy_size[14U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[15U] = (gn_xcr_channel_daisy_size[15U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[16U] = (gn_xcr_channel_daisy_size[16U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[17U] = (gn_xcr_channel_daisy_size[17U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[18U] = (gn_xcr_channel_daisy_size[18U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[19U] = (gn_xcr_channel_daisy_size[19U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[20U] = (gn_xcr_channel_daisy_size[20U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[21U] = (gn_xcr_channel_daisy_size[21U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_blk_size);
+    gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_blk_size);
+
+    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(100);
+    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(100);
 }
 
 void xcr24_init(void)
@@ -854,7 +734,7 @@ void xcr24_init(void)
 
     xcr24_regs_init_table();
 
-    //xcr24_read_all();
+    xcr24_read_all();
 }
 
 void xcr24_trim_init(void)
@@ -883,7 +763,7 @@ const _xcr_group2_regs_t* xcr24_get_xcr24_get_gr2_regs(void)
     return &gt_xcr24_get_gr2_regs;
 }
 
-void xcr24_read_otp_control(uint16_t addr, uint16_t length)
+uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length)
 {
     _cmd_t cmd = { 0U };
     uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
@@ -922,12 +802,13 @@ void xcr24_read_otp_control(uint16_t addr, uint16_t length)
     }
     else
     {
-        _xcr_otp_control_regs_t* _r = &gt_xcr24_otp_access;
+        _xcr_otp_control_regs_t* _r = &gt_xcr24_get_otp_access;
         for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
+    return rx_buffer[XCR_SPI_HEADER_SIZE];
 }
 
 void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
@@ -973,7 +854,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     }
     else
     {
-        _xcr_otp_control_regs_t* _r = &gt_xcr24_otp_access;
+        _xcr_otp_control_regs_t* _r = &gt_xcr24_set_otp_access;
         for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
@@ -981,7 +862,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     }
 }
 
-void xcr24_read_grp1_reg(uint16_t addr, uint16_t length)
+uint16_t xcr24_read_grp1_reg(uint16_t addr, uint16_t length)
 {
     _cmd_t cmd = { 0U };
     uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
@@ -1023,9 +904,10 @@ void xcr24_read_grp1_reg(uint16_t addr, uint16_t length)
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
+    return rx_buffer[XCR_SPI_HEADER_SIZE];
 }
 
-void xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
+uint16_t xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
 {
     _cmd_t cmd = { 0U };
     uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
@@ -1067,6 +949,7 @@ void xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE];
         }
     }
+    return rx_buffer[XCR_SPI_HEADER_SIZE];
 }
 
 void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
@@ -1167,7 +1050,7 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
 
 static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     xcr_rw_grp_t now_grp = (xcr_rw_grp_t)(_rF0->bit.ADDR_EXT);
 
     if (in_grp >= XCR_RW_GRP_MAX)
@@ -1183,7 +1066,7 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
 
         cmd.bit.code = CMD_CODE2;
         cmd.bit.addr = (OTP_BASE_ADDR + XCR_TEST_CONTROL);
-        cmd.bit.size = 1;
+        cmd.bit.size = 1U;
 
         tx_buffer[0] = cmd.ALL;
         tx_buffer[1] = _rF0->ALL;
@@ -1359,7 +1242,7 @@ void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 
 void xcr24_trim_init_1v5_ldo_dig(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1369,7 +1252,7 @@ void xcr24_trim_init_1v5_ldo_dig(void)
 
 void xcr24_trim_init_dac_3v0(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1383,7 +1266,7 @@ void xcr24_trim_init_dac_3v0(void)
 
 void xcr24_trim_init_dac1_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1401,7 +1284,7 @@ void xcr24_trim_init_dac1_ofs(void)
 
 void xcr24_trim_init_dac2_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1419,7 +1302,7 @@ void xcr24_trim_init_dac2_ofs(void)
 
 void xcr24_trim_init_dac3_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1437,7 +1320,7 @@ void xcr24_trim_init_dac3_ofs(void)
 
 void xcr24_trim_init_1v5_ldo_osc(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1451,7 +1334,7 @@ void xcr24_trim_init_1v5_ldo_osc(void)
 
 void xcr24_trim_init_osc_a(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1471,7 +1354,7 @@ void xcr24_trim_init_osc_a(void)
 
 void xcr24_trim_init_osc_b(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1489,13 +1372,12 @@ void xcr24_trim_init_osc_b(void)
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B2, &_r68->ALL, 1U);
 }
 
-
 bool xcr24_trim_set_1v5_ldo_dig(uint16_t reg_val)
 {
     bool ret = false;
     if (reg_val <= XCR_MAX_1V5_LDO_DIG)
     {
-        _v_mirror1_t* _rF5 = &gt_xcr24_otp_access.reg._rF5;
+        _v_mirror1_t* _rF5 = &gt_xcr24_set_otp_access.reg._rF5;
         _rF5->bit.vctl_ldo = reg_val;
         xcr24_write_otp_control(XCR_MIRROR1, &_rF5->ALL, 1U);
         ret = true;
@@ -1512,7 +1394,7 @@ bool xcr24_trim_set_dac_3v0(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC_3V0)
     {
-        _v_mirror2_t* _rF6 = &gt_xcr24_otp_access.reg._rF6;
+        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_access.reg._rF6;
         _rF6->bit.dac_ctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
         ret = true;
@@ -1529,7 +1411,7 @@ bool xcr24_trim_set_dac1_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC1_OFS)
     {
-        _v_mirror2_t* _rF6 = &gt_xcr24_otp_access.reg._rF6;
+        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_access.reg._rF6;
         _rF6->bit.dac1_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
         ret = true;
@@ -1546,7 +1428,7 @@ bool xcr24_trim_set_dac2_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC2_OFS)
     {
-        _v_mirror3_t* _rF7 = &gt_xcr24_otp_access.reg._rF7;
+        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_access.reg._rF7;
         _rF7->bit.dac2_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
         ret = true;
@@ -1563,7 +1445,7 @@ bool xcr24_trim_set_dac3_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC3_OFS)
     {
-        _v_mirror3_t* _rF7 = &gt_xcr24_otp_access.reg._rF7;
+        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_access.reg._rF7;
         _rF7->bit.dac3_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
         ret = true;
@@ -1580,7 +1462,7 @@ bool xcr24_trim_set_1v5_ldo_osc(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_1V5_LDO_OSC)
     {
-        _v_mirror4_t* _rF8 = &gt_xcr24_otp_access.reg._rF8;
+        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_access.reg._rF8;
         _rF8->bit.ldo_osc_ctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
         ret = true;
@@ -1597,7 +1479,7 @@ bool xcr24_trim_set_osc_a(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_OSC_A)
     {
-        _v_mirror4_t* _rF8 = &gt_xcr24_otp_access.reg._rF8;
+        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_access.reg._rF8;
         _rF8->bit.osc_rctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
         ret = true;
@@ -1614,7 +1496,7 @@ bool xcr24_trim_set_osc_b(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_OSC_B)
     {
-        _v_mirror5_t* _rF9 = &gt_xcr24_otp_access.reg._rF9;
+        _v_mirror5_t* _rF9 = &gt_xcr24_set_otp_access.reg._rF9;
         _rF9->bit.osc_rctl2 = reg_val;
         xcr24_write_otp_control(XCR_MIRROR5, &_rF9->ALL, 1U);
         ret = true;
@@ -1628,61 +1510,53 @@ bool xcr24_trim_set_osc_b(uint16_t reg_val)
 
 void xcr24_trim_init_efuse(void)
 {
-    /*
-    _v_xdr12_otp_access1_t* _r3A = &gt_xdr12_otp_ctrl_set_regs.reg._r3A;
-    _r3A->bit.otp_pg_acc_cycle = 0x000U;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS1, _r3A->ALL, XD12R_ADDR_TYPE_GENERAL);
+    _v_otp_pg_access_t* _rF1 = &gt_xcr24_set_otp_access.reg._rF1;
+    _rF1->bit.OTP_PG_ACC_CYCLE = 0x03FFU;
+    xcr24_write_otp_control(XCR_OTP_PG_ACCESS, &_rF1->ALL, 1U);
 
-    _v_xdr12_otp_access2_t* _r3B = &gt_xdr12_otp_ctrl_set_regs.reg._r3B;
-    _r3B->bit.otp_pg_acc_cycle = 0x3FFU;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_ACCESS2, _r3B->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_otp_write_t* _r3C = &gt_xdr12_otp_ctrl_set_regs.reg._r3C;
-    _r3C->bit.otp_wsel = 4U;
-    _r3C->bit.otp_rd = 0U;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_WRITE, _r3C->ALL, XD12R_ADDR_TYPE_GENERAL);
-    */
+    _v_otp_write_t* _rF2 = &gt_xcr24_set_otp_access.reg._rF2;
+    _rF2->bit.OTP_WSEL = 0x04U;
+    _rF2->bit.OTP_RD = 0U;
+    _rF2->bit.OTP_PG_DONE = 0U;
+    xcr24_write_otp_control(XCR_OTP_WRITE, &_rF2->ALL, 1U);
 }
 
 void xcr24_trim_start_efuse(void)
 {
-    /*
-    _v_xdr12_otp_rd_prog_t* _r3D = &gt_xdr12_otp_ctrl_set_regs.reg._r3D;
-    _r3D->bit.otp_pg_s = 1U;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OTP_RD_PROG, _r3D->ALL, XD12R_ADDR_TYPE_GENERAL);
-    */
+    _v_otp_rd_prog_t* _rF3 = &gt_xcr24_set_otp_access.reg._rF3;
+    _rF3->bit.OTP_PG_S = 1U;
+    xcr24_write_otp_control(XCR_OTP_RD_PROG, &_rF3->ALL, 1U);
 }
 
 void xcr24_trim_save_mirror_register(void)
 {
-    /*
-    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
-    {
-        xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
-    }
-        */
+    xcr24_read_otp_control(XCR_MIRROR1, 5U);
 }
 
 uint32_t xcr24_trim_verify_mirror_dump(void)
 {
     uint32_t ret = 0U;
-    /*
-    for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
+    for (xcr_addr_otp_t mirror_addr = XCR_MIRROR1 ; mirror_addr < XCR_GATE_CONTROL ; ++mirror_addr) // 0xF5 ~ 0xF9
     {
-        uint16_t saved_reg = xdr12_get_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
-        uint16_t mirror_reg = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
-        if (saved_reg != mirror_reg)
+        uint16_t saved_reg = gt_xcr24_set_otp_access.ALL[mirror_addr];
+        uint16_t read_reg = xcr24_read_otp_control(mirror_addr, 1U);
+
+        if (mirror_addr == XCR_MIRROR5)
+        {
+            saved_reg &= 0x1FU;
+            read_reg &= 0x1FU;
+        }
+        if (saved_reg != read_reg)
         {
             ret |= (1UL << mirror_addr);
             comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
-                ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+                ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
         }
         else
         {
             comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
-                ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, mirror_reg);
+                ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
         }
     }
-    */
     return ret;
 }
