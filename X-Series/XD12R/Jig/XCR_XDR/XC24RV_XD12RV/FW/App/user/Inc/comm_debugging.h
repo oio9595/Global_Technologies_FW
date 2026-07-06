@@ -29,7 +29,7 @@ typedef enum __LOG_LEVEL__
 #define ANSI_FONT_BLUE              "\033[34m"
 #define ANSI_FONT_MAGENTA           "\033[35m"
 
-#define FATAL_INVALID_INPUT(val)    comm_UART_Printf(LOG_LV_FATAL, "\r\n%s invalid input (%u)", __func__, (val))
+#define FATAL_INVALID_INPUT(val)    comm_UART_Printf(LOG_LV_FATAL, "\r\nFunction[%s] invalid input (%u)", __func__, (val))
 
 extern bool gb_usart_tx_start_flag;
 

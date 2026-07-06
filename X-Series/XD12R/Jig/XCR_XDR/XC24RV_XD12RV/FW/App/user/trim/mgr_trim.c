@@ -1069,7 +1069,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 }
                 case XDR_TRIM_LIST_CH_GAIN:
                 {
-                    gpio_set_power_9v(VLED_ON);
+                    gpio_set_vled_9v(VLED_ON);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
                     xdr12_trim_init_ch_gain();
                     xdr12_trim_set_max_curr_vref(info->input[info->repeat]);
@@ -1080,7 +1080,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 }
                 case XDR_TRIM_LIST_CH_OFS:
                 {
-                    gpio_set_power_9v(VLED_ON);
+                    gpio_set_vled_9v(VLED_ON);
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
                     xdr12_trim_init_ch_ofs();
                     xdr12_trim_set_max_curr_vref(info->input[info->repeat]);
@@ -1410,7 +1410,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
             comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
             gpio_set_xd_vdd_5v(VCC_OFF);
-            gpio_set_power_9v(VLED_OFF);
+            gpio_set_vled_9v(VLED_OFF);
             td->step = TRIM_STEP_NONE;
             td->tout = XDR_DELAY_DEFAULT;
             break;

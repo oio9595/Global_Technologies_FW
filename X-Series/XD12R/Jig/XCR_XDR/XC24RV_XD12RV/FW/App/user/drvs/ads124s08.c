@@ -431,7 +431,7 @@ static void ADS114S08_Get_ADC_Offset()
 {
     comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Start...\r\n");
     gpio_set_current_gain(GAIN_LOW);
-    gpio_set_power_9v(VLED_ON);
+    gpio_set_vled_9v(VLED_ON);
 
     for (XD_CH_t output_ch = XD_CH_01 ; output_ch < XD_CH_MAX ; ++output_ch)
     {
@@ -446,7 +446,7 @@ static void ADS114S08_Get_ADC_Offset()
         }
     }
 
-    gpio_set_power_9v(VLED_OFF);
+    gpio_set_vled_9v(VLED_OFF);
     gpio_set_demux_channel_selection(XD_CH_MAX);
     comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X, \r\n", gn_ads114s08_offset[0]);
 }
@@ -488,7 +488,7 @@ bool ADS114S08_Wait_Done(void)
     {
         if(0U == gn_ads114s08_read_timeout)
         {
-            comm_UART_Printf(LOG_LV_ERROR, "\r\n%s timeout!!!", __func__);
+            comm_UART_Printf(LOG_LV_ERROR, "\r\nFunction[%s] timeout!!!", __func__);
             return false;
         }
     }
@@ -519,7 +519,7 @@ void ADS114S08_Init(void)
 #ifdef USE_DISPLAY_DEVICE_REGS
     ADS114S08_Dump_Registers();
 #endif
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\n %s Done\r\n", __func__);
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\nFunction[%s] Done\r\n", __func__);
 }
 
 void ADC_DRDY_INT_Handler(void)

@@ -7,7 +7,7 @@
 
 #include "drv_gpio.h"
 
-void gpio_set_power_9v(vled_state_t state)
+void gpio_set_vled_9v(vled_state_t state)
 {
     switch(state)
     {
@@ -29,17 +29,39 @@ void gpio_set_power_9v(vled_state_t state)
     }
 }
 
+void gpio_set_vled_dcdc(vled_state_t state)
+{
+    switch(state)
+    {
+        case VLED_OFF:
+        {
+            VLED_DCDC_EN_HI();
+            break;
+        }
+        case VLED_ON:
+        {
+            VLED_DCDC_EN_LO();
+            break;
+        }
+        default:
+        {
+            VLED_DCDC_EN_HI();
+            break;
+        }
+    }
+}
+
 void gpio_set_xd_vdd_5v(vcc_state_t state)
 {
     switch(state)
     {
-        case VCC_OFF:
+        case VCC_OFF: // on -> off : 40ms
         {
             XD_VCC_EN_HI();
             XD_5V5_EN_LO();
             break;
         }
-        case VCC_ON_3V3:
+        case VCC_ON_3V3: // off -> on : 10ms
         {
             XD_VCC_EN_LO();
             XD_5V5_EN_LO();

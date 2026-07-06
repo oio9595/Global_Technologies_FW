@@ -595,7 +595,7 @@ static bool _xdr_test_thread(struct thread_data* td)
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             gpio_set_xd_vdd_5v(VCC_OFF);
-            gpio_set_power_9v(VLED_OFF);
+            gpio_set_vled_9v(VLED_OFF);
             td->step = TEST_STEP_NONE;
             td->tout = STEP_DELAY_DEFAULT;
             break;

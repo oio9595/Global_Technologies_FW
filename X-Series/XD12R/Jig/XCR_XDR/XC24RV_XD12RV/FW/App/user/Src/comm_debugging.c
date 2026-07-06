@@ -10,6 +10,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "drv_gpio.h"
+#include "ads124s08.h"
+
 #include "drv_comm.h"
 #include "drv_timer.h"
 
@@ -30,7 +33,7 @@
 #define CLI_KEY_END         0x34
 
 #define RX_BUFF_SIZE        (4U)
-#define TX_BUFF_SIZE        (64U)
+#define TX_BUFF_SIZE        (255U)
 
 #define RX_PACKET_SIZE      (32U)
 #define TX_PACKET_SIZE      (400U)
@@ -343,47 +346,65 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         /*************** GPIO ON/OFF *******************/
-        else if(!(strcmp(str_in, "power_on")))
+        else if(Command_Param_is_("vled_dcdc", "%u", &u32_recv_param[0]))
         {
-            gpio_set_power_9v(VLED_ON);
+            gpio_set_vled_dcdc((vled_state_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "power_off")))
+        else if(Command_Param_is_("vled", "%u", &u32_recv_param[0]))
         {
-            gpio_set_power_9v(VLED_OFF);
+            gpio_set_vled_9v((vled_state_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xd_vcc_50_on")))
+        else if(Command_Param_is_("xd_vcc", "%u", &u32_recv_param[0]))
         {
-            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            gpio_set_xd_vdd_5v((vcc_state_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xd_vcc_55_on")))
+        else if(Command_Param_is_("xc_vcc", "%u", &u32_recv_param[0]))
         {
-            gpio_set_xd_vdd_5v(VCC_ON_5V5);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_vcc_off")))
-        {
-            gpio_set_xd_vdd_5v(VCC_OFF);
+            gpio_set_xc_vdd_5v((vcc_state_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
         /*************** XDR12 *******************/
-        else if(Command_Param_is_("xdr_write", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if(!(strcmp(str_in, "xd_icc")))
+        {
+            xdr12_test_init_icc_stby();
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", icc);
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_reset")))
+        {
+            xdr12_reset();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_idgen")))
+        {
+            xdr12_idgen();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_debug")))
+        {
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(Command_Param_is_("xdr_read", "%x", &u32_recv_param[0]))
+        else if(Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
             xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-
-        else if(!(strcmp(str_in, "xdr_init")))
-        {
-            xdr12_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xdr_syncgen")))
@@ -398,6 +419,25 @@ void comm_debugging_process(void)
             uint16_t len = ldim_get_xdr_ld_transfer_size();
 
             xdr12_ld_transfer(p, len);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+
+        /*************** XCR24 *******************/
+        else if(!(strcmp(str_in, "xc_icc")))
+        {
+            xcr24_test_init_icc_stby();
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3f", icc);
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xc_debug")))
+        {
+            xcr24_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 

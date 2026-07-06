@@ -29,7 +29,7 @@
 #define XDR_MAX_CH_GAIN         (0x07FU)
 #define XDR_MAX_CH_OFS          (0x1FFU)
 
-#define XDR_BIT_IDGEN         (4U)
+#define XDR_BIT_IDGEN           (4U)
 #define XDR_BIT_SYNCGEN         (4U)
 #define XDR_HDR_BIT             (4U)
 #define XDR_ADDR_BIT            (6U)
@@ -227,8 +227,8 @@ static _xdr12_mirror_regs_t gt_xdr12_mirror_get_regs[XDR_DAISY_LENGTH];
 static uint16_t gn_pwm_out_xd_write[(XDR_DAISY_LENGTH * XDR_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
 static uint16_t gn_pwm_out_xd_ld_transfer[(XDR_DAISY_LENGTH * XDR_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
 
-static uint16_t gn_pwm_in_xd_response_freq[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 1U];
-static uint16_t gn_pwm_in_xd_response_duty[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 1U];
+static uint16_t gn_pwm_in_xd_response_freq[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 2U];
+static uint16_t gn_pwm_in_xd_response_duty[(XDR_DAISY_LENGTH * XDR_CMD_READOUT) + 2U];
 
 volatile bool gb_xd_pwm_out_flag;
 volatile bool gb_xd_pwm_in_flag;
@@ -270,12 +270,21 @@ static bool xdr12_pwm_in(uint16_t length, uint16_t timeout_us)
     gb_xd_pwm_in_flag = true;
     gb_xd_pwm_in_timeout = false;
 
+    LL_DMA_ClearFlag_TC5(DMA1);
+    LL_DMA_ClearFlag_TC6(DMA1);
+    LL_TIM_ClearFlag_CC1(TIM2);
+    LL_TIM_ClearFlag_CC2(TIM2);
+
     BUFFER_OE_HI();
 
-    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, length);
     LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, length);
-    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, length);
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_5);
+
+    LL_TIM_SetCounter(TIM2, 0);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM2);
 
     start_timeout_timer(timeout_us);
@@ -289,13 +298,21 @@ static bool xdr12_pwm_in(uint16_t length, uint16_t timeout_us)
             LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_5);
             LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
             gb_xd_pwm_in_flag = false;
-
             break;
         }
     }
 
     stop_timeout_timer();
 
+    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
+    LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_5);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_6, 0);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_5, 0);
+    LL_DMA_ClearFlag_TC6(DMA1);
+    LL_DMA_ClearFlag_TC5(DMA1);
+
+    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableCounter(TIM2);
 
     BUFFER_OE_LO();
@@ -434,7 +451,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
 
             pdata[id++] = n_data;
             duty_idx += XDR_CMD_READOUT;
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Fault Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%01X", n_header, n_id, n_data);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%01X", n_header, n_id, n_data);
         }
     }
 
@@ -1081,13 +1098,12 @@ static void xdr12_regs_trim_init_table(void)
 void xdr12_reset(void)
 {
     _v_xdr12_reset_id_t _r00 = { 0U };
-
     _r00.bit.lkg_e = 0U;
     _r00.bit.e_rst = 0U;
     _r00.bit.vs_rst = 0U;
     _r00.bit.rst = 1U;
-
     xdr12_write_by_type(XD12R_RESET_ID, _r00.ALL, XD12R_ADDR_TYPE_GENERAL);
+    LL_mDelay(1U);
 }
 
 void xdr12_idgen(void)
@@ -1116,6 +1132,7 @@ void xdr12_idgen(void)
         xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
     }
     #endif
+    LL_mDelay(1U);
 }
 
 void xdr12_syncgen(void)
@@ -1196,7 +1213,7 @@ void xdr12_init(void)
 {
     xdr12_reset();
     xdr12_idgen();
-    xdr12_regs_init_table();
+    //xdr12_regs_init_table();
     xdr12_read_all();
 }
 
@@ -1245,28 +1262,30 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
 {
     #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
-        uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t* const out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
-        uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT);
+        const uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT);
 
         for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
         {
             gt_xd_read_command[daisy].bit.addr = addr;
             len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &out[len], XDR_CMD_READ);
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tADDR - 0x%02X", gt_xd_write_command->bit.addr);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tIN_LENGTH [%u] CMD[0x%01X] ADDR[0x%02X]", pwm_in_length, gt_xd_read_command->bit.cmd_code, gt_xd_read_command->bit.addr);
         }
         out[len++] = 0U;
 
-        xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out((uint32_t)out, (len + PWM_OUT_HEADER_SIZE));
         xdr12_pwm_out_done();
 
-        if(false == xdr12_pwm_in(pwm_in_length, 100U))
+        LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+
+        if(false == xdr12_pwm_in(pwm_in_length, 150U))
         {
             uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, p_xdr_buffer, pwm_in_length);
         }
         else
         {
-            comm_UART_Printf(LOG_LV_ERROR, "%s timeout\r\n", __func__);
+            comm_UART_Printf(LOG_LV_ERROR, "\r\nFunction[%s] timeout!!", __func__);
         }
     }
     #else // to do
@@ -1314,6 +1333,7 @@ static void xdr12_change_addr_type(xd12r_addr_type_t addr_type)
 
     if (current_type != addr_type)
     {
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nChange XDR ADDR_TYPE TO %s", (addr_type == XD12R_ADDR_TYPE_GENERAL)?("GENERAL"):("MIRROR"));
         _r3F->bit.addr_ext = addr_type;
         xdr12_write(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, gt_xdr12_otp_ctrl_set_regs.reg._r3F.ALL);
     }
@@ -1869,7 +1889,7 @@ void xdr12_test_init_fll_60M(void)
 void xdr12_test_init_iout_3P(void)
 {
     // turn on proper power if needed like VLED
-    gpio_set_power_9v(VLED_ON);
+    gpio_set_vled_9v(VLED_ON);
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
     gpio_set_current_gain(GAIN_HIGH);
@@ -1898,7 +1918,7 @@ void xdr12_test_init_iout_3P(void)
 void xdr12_test_init_max_sweep(void)
 {
     // turn on proper power if needed like VLED
-    gpio_set_power_9v(VLED_ON);
+    gpio_set_vled_9v(VLED_ON);
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
     gpio_set_current_gain(GAIN_HIGH);

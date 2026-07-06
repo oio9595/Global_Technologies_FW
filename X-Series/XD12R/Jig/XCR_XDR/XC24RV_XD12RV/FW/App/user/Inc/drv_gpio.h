@@ -79,6 +79,9 @@ typedef enum tag_CURRENT_GAIN_T
 #define VLED_9V_EN_LO()         (VLED_9V_EN_GPIO_Port->BSRR = (VLED_9V_EN_Pin << 16U))
 #define VLED_9V_EN_HI()         (VLED_9V_EN_GPIO_Port->BSRR = (VLED_9V_EN_Pin <<  0U))
 
+#define VLED_DCDC_EN_LO()       (VLED_DCDC_EN_GPIO_Port->BSRR = (VLED_DCDC_EN_Pin << 16U))
+#define VLED_DCDC_EN_HI()       (VLED_DCDC_EN_GPIO_Port->BSRR = (VLED_DCDC_EN_Pin <<  0U))
+
 #define XD_VCC_EN_LO()          (XD_VCC_EN_GPIO_Port->BSRR = (XD_VCC_EN_Pin << 16U))
 #define XD_VCC_EN_HI()          (XD_VCC_EN_GPIO_Port->BSRR = (XD_VCC_EN_Pin <<  0U))
 
@@ -103,7 +106,8 @@ typedef enum tag_CURRENT_GAIN_T
 #define FLLSYNC_ENABLE()        do { LL_GPIO_SetPinMode(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_MODE_ALTERNATE);  LL_GPIO_SetPinPull(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_PULL_NO);      } while(0U)
 #define FLLSYNC_DISABLE()       do { LL_GPIO_SetPinMode(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_MODE_INPUT);      LL_GPIO_SetPinPull(FLL_SYNC_GPIO_Port, FLL_SYNC_Pin, LL_GPIO_PULL_NO);      } while(0U)
 
-void gpio_set_power_9v(vled_state_t state);
+void gpio_set_vled_9v(vled_state_t state);
+void gpio_set_vled_dcdc(vled_state_t state);
 void gpio_set_xd_vdd_5v(vcc_state_t state);
 void gpio_set_xc_vdd_5v(vcc_state_t state);
 void gpio_set_current_gain(current_gain_t gain);

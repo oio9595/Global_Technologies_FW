@@ -137,6 +137,8 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define ADC_NSS_GPIO_Port GPIOA
 #define nINT_FT_Pin LL_GPIO_PIN_10
 #define nINT_FT_GPIO_Port GPIOA
+#define DEBUG_Pin LL_GPIO_PIN_11
+#define DEBUG_GPIO_Port GPIOA
 #define DEMUX_CHSEL_2_Pin LL_GPIO_PIN_12
 #define DEMUX_CHSEL_2_GPIO_Port GPIOA
 #define TMS_Pin LL_GPIO_PIN_13
