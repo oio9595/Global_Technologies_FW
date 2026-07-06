@@ -29,6 +29,7 @@
 #define XDR_MAX_CH_GAIN         (0x07FU)
 #define XDR_MAX_CH_OFS          (0x1FFU)
 
+#define XDR_BIT_IDGEN         (4U)
 #define XDR_BIT_SYNCGEN         (4U)
 #define XDR_HDR_BIT             (4U)
 #define XDR_ADDR_BIT            (6U)
@@ -223,7 +224,6 @@ static _xdr12_otp_ctrl_regs_t gt_xdr12_otp_ctrl_get_regs[XDR_DAISY_LENGTH];
 static _xdr12_mirror_regs_t gt_xdr12_mirror_set_regs;
 static _xdr12_mirror_regs_t gt_xdr12_mirror_get_regs[XDR_DAISY_LENGTH];
 
-static uint16_t gn_pwm_out_xd_syncgen[(XDR_DAISY_LENGTH * XDR_BIT_SYNCGEN) + PWM_OUT_DUMMY_SIZE];
 static uint16_t gn_pwm_out_xd_write[(XDR_DAISY_LENGTH * XDR_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
 static uint16_t gn_pwm_out_xd_ld_transfer[(XDR_DAISY_LENGTH * XDR_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
 
@@ -1094,18 +1094,46 @@ void xdr12_idgen(void)
 {
     #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
-        uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
 
         xdr12_pwm_out_done();
 
         for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
         {
-            len += xdr12_make_pwm_out_stream(gt_xd_idgen_command[daisy].ALL, &out[len], XDR_BIT_SYNCGEN);
+            len += xdr12_make_pwm_out_stream(gt_xd_idgen_command[daisy].ALL, &p_pwm_out[len], XDR_BIT_IDGEN);
         }
-        out[len++] = 0U;
+        p_pwm_out[len++] = 0U;
 
-        xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
+    }
+    #else
+    {
+        _v_id_gen_command_t _r04 = { 0, };
+
+        _r04.bit.enable = 1U;
+
+        xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
+    }
+    #endif
+}
+
+void xdr12_syncgen(void)
+{
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    {
+        uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t len = 0U;
+
+        xdr12_pwm_out_done();
+
+        for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
+        {
+            len += xdr12_make_pwm_out_stream(gt_xd_syncgen_command[daisy].ALL, &p_pwm_out[len], XDR_BIT_SYNCGEN);
+        }
+        p_pwm_out[len++] = 0U;
+
+        xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
     }
     #else
     {
@@ -1198,7 +1226,7 @@ static void xdr12_write(uint16_t addr, uint16_t data)
         }
         out[len++] = 0U;
 
-        xdr12_pwm_out((uint32_t)gn_pwm_out_xd_write, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out((uint32_t)out, (len + PWM_OUT_HEADER_SIZE));
     }
     #else
     {
@@ -1324,11 +1352,6 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
     return xdr_buffer[0];
 }
 
-void xdr12_pwm_out_syncgen(void)
-{
-    xdr12_pwm_out((uint32_t)gn_pwm_out_xd_syncgen, (uint32_t)(sizeof(gn_pwm_out_xd_syncgen)/sizeof(gn_pwm_out_xd_syncgen[0U])));
-}
-
 void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
 {
     if((p == NULL) || (line_size == 0U))
@@ -1336,7 +1359,7 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
         return;
     }
 
-    uint16_t* const out = gn_pwm_out_xd_ld_transfer + PWM_OUT_HEADER_SIZE;
+    uint16_t* const p_pwm_out = gn_pwm_out_xd_ld_transfer + PWM_OUT_HEADER_SIZE;
     uint16_t len = 0;
     const uint16_t* p_src = p;
 
@@ -1348,24 +1371,24 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
         }
 
         /* header : 1111 */
-        out[len++] = PWM_OUT_BIT1;
-        out[len++] = PWM_OUT_BIT1;
-        out[len++] = PWM_OUT_BIT1;
-        out[len++] = PWM_OUT_BIT1;
+        p_pwm_out[len++] = PWM_OUT_BIT1;
+        p_pwm_out[len++] = PWM_OUT_BIT1;
+        p_pwm_out[len++] = PWM_OUT_BIT1;
+        p_pwm_out[len++] = PWM_OUT_BIT1;
 
         for(uint8_t ld_idx = 0U ; ld_idx < XDR_LD_SIZE ; ++ld_idx)
         {
-            const uint16_t written = xdr12_make_pwm_out_stream(*p_src++, &out[len], XDR_LD_DATA_BIT);
+            const uint16_t written = xdr12_make_pwm_out_stream(*p_src++, &p_pwm_out[len], XDR_LD_DATA_BIT);
             len += written;
         }
     }
 
     if((uint32_t)len < (XDR_DAISY_LENGTH * XDR_LD_TRANSFER + 1U))
     {
-        out[len++] = 0U; /* PWM_DMA_TAIL_SIZE */
+        p_pwm_out[len++] = 0U; /* PWM_DMA_TAIL_SIZE */
     }
 
-    xdr12_pwm_out((uint32_t)gn_pwm_out_xd_ld_transfer, (uint32_t)len);
+    xdr12_pwm_out((uint32_t)p_pwm_out, (uint32_t)len);
 }
 
 void xdr12_trim_init_current_ref(void)

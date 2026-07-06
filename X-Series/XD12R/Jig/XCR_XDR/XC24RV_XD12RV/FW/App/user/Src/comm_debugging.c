@@ -183,6 +183,13 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - INFO - XCR : %s, XDR : %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+        comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By MCU");
+    #elif
+        comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By XCR");
+    #else
+        #error "XDR_CONTROL_TYPE is not defined"
+    #endif
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
@@ -295,12 +302,20 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        else if(Command_Param_is_("ldim_color", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
+        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
         {
-            for(uint16_t block = 0U ; block < LDIM_BLK_SIZE ; ++block)
-            {
-                ldim_set_ldim_rgb(block, (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
-            }
+            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("step", "%u", &u32_recv_param[0]))
+        {
+            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "step")))
+        {
+            uint16_t* p_led_color_buffer = ldim_get_led_color_buffer();
+            comm_UART_Printf(LOG_LV_INFO, "\r\nR: %u, C : %u, G : %u, B : %u", p_led_color_buffer[0], p_led_color_buffer[1], p_led_color_buffer[2], p_led_color_buffer[3]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xcr_ldim_start")))
@@ -373,7 +388,7 @@ void comm_debugging_process(void)
         }
         else if(!(strcmp(str_in, "xdr_syncgen")))
         {
-            xdr12_pwm_out_syncgen();
+            xdr12_syncgen();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 

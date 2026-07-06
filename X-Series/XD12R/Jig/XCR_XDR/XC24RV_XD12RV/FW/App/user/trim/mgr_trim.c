@@ -17,8 +17,6 @@
 #define XCR_DELAY_PWR_OFF                   (100U)
 #define XCR_DELAY_EFUSE_DONE                (500U)
 
-#define XCR_OSC_PRESCALE                    (128U * 64U)
-
 #define XCR_DEFAULT_SUB_VAL_1V5_LDO_DIG     (1U << 4U)
 #define XCR_DEFAULT_SUB_VAL_DAC_3V0         (1U << 5U)
 #define XCR_DEFAULT_SUB_VAL_DAC1_OFS        (1U << 7U)
@@ -31,7 +29,7 @@
 #ifdef SEQUENCE_DEBUG
     #define XCR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
 #else
-    #define XCR_TRIM_ERROR_RANGE        (0.05f) /* 5% */
+    #define XCR_TRIM_ERROR_RANGE        (0.01f) /* 1% */
 #endif
 
 #define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)     /* 1.5V */
@@ -60,8 +58,6 @@
 #define XDR_DELAY_PWR_OFF                   (100U)
 #define XDR_DELAY_EFUSE_DONE                (500U)
 
-#define XDR_OSC_PRESCALE                    (128U * 64U)
-
 #define XDR_DEFAULT_SUB_VAL_CURRENT_REF     (1U << 4U)
 #define XDR_DEFAULT_SUB_VAL_LDO_DIG         (1U << 3U)
 #define XDR_DEFAULT_SUB_VAL_LDO_DAC         (1U << 4U)
@@ -73,7 +69,7 @@
 #ifdef SEQUENCE_DEBUG
     #define XDR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
 #else
-    #define XDR_TRIM_ERROR_RANGE        (0.05f) /* 5% */
+    #define XDR_TRIM_ERROR_RANGE        (0.01f) /* 1% */
 #endif
 
 #define XDR_TRIM_TGT_CURRENT_REF            (1.4f)      /* 1.4 V */

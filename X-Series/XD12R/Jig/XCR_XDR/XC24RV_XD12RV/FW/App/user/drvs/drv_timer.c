@@ -71,6 +71,7 @@ void tim_vsync_out_start(void)
     tim_update_vsync_out_freq();
 
     LL_TIM_OC_SetCompareCH2(TIM8, VSYNC_OUT_PULSE);
+    LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_EnableCounter(TIM8);
 }
 
@@ -123,8 +124,11 @@ void tim_svsync_out_handler(void)
 
 void tim_vsync_out_handler(void)
 {
-    gb_vsync_out_flag = true;
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+        xdr12_syncgen();
+    #endif
     tim_svsync_timer_start();
+    gb_vsync_out_flag = true;
 }
 
 void tim_set_vsync_out_freq(float f)
@@ -145,11 +149,8 @@ void tim_vsync_out_process(void)
 {
     if(true == gb_vsync_out_flag)
     {
-        if(true == gb_xcr_ldim_start)
-        {
-            gn_xcr_ldim_block_conversion_index = 0U;
-            gb_xcr_ldim_block_conversion_flag = true;
-        }
+        gn_xcr_ldim_block_conversion_index = 0U;
+        gb_xcr_ldim_block_conversion_flag = true;
         gb_vsync_out_flag = false;
     }
 
@@ -161,18 +162,18 @@ void tim_vsync_out_process(void)
         ++gn_xcr_ldim_block_conversion_index;
         if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
         {
-            /*
+    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+            uint16_t* p = ldim_get_xdr_ld_transfer_buffer();
+            uint16_t len = ldim_get_xdr_ld_transfer_size();
+            xdr12_ld_transfer(p, len);
+    #elif
             uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
             uint16_t len = ldim_get_xcr_ld_transfer_size();
 
             xcr24_set_ld_transfer(p, len);
-            */
-
-            uint16_t* p = ldim_get_xdr_ld_transfer_buffer();
-            uint16_t len = ldim_get_xdr_ld_transfer_size();
-
-            xdr12_ld_transfer(p, len);
-
+    #else
+            #error "XDR_CONTROL_TYPE is not defined"
+    #endif
             gb_xcr_ldim_block_conversion_flag = false;
             gn_xcr_ldim_block_conversion_index = 0U;
         }

@@ -2337,14 +2337,14 @@ typedef union _xcr_Group1_regs
         _v_dac2_increment_1_t                       _r57;
         _v_dac2_increment_2_hold_limit_t            _r58;
         _v_dac2_decrement_inc_wait_t                _r59;
-        _v_dac2_increment_hold_threshold_t           _r5A;
+        _v_dac2_increment_hold_threshold_t          _r5A;
         _v_dac2_fb_valid_timer_t                    _r5B;
         _v_dac2_min_limit_t                         _r5C;
         _v_dac2_max_limit_t                         _r5D;
         _v_dac3_increment_1_t                       _r5E;
         _v_dac3_increment_2_hold_limit_t            _r5F;
         _v_dac3_decrement_inc_wait_t                _r60;
-        _v_dac3_increment_hold_threshold_t           _r61;
+        _v_dac3_increment_hold_threshold_t          _r61;
         _v_dac3_fb_valid_timer_t                    _r62;
         _v_dac3_min_limit_t                         _r63;
         _v_dac3_max_limit_t                         _r64;

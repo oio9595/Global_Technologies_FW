@@ -1572,86 +1572,262 @@ void xcr24_test_init_icc_actv(void)
 {
     /* change adc ch_p, ch_n */
     ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+    // set proper xdr12 register
+    xcr24_trim_init();
 }
 
 void xcr24_test_init_ldo(void)
 {
+    // change adc ch_p, ch_n
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO, ADS_AINCOM);
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
 }
 void xcr24_test_init_ldo_fll_a(void)
 {
+    // turn on proper power if needed like VLE
 
+    // change adc ch_p, ch_n
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_ana_test_t* _r12 = &gt_xcr24_set_gr2_regs.reg._r12;
+    _r12->bit.TEST_ANA_EN = 6U;
+    xcr24_write_grp2_reg(XCR_GRP2_ANA_TEST, &_r12->ALL, 1U);
 }
+
 void xcr24_test_init_ldo_fll_b(void)
 {
+    // turn on proper power if needed like VLE
 
+    // change adc ch_p, ch_n
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    _v_ana_test_t* _r12 = &gt_xcr24_set_gr2_regs.reg._r12;
+    _r12->bit.TEST_ANA_EN = 5U;
+    xcr24_write_grp2_reg(XCR_GRP2_ANA_TEST, &_r12->ALL, 1U);
 }
+
 void xcr24_test_init_fll_a_30m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
+    _r65->bit.OSC_MAN_EN_A = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
+
+    const float xc_mclk = 30000000.0f; /* 30MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
+
 void xcr24_test_init_fll_a_35m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
+    _r65->bit.OSC_MAN_EN_A = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
+
+    const float xc_mclk = 35000000.0f; /* 35MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
+
 void xcr24_test_init_fll_a_40m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
+    _r65->bit.OSC_MAN_EN_A = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
+
+    const float xc_mclk = 40000000.0f; /* 40MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
 void xcr24_test_init_fll_b_30m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
+    _r67->bit.OSC_MAN_EN_B = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+
+    const float xc_mclk = 30000000.0f; /* 30MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
+
 void xcr24_test_init_fll_b_35m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
+    _r67->bit.OSC_MAN_EN_B = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+
+    const float xc_mclk = 35000000.0f; /* 35MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
+
 void xcr24_test_init_fll_b_40m(void)
 {
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.MCLK64_O = 1U;
+    _rF0->bit.MCLK1_O = 0U;
+    _rF0->bit.MCLK_SEL = 0U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
+    _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
+    _r67->bit.OSC_MAN_EN_B = 0U;
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+
+    const float xc_mclk = 40000000.0f; /* 40MHz */
+    const float vsync = 120.0f; /* 120Hz */
+    const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
+
+    _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+    _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
+    xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
 
 void xcr24_test_start_icc_stby(void)
 {
+    ADS114S08_Set_Start(true);
 }
 
 void xcr24_test_start_icc_actv(void)
 {
+    ADS114S08_Set_Start(true);
 }
 
 void xcr24_test_start_ldo(void)
 {
+    ADS114S08_Set_Start(true);
 
 }
 void xcr24_test_start_ldo_fll_a(void)
 {
+    ADS114S08_Set_Start(true);
 
 }
 void xcr24_test_start_ldo_fll_b(void)
 {
+    ADS114S08_Set_Start(true);
 
 }
 void xcr24_test_start_fll_a_30m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }
 void xcr24_test_start_fll_a_35m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }
 void xcr24_test_start_fll_a_40m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }
 void xcr24_test_start_fll_b_30m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }
 void xcr24_test_start_fll_b_35m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }
 void xcr24_test_start_fll_b_40m(void)
 {
-
+    mcu_peripheral_tim_input_capture_start();
 }

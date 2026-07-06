@@ -42,9 +42,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MCU_ADC_MEASURE_COUNT       (20)
-#define MCU_ADC_VREF                (3.3f)
-#define MCU_ADC_RESOLUTION          (4095.0f)
+#define MCU_ADC_MEASURE_COUNT             (20)
+#define MCU_ADC_VREF                      (3.3f)
+#define MCU_ADC_RESOLUTION                (4095.0f)
 
 #define MCU_TIM_INPUT_CAPTURE_SIZE        (512)
 #define MCU_INPUT_CAPTURE_START_OFS       (1)

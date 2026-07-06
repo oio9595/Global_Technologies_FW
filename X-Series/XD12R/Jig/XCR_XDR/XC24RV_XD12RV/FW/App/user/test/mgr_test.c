@@ -97,23 +97,25 @@ typedef void (*xdr12_test_start_func)(void);
 static struct{
     MGRSTATUS   status;
     test_info_t t_xdr_test_info[XDR_TEST_LIST_MAX];
+    test_info_t t_xcr_test_info[XCR_TEST_LIST_MAX];
     xdr_test_list_t t_xd_test_list;
+    xcr_test_list_t t_xc_test_list;
     THREAD_ID   test_thr;
 }__priv_test;
 
 static const char* gs_xcr_test_list[XCR_TEST_LIST_MAX] =
 {
-    "XCR_TEST_LIST_ICC_STBY ",
-    "XCR_TEST_LIST_ICC_ACTV ",
-    "XCR_TEST_LIST_LDO      ",
-    "XCR_TEST_LIST_LDO_FLL_A",
-    "XCR_TEST_LIST_LDO_FLL_B",
-    "XCR_TEST_LIST_FLL_A_30M",
-    "XCR_TEST_LIST_FLL_A_35M",
-    "XCR_TEST_LIST_FLL_A_40M",
-    "XCR_TEST_LIST_FLL_B_30M",
-    "XCR_TEST_LIST_FLL_B_35M",
-    "XCR_TEST_LIST_FLL_B_40M",
+    "XCR_ICC_STBY ",
+    "XCR_ICC_ACTV ",
+    "XCR_LDO      ",
+    "XCR_LDO_FLL_A",
+    "XCR_LDO_FLL_B",
+    "XCR_FLL_A_30M",
+    "XCR_FLL_A_35M",
+    "XCR_FLL_A_40M",
+    "XCR_FLL_B_30M",
+    "XCR_FLL_B_35M",
+    "XCR_FLL_B_40M",
 };
 
 static const xcr24_test_init_func gp_xcr24_test_init_func[XCR_TEST_LIST_MAX] =
@@ -258,36 +260,24 @@ static const uint8_t* gs_test_step[TEST_STEP_MAX] =
 };
 
 static void xcr_test_log_summary(void)
-{/*
-    char log_buf[350] = {0};
-    int log_buf_len = 0U;
-    for (xdr_test_list_t list = XDR_TEST_LIST_ICC_STBY ; list < XDR_TEST_LIST_MAX ; ++list)
+{
+    for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY ; list < XCR_TEST_LIST_MAX ; ++list)
     {
-        test_info_t* info = &__priv_test.t_xdr_test_info[list];
-        uint8_t max_ch = (list < XDR_TEST_LIST_IOUT_P1) ? (1U) : ((uint8_t)XD_CH_MAX);
-        for (uint8_t ch = XD_CH_01 ; ch < max_ch ; ++ch)
-        {
-            if (ch == XD_CH_01)
-            {
-                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[%s]\t[VAL: %.3f]", gs_xdr_test_list[list], info->measure[ch].value);
-            }
-            else
-            {
-                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, " [%.3f]", info->measure[ch].value);
-            }
-        }
-        comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
-        memset(log_buf, 0, sizeof(log_buf));
-        log_buf_len = 0U;
-    }*/
+        test_info_t* info = &__priv_test.t_xcr_test_info[list];
+        comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t[VAL: %.3f]", gs_xcr_test_list[list], info->measure[0].value);
+    }
 }
 
 static bool _xcr_test_thread(struct thread_data* td)
-{/*
+{
+    xcr_test_list_t* list = &__priv_test.t_xc_test_list;
+    test_info_t *info = &__priv_test.t_xcr_test_info[*list];
     switch(td->step)
     {
         case TEST_STEP_PWR_ON:
         {
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            gpio_set_xc_vdd_5v(VCC_ON_3V3);
             td->step = TEST_STEP_INITIAL;
             td->tout = STEP_DELAY_PWR_ON;
             break;
@@ -295,6 +285,7 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         case TEST_STEP_INITIAL:
         {
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             td->step = TEST_STEP_INITIAL_BY_LIST;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -302,7 +293,8 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         case TEST_STEP_INITIAL_BY_LIST:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xcr_test_list[*list], td->tout);
+            gp_xcr24_test_init_func[*list]();
             td->step = TEST_STEP_START_MEASURE;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -310,7 +302,8 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         case TEST_STEP_START_MEASURE:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xcr_test_list[*list], td->tout);
+            gp_xcr24_test_start_func[*list]();
             td->step = TEST_STEP_GET_MEASURED_VALUE;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -318,15 +311,52 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         case TEST_STEP_GET_MEASURED_VALUE:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
-            td->step = TEST_STEP_GET_MEASURED_VALUE;
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xcr_test_list[*list], td->tout);
+            uint16_t* p_adc_value = &info->measure[info->chx].adc;
+            float* p_value = &info->measure[info->chx].value;
+            switch (*list)
+            {
+                case XCR_TEST_LIST_ICC_STBY:
+                case XCR_TEST_LIST_ICC_ACTV:
+                case XCR_TEST_LIST_LDO:
+                case XCR_TEST_LIST_LDO_FLL_A:
+                case XCR_TEST_LIST_LDO_FLL_B:
+                {
+                    *p_adc_value = ADS114S08_Get_ADC_Value();
+                    *p_value = JigBD_IF_Convert_Adc_To_ICC(*p_adc_value);
+                    break;
+                }
+                case XCR_TEST_LIST_FLL_A_30M:
+                case XCR_TEST_LIST_FLL_A_35M:
+                case XCR_TEST_LIST_FLL_A_40M:
+                case XCR_TEST_LIST_FLL_B_30M:
+                case XCR_TEST_LIST_FLL_B_35M:
+                case XCR_TEST_LIST_FLL_B_40M:
+                {
+                    *p_value = mcu_peripheral_tim_conversion_freq() * XCR_OSC_PRESCALE;
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            if (++(*list) < XCR_TEST_LIST_MAX)
+            {
+                td->step = TEST_STEP_INITIAL_BY_LIST;
+            }
+            else
+            {
+                td->step = TEST_STEP_LOG_SUMMARY;
+            }
             td->tout = STEP_DELAY_DEFAULT;
             break;
         }
 
         case TEST_STEP_LOG_SUMMARY:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            xcr_test_log_summary();
             td->step = TEST_STEP_PWR_OFF;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -334,7 +364,8 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         case TEST_STEP_PWR_OFF:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            gpio_set_xc_vdd_5v(VCC_OFF);
             td->step = TEST_STEP_NONE;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -342,11 +373,11 @@ static bool _xcr_test_thread(struct thread_data* td)
 
         default:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             __priv_test.test_thr = INVALID_THREAD_ID;
             return false;
         }
-    }*/
+    }
     return true;
 }
 
@@ -392,7 +423,7 @@ static bool _xdr_test_thread(struct thread_data* td)
 
         case TEST_STEP_INITIAL:
         {
-            comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_test_step[td->step], gs_xdr_test_list[*list], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             td->step = TEST_STEP_INITIAL_BY_LIST;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -488,7 +519,7 @@ static bool _xdr_test_thread(struct thread_data* td)
                 case XDR_TEST_LIST_FLL_50M:
                 case XDR_TEST_LIST_FLL_60M:
                 {
-                    *p_value = mcu_peripheral_tim_conversion_freq();
+                    *p_value = mcu_peripheral_tim_conversion_freq() * XDR_OSC_PRESCALE;
                     break;
                 }
                 case XDR_TEST_LIST_IOUT_P1:
@@ -553,7 +584,7 @@ static bool _xdr_test_thread(struct thread_data* td)
 
         case TEST_STEP_LOG_SUMMARY:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             xdr_test_log_summary();
             td->step = TEST_STEP_PWR_OFF;
             td->tout = STEP_DELAY_DEFAULT;
@@ -562,7 +593,7 @@ static bool _xdr_test_thread(struct thread_data* td)
 
         case TEST_STEP_PWR_OFF:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             gpio_set_xd_vdd_5v(VCC_OFF);
             gpio_set_power_9v(VLED_OFF);
             td->step = TEST_STEP_NONE;
@@ -572,7 +603,7 @@ static bool _xdr_test_thread(struct thread_data* td)
 
         default:
         {
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
+            comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, gs_test_step[td->step], td->tout);
             __priv_test.test_thr = INVALID_THREAD_ID;
             return false;
         }

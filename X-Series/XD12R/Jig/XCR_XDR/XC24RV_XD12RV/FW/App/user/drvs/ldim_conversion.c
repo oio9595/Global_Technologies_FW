@@ -42,6 +42,14 @@ uint16_t* ldim_get_led_color_buffer(void)
     return gn_led_color_table;
 }
 
+void ldim_set_led_color_buffer(uint16_t red, uint16_t cyan, uint16_t green, uint16_t blue)
+{
+    gn_led_color_table[COLOR_RED] = red;
+    gn_led_color_table[COLOR_CYAN] = cyan;
+    gn_led_color_table[COLOR_GREEN] = green;
+    gn_led_color_table[COLOR_BLUE] = blue;
+}
+
 void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t blue, uint16_t cyan)
 {
     const uint8_t xc_ch_max = gn_block_map[block][0];
