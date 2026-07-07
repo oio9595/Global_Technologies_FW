@@ -75,6 +75,8 @@ static _xcr_group2_regs_t gt_xcr24_get_gr2_regs;
 static _xcr_otp_control_regs_t gt_xcr24_set_otp_access; /* base address 0xF0 */
 static _xcr_otp_control_regs_t gt_xcr24_get_otp_access; /* base address 0xF0 */
 
+static bool gb_xcr_do_efuse;
+
 static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
 
 static void xcr24_regs_init_table(void)
@@ -1241,6 +1243,16 @@ void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
     XCR_NSS_LO();
     uint8_t ret = spi_write(SPI1, spi_buffer, len + 1U + 1U, 20U);
     XCR_NSS_HI();
+}
+
+void xcr24_trim_set_efuse_enable(bool en)
+{
+    gb_xcr_do_efuse = en;
+}
+
+bool xcr24_trim_get_efuse_enable(void)
+{
+    return gb_xcr_do_efuse;
 }
 
 void xcr24_trim_init_1v5_ldo_dig(void)

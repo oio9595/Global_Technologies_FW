@@ -110,6 +110,24 @@ void sys_init(void)
     xcr24_init_param();
     xdr12_init_param();
 
+#if (XDR_EFUSE == XDR_EFUSE_SKIP)
+    xdr12_trim_set_efuse_enable(false);
+#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
+    xdr12_trim_set_efuse_enable(true);
+#else
+    #error "XDR_EFUSE is not defined"
+#endif
+
+#if (XCR_EFUSE == XCR_EFUSE_SKIP)
+    xcr24_trim_set_efuse_enable(false);
+#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
+    xcr24_trim_set_efuse_enable(true);
+#else
+    #error "XCR_EFUSE is not defined"
+#endif
+
+    xcr24_trim_set_efuse_enable(false);
+
 #if 0
     LL_TIM_EnableARRPreload(TIM3);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH1);

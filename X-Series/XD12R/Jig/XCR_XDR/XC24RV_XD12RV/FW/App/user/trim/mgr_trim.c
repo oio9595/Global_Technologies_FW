@@ -29,11 +29,11 @@
 #ifdef SEQUENCE_DEBUG
     #define XCR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
 #else
-    #define XCR_TRIM_ERROR_RANGE        (0.01f) /* 1% */
+    #define XCR_TRIM_ERROR_RANGE        (0.005f) /* 0.5% */
 #endif
 
 #define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)     /* 1.5V */
-#define XCR_TRIM_TGT_DAC_3V0                (3.0f)     /* 1.5V */
+#define XCR_TRIM_TGT_DAC_3V0                (3.0f)     /* 3.0V */
 #define XCR_TRIM_TGT_DAC1_OFS               (0.1465f)  /* 146.5mV */
 #define XCR_TRIM_TGT_DAC2_OFS               (0.1465f)  /* 146.5mV */
 #define XCR_TRIM_TGT_DAC3_OFS               (0.1465f)  /* 146.5mV */
@@ -69,7 +69,7 @@
 #ifdef SEQUENCE_DEBUG
     #define XDR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
 #else
-    #define XDR_TRIM_ERROR_RANGE        (0.01f) /* 1% */
+    #define XDR_TRIM_ERROR_RANGE        (0.005f) /* 0.5% */
 #endif
 
 #define XDR_TRIM_TGT_CURRENT_REF            (1.4f)      /* 1.4 V */
@@ -220,9 +220,6 @@ static const uint8_t* gs_xcr_trim_list[XCR_TRIM_LIST_MAX] =
     "XCR_TRIM_LIST_OSC_A",
     "XCR_TRIM_LIST_OSC_B",
 };
-
-static bool gb_xcr_do_efuse;
-static bool gb_xdr_do_efuse;
 
 static const uint8_t* gs_xdr_trim_list[XDR_TRIM_LIST_MAX] =
 {
@@ -732,7 +729,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
         case TRIM_STEP_PREPARE_EFUSE:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_trim_step[td->step], gs_xcr_trim_list[*list], td->tout);
-            if (gb_xcr_do_efuse)
+            if (true == xcr24_trim_get_efuse_enable())
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
                 // save mirror register
@@ -1326,7 +1323,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_PREPARE_EFUSE:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", gs_trim_step[td->step], gs_xdr_trim_list[*list], td->tout);
-            if (gb_xdr_do_efuse)
+            if (true == xdr12_trim_get_efuse_enable())
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
                 // save mirror register

@@ -16,6 +16,10 @@ extern "C" {
 #include <stdbool.h>
 #include "xcr24_struct.h"
 
+#define XCR_EFUSE_SKIP      (0U)
+#define XCR_EFUSE_BURN      (0U)
+#define XCR_EFUSE           (XCR_EFUSE_SKIP)
+
 #define XCR_CH_SIZE             (1U)
 #define XCR_SEG_CH_SIZE       	(8U)
 
@@ -60,6 +64,9 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
 
 void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
+
+void xcr24_trim_set_efuse_enable(bool en);
+bool xcr24_trim_get_efuse_enable(void);
 
 void xcr24_trim_init_1v5_ldo_dig(void);
 void xcr24_trim_init_dac_3v0(void);

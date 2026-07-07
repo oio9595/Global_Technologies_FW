@@ -17,7 +17,26 @@ extern "C" {
 #include "drv_gpio.h"
 #include "xdr12_struct.h"
 
+#define XDR_EFUSE_SKIP      (0U)
+#define XDR_EFUSE_BURN      (0U)
+#define XDR_EFUSE           (XDR_EFUSE_SKIP)
+
+#define XDR_CONTROLLED_MCU  (0U)
+#define XDR_CONTROLLED_XCR  (1U)
+#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_MCU)
+
 #define XDR_CH_SIZE         (12U)
+#define XDR_DAISY_LENGTH    (1U)
+
+//#define XDR_LD_DATA_12BIT (12U)
+#define XDR_LD_DATA_14BIT   (14U)
+#define XDR_LD_DATA_BIT     XDR_LD_DATA_14BIT
+
+#define XDR_SV_NO           (32U)
+
+#define XDR_SERIAL_CLK_HIGH (17U)
+#define XDR_SERIAL_CLK_LOW  (8U)
+#define XDR_SERIAL_CLK      ((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
 
 #define XDR_TYPE_A          (0U) /* NTS + TS */
 #define XDR_TYPE_B          (1U) /* NTS + NTS + TS */
@@ -79,18 +98,6 @@ extern "C" {
     #error "XDR_TYPE is not defined"
 #endif
 
-#define XDR_DAISY_LENGTH            (1U)
-
-//#define XDR_LD_DATA_12BIT           (12U)
-#define XDR_LD_DATA_14BIT           (14U)
-#define XDR_LD_DATA_BIT             XDR_LD_DATA_14BIT
-
-#define XDR_SV_NO               	(32U)
-
-#define XDR_SERIAL_CLK_HIGH     	(17U)
-#define XDR_SERIAL_CLK_LOW      	(8U)
-#define XDR_SERIAL_CLK          	((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
-
 typedef enum tag_XD12R_ADDR_TYPE
 {
     XD12R_ADDR_TYPE_GENERAL = 0U,
@@ -113,6 +120,9 @@ void xdr12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_t
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);
 
 void xdr12_ld_transfer(void);
+
+void xdr12_trim_set_efuse_enable(bool en);
+bool xdr12_trim_get_efuse_enable(void);
 
 void xdr12_trim_init_current_ref(void);
 void xdr12_trim_init_ldo_dig(void);

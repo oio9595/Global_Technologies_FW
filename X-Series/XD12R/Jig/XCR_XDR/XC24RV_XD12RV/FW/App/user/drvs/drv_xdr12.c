@@ -49,10 +49,6 @@
 #define CMD_DELAY_FAULT_READ    (XDR_CMD_READOUT + 40U) /* 40us */
 #define CMD_DELAY_REG_RD        (XDR_CMD_READ + 80U) /* 80us */
 
-#define XDR_CONTROLLED_MCU      (0U)
-#define XDR_CONTROLLED_XCR      (1U)
-#define XDR_CONTROL_TYPE        (XDR_CONTROLLED_MCU)
-
 #define XDR_FUNCTION_DIS        (0U)
 #define XDR_FUNCTION_EN         (1U)
 
@@ -251,6 +247,8 @@ static _v_serdes_fault_read_command_t gt_xd_fault_read_command[XDR_DAISY_LENGTH]
 static _v_serdes_fault_readout_command_t gt_xd_fault_readout_command;
 static _v_serdes_sync_gen_command_t gt_xd_syncgen_command[XDR_DAISY_LENGTH];
 static _v_serdes_id_gen_command_t gt_xd_idgen_command[XDR_DAISY_LENGTH];
+
+static bool gb_xdr_do_efuse;
 
 static void start_timeout_timer(uint16_t timeout_us)
 {
@@ -1222,7 +1220,7 @@ void xdr12_init(void)
 {
     xdr12_reset();
     xdr12_idgen();
-    //xdr12_regs_init_table();
+    xdr12_regs_init_table();
     xdr12_read_all();
 }
 
@@ -1424,6 +1422,16 @@ void xdr12_ld_transfer(void)
     us_delay(CMD_DELAY_LD);
 }
 
+void xdr12_trim_set_efuse_enable(bool en)
+{
+    gb_xdr_do_efuse = en;
+}
+
+bool xdr12_trim_get_efuse_enable(void)
+{
+    return gb_xdr_do_efuse;
+}
+
 void xdr12_trim_init_current_ref(void)
 {
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
@@ -1542,7 +1550,7 @@ void xdr12_trim_set_channel_enable(XD_CH_t chx)
 {
     _v_xdr12_channel_enable_t* _r05 = &gt_xdr12_set_regs.reg._r05;
     _r05->ALL = (uint16_t)(1U << chx);
-    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_MIRROR);
+    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xdr12_trim_set_max_curr_vref(uint16_t vref)

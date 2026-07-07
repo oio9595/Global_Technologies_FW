@@ -187,13 +187,30 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - INFO - XCR : %s, XDR : %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-        comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By MCU");
-    #elif
-        comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By XCR");
-    #else
-        #error "XDR_CONTROL_TYPE is not defined"
-    #endif
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By MCU");
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By XCR");
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+
+#if (XDR_EFUSE == XDR_EFUSE_SKIP)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR EFUSE Skip");
+#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR EFUSE Enable");
+#else
+    #error "XDR_EFUSE is not defined"
+#endif
+
+#if (XCR_EFUSE == XCR_EFUSE_SKIP)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XCR EFUSE Skip");
+#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - XCR EFUSE Enable");
+#else
+    #error "XCR_EFUSE is not defined"
+#endif
+
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
@@ -203,7 +220,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    gt_log_level = LOG_LV_DEBUG;
+    gt_log_level = LOG_LV_INFO;
 }
 
 void comm_debugging_process(void)
@@ -303,6 +320,11 @@ void comm_debugging_process(void)
         else if(!(strcmp(str_in, "xdr_test_start")))
         {
             MGR_TEST()->cmd(TEST_CMD_XDR_START, NULL);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xdr_sweep_start")))
+        {
+            MGR_TEST()->cmd(TEST_CMD_XDR_SWEEP_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
