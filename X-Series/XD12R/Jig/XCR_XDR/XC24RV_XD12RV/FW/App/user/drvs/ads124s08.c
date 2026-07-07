@@ -39,7 +39,7 @@
 #include "ads124s08.h"
 #include "comm_debugging.h"
 
-#define USE_DISPLAY_DEVICE_REGS
+//#define USE_DISPLAY_DEVICE_REGS
 #define ADS114S08_READ_COUNT    (16U) /* must be power of 2 */
 
 /* Commands */
