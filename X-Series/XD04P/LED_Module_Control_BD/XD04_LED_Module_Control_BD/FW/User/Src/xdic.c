@@ -124,7 +124,7 @@ static fb_level_t gt_xd_fb_level;
 float gf_xd_max_current;
 float gf_xd_duty;
 
-static uint8_t gn_xd_daisy_chain_size = 2U;
+static uint8_t gn_xd_daisy_chain_size;
 
 static bool gb_xd_id_error_channel[XC_CH_ENABLE_SIZE] = {true}; // if true, mismatch
 

@@ -37,8 +37,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-// "26. 06. 11 - Version Code Update : 0x01
-#define FW_VERSION_CODE     (1U)
+/* "26. 06. 11 - Version Code Update : 0x01 */
+/* "26. 07. 07 - Version Code Update : 0x02 @ XD_SINGLE */
+/* "26. 07. 07 - Version Code Update : 0x03 @ XD_DUAL */
+#define FW_VERSION_CODE     (3U)
+#define XD_SINGLE           (1U)
+#define XD_DUAL             (2U)
+
+//#define XD_DEFAULT_SIZE     (XD_SINGLE)
+#define XD_DEFAULT_SIZE     (XD_DUAL)
 
 #define PRINT_BUFF_SIZE     256U
 #define RX_BUFF_SIZE        256U // must be 2^n
@@ -620,6 +627,8 @@ int main(void)
         LL_mDelay(250U);
     }
     LED_LO();
+
+    XDIC_Set_Daisy_Chain_Size(XD_DEFAULT_SIZE);
 
   /* USER CODE END 2 */
 
