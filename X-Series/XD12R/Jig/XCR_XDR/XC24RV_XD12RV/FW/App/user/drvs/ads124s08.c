@@ -65,7 +65,7 @@
 #define ICC_R                   (22.0f)
 
 #define ADC_VREF                (5000.0f) /* mV */
-#define ADC_RES                 (32767U) /* mV */
+#define ADC_RES                 (32767U)
 #define mVOLTAGE_PER_ADC        (ADC_VREF / (float)ADC_RES)
 #define ADC_CONV_COEFF_HIGH     (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
 #define ADC_CONV_COEFF_MID      (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))

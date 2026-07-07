@@ -264,7 +264,7 @@ static void xcr_test_log_summary(void)
     for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY ; list < XCR_TEST_LIST_MAX ; ++list)
     {
         test_info_t* info = &__priv_test.t_xcr_test_info[list];
-        comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t[VAL: %.3f]", gs_xcr_test_list[list], info->measure[0].value);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t[VAL: %.3f]", gs_xcr_test_list[list], (double)(info->measure[0].value));
     }
 }
 
@@ -393,11 +393,11 @@ static void xdr_test_log_summary(void)
         {
             if (ch == XD_CH_01)
             {
-                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[%s]\t[VAL: %.3f]", gs_xdr_test_list[list], info->measure[ch].value);
+                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[%s]\t[VAL: %.3f]", gs_xdr_test_list[list], (double)(info->measure[ch].value));
             }
             else
             {
-                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, " [%.3f]", info->measure[ch].value);
+                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, " [%.3f]", (double)(info->measure[ch].value));
             }
         }
         comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);

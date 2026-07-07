@@ -16,13 +16,6 @@
 #define CMD_CODE_SYNCGEN        (0x09U)  /* 0b1001 */
 #define CMD_CODE_IDGEN          (0x08U)  /* 0b1000 */
 
-#define CMD_DELAY_REG_WR        (10U) /* 10us */
-#define CMD_DELAY_LD_Tx         (10U) /* 10us */
-#define CMD_DELAY_SYNCGEN       (10U) /* 10us */
-#define CMD_DELAY_IDGEN         (10U) /* 10us */
-#define CMD_DELAY_FAULT_READ    (40U) /* 40us */
-#define CMD_DELAY_REG_RD        (80U) /* 80us */
-
 #define PWM_OUT_BIT0            (((TIM1_PERIOD + 1U) * 1) / 3U)
 #define PWM_OUT_BIT1            (((TIM1_PERIOD + 1U) * 2) / 3U)
 
@@ -44,9 +37,17 @@
 #define XDR_ADDR_BIT            (6U)
 #define XDR_ID_BIT              (5U)
 #define XDR_DATA_BIT            (12U)
+#define XDR_LD_TRANSFER         (XDR_HDR_BIT + (XDR_LD_DATA_BIT * XDR_LD_SIZE))
 #define XDR_CMD_WRITE           (XDR_HDR_BIT + XDR_ADDR_BIT + XDR_DATA_BIT)
 #define XDR_CMD_READ            (XDR_HDR_BIT + XDR_ADDR_BIT)
 #define XDR_CMD_READOUT         (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT)
+
+#define CMD_DELAY_REG_WR        (XDR_CMD_WRITE + 10U) /* 10us */
+#define CMD_DELAY_LD            (XDR_LD_TRANSFER + 10U) /* 10us */
+#define CMD_DELAY_SYNCGEN       (XDR_BIT_SYNCGEN + 10U) /* 10us */
+#define CMD_DELAY_IDGEN         (XDR_BIT_IDGEN + 10U) /* 10us */
+#define CMD_DELAY_FAULT_READ    (XDR_CMD_READOUT + 40U) /* 40us */
+#define CMD_DELAY_REG_RD        (XDR_CMD_READ + 80U) /* 80us */
 
 #define XDR_CONTROLLED_MCU      (0U)
 #define XDR_CONTROLLED_XCR      (1U)
@@ -66,7 +67,6 @@
 
 #define XDR_SYNC_MODE_CMD       (0U)
 #define XDR_SYNC_MODE_SVI       (1U)
-#define XDR_LD_TRANSFER         (XDR_HDR_BIT + (XDR_LD_DATA_BIT * XDR_LD_SIZE))
 
 #define XDR_FPWM_DIV_1          (0U)
 #define XDR_FPWM_DIV_2          (1U)
@@ -460,7 +460,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
 
             pdata[id++] = n_data;
             duty_idx += XDR_CMD_READOUT;
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%01X", n_header, n_id, n_data);
+            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%03X", n_header, n_id, n_data);
         }
     }
 
@@ -1284,10 +1284,13 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
         }
         p_pwm_out[len++] = 0U;
 
+        memset(gn_pwm_in_xd_response_freq, 0U, sizeof(gn_pwm_in_xd_response_freq));
+        memset(gn_pwm_in_xd_response_duty, 0U, sizeof(gn_pwm_in_xd_response_duty));
+
         xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
         xdr12_pwm_out_done();
 
-        LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
+        LL_GPIO_SetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
 
         if(false == xdr12_pwm_in(pwm_in_length, 150U))
         {
@@ -1297,6 +1300,7 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
         {
             comm_UART_Printf(LOG_LV_ERROR, "\r\nFunction[%s] timeout!!", __func__);
         }
+        LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
     }
     #else // to do
     {
@@ -1417,7 +1421,7 @@ void xdr12_ld_transfer(void)
 #else
     #error "XDR_CONTROL_TYPE is not defined"
 #endif
-    us_delay(CMD_DELAY_LD_Tx);
+    us_delay(CMD_DELAY_LD);
 }
 
 void xdr12_trim_init_current_ref(void)

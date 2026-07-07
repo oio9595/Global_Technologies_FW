@@ -605,10 +605,12 @@ static void xcr24_regs_trim_init_table(void)
         {
             case XCR_TEST_CONTROL:
                 _rotp->reg._rF0.bit.TEST_EN = 1U;
-                // break;
+                break;
             case XCR_OTP_PROTECT:
                 _rotp->reg._rF4.bit.PROTECT = 0x0A5AU;
                 break;
+            default:
+                continue;
         }
         xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
     }

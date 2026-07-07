@@ -390,7 +390,7 @@ static void xcr_trim_log_summary(void)
     {
         trim_info_t* info = &__priv_trim.t_xcr_trim_info[list];
         comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t\t[REG: %3u] [SUB: %3u] [VAL: %.3f]", \
-            gs_xcr_trim_list[list], info->reg_val[0], info->sub_val[0], info->measure[0].value);
+            gs_xcr_trim_list[list], info->reg_val[0], info->sub_val[0], (double)(info->measure[0].value));
     }
 }
 
@@ -636,16 +636,16 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
                 comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
-                    gs_xcr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    gs_xcr_trim_list[*list], (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
-                    info->range.target, info->range.min, info->range.max);
+                    (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✕ OUT_RANGE%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
-                    gs_xcr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    gs_xcr_trim_list[*list], (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
-                    info->range.target, info->range.min, info->range.max);
+                    (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
 
             uint16_t adj_mount = 1;
@@ -709,7 +709,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     info->measure[ch].value = closest_val;
                     info->sub_val[ch] = info->saved[ch].sub_val[closest_idx];
                     comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value : %.3f) (Sub_Val : %u)", \
-                        ANSI_FONT_GREEN, ANSI_FONT_NONE, info->measure[ch].value, info->sub_val[ch]);
+                        ANSI_FONT_GREEN, ANSI_FONT_NONE, (double)(info->measure[ch].value), info->sub_val[ch]);
 
                     comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t enough save count");
                     xcr_trim_update_register_by_sub_val(*list, info);
@@ -934,12 +934,12 @@ static void xdr_trim_log_summary(void)
             if (ch == XD_CH_01)
             {
                 comm_UART_Printf(LOG_LV_INFO, "\r\n[%s]\t[REG: %3u] [SUB: %3u] [VAL: %.3f]", \
-                    gs_xdr_trim_list[list], info->reg_val[ch], info->sub_val[ch], info->measure[ch].value);
+                    gs_xdr_trim_list[list], info->reg_val[ch], info->sub_val[ch], (double)(info->measure[ch].value));
             }
             else
             {
                 comm_UART_Printf(LOG_LV_INFO, "\r\n\t\t\t[REG: %3u] [SUB: %3u] [VAL: %.3f]", \
-                    info->reg_val[ch], info->sub_val[ch], info->measure[ch].value);
+                    info->reg_val[ch], info->sub_val[ch], (double)(info->measure[ch].value));
             }
         }
     }
@@ -1218,16 +1218,16 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
                 comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
-                    gs_xdr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    gs_xdr_trim_list[*list], (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
-                    info->range.target, info->range.min, info->range.max);
+                    (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✕ OUT_RANGE%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
-                    gs_xdr_trim_list[*list], (ch + 1U), info->measure[ch].value, \
+                    gs_xdr_trim_list[*list], (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
-                    info->range.target, info->range.min, info->range.max);
+                    (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
 
             if (t_judge.up == true)
@@ -1295,7 +1295,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                     info->measure[ch].value = closest_val;
                     info->sub_val[ch] = info->saved[ch].sub_val[closest_idx];
                     comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value : %.3f) (Sub_Val : %u)", \
-                        ANSI_FONT_GREEN, ANSI_FONT_NONE, info->measure[ch].value, info->sub_val[ch]);
+                        ANSI_FONT_GREEN, ANSI_FONT_NONE, (double)(info->measure[ch].value), info->sub_val[ch]);
                     xdr_trim_update_register_by_sub_val(*list, info);
 
                     if (((*list == XDR_TRIM_LIST_CH_GAIN) || (*list == XDR_TRIM_LIST_CH_OFS)) && (ch < (XD_CH_MAX - 1U)))

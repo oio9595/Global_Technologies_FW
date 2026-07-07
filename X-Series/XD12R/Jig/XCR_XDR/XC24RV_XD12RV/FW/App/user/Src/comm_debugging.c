@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "drv_gpio.h"
 #include "ads124s08.h"
@@ -242,7 +243,7 @@ void comm_debugging_process(void)
         else if (Command_is_("jig_ic_stop"))
         {
             float freq = mcu_peripheral_tim_conversion_freq();
-            comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f MHz\r\n", freq / 1000000.0f);
+            comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f Hz\r\n", (double)(freq));
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -376,7 +377,7 @@ void comm_debugging_process(void)
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", icc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
@@ -412,7 +413,6 @@ void comm_debugging_process(void)
             xdr12_syncgen();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
         else if(!(strcmp(str_in, "xdr_ldim")))
         {
             xdr12_ld_transfer();
@@ -428,7 +428,7 @@ void comm_debugging_process(void)
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3f", icc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3f", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
@@ -452,6 +452,66 @@ void comm_debugging_process(void)
         else if(Command_Param_is_("vsync_freq", "%u", &u32_recv_param[0]))
         {
             tim_set_vsync_out_freq((float)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        /* test with previous IC */
+        else if(Command_Param_is_("xd_curr", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            current_gain_t gain = (current_gain_t)u32_recv_param[0];
+            XD_CH_t ch = (XD_CH_t)(u32_recv_param[1]);
+            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
+
+            gpio_set_vled_9v(VLED_ON);
+            gpio_set_current_gain(gain);
+            gpio_set_demux_channel_selection(ch);
+
+            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0xAAA, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x0B, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x0C, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x0D, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x0A, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x820, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_read_by_type((uint16_t)0x05, XD12R_ADDR_TYPE_GENERAL);
+
+            tim_vsync_out_start();
+            LL_mDelay(1000U);
+            tim_vsync_out_stop();
+
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
+                float iout = JigBD_IF_Convert_Adc_To_Current(adc, gain);
+                comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], m_volt [%f], iout [%f]", adc, (double)(volt), (double)(iout));
+            }
+
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_vref")))
+        {
+            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x900, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_read_by_type((uint16_t)0x3F, XD12R_ADDR_TYPE_GENERAL);
+
+            tim_vsync_out_start();
+            LL_mDelay(1000U);
+            tim_vsync_out_stop();
+
+            mcu_peripheral_adc_start();
+            uint16_t mcu_adc_value = mcu_peripheral_adc_get();
+            float mcu_volt = mcu_peripheral_adc_conversion_to_voltage(mcu_adc_value);
+            comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], m_volt [%f]", mcu_adc_value, (double)(mcu_volt));
+
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 

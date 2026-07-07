@@ -61,13 +61,13 @@ void gpio_set_xd_vdd_5v(vcc_state_t state)
             XD_5V5_EN_LO();
             break;
         }
-        case VCC_ON_3V3: // off -> on : 10ms
+        case VCC_ON_3V3: // off -> 3.3 : 10ms
         {
             XD_VCC_EN_LO();
             XD_5V5_EN_LO();
             break;
         }
-        case VCC_ON_5V5:
+        case VCC_ON_5V5: // 3.3 -> 5.5 : 10ms
         {
             XD_VCC_EN_LO();
             XD_5V5_EN_HI();
@@ -86,19 +86,19 @@ void gpio_set_xc_vdd_5v(vcc_state_t state)
 {
     switch(state)
     {
-        case VCC_OFF:
+        case VCC_OFF: // on -> off : 40ms
         {
             XC_VCC_EN_HI();
             XC_5V5_EN_LO();
             break;
         }
-        case VCC_ON_3V3:
+        case VCC_ON_3V3: // off -> 3.3 : 10ms
         {
             XC_VCC_EN_LO();
             XC_5V5_EN_LO();
             break;
         }
-        case VCC_ON_5V5:
+        case VCC_ON_5V5: // 3.3 -> 5.5 : 10ms
         {
             XC_VCC_EN_LO();
             XC_5V5_EN_HI();
@@ -162,16 +162,16 @@ void gpio_set_demux_channel_selection(XD_CH_t output_ch)
         }
         case XD_CH_02:
         {
-            DEMUX_CHSEL_1_LO();
-            DEMUX_CHSEL_2_HI();
+            DEMUX_CHSEL_1_HI();
+            DEMUX_CHSEL_2_LO();
             DEMUX_CHSEL_3_LO();
             DEMUX_CHSEL_4_LO();
             break;
         }
         case XD_CH_03:
         {
-            DEMUX_CHSEL_1_HI();
-            DEMUX_CHSEL_2_LO();
+            DEMUX_CHSEL_1_LO();
+            DEMUX_CHSEL_2_HI();
             DEMUX_CHSEL_3_LO();
             DEMUX_CHSEL_4_LO();
             break;
@@ -194,16 +194,16 @@ void gpio_set_demux_channel_selection(XD_CH_t output_ch)
         }
         case XD_CH_06:
         {
-            DEMUX_CHSEL_1_LO();
-            DEMUX_CHSEL_2_HI();
+            DEMUX_CHSEL_1_HI();
+            DEMUX_CHSEL_2_LO();
             DEMUX_CHSEL_3_HI();
             DEMUX_CHSEL_4_LO();
             break;
         }
         case XD_CH_07:
         {
-            DEMUX_CHSEL_1_HI();
-            DEMUX_CHSEL_2_LO();
+            DEMUX_CHSEL_1_LO();
+            DEMUX_CHSEL_2_HI();
             DEMUX_CHSEL_3_HI();
             DEMUX_CHSEL_4_LO();
             break;
@@ -226,16 +226,16 @@ void gpio_set_demux_channel_selection(XD_CH_t output_ch)
         }
         case XD_CH_10:
         {
-            DEMUX_CHSEL_1_LO();
-            DEMUX_CHSEL_2_HI();
+            DEMUX_CHSEL_1_HI();
+            DEMUX_CHSEL_2_LO();
             DEMUX_CHSEL_3_LO();
             DEMUX_CHSEL_4_HI();
             break;
         }
         case XD_CH_11:
         {
-            DEMUX_CHSEL_1_HI();
-            DEMUX_CHSEL_2_LO();
+            DEMUX_CHSEL_1_LO();
+            DEMUX_CHSEL_2_HI();
             DEMUX_CHSEL_3_LO();
             DEMUX_CHSEL_4_HI();
             break;
