@@ -112,7 +112,7 @@ void xdr12_trim_init(void);
 void xdr12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_type);
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);
 
-void xdr12_ld_transfer(uint16_t* p, uint16_t line_size);
+void xdr12_ld_transfer(void);
 
 void xdr12_trim_init_current_ref(void);
 void xdr12_trim_init_ldo_dig(void);

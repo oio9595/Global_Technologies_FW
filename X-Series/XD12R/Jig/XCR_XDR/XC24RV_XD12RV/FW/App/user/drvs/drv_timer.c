@@ -162,18 +162,7 @@ void tim_vsync_out_process(void)
         ++gn_xcr_ldim_block_conversion_index;
         if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
         {
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-            uint16_t* p = ldim_get_xdr_ld_transfer_buffer();
-            uint16_t len = ldim_get_xdr_ld_transfer_size();
-            xdr12_ld_transfer(p, len);
-    #elif
-            uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
-            uint16_t len = ldim_get_xcr_ld_transfer_size();
-
-            xcr24_set_ld_transfer(p, len);
-    #else
-            #error "XDR_CONTROL_TYPE is not defined"
-    #endif
+            xdr12_ld_transfer();
             gb_xcr_ldim_block_conversion_flag = false;
             gn_xcr_ldim_block_conversion_index = 0U;
         }

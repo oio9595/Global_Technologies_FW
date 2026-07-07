@@ -415,10 +415,7 @@ void comm_debugging_process(void)
 
         else if(!(strcmp(str_in, "xdr_ldim")))
         {
-            uint16_t* p = ldim_get_xdr_ld_transfer_buffer();
-            uint16_t len = ldim_get_xdr_ld_transfer_size();
-
-            xdr12_ld_transfer(p, len);
+            xdr12_ld_transfer();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 

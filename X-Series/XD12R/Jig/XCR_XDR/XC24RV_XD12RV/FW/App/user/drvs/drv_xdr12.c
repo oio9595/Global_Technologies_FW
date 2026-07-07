@@ -1,10 +1,12 @@
 #include <string.h>
 
+#include "main.h"
 #include "drv_xdr12.h"
 #include "drv_xcr24.h"
 #include "comm_debugging.h"
 #include "drv_gpio.h"
 #include "ads124s08.h"
+#include "ldim_conversion.h"
 
 /* XDR/IC602 serializer protocol */
 #define CMD_CODE_WRITE          (0x0DU)  /* 0b1101 */
@@ -13,6 +15,13 @@
 #define CMD_CODE_RD_FAULT       (0x0AU)  /* 0b1010 */
 #define CMD_CODE_SYNCGEN        (0x09U)  /* 0b1001 */
 #define CMD_CODE_IDGEN          (0x08U)  /* 0b1000 */
+
+#define CMD_DELAY_REG_WR        (10U) /* 10us */
+#define CMD_DELAY_LD_Tx         (10U) /* 10us */
+#define CMD_DELAY_SYNCGEN       (10U) /* 10us */
+#define CMD_DELAY_IDGEN         (10U) /* 10us */
+#define CMD_DELAY_FAULT_READ    (40U) /* 40us */
+#define CMD_DELAY_REG_RD        (80U) /* 80us */
 
 #define PWM_OUT_BIT0            (((TIM1_PERIOD + 1U) * 1) / 3U)
 #define PWM_OUT_BIT1            (((TIM1_PERIOD + 1U) * 2) / 3U)
@@ -1103,7 +1112,6 @@ void xdr12_reset(void)
     _r00.bit.vs_rst = 0U;
     _r00.bit.rst = 1U;
     xdr12_write_by_type(XD12R_RESET_ID, _r00.ALL, XD12R_ADDR_TYPE_GENERAL);
-    LL_mDelay(1U);
 }
 
 void xdr12_idgen(void)
@@ -1132,7 +1140,7 @@ void xdr12_idgen(void)
         xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
     }
     #endif
-    LL_mDelay(1U);
+    us_delay(CMD_DELAY_IDGEN);
 }
 
 void xdr12_syncgen(void)
@@ -1161,6 +1169,7 @@ void xdr12_syncgen(void)
         xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
     }
     #endif
+    us_delay(CMD_DELAY_SYNCGEN);
 }
 
 static void xdr12_memory_copy(void)
@@ -1229,7 +1238,7 @@ static void xdr12_write(uint16_t addr, uint16_t data)
 {
     #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
-        uint16_t* out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
 
         xdr12_pwm_out_done();
@@ -1238,12 +1247,12 @@ static void xdr12_write(uint16_t addr, uint16_t data)
         {
             gt_xd_write_command[daisy].bit.addr = addr;
             gt_xd_write_command[daisy].bit.data = data;
-            len += xdr12_make_pwm_out_stream(gt_xd_write_command[daisy].ALL, &out[len], XDR_CMD_WRITE);
+            len += xdr12_make_pwm_out_stream(gt_xd_write_command[daisy].ALL, &p_pwm_out[len], XDR_CMD_WRITE);
             comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Write Packet\r\n\tADDR - 0x%02X, DATA - 0x%03X", gt_xd_write_command->bit.addr, gt_xd_write_command->bit.data);
         }
-        out[len++] = 0U;
+        p_pwm_out[len++] = 0U;
 
-        xdr12_pwm_out((uint32_t)out, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
     }
     #else
     {
@@ -1256,25 +1265,26 @@ static void xdr12_write(uint16_t addr, uint16_t data)
         xcr24_write_grp1_reg(XCR_GLOBAL_WRITE_COMMAND, &_r01.ALL, 1U);
     }
     #endif
+    us_delay(CMD_DELAY_REG_WR);
 }
 
 static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
 {
     #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
-        uint16_t* const out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+        uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
         uint16_t len = 0U;
         const uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT);
 
         for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
         {
             gt_xd_read_command[daisy].bit.addr = addr;
-            len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &out[len], XDR_CMD_READ);
+            len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &p_pwm_out[len], XDR_CMD_READ);
             comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tIN_LENGTH [%u] CMD[0x%01X] ADDR[0x%02X]", pwm_in_length, gt_xd_read_command->bit.cmd_code, gt_xd_read_command->bit.addr);
         }
-        out[len++] = 0U;
+        p_pwm_out[len++] = 0U;
 
-        xdr12_pwm_out((uint32_t)out, (len + PWM_OUT_HEADER_SIZE));
+        xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
         xdr12_pwm_out_done();
 
         LL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
@@ -1322,6 +1332,7 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
         }
     }
     #endif
+    us_delay(CMD_DELAY_REG_RD);
 
     return 0U;
 }
@@ -1372,24 +1383,15 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
     return xdr_buffer[0];
 }
 
-void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
+void xdr12_ld_transfer(void)
 {
-    if((p == NULL) || (line_size == 0U))
-    {
-        return;
-    }
-
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    uint16_t* p_ld_buffer = ldim_get_xdr_ld_transfer_buffer();
     uint16_t* const p_pwm_out = gn_pwm_out_xd_ld_transfer + PWM_OUT_HEADER_SIZE;
     uint16_t len = 0;
-    const uint16_t* p_src = p;
 
     for(uint16_t daisy = 0U ; daisy < XDR_DAISY_LENGTH ; ++daisy)
     {
-        if((len + XDR_LD_TRANSFER) > (XDR_DAISY_LENGTH * XDR_LD_TRANSFER + 1U))
-        {
-            break;
-        }
-
         /* header : 1111 */
         p_pwm_out[len++] = PWM_OUT_BIT1;
         p_pwm_out[len++] = PWM_OUT_BIT1;
@@ -1398,8 +1400,7 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
 
         for(uint8_t ld_idx = 0U ; ld_idx < XDR_LD_SIZE ; ++ld_idx)
         {
-            const uint16_t written = xdr12_make_pwm_out_stream(*p_src++, &p_pwm_out[len], XDR_LD_DATA_BIT);
-            len += written;
+            len += xdr12_make_pwm_out_stream(*p_ld_buffer++, &p_pwm_out[len], XDR_LD_DATA_BIT);
         }
     }
 
@@ -1409,6 +1410,14 @@ void xdr12_ld_transfer(uint16_t* p, uint16_t line_size)
     }
 
     xdr12_pwm_out((uint32_t)p_pwm_out, (uint32_t)len);
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
+    uint16_t len = ldim_get_xcr_ld_transfer_size();
+    xcr24_set_ld_transfer(p, len);
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+    us_delay(CMD_DELAY_LD_Tx);
 }
 
 void xdr12_trim_init_current_ref(void)
