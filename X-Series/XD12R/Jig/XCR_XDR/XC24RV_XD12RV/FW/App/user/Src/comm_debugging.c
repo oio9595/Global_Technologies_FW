@@ -70,6 +70,7 @@ typedef struct
 
 volatile static LOG_LV_t gt_log_level;
 static UART_t gt_uart;
+static rx_packet_t gt_last_uart_rx;
 bool gb_usart_tx_start_flag;
 
 static const char* const gp_msg_prompt = "\n\rJIG> \0";
@@ -602,6 +603,7 @@ void comm_debugging_process(void)
         else if(!(strcmp(str_in, "xd_osc")))
         {
             xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x810, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_write_by_type((uint16_t)0x23, (uint16_t)0x808, XD12R_ADDR_TYPE_GENERAL);
             xdr12_read_by_type((uint16_t)0x3F, XD12R_ADDR_TYPE_GENERAL);
 
             tim_vsync_out_start();
@@ -615,7 +617,7 @@ void comm_debugging_process(void)
             LL_mDelay(1000U);
 
             float freq = mcu_peripheral_tim_conversion_freq();
-            comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f Hz\r\n", (double)(freq) * XDR_CONST_OSC);
+            comm_UART_Printf(LOG_LV_INFO, "XDR OSC: %.3f MHz\r\n", (double)(freq) * XDR_CONST_OSC);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("log_lv", "%u", &u32_recv_param[0]))
@@ -702,6 +704,8 @@ void comm_rx_handler(uint8_t rx_data)
             {
                 gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[(RX_PACKET_SIZE - 1)] = 0;
             }
+            memcpy(gt_last_uart_rx.buffer, gt_uart.Rxbuff[gt_uart.RxInCnt].buffer, sizeof(gt_uart.Rxbuff[gt_uart.RxInCnt].buffer));
+            gt_last_uart_rx.length = gt_uart.Rxbuff[gt_uart.RxInCnt].length;
 
             ++gt_uart.RxInCnt;
             if(gt_uart.RxInCnt > (RX_BUFF_SIZE -1))
@@ -723,19 +727,22 @@ void comm_rx_handler(uint8_t rx_data)
             }
             break;
         }
-
         default:
         {
-            if((rx_data == CLI_KEY_UP) && (gt_uart.Rxbuff[gt_uart.RxInCnt].length > 2) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length-2] == 0x1B) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length -1] == 0x5B))
+            if((rx_data == CLI_KEY_UP) && (gt_uart.Rxbuff[gt_uart.RxInCnt].length >= 2U) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length - 2] == 0x1BU) && (gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length - 1] == 0x5BU))
             {
                 UART_PutChar('\n');
-                UART_PutChar('\r');
-
-                gt_uart.Rxbuff[gt_uart.RxInCnt].length = 0;
+                //UART_PutChar('\r');
+                memcpy(gt_uart.Rxbuff[gt_uart.RxInCnt].buffer, gt_last_uart_rx.buffer, sizeof(gt_last_uart_rx.buffer));
+                gt_uart.Rxbuff[gt_uart.RxInCnt].length = gt_last_uart_rx.length;
+                for (uint8_t i = 0; i < gt_uart.Rxbuff[gt_uart.RxInCnt].length; ++i)
+                {
+                    UART_PutChar(gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[i]);
+                }
             }
             else
             {
-                if(gt_uart.Rxbuff[gt_uart.RxInCnt].length < (RX_PACKET_SIZE - 1))
+                if(gt_uart.Rxbuff[gt_uart.RxInCnt].length < (RX_PACKET_SIZE - 1U))
                 {
                     gt_uart.Rxbuff[gt_uart.RxInCnt].buffer[gt_uart.Rxbuff[gt_uart.RxInCnt].length] = rx_data;
                     ++gt_uart.Rxbuff[gt_uart.RxInCnt].length;
