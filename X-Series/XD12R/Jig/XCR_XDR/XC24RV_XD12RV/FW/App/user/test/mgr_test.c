@@ -7,8 +7,6 @@
 #include "ads124s08.h"
 #include "comm_debugging.h"
 
-#define SEQUENCE_DEBUG
-
 #define STEP_DELAY_DEFAULT      (10U)
 #define STEP_DELAY_MEASURE      (100U)
 #define STEP_DELAY_PWR_ON       (100U)
@@ -543,9 +541,7 @@ static bool _xdr_test_thread(struct thread_data* td)
                     }
                     else
                     {
-#ifndef SEQUENCE_DEBUG
                         return true;
-#endif
                     }
                     break;
                 }
@@ -593,9 +589,7 @@ static bool _xdr_test_thread(struct thread_data* td)
                     }
                     else
                     {
-#ifndef SEQUENCE_DEBUG
                         return true;
-#endif
                     }
                     break;
                 }

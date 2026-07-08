@@ -1060,6 +1060,7 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
 
     if (in_grp >= XCR_RW_GRP_MAX)
     {
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid group type", __func__);
         return;
     }
 
@@ -1360,6 +1361,7 @@ void xcr24_trim_init_osc_a(void)
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
     _r65->bit.OSC_MAN_EN_A = 1U;
+    _r65->bit.FLT_CTL_A = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
     _v_osc_fll_man_a2_t* _r66 = &gt_xcr24_set_gr1_regs.reg._r66;
@@ -1380,6 +1382,7 @@ void xcr24_trim_init_osc_b(void)
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 1U;
+    _r67->bit.FLT_CTL_B = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
     _v_osc_fll_man_b2_t* _r68 = &gt_xcr24_set_gr1_regs.reg._r68;
@@ -1647,6 +1650,7 @@ void xcr24_test_init_fll_a_30m(void)
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
     _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.FLT_CTL_A = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
     const float xc_mclk = 30000000.0f; /* 30MHz */
@@ -1674,6 +1678,7 @@ void xcr24_test_init_fll_a_35m(void)
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
     _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.FLT_CTL_A = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
     const float xc_mclk = 35000000.0f; /* 35MHz */
@@ -1701,6 +1706,7 @@ void xcr24_test_init_fll_a_40m(void)
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
     _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.FLT_CTL_A = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
     const float xc_mclk = 40000000.0f; /* 40MHz */
@@ -1727,6 +1733,7 @@ void xcr24_test_init_fll_b_30m(void)
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.FLT_CTL_B = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
 
     const float xc_mclk = 30000000.0f; /* 30MHz */
@@ -1754,6 +1761,7 @@ void xcr24_test_init_fll_b_35m(void)
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.FLT_CTL_B = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
 
     const float xc_mclk = 35000000.0f; /* 35MHz */
@@ -1781,6 +1789,7 @@ void xcr24_test_init_fll_b_40m(void)
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.FLT_CTL_B = 1U;
     xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
 
     const float xc_mclk = 40000000.0f; /* 40MHz */

@@ -1405,11 +1405,7 @@ void xdr12_ld_transfer(void)
             len += xdr12_make_pwm_out_stream(*p_ld_buffer++, &p_pwm_out[len], XDR_LD_DATA_BIT);
         }
     }
-
-    if((uint32_t)len < (XDR_DAISY_LENGTH * XDR_LD_TRANSFER + 1U))
-    {
-        p_pwm_out[len++] = 0U; /* PWM_DMA_TAIL_SIZE */
-    }
+    p_pwm_out[len++] = 0U;
 
     xdr12_pwm_out((uint32_t)p_pwm_out, (uint32_t)len);
 #elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
@@ -1732,7 +1728,7 @@ void xdr12_trim_save_mirror_register(void)
 {
     for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_MAX ; ++mirror_addr)
     {
-        gt_xdr12_mirror_get_regs[0].ALL[mirror_addr] = xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        xdr12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
     }
 }
 

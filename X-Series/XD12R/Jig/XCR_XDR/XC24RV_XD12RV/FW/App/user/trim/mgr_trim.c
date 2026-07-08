@@ -7,8 +7,6 @@
 #include "drv_gpio.h"
 #include "ads124s08.h"
 
-#define SEQUENCE_DEBUG
-
 #define SAVE_INFO_MAX_CNT                   (10)
 
 #define XCR_DELAY_DEFAULT                   (10U)
@@ -26,11 +24,7 @@
 #define XCR_DEFAULT_SUB_VAL_OSC_A           (1U << 4U)
 #define XCR_DEFAULT_SUB_VAL_OSC_B           (1U << 4U)
 
-#ifdef SEQUENCE_DEBUG
-    #define XCR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
-#else
-    #define XCR_TRIM_ERROR_RANGE        (0.005f) /* 0.5% */
-#endif
+#define XCR_TRIM_ERROR_RANGE                (0.005f) /* 0.5% */
 
 #define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)     /* 1.5V */
 #define XCR_TRIM_TGT_DAC_3V0                (3.0f)     /* 3.0V */
@@ -66,11 +60,7 @@
 #define XDR_DEFAULT_SUB_VAL_CH_GAIN         (1U << 6U)
 #define XDR_DEFAULT_SUB_VAL_CH_OFS          (1U << 8U)
 
-#ifdef SEQUENCE_DEBUG
-    #define XDR_TRIM_ERROR_RANGE        (1.0f)  /* 100%, Only For Debug */
-#else
-    #define XDR_TRIM_ERROR_RANGE        (0.005f) /* 0.5% */
-#endif
+#define XDR_TRIM_ERROR_RANGE                (0.005f) /* 0.5% */
 
 #define XDR_TRIM_TGT_CURRENT_REF            (1.4f)      /* 1.4 V */
 #define XDR_TRIM_TGT_LDO_DIG                (1.5f)      /* 1.5 V */
@@ -675,11 +665,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
 
-            uint16_t adj_mount = 1;
-            //uint16_t adj_mount = trim_calculate_adjust_amount(info);
-            #ifdef SEQUENCE_DEBUG
-            adj_mount = 0U;
-            #endif
+            uint16_t adj_mount = trim_calculate_adjust_amount(info);
             if (t_judge.up == true)
             {
                 info->sub_val[ch] += adj_mount;
@@ -774,7 +760,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
             else
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
-                // turn off
                 td->step = TRIM_STEP_LOG_SUMMARY;
                 td->tout = XCR_DELAY_DEFAULT;
             }
@@ -1046,7 +1031,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_PWR_ON:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, trim_step_to_string((trim_step_t)td->step), td->tout);
-            /* Power On Sequence */
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
             td->step = TRIM_STEP_INITIAL;
             td->tout = XDR_DELAY_PWR_ON;
@@ -1056,7 +1040,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_INITIAL:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
-            /* XDR Initialization */
             xdr12_trim_init();
             td->step = TRIM_STEP_INITIAL_BY_LIST;
             td->tout = XDR_DELAY_DEFAULT;
@@ -1066,7 +1049,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_INITIAL_BY_LIST:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
-            /* XDR Prepare for Each Trim List */
             switch (*list)
             {
                 case XDR_TRIM_LIST_CURRENT_REF:
@@ -1234,7 +1216,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
-            /* XDR Compare */
             judge_info_t t_judge = trim_compare_range(info);
             XD_CH_t ch = info->chx;
 
@@ -1257,31 +1238,23 @@ static bool _xdr_trim_thread(struct thread_data* td)
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
 
+            uint16_t adj_mount = trim_calculate_adjust_amount(info);
             if (t_judge.up == true)
             {
-                //uint16_t adj_mount = 1;
-                uint16_t adj_mount = trim_calculate_adjust_amount(info);
                 info->sub_val[ch] += adj_mount;
-                #ifdef SEQUENCE_DEBUG
-                info->sub_val[ch] -= 1U;
-                #endif
                 comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %u)", \
                     ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
             else if (t_judge.down == true)
             {
-                //uint16_t adj_mount = 1;
-                uint16_t adj_mount = trim_calculate_adjust_amount(info);
                 info->sub_val[ch] -= adj_mount;
-                #ifdef SEQUENCE_DEBUG
-                info->sub_val[ch] += 1U;
-                #endif
                 comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %u)", \
                     ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
 
             if (info->saved[ch].saved_cnt < SAVE_INFO_MAX_CNT)
             {
+                comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t not enough save count");
                 if (true == xdr_trim_update_register_by_sub_val(*list, info))
                 {
                     td->step = TRIM_STEP_INITIAL_BY_LIST;
@@ -1368,7 +1341,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
             else
             {
                 comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
-                // turn off
                 td->step = TRIM_STEP_LOG_SUMMARY;
                 td->tout = XDR_DELAY_DEFAULT;
             }
