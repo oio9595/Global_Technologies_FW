@@ -68,12 +68,13 @@ static uint8_t gn_xcr_channel_block_size[24];
 static uint32_t gn_xcr_fll_cnt[2];
 
 static _xcr_group1_regs_t gt_xcr24_set_gr1_regs;
-static _xcr_group2_regs_t gt_xcr24_set_gr2_regs;
 static _xcr_group1_regs_t gt_xcr24_get_gr1_regs;
+
+static _xcr_group2_regs_t gt_xcr24_set_gr2_regs;
 static _xcr_group2_regs_t gt_xcr24_get_gr2_regs;
 
-static _xcr_otp_control_regs_t gt_xcr24_set_otp_access; /* base address 0xF0 */
-static _xcr_otp_control_regs_t gt_xcr24_get_otp_access; /* base address 0xF0 */
+static _xcr_otp_control_regs_t gt_xcr24_set_otp_regs; /* base address 0xF0 */
+static _xcr_otp_control_regs_t gt_xcr24_get_otp_regs; /* base address 0xF0 */
 
 static bool gb_xcr_do_efuse;
 
@@ -527,7 +528,7 @@ static void xcr24_regs_trim_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
-    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_access;
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
 
     for(xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
     {
@@ -631,10 +632,32 @@ void xcr24_reset(void)
     xcr24_write_grp1_reg(XCR_RESET, &_r00.ALL, 1U);
 }
 
+static void xcr24_dump_registers(void)
+{
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP1 Registers");
+    for (xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
+    }
+
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP2 Registers");
+    for (xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
+    }
+
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 OTP Control Registers");
+    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_otp_regs.ALL[addr]);
+    }
+}
+
 static void xcr24_memory_copy(void)
 {
     memcpy(gt_xcr24_set_gr1_regs.ALL, gt_xcr24_get_gr1_regs.ALL, sizeof(gt_xcr24_get_gr1_regs));
     memcpy(gt_xcr24_set_gr2_regs.ALL, gt_xcr24_get_gr2_regs.ALL, sizeof(gt_xcr24_get_gr2_regs));
+    memcpy(gt_xcr24_set_otp_regs.ALL, gt_xcr24_get_otp_regs.ALL, sizeof(gt_xcr24_get_otp_regs));
 }
 
 void xcr24_read_all(void)
@@ -646,6 +669,7 @@ void xcr24_read_all(void)
 
     xcr24_read_otp_control(XCR_TEST_CONTROL, 10U);
 
+    xcr24_dump_registers();
     xcr24_memory_copy();
 }
 
@@ -736,18 +760,14 @@ void xcr24_init_param(void)
 void xcr24_init(void)
 {
     xcr24_reset();
-
     xcr24_regs_init_table();
-
     xcr24_read_all();
 }
 
 void xcr24_trim_init(void)
 {
     xcr24_reset();
-
     xcr24_regs_trim_init_table();
-
     xcr24_read_all();
 }
 
@@ -807,7 +827,7 @@ uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length)
     }
     else
     {
-        _xcr_otp_control_regs_t* _r = &gt_xcr24_get_otp_access;
+        _xcr_otp_control_regs_t* _r = &gt_xcr24_get_otp_regs;
         for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
@@ -859,7 +879,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     }
     else
     {
-        _xcr_otp_control_regs_t* _r = &gt_xcr24_set_otp_access;
+        _xcr_otp_control_regs_t* _r = &gt_xcr24_set_otp_regs;
         for(uint16_t i = 0U ; i < burst_size ; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
@@ -1055,7 +1075,7 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
 
 static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     xcr_rw_grp_t now_grp = (xcr_rw_grp_t)(_rF0->bit.ADDR_EXT);
 
     if (in_grp >= XCR_RW_GRP_MAX)
@@ -1258,7 +1278,7 @@ bool xcr24_trim_get_efuse_enable(void)
 
 void xcr24_trim_init_1v5_ldo_dig(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1268,7 +1288,7 @@ void xcr24_trim_init_1v5_ldo_dig(void)
 
 void xcr24_trim_init_dac_3v0(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1282,7 +1302,7 @@ void xcr24_trim_init_dac_3v0(void)
 
 void xcr24_trim_init_dac1_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1300,7 +1320,7 @@ void xcr24_trim_init_dac1_ofs(void)
 
 void xcr24_trim_init_dac2_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1318,7 +1338,7 @@ void xcr24_trim_init_dac2_ofs(void)
 
 void xcr24_trim_init_dac3_ofs(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 1U;
     _rF0->bit.DACO2_DIRECT = 1U;
@@ -1336,7 +1356,7 @@ void xcr24_trim_init_dac3_ofs(void)
 
 void xcr24_trim_init_1v5_ldo_osc(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1350,7 +1370,7 @@ void xcr24_trim_init_1v5_ldo_osc(void)
 
 void xcr24_trim_init_osc_a(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1371,7 +1391,7 @@ void xcr24_trim_init_osc_a(void)
 
 void xcr24_trim_init_osc_b(void)
 {
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1395,7 +1415,7 @@ bool xcr24_trim_set_1v5_ldo_dig(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_1V5_LDO_DIG)
     {
-        _v_mirror1_t* _rF5 = &gt_xcr24_set_otp_access.reg._rF5;
+        _v_mirror1_t* _rF5 = &gt_xcr24_set_otp_regs.reg._rF5;
         _rF5->bit.vctl_ldo = reg_val;
         xcr24_write_otp_control(XCR_MIRROR1, &_rF5->ALL, 1U);
         ret = true;
@@ -1412,7 +1432,7 @@ bool xcr24_trim_set_dac_3v0(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC_3V0)
     {
-        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_access.reg._rF6;
+        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_regs.reg._rF6;
         _rF6->bit.dac_ctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
         ret = true;
@@ -1429,7 +1449,7 @@ bool xcr24_trim_set_dac1_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC1_OFS)
     {
-        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_access.reg._rF6;
+        _v_mirror2_t* _rF6 = &gt_xcr24_set_otp_regs.reg._rF6;
         _rF6->bit.dac1_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR2, &_rF6->ALL, 1U);
         ret = true;
@@ -1446,7 +1466,7 @@ bool xcr24_trim_set_dac2_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC2_OFS)
     {
-        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_access.reg._rF7;
+        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_regs.reg._rF7;
         _rF7->bit.dac2_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
         ret = true;
@@ -1463,7 +1483,7 @@ bool xcr24_trim_set_dac3_ofs(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_DAC3_OFS)
     {
-        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_access.reg._rF7;
+        _v_mirror3_t* _rF7 = &gt_xcr24_set_otp_regs.reg._rF7;
         _rF7->bit.dac3_ofs = reg_val;
         xcr24_write_otp_control(XCR_MIRROR3, &_rF7->ALL, 1U);
         ret = true;
@@ -1480,7 +1500,7 @@ bool xcr24_trim_set_1v5_ldo_osc(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_1V5_LDO_OSC)
     {
-        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_access.reg._rF8;
+        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_regs.reg._rF8;
         _rF8->bit.ldo_osc_ctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
         ret = true;
@@ -1497,7 +1517,7 @@ bool xcr24_trim_set_osc_a(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_OSC_A)
     {
-        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_access.reg._rF8;
+        _v_mirror4_t* _rF8 = &gt_xcr24_set_otp_regs.reg._rF8;
         _rF8->bit.osc_rctl = reg_val;
         xcr24_write_otp_control(XCR_MIRROR4, &_rF8->ALL, 1U);
         ret = true;
@@ -1514,7 +1534,7 @@ bool xcr24_trim_set_osc_b(uint16_t reg_val)
     bool ret = false;
     if (reg_val <= XCR_MAX_OSC_B)
     {
-        _v_mirror5_t* _rF9 = &gt_xcr24_set_otp_access.reg._rF9;
+        _v_mirror5_t* _rF9 = &gt_xcr24_set_otp_regs.reg._rF9;
         _rF9->bit.osc_rctl2 = reg_val;
         xcr24_write_otp_control(XCR_MIRROR5, &_rF9->ALL, 1U);
         ret = true;
@@ -1528,11 +1548,11 @@ bool xcr24_trim_set_osc_b(uint16_t reg_val)
 
 void xcr24_trim_init_efuse(void)
 {
-    _v_otp_pg_access_t* _rF1 = &gt_xcr24_set_otp_access.reg._rF1;
+    _v_otp_pg_access_t* _rF1 = &gt_xcr24_set_otp_regs.reg._rF1;
     _rF1->bit.OTP_PG_ACC_CYCLE = 0x03FFU;
     xcr24_write_otp_control(XCR_OTP_PG_ACCESS, &_rF1->ALL, 1U);
 
-    _v_otp_write_t* _rF2 = &gt_xcr24_set_otp_access.reg._rF2;
+    _v_otp_write_t* _rF2 = &gt_xcr24_set_otp_regs.reg._rF2;
     _rF2->bit.OTP_WSEL = 0x04U;
     _rF2->bit.OTP_RD = 0U;
     _rF2->bit.OTP_PG_DONE = 0U;
@@ -1541,7 +1561,7 @@ void xcr24_trim_init_efuse(void)
 
 void xcr24_trim_start_efuse(void)
 {
-    _v_otp_rd_prog_t* _rF3 = &gt_xcr24_set_otp_access.reg._rF3;
+    _v_otp_rd_prog_t* _rF3 = &gt_xcr24_set_otp_regs.reg._rF3;
     _rF3->bit.OTP_PG_S = 1U;
     xcr24_write_otp_control(XCR_OTP_RD_PROG, &_rF3->ALL, 1U);
 }
@@ -1556,13 +1576,13 @@ uint32_t xcr24_trim_verify_mirror_dump(void)
     uint32_t ret = 0U;
     for (xcr_addr_otp_t mirror_addr = XCR_MIRROR1 ; mirror_addr < XCR_GATE_CONTROL ; ++mirror_addr) // 0xF5 ~ 0xF9
     {
-        uint16_t saved_reg = gt_xcr24_set_otp_access.ALL[mirror_addr];
+        uint16_t saved_reg = gt_xcr24_get_otp_regs.ALL[mirror_addr];
         uint16_t read_reg = xcr24_read_otp_control(mirror_addr, 1U);
 
         if (mirror_addr == XCR_MIRROR5)
         {
-            saved_reg &= 0x1FU;
-            read_reg &= 0x1FU;
+            saved_reg &= 0x1FU; // masking low 5 bits for mirror5 register, as only 5 bits are valid for this register
+            read_reg &= 0x1FU; // masking low 5 bits for mirror5 register, as only 5 bits are valid for this register
         }
         if (saved_reg != read_reg)
         {
@@ -1598,7 +1618,7 @@ void xcr24_test_init_ldo(void)
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO, ADS_AINCOM);
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
@@ -1613,7 +1633,7 @@ void xcr24_test_init_ldo_fll_a(void)
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1629,7 +1649,7 @@ void xcr24_test_init_ldo_fll_b(void)
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1641,7 +1661,7 @@ void xcr24_test_init_ldo_fll_b(void)
 void xcr24_test_init_fll_a_30m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1669,7 +1689,7 @@ void xcr24_test_init_fll_a_30m(void)
 void xcr24_test_init_fll_a_35m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1697,7 +1717,7 @@ void xcr24_test_init_fll_a_35m(void)
 void xcr24_test_init_fll_a_40m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1724,7 +1744,7 @@ void xcr24_test_init_fll_a_40m(void)
 void xcr24_test_init_fll_b_30m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1752,7 +1772,7 @@ void xcr24_test_init_fll_b_30m(void)
 void xcr24_test_init_fll_b_35m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1780,7 +1800,7 @@ void xcr24_test_init_fll_b_35m(void)
 void xcr24_test_init_fll_b_40m(void)
 {
     // set proper xdr12 register
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_access.reg._rF0;
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
     _rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 0U;
@@ -1823,12 +1843,10 @@ void xcr24_test_start_ldo(void)
 void xcr24_test_start_ldo_fll_a(void)
 {
     ADS114S08_Set_Start(true);
-
 }
 void xcr24_test_start_ldo_fll_b(void)
 {
     ADS114S08_Set_Start(true);
-
 }
 void xcr24_test_start_fll_a_30m(void)
 {

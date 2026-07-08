@@ -1170,6 +1170,27 @@ void xdr12_syncgen(void)
     us_delay(CMD_DELAY_SYNCGEN);
 }
 
+static void xdr12_dump_registers(void)
+{
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXDR12 General Registers");
+    for (xd12_addr_t addr = XD12R_RESET_ID ; addr < XD12R_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xdr12_get_regs[0].ALL[addr]);
+    }
+
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXDR12 OTP Control Registers");
+    for (xd12_otp_ctrl_addr_t addr = XD12R_OTP_ACCESS1 ; addr < XD12R_OTP_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", (XD12R_OTP_CTRL_BASE + addr), gt_xdr12_otp_ctrl_get_regs[0].ALL[addr]);
+    }
+
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXDR12 Mirror Registers");
+    for (xd12_mirror_addr_t addr = XD12R_MIRROR1 ; addr < XD12R_MIRROR_MAX ; ++addr)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xdr12_mirror_get_regs[0].ALL[addr]);
+    }
+}
+
 static void xdr12_memory_copy(void)
 {
     gt_xdr12_set_regs = gt_xdr12_get_regs[0];
@@ -1193,7 +1214,7 @@ void xdr12_read_all(void)
     {
         xdr12_read_by_type(addr, XD12R_ADDR_TYPE_MIRROR);
     }
-
+    xdr12_dump_registers();
     xdr12_memory_copy();
 }
 

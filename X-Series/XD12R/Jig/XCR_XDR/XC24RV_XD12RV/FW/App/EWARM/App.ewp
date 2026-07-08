@@ -1127,7 +1127,7 @@
             <data>
                 <buildActions>
                     <buildAction>
-                        <cmdline>py "$PROJ_DIR$\..\..\Prebuild\prebuild.py" --minor</cmdline>
+                        <cmdline>py "$PROJ_DIR$\..\..\Prebuild\prebuild.py"</cmdline>
                         <workingDirectory>$PROJ_DIR$</workingDirectory>
                         <buildSequence>preCompile</buildSequence>
                         <outputs>
