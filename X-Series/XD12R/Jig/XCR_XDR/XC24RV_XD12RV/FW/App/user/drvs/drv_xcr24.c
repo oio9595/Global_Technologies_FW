@@ -759,6 +759,7 @@ void xcr24_init_param(void)
 
 void xcr24_init(void)
 {
+    XCR_NSS_HI();
     xcr24_reset();
     xcr24_regs_init_table();
     xcr24_read_all();
@@ -766,6 +767,7 @@ void xcr24_init(void)
 
 void xcr24_trim_init(void)
 {
+    XCR_NSS_HI();
     xcr24_reset();
     xcr24_regs_trim_init_table();
     xcr24_read_all();
