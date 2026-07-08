@@ -81,6 +81,23 @@ void tim_vsync_out_stop(void)
     LL_TIM_DisableCounter(TIM8);
 }
 
+void tim_fllsync_start(void)
+{
+    FLLSYNC_ENABLE();
+    LL_TIM_SetCounter(TIM4, 0U);
+    LL_TIM_OC_SetCompareCH2(TIM4, FLLSYNC_OUT_PULSE);
+    LL_TIM_CC_EnableChannel(TIM4, LL_TIM_CHANNEL_CH1);
+    LL_TIM_EnableCounter(TIM4);
+}
+
+void tim_fllsync_stop(void)
+{
+    FLLSYNC_DISABLE();
+    LL_TIM_DisableCounter(TIM4);
+    LL_TIM_CC_DisableChannel(TIM4, LL_TIM_CHANNEL_CH1);
+    LL_TIM_SetCounter(TIM4, 0U);
+}
+
 void tim_svsync_out_handler(void)
 {
     uint32_t period = 0U;
@@ -140,8 +157,6 @@ void tim_set_vsync_out_freq(float f)
     tim_update_vsync_out_freq();
 }
 
-
-bool gb_xcr_ldim_start;
 static bool gb_xcr_ldim_block_conversion_flag;
 static uint16_t gn_xcr_ldim_block_conversion_index;
 

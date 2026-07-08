@@ -358,22 +358,6 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "\r\nR: %u, C : %u, G : %u, B : %u", p_led_color_buffer[0], p_led_color_buffer[1], p_led_color_buffer[2], p_led_color_buffer[3]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xcr_ldim_start")))
-        {
-            extern bool gb_xcr_ldim_start;
-
-            gb_xcr_ldim_start = true;
-
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xcr_ldim_stop")))
-        {
-            extern bool gb_xcr_ldim_start;
-
-            gb_xcr_ldim_start = false;
-
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
         else if(!(strcmp(str_in, "xcr_ldim_force")))
         {
             uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
@@ -427,6 +411,11 @@ void comm_debugging_process(void)
             xdr12_idgen();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xdr_syncgen")))
+        {
+            xdr12_syncgen();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
         else if(!(strcmp(str_in, "xd_debug")))
         {
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
@@ -445,9 +434,15 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_syncgen")))
+        else if(Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            xdr12_syncgen();
+            xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
+        {
+            uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xdr_ldim")))
@@ -489,6 +484,16 @@ void comm_debugging_process(void)
         else if(Command_Param_is_("vsync_freq", "%u", &u32_recv_param[0]))
         {
             tim_set_vsync_out_freq((float)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "fllsync_start")))
+        {
+            tim_fllsync_start();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "fllsync_stop")))
+        {
+            tim_fllsync_stop();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         /* test with previous IC */

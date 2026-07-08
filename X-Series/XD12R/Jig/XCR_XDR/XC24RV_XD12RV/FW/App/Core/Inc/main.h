@@ -166,14 +166,14 @@ float mcu_peripheral_tim_conversion_freq(void);
 
 /* USER CODE BEGIN Private defines */
 
-#define APB1_TIM_CLK        ( 90000000UL)   /* 2/3/4/5/12/13/14, SPI2/3 */
-#define APB2_TIM_CLK        (180000000UL)   /* 1/8/9/10/11, SPI1/4 */
+#define APB1_TIM_CLK            ( 90000000UL)   /* 2/3/4/5/12/13/14, SPI2/3 */
+#define APB2_TIM_CLK            (180000000UL)   /* 1/8/9/10/11, SPI1/4 */
 
 /* XD_PWM_OUT, TIMER1_CH1 */
-#define XD_PWM_OUT_FREQ     (1000000UL)     /* 1us, 1MHz */
-#define TIM1_PRESCALER      (0U)
-#define TIM1_CLK            (APB2_TIM_CLK / (TIM1_PRESCALER + 1U))   /* 180MHz */
-#define TIM1_PERIOD         ((TIM1_CLK / XD_PWM_OUT_FREQ) - 1U)             /* (180 - 1) */
+#define XD_PWM_OUT_FREQ         (1000000UL)     /* 1us, 1MHz */
+#define TIM1_PRESCALER          (0U)
+#define TIM1_CLK                (APB2_TIM_CLK / (TIM1_PRESCALER + 1U))   /* 180MHz */
+#define TIM1_PERIOD             ((TIM1_CLK / XD_PWM_OUT_FREQ) - 1U)             /* (180 - 1) */
 
 /* SVSYNC_OUT, TIMER3_CH1 */
 #define TIM3_PRESCALER          (0U)
@@ -183,16 +183,22 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define SVSYNC_OUT_PULSE(us)    ((uint32_t)(((us) * TIM3_CLK) / 1000000UL)) /* 10us pwm width */
 
 /* VSYNC_OUT, TIMER8 */
-#define TIM8_PRESCALER      (29U)
-#define TIM8_CLK            ((float)APB2_TIM_CLK / (TIM8_PRESCALER + 1U))
-#define TIM8_PERIOD         ((uint16_t)((TIM8_CLK / 120U) - 1U))
-#define TIM8_PERIOD_HZ(f)   ((uint32_t)((TIM8_CLK / (f)) - 1U))
-#define VSYNC_OUT_PULSE     ((uint16_t)((10.0f * TIM8_CLK) / 1000000UL)) /* 10us pwm width */
+#define TIM8_PRESCALER          (29U)
+#define TIM8_CLK                ((float)APB2_TIM_CLK / (TIM8_PRESCALER + 1U))
+#define TIM8_PERIOD             ((uint16_t)((TIM8_CLK / 120U) - 1U))
+#define TIM8_PERIOD_HZ(f)       ((uint32_t)((TIM8_CLK / (f)) - 1U))
+#define VSYNC_OUT_PULSE         ((uint16_t)((10.0f * TIM8_CLK) / 1000000UL)) /* 10us pwm width */
 
 /* us_delay, TIMER12 */
-#define TIM12_PRESCALER      ((uint16_t)((APB1_TIM_CLK/1000000UL) - 1U))    /* prescaler for 1us */
-#define TIM12_CLK            ((float)APB1_TIM_CLK / (TIM12_PRESCALER + 1U))
-#define TIM12_PERIOD         (65535UL)
+#define TIM12_PRESCALER         ((uint16_t)((APB1_TIM_CLK/1000000UL) - 1U))    /* prescaler for 1us */
+#define TIM12_CLK               ((float)APB1_TIM_CLK / (TIM12_PRESCALER + 1U))
+#define TIM12_PERIOD            (65535UL)
+
+/* FLLSYNC, TIMER4 */
+#define TIM4_PRESCALER          (14U)
+#define TIM4_PERIOD             (59999UL)
+#define TIM4_CLK                ((float)APB1_TIM_CLK / ((TIM4_PRESCALER + 1U) * (TIM4_PERIOD + 1U)))
+#define FLLSYNC_OUT_PULSE       ((uint16_t)((10.0f * TIM4_CLK) / 1000000UL)) /* 10us pwm width */
 
 /* XD_PWM_IN, TIMER2 */
 

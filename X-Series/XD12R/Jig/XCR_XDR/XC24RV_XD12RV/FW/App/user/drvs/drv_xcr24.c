@@ -753,8 +753,8 @@ void xcr24_init_param(void)
     gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_blk_size);
     gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_blk_size);
 
-    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(100);
-    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(100);
+    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
+    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
 }
 
 void xcr24_init(void)

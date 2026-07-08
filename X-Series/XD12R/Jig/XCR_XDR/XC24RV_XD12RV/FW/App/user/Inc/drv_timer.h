@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   drv_timer.h
  * Author: GT
  * for XCR24 & XDR12 ES2
@@ -14,6 +14,9 @@ extern "C" {
 
 void tim_vsync_out_start(void);
 void tim_vsync_out_stop(void);
+
+void tim_fllsync_start(void);
+void tim_fllsync_stop(void);
 
 void tim_svsync_out_handler(void);
 void tim_vsync_out_handler(void);
