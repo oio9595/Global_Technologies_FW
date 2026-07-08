@@ -477,6 +477,10 @@ static bool xcr_trim_update_register_by_sub_val(xcr_trim_list_t in_trim_list, tr
     {
         comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %u) (SUB: %u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
     }
+    else
+    {
+        comm_UART_Printf(LOG_LV_FATAL, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %u) (SUB: %u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
+    }
     return ret;
 }
 
@@ -940,7 +944,7 @@ static void xdr_trim_log_summary(void)
     for (xdr_trim_list_t list = XDR_TRIM_LIST_CURRENT_REF ; list < XDR_TRIM_LIST_MAX ; ++list)
     {
         trim_info_t* info = &__priv_trim.t_xdr_trim_info[list];
-        uint8_t max_ch = (list < XDR_TRIM_LIST_CH_GAIN) ? (1U) : ((uint8_t)XD_CH_MAX);
+        uint8_t max_ch = (list < XDR_TRIM_LIST_CH_GAIN) ? (XD_CH_01 + 1U) : ((uint8_t)XD_CH_MAX);
         for (uint8_t ch = XD_CH_01 ; ch < max_ch ; ++ch)
         {
             if (ch == XD_CH_01)
@@ -1017,6 +1021,10 @@ static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, tr
     if (ret == true)
     {
         comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %u) (SUB: %u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
+    }
+    else
+    {
+        comm_UART_Printf(LOG_LV_ERROR, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %u) (SUB: %u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
     }
     return ret;
 }
