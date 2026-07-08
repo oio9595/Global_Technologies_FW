@@ -410,10 +410,10 @@ void PeriphCommonClock_Config(void)
   /** Initializes the peripherals clock
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 375;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 420;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLI2SP_DIV2;
   PeriphClkInitStruct.PLLI2S.PLLI2SM = 8;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 4;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
   PeriphClkInitStruct.PLLI2SDivQ = 1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
