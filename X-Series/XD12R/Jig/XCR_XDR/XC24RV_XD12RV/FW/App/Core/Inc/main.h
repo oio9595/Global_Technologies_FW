@@ -202,11 +202,12 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define TIM5_CLK            (APB1_TIM_CLK / (TIM5_PRESCALER + 1U))
 #define TIM5_PERIOD         (0xFFFFFFFFUL)
 
-#define HW_OSC_PRESCALE                   (128U)
-#define XCR_PRESCALE                      (64U)
-#define XDR_PRESCALE                      (64U)
-#define XCR_OSC_PRESCALE                  (HW_OSC_PRESCALE * XCR_PRESCALE)
-#define XDR_OSC_PRESCALE                  (HW_OSC_PRESCALE * XDR_PRESCALE)
+#define CONST_HZ_TO_MHZ     (1000000.0f)
+#define HW_OSC_PRESCALE     (128U)
+#define XCR_PRESCALE        (64U)
+#define XDR_PRESCALE        (64U)
+#define XCR_CONST_OSC       (HW_OSC_PRESCALE * XCR_PRESCALE / CONST_HZ_TO_MHZ)
+#define XDR_CONST_OSC       (HW_OSC_PRESCALE * XDR_PRESCALE / CONST_HZ_TO_MHZ)
 
 __STATIC_INLINE void us_delay(uint32_t n_delay)
 {
