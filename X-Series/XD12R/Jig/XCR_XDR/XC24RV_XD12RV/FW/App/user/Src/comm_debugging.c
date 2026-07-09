@@ -44,6 +44,30 @@
 #define Command_Param_is_(a, b, ...) (sscanf(str_in, a b, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
 #define Command_is_(x) (strncmp(str_in, x, strlen(x)) == 0)
 
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    #define MSG_XDR_CTL "XDR Controlled By MCU"
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    #define MSG_XDR_CTL "XDR Controlled By XCR"
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+
+#if (XDR_EFUSE == XDR_EFUSE_SKIP)
+    #define MSG_XDR_EFUSE "XDR EFUSE Skip"
+#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
+    #define MSG_XDR_EFUSE "XDR EFUSE Enable"
+#else
+    #error "XDR_EFUSE is not defined"
+#endif
+
+#if (XCR_EFUSE == XCR_EFUSE_SKIP)
+    #define MSG_XCR_EFUSE "XCR EFUSE Skip"
+#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
+    #define MSG_XCR_EFUSE "XCR EFUSE Enable"
+#else
+    #error "XCR_EFUSE is not defined"
+#endif
+
 typedef struct
 {
     uint8_t length;
@@ -199,30 +223,10 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Build   : %s", __DATE__);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - INFO - XCR : %s, XDR : %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
-#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By MCU");
-#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR Controlled By XCR");
-#else
-    #error "XDR_CONTROL_TYPE is not defined"
-#endif
-
-#if (XDR_EFUSE == XDR_EFUSE_SKIP)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR EFUSE Skip");
-#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XDR EFUSE Enable");
-#else
-    #error "XDR_EFUSE is not defined"
-#endif
-
-#if (XCR_EFUSE == XCR_EFUSE_SKIP)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XCR EFUSE Skip");
-#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - XCR EFUSE Enable");
-#else
-    #error "XCR_EFUSE is not defined"
-#endif
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - Model   : %s, %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_CTL);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_EFUSE);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XCR_EFUSE);
 
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
     //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
