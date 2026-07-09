@@ -110,15 +110,14 @@ else:
     else:
         print("Warning: FW_BUILD not found in version.h")
 
-
 # 6. FW_GIT_REV 값 업데이트하기
 if re.search(r"#define\s+FW_GIT_REV\s+", text):
-    text = re.sub(r'(#define\s+FW_GIT_REV\s+)"[^"\r\n]*"', rf'\g<1>"{git_rev}"', text)
+    # 이 줄이 핵심입니다. 기존 줄에 -dirty가 있든 말든 그 줄 전체(.*)를 밀어버립니다.
+    text = re.sub(r'#define\s+FW_GIT_REV\s+.*', f'#define FW_GIT_REV "{git_rev}"', text)
 else:
     text += f'\n#define FW_GIT_REV "{git_rev}"\n'
 
 print(f"FW_GIT_REV has been updated to \"{git_rev}\".")
-
 
 # 7. 파일 저장
 with open(version_h, "w", encoding="utf-8") as f:
