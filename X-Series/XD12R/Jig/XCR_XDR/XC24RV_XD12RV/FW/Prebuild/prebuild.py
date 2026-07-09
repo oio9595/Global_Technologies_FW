@@ -113,7 +113,7 @@ else:
 
 # 6. FW_GIT_REV 값 업데이트하기
 if re.search(r"#define\s+FW_GIT_REV\s+", text):
-    text = re.sub(r'(#define\s+FW_GIT_REV\s+)("[^"]*")', rf'\g<1>"{git_rev}"', text)
+    text = re.sub(r'(#define\s+FW_GIT_REV\s+)"[^"\r\n]*"', rf'\g<1>"{git_rev}"', text)
 else:
     text += f'\n#define FW_GIT_REV "{git_rev}"\n'
 
