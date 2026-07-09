@@ -34,15 +34,12 @@ try:
         .decode("utf-8")
         .strip()
     )
-    print(f"Git revision detected: {git_rev}")
 
     # 3-2. version.h를 제외한 다른 파일의 변경 사항 감지
     try:
-        # git_root_dir 기준의 version.h 상대 경로 계산
         rel_version_h = version_h.relative_to(git_root_dir).as_posix()
         status_cmd = ["git", "status", "--porcelain", "--", f":!{rel_version_h}"]
     except Exception:
-        # 상대 경로 변환 실패 시 폴백 (전체 status 검사)
         status_cmd = ["git", "status", "--porcelain"]
 
     git_status = (
@@ -51,9 +48,17 @@ try:
         .strip()
     )
 
-    # 다른 변경 사항이 있다면 -dirty 접미사 추가
+    print(f"Git revision detected: {git_rev}")
+
+    # ================= [디버깅 메시지 추가] =================
     if git_status:
+        print("====== [DEBUG] Git Dirty Detected Files ======")
+        print(git_status)
+        print("=============================================")
         git_rev += "-dirty"
+    else:
+        print("[DEBUG] Git status is completely clean!")
+    # ========================================================
 
 except Exception as e:
     print(f"Warning: Failed to get git revision ({e}). Using 'unknown'")
