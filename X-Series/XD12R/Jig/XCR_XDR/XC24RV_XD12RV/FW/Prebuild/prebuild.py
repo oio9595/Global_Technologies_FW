@@ -23,9 +23,9 @@ if git_root_dir is None:
 
 version_h = script_dir.parent / "App" / "user" / "Inc" / "version.h"
 
-
 # 3. Git 최신 리비전 번호 및 수정 사항(-dirty) 감지
 try:
+    # 3-1. 최신 커밋 해시 가져오기
     git_rev = (
         subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
@@ -35,27 +35,22 @@ try:
         .strip()
     )
 
+    # 3-2. version.h를 제외한 다른 파일의 변경 사항 감지
     try:
+        # git_root_dir 기준의 version.h 상대 경로 계산
         rel_version_h = version_h.relative_to(git_root_dir).as_posix()
-        git_status = (
-            subprocess.check_output(
-                ["git", "status", "--porcelain", "--", f":!{rel_version_h}"],
-                cwd=git_root_dir
-            )
-            .decode("utf-8")
-            .strip()
-        )
+        status_cmd = ["git", "status", "--porcelain", "--", f":!{rel_version_h}"]
     except Exception:
-        # 안전장치: 상대 경로 변환 실패 시 기존 방식으로 폴백
-        git_status = (
-            subprocess.check_output(
-                ["git", "status", "--porcelain"],
-                cwd=git_root_dir
-            )
-            .decode("utf-8")
-            .strip()
-        )
+        # 상대 경로 변환 실패 시 폴백 (전체 status 검사)
+        status_cmd = ["git", "status", "--porcelain"]
 
+    git_status = (
+        subprocess.check_output(status_cmd, cwd=git_root_dir)
+        .decode("utf-8")
+        .strip()
+    )
+
+    # 다른 변경 사항이 있다면 -dirty 접미사 추가
     if git_status:
         git_rev += "-dirty"
 
