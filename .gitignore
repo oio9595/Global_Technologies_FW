@@ -82,3 +82,9 @@ thumbs.db
 
 # 측정 데이터
 **/측정자료/
+
+# IAR 컴파일러 빌드 출력 파일 및 임시 폴더 제외
+**/EWARM/App/
+**/EWARM/settings/
+**/EWARM/Debug/
+**/EWARM/Release/
