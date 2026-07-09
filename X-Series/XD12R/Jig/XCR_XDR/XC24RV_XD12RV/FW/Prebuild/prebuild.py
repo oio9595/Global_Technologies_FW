@@ -35,14 +35,26 @@ try:
         .strip()
     )
 
-    git_status = (
-        subprocess.check_output(
-            ["git", "status", "--porcelain"],
-            cwd=git_root_dir
+    try:
+        rel_version_h = version_h.relative_to(git_root_dir).as_posix()
+        git_status = (
+            subprocess.check_output(
+                ["git", "status", "--porcelain", "--", f":!{rel_version_h}"],
+                cwd=git_root_dir
+            )
+            .decode("utf-8")
+            .strip()
         )
-        .decode("utf-8")
-        .strip()
-    )
+    except Exception:
+        # 안전장치: 상대 경로 변환 실패 시 기존 방식으로 폴백
+        git_status = (
+            subprocess.check_output(
+                ["git", "status", "--porcelain"],
+                cwd=git_root_dir
+            )
+            .decode("utf-8")
+            .strip()
+        )
 
     if git_status:
         git_rev += "-dirty"
