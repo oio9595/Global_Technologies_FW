@@ -58,7 +58,7 @@
 
 #define LTC_R_RIN               (2200.0f)
 #define LTC_R_ROUT              (3300.0f)
-#define LTC_R_RS_HIGH           (13.0f)
+#define LTC_R_RS_HIGH           (13.1f)
 #define LTC_R_RS_MID            (200.0f)
 #define LTC_R_RS_LOW            (3900.0f)
 

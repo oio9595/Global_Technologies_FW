@@ -278,31 +278,6 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        else if(Command_Param_is_("xcr_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            uint16_t addr = (uint16_t)u32_recv_param[0];
-            uint16_t param = (uint16_t)u32_recv_param[1];
-
-            xcr24_write_grp1_reg(addr, &param, 1U);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xcr_r", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-
-            //comm_UART_Printf(LOG_LV_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
-
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-
-        else if(!(strcmp(str_in, "xcr_init")))
-        {
-            xcr24_init();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-
         /*********** MCO output enable/disable *************/
         else if(!(strcmp(str_in, "mclk_enable")))
         {
@@ -465,6 +440,33 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_debug")))
+        {
+            gpio_set_xc_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xcr24_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+
+        else if(Command_Param_is_("xcr_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            uint16_t param = (uint16_t)u32_recv_param[1];
+
+            xcr24_write_grp1_reg(addr, &param, 1U);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xcr_r", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+
+            //comm_UART_Printf(LOG_LV_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
+
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+
+        else if(!(strcmp(str_in, "xcr_init")))
         {
             xcr24_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
