@@ -34,6 +34,7 @@ try:
         .decode("utf-8")
         .strip()
     )
+    print(f"Git revision detected: {git_rev}")
 
     # 3-2. version.h를 제외한 다른 파일의 변경 사항 감지
     try:
