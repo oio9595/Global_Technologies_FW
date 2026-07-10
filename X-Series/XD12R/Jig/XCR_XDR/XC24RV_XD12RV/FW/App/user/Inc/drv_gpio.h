@@ -100,6 +100,10 @@ typedef enum tag_CURRENT_GAIN_T
 #define BUFFER_OE_LO()          (BUFFER_OE_GPIO_Port->BSRR = (BUFFER_OE_Pin << 16U))
 #define BUFFER_OE_HI()          (BUFFER_OE_GPIO_Port->BSRR = (BUFFER_OE_Pin <<  0U))
 
+#define DEBUG_LO()              (DEBUG_GPIO_Port->BSRR = (DEBUG_Pin << 16U))
+#define DEBUG_HI()              (DEBUG_GPIO_Port->BSRR = (DEBUG_Pin <<  0U))
+#define DEBUG_TOGGLE()          (DEBUG_GPIO_Port->ODR ^= DEBUG_Pin)
+
 #define MCO2_ENABLE()           do { LL_GPIO_SetPinMode(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_MODE_ALTERNATE);  LL_GPIO_SetPinPull(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_PULL_NO);      } while(0U)
 #define MCO2_DISABLE()          do { LL_GPIO_SetPinMode(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_MODE_INPUT);      LL_GPIO_SetPinPull(XCR_MCLK_GPIO_Port, XCR_MCLK_Pin, LL_GPIO_PULL_DOWN);    } while(0U)
 

@@ -18,7 +18,7 @@ extern "C" {
 #include "xdr12_struct.h"
 
 #define XDR_EFUSE_SKIP      (0U)
-#define XDR_EFUSE_BURN      (0U)
+#define XDR_EFUSE_BURN      (1U)
 #define XDR_EFUSE           (XDR_EFUSE_SKIP)
 
 #define XDR_CONTROLLED_MCU  (0U)
@@ -30,7 +30,7 @@ extern "C" {
 
 //#define XDR_LD_DATA_12BIT (12U)
 #define XDR_LD_DATA_14BIT   (14U)
-#define XDR_LD_DATA_BIT     XDR_LD_DATA_14BIT
+#define XDR_LD_DATA_BIT     (XDR_LD_DATA_14BIT)
 
 #define XDR_SV_NO           (32U)
 
@@ -108,6 +108,7 @@ extern volatile bool gb_xd_pwm_out_flag;
 extern volatile bool gb_xd_pwm_in_flag;
 extern volatile bool gb_xd_pwm_in_timeout;
 
+void xdr12_read_all(void);
 void xdr12_init_param(void);
 
 void xdr12_reset(void);
@@ -132,7 +133,7 @@ void xdr12_trim_init_osc(void);
 void xdr12_trim_init_ch_gain(void);
 void xdr12_trim_init_ch_ofs(void);
 
-void xdr12_trim_set_channel_enable(XD_CH_t chx);
+void xdr12_trim_set_channel_enable(uint8_t chx);
 void xdr12_trim_set_max_curr_vref(uint16_t vref);
 void xdr12_trim_set_max_curr_lvl(uint16_t curr_lvl);
 
@@ -141,13 +142,14 @@ bool xdr12_trim_set_ldo_dig(uint16_t reg_val);
 bool xdr12_trim_set_ldo_dac(uint16_t reg_val);
 bool xdr12_trim_set_ldo_fll(uint16_t reg_val);
 bool xdr12_trim_set_osc(uint16_t reg_val);
-bool xdr12_trim_set_ch_gain(uint16_t reg_val, XD_CH_t chx);
-bool xdr12_trim_set_ch_ofs(uint16_t reg_val, XD_CH_t chx);
+bool xdr12_trim_set_ch_gain(uint16_t reg_val, uint8_t chx);
+bool xdr12_trim_set_ch_ofs(uint16_t reg_val, uint8_t chx);
 
 void xdr12_trim_init_efuse(void);
 void xdr12_trim_start_efuse(void);
 
 void xdr12_trim_save_mirror_register(void);
+uint16_t*  xdr12_get_trim_debug_reg(void);
 uint32_t xdr12_trim_verify_mirror_dump(void);
 
 void xdr12_test_init_icc_stby(void);
@@ -160,6 +162,7 @@ void xdr12_test_init_osc(void);
 void xdr12_test_init_fll_40M(void);
 void xdr12_test_init_fll_50M(void);
 void xdr12_test_init_fll_60M(void);
+void xdr12_test_init_fll_MHz(uint32_t freq_mhz);
 void xdr12_test_init_iout_3P(void);
 void xdr12_test_init_max_sweep(void);
 
@@ -175,6 +178,8 @@ void xdr12_test_start_fll_50M(void);
 void xdr12_test_start_fll_60M(void);
 void xdr12_test_start_iout_3P(void);
 void xdr12_test_start_max_sweep(void);
+
+void xdr12_test(uint32_t test_no);
 
 #ifdef __cplusplus
 }

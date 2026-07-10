@@ -54,16 +54,16 @@
 
 #if (XDR_EFUSE == XDR_EFUSE_SKIP)
     #define MSG_XDR_EFUSE "XDR EFUSE Skip"
-#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
-    #define MSG_XDR_EFUSE "XDR EFUSE Enable"
+#elif (XDR_EFUSE == XDR_EFUSE_BURN)
+    #define MSG_XDR_EFUSE "XDR EFUSE Burn"
 #else
     #error "XDR_EFUSE is not defined"
 #endif
 
 #if (XCR_EFUSE == XCR_EFUSE_SKIP)
     #define MSG_XCR_EFUSE "XCR EFUSE Skip"
-#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
-    #define MSG_XCR_EFUSE "XCR EFUSE Enable"
+#elif (XCR_EFUSE == XCR_EFUSE_BURN)
+    #define MSG_XCR_EFUSE "XCR EFUSE Burn"
 #else
     #error "XCR_EFUSE is not defined"
 #endif
@@ -133,9 +133,9 @@ __STATIC_INLINE uint8_t comm_get_tx_packet(tx_packet_t** pData)
         *pData = gt_uart.Txbuff + gt_uart.TxOutCnt;
 
         ++gt_uart.TxOutCnt;
-        if(gt_uart.TxOutCnt > (TX_BUFF_SIZE -1))
+        if(gt_uart.TxOutCnt > (TX_BUFF_SIZE - 1U))
         {
-            gt_uart.TxOutCnt = 0;
+            gt_uart.TxOutCnt = 0U;
         }
 
         ret = 1;
@@ -402,6 +402,13 @@ void comm_debugging_process(void)
             xdr12_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xd_trim_debug")))
+        {
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_trim_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
         else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
@@ -422,6 +429,11 @@ void comm_debugging_process(void)
         {
             uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
             comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_r_all")))
+        {
+            xdr12_read_all();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xdr_ldim")))
@@ -469,10 +481,9 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
-        else if(!(strcmp(str_in, "xcr_init")))
+        else if(!(strcmp(str_in, "xc_r_all")))
         {
-            xcr24_init();
+            xcr24_read_all();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -545,90 +556,126 @@ void comm_debugging_process(void)
 
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        /* test with previous IC */
-        else if(Command_Param_is_("xd_curr", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        /* test XDR */
+        else if(Command_Param_is_("xd_gain", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            current_gain_t gain = (current_gain_t)u32_recv_param[0];
+            current_gain_t gain = GAIN_MID;
+            xdr12_write_by_type((uint16_t)0x00, (uint16_t)0x000, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x01, (uint16_t)0x230, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x02, (uint16_t)0x814, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x03, (uint16_t)0x08F, XD12R_ADDR_TYPE_MIRROR);
+
+            xdr12_trim_init_ch_ofs();
             gpio_set_vled_9v(VLED_ON);
             gpio_set_current_gain(gain);
-            float iout[XD_CH_MAX] = { 0.0f, };
-            for (XD_CH_t ch = XD_CH_01; ch < XD_CH_MAX; ch++)
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+
+            uint8_t ch = (uint8_t)(u32_recv_param[0] - 1U);
+            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
+            gpio_set_demux_channel_selection((XD_CH_t)ch);
+            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
+
+            xdr12_write_by_type(XD12R_MIRROR_GAIN_CH01 + ch, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+
+            LL_mDelay(50U);
+
+            float iout[2] = { 0.0f };
+
+            for (uint8_t i = 0U; i < 2U ; i++)
             {
-                uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
-                gpio_set_demux_channel_selection(ch);
-
-                xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
-                xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
-                xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
-
-                xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0xAAA, XD12R_ADDR_TYPE_GENERAL);
-                xdr12_write_by_type((uint16_t)0x0B, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL); /* vref */
-                xdr12_write_by_type((uint16_t)0x0C, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL); /* vref */
-                xdr12_write_by_type((uint16_t)0x0D, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL); /* vref */
-
-                xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
-                xdr12_write_by_type((uint16_t)0x0A, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
-
-                xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x820, XD12R_ADDR_TYPE_GENERAL);
-
-                xdr12_read_by_type((uint16_t)0x05, XD12R_ADDR_TYPE_GENERAL);
-
-                tim_vsync_out_start();
-                LL_mDelay(1000U);
-                tim_vsync_out_stop();
-
-                ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+                uint16_t vref_table[2] = { 300U, 2200U };
+                xdr12_trim_set_max_curr_vref(vref_table[i]);
+                LL_mDelay(50U);
                 ADS114S08_Set_Start(true);
                 if (true == ADS114S08_Wait_Done())
                 {
                     uint16_t adc = ADS114S08_Get_ADC_Value();
                     float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
-                    iout[ch] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], m_volt [%f], iout [%f]", adc, (double)(volt), (double)(iout[ch]));
+                    iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
                 }
             }
-            for (XD_CH_t ch = XD_CH_01; ch < XD_CH_MAX; ch++)
-            {
-                comm_UART_Printf(LOG_LV_INFO, "\r\n %f", (double)(iout[ch]));
-            }
-
+            comm_UART_Printf(LOG_LV_INFO, "\r\n iout[0] : %.3f, iout[1] : %.3f, delta : %.3f", (double)(iout[0]), (double)(iout[1]), (double)(iout[1] - iout[0]));
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xd_vref")))
+        else if(Command_Param_is_("xd_ofs", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x900, XD12R_ADDR_TYPE_GENERAL);
+            current_gain_t gain = GAIN_MID;
+            xdr12_write_by_type((uint16_t)0x00, (uint16_t)0x000, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x01, (uint16_t)0x1B0, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x02, (uint16_t)0x814, XD12R_ADDR_TYPE_MIRROR);
+            xdr12_write_by_type((uint16_t)0x03, (uint16_t)0x08F, XD12R_ADDR_TYPE_MIRROR);
 
-            xdr12_read_by_type((uint16_t)0x3F, XD12R_ADDR_TYPE_GENERAL);
+            xdr12_trim_init_ch_ofs();
+            gpio_set_vled_9v(VLED_ON);
+            gpio_set_current_gain(gain);
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
 
-            tim_vsync_out_start();
-            LL_mDelay(1000U);
-            tim_vsync_out_stop();
+            uint8_t ch = (uint8_t)(u32_recv_param[0] - 1U);
+            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
+            gpio_set_demux_channel_selection((XD_CH_t)ch);
+            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
 
-            mcu_peripheral_adc_start();
-            uint16_t mcu_adc_value = mcu_peripheral_adc_get();
-            float mcu_volt = mcu_peripheral_adc_conversion_to_voltage(mcu_adc_value);
-            comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], m_volt [%f]", mcu_adc_value, (double)(mcu_volt));
+            xdr12_write_by_type(XD12R_MIRROR_OFS_CH01 + ch, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
 
+            LL_mDelay(50U);
+
+            float iout[2] = { 0.0f };
+
+            for (uint8_t i = 0U; i < 2U ; i++)
+            {
+                uint16_t vref_table[2] = { 300U, 300U };
+                xdr12_trim_set_max_curr_vref(vref_table[i]);
+                LL_mDelay(50U);
+                ADS114S08_Set_Start(true);
+                if (true == ADS114S08_Wait_Done())
+                {
+                    uint16_t adc = ADS114S08_Get_ADC_Value();
+                    float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
+                    iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
+                }
+            }
+            comm_UART_Printf(LOG_LV_INFO, "\r\n iout[0] : %.3f, iout[1] : %.3f, avg : %.3f", (double)(iout[0]), (double)(iout[1]), ((double)(iout[0] + iout[1]) / 2.0f));
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_osc")))
         {
-            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x810, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_write_by_type((uint16_t)0x23, (uint16_t)0x808, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_read_by_type((uint16_t)0x3F, XD12R_ADDR_TYPE_GENERAL);
-
-            tim_vsync_out_start();
-            LL_mDelay(1000U);
-            tim_vsync_out_stop();
-
-            mcu_peripheral_tim_input_capture_start();
-            comm_UART_Printf(LOG_LV_INFO, "Timer input capture started\r\n");
+            xdr12_trim_init_osc();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_fll", "%u", &u32_recv_param[0]))
+        {
+            xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[0]);
+            tim_vsync_out_start();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_fll_change", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
+        {
+            if (u32_recv_param[2] < 5)
+            {
+                xdr12_test(u32_recv_param[2]);
+                xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[0]);
+                tim_vsync_out_start();
+                LL_mDelay(1000U);
+                xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[1]);
+                /*
 
-            LL_mDelay(1000U);
+                uint16_t cnt = 250U;
+                float freq[250] = {0.0f};
 
-            float freq = mcu_peripheral_tim_conversion_freq();
-            comm_UART_Printf(LOG_LV_INFO, "XDR OSC: %.3f MHz\r\n", (double)(freq) * XDR_CONST_OSC);
+                for (uint16_t i = 0U; i < cnt; ++i)
+                {
+                    mcu_peripheral_tim_input_capture_start();
+                    freq[i] = mcu_peripheral_tim_conversion_freq() * XDR_CONST_OSC;
+                }
+
+                tim_vsync_out_stop();
+
+                for (uint16_t i = 0U; i < cnt; ++i)
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n freq[%u] : %.3f", i, (double)(freq[i]));
+                }
+                */
+            }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("log_lv", "%u", &u32_recv_param[0]))

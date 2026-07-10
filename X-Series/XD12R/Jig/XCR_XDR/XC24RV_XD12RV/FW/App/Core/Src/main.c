@@ -46,7 +46,8 @@
 #define MCU_ADC_VREF                      (3.3f)
 #define MCU_ADC_RESOLUTION                (4095.0f)
 
-#define MCU_TIM_INPUT_CAPTURE_SIZE        (512)
+//#define MCU_TIM_INPUT_CAPTURE_SIZE        (512)
+#define MCU_TIM_INPUT_CAPTURE_SIZE        (4)
 #define MCU_INPUT_CAPTURE_START_OFS       (1)
 #define MCU_TIM_INPUT_CAPTURE_TIMEOUT_MS  (1000U)
 /* USER CODE END PD */
@@ -115,7 +116,7 @@ void sys_init(void)
 
 #if (XDR_EFUSE == XDR_EFUSE_SKIP)
     xdr12_trim_set_efuse_enable(false);
-#elif (XDR_EFUSE == XDR_EFUSE_ENABLE)
+#elif (XDR_EFUSE == XDR_EFUSE_BURN)
     xdr12_trim_set_efuse_enable(true);
 #else
     #error "XDR_EFUSE is not defined"
@@ -123,7 +124,7 @@ void sys_init(void)
 
 #if (XCR_EFUSE == XCR_EFUSE_SKIP)
     xcr24_trim_set_efuse_enable(false);
-#elif (XCR_EFUSE == XCR_EFUSE_ENABLE)
+#elif (XCR_EFUSE == XCR_EFUSE_BURN)
     xcr24_trim_set_efuse_enable(true);
 #else
     #error "XCR_EFUSE is not defined"

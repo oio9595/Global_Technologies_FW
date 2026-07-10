@@ -17,7 +17,7 @@ extern "C" {
 #include "xcr24_struct.h"
 
 #define XCR_EFUSE_SKIP      (0U)
-#define XCR_EFUSE_BURN      (0U)
+#define XCR_EFUSE_BURN      (1U)
 #define XCR_EFUSE           (XCR_EFUSE_SKIP)
 
 #define XCR_CH_SIZE             (1U)
@@ -33,6 +33,7 @@ extern "C" {
 
 extern volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
+void xcr24_read_all(void);
 void xcr24_init_param(void);
 
 void xcr24_init(void);

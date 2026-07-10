@@ -637,19 +637,19 @@ static void xcr24_dump_registers(void)
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP1 Registers");
     for (xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP2 Registers");
     for (xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 OTP Control Registers");
     for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR [0x%02X] DATA [0x%03X]", addr, gt_xcr24_get_otp_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_otp_regs.ALL[addr]);
     }
 }
 
