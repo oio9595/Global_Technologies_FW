@@ -608,9 +608,9 @@ uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
     return ret; //adc
 }
 
-float JigBD_IF_Convert_Adc_To_mVoltage(uint16_t adc)
+float JigBD_IF_Convert_Adc_To_Voltage(uint16_t adc)
 {
-    float ret = ((float)adc * mVOLTAGE_PER_ADC);
+    float ret = ((float)adc * mVOLTAGE_PER_ADC / 1000.0f); /* mV -> V */
     return ret; //mV
 }
 
