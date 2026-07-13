@@ -291,7 +291,7 @@ typedef enum _xcr_local_rw_data_addr_
     XCR_PORT8_LOCAL_RW_DATA16,/*0xEF*/
 }xcr_local_rw_data_addr_t;
 
-#define OTP_BASE_ADDR       (0xF0U)
+#define XCR_OTP_BASE_ADDR       (0xF0U)
 typedef enum _xcr_addr_otp_
 {
     XCR_TEST_CONTROL = 0U,/*0xF0*/

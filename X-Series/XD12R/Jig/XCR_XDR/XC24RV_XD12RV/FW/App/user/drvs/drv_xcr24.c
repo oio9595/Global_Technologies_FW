@@ -637,19 +637,19 @@ static void xcr24_dump_registers(void)
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP1 Registers");
     for (xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP2 Registers");
     for (xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 OTP Control Registers");
     for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xcr24_get_otp_regs.ALL[addr]);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", (XCR_OTP_BASE_ADDR + addr), gt_xcr24_get_otp_regs.ALL[addr]);
     }
 }
 
@@ -809,7 +809,7 @@ uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length)
     uint16_t spi_len = 1U + burst_size; /* HDR + readout */
 
     cmd.bit.code = CMD_CODE1;
-    cmd.bit.addr = (OTP_BASE_ADDR + addr);
+    cmd.bit.addr = (XCR_OTP_BASE_ADDR + addr);
     cmd.bit.size = burst_size;
 
     tx_buffer[0U] = cmd.ALL;
@@ -856,7 +856,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     uint16_t spi_len = 0U;
 
     cmd.bit.code = CMD_CODE2;
-    cmd.bit.addr = (OTP_BASE_ADDR + addr);
+    cmd.bit.addr = (XCR_OTP_BASE_ADDR + addr);
     cmd.bit.size = burst_size;
 
     tx_buffer[spi_len++] = cmd.ALL;
@@ -1093,7 +1093,7 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
         uint16_t tx_buffer[2] = { 0U };
 
         cmd.bit.code = CMD_CODE2;
-        cmd.bit.addr = (OTP_BASE_ADDR + XCR_TEST_CONTROL);
+        cmd.bit.addr = (XCR_OTP_BASE_ADDR + XCR_TEST_CONTROL);
         cmd.bit.size = 1U;
 
         tx_buffer[0] = cmd.ALL;
