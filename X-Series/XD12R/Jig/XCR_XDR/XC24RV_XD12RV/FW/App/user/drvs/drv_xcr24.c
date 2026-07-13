@@ -1589,12 +1589,12 @@ uint32_t xcr24_trim_verify_mirror_dump(void)
         if (saved_reg != read_reg)
         {
             ret |= (1UL << mirror_addr);
-            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%04X - 0x%04X]", \
                 ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
         }
         else
         {
-            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%03X - 0x%03X]", \
+            comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%04X - 0x%04X]", \
                 ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
         }
     }
@@ -1756,7 +1756,7 @@ void xcr24_test_init_fll_b_30m(void)
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
     _r67->bit.FLT_CTL_B = 1U;
-    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
     const float xc_mclk = 30000000.0f; /* 30MHz */
     const float vsync = 120.0f; /* 120Hz */
@@ -1784,7 +1784,7 @@ void xcr24_test_init_fll_b_35m(void)
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
     _r67->bit.FLT_CTL_B = 1U;
-    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
     const float xc_mclk = 35000000.0f; /* 35MHz */
     const float vsync = 120.0f; /* 120Hz */
@@ -1812,7 +1812,7 @@ void xcr24_test_init_fll_b_40m(void)
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
     _r67->bit.OSC_MAN_EN_B = 0U;
     _r67->bit.FLT_CTL_B = 1U;
-    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_A1, &_r67->ALL, 1U);
+    xcr24_write_grp1_reg(XCR_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
     const float xc_mclk = 40000000.0f; /* 40MHz */
     const float vsync = 120.0f; /* 120Hz */
@@ -1831,16 +1831,13 @@ void xcr24_test_start_icc_stby(void)
 {
     ADS114S08_Set_Start(true);
 }
-
 void xcr24_test_start_icc_actv(void)
 {
     ADS114S08_Set_Start(true);
 }
-
 void xcr24_test_start_ldo(void)
 {
     ADS114S08_Set_Start(true);
-
 }
 void xcr24_test_start_ldo_fll_a(void)
 {
