@@ -28,6 +28,7 @@ typedef enum __LOG_LEVEL__
 #define ANSI_FONT_YELLOW            "\033[33m"
 #define ANSI_FONT_BLUE              "\033[34m"
 #define ANSI_FONT_MAGENTA           "\033[35m"
+#define ANSI_FONT_CYAN              "\033[36m"
 
 #define FATAL_INVALID_INPUT(val)    comm_UART_Printf(LOG_LV_FATAL, "\r\nFunction[%s] invalid input (%u)", __func__, (val))
 
