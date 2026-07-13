@@ -42,13 +42,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MCU_ADC_MEASURE_COUNT             (20)
+#define MCU_ADC_MEASURE_COUNT             (20U)
 #define MCU_ADC_VREF                      (3.3f)
 #define MCU_ADC_RESOLUTION                (4095.0f)
 
-//#define MCU_TIM_INPUT_CAPTURE_SIZE        (512)
-#define MCU_TIM_INPUT_CAPTURE_SIZE        (4)
-#define MCU_INPUT_CAPTURE_START_OFS       (1)
+#define MCU_TIM_INPUT_CAPTURE_SIZE        (512U)
+#define MCU_INPUT_CAPTURE_START_OFS       (2U)
 #define MCU_TIM_INPUT_CAPTURE_TIMEOUT_MS  (1000U)
 /* USER CODE END PD */
 
@@ -164,14 +163,14 @@ void mcu_peripheral_adc_start(void)
 {
     gn_InternalADC = 0U;
     LL_ADC_Enable(ADC1);
-    LL_mDelay(1);
-    for (uint8_t cnt = 0 ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
+    LL_mDelay(1U);
+    for (uint8_t cnt = 0U ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
         while(!LL_ADC_IsActiveFlag_EOCS(ADC1)) {}
         LL_ADC_ClearFlag_EOCS(ADC1);
         gn_InternalADC += LL_ADC_REG_ReadConversionData12(ADC1);
-        LL_mDelay(1);
+        LL_mDelay(1U);
     }
 
     LL_ADC_Disable(ADC1);
@@ -184,7 +183,7 @@ uint16_t mcu_peripheral_adc_get(void)
 
 float mcu_peripheral_adc_conversion_to_voltage(uint16_t adc_value)
 {
-  return (float)(adc_value / MCU_ADC_RESOLUTION * MCU_ADC_VREF);
+    return (float)((float)adc_value / MCU_ADC_RESOLUTION * MCU_ADC_VREF);
 }
 
 void mcu_peripheral_tim_input_capture_start(void)
@@ -254,27 +253,27 @@ float mcu_peripheral_tim_conversion_freq(void)
     uint32_t delta = 0U;
     uint32_t counter = 0U;
 
-    for(uint16_t i = 2U ; i < MCU_TIM_INPUT_CAPTURE_SIZE; ++i) // skip tim_cnt[0]
+    for(uint16_t i = MCU_INPUT_CAPTURE_START_OFS ; i < MCU_TIM_INPUT_CAPTURE_SIZE; ++i) // skip tim_cnt[0]
     {
-        if(gt_input_capture_info.tim_cnt[i] >= gt_input_capture_info.tim_cnt[i-1])
+        if(gt_input_capture_info.tim_cnt[i] >= gt_input_capture_info.tim_cnt[i - 1U])
         {
-            delta += gt_input_capture_info.tim_cnt[i] - gt_input_capture_info.tim_cnt[i-1];
+            delta += gt_input_capture_info.tim_cnt[i] - gt_input_capture_info.tim_cnt[i - 1U];
         }
         else
         {
-            delta += (TIM5_PERIOD - gt_input_capture_info.tim_cnt[i-1]) + gt_input_capture_info.tim_cnt[i] + 1U;
+            delta += (TIM5_PERIOD - gt_input_capture_info.tim_cnt[i - 1U]) + gt_input_capture_info.tim_cnt[i] + 1U;
         }
 
         ++counter;
     }
 
-    if(delta > 0)
+    if(delta > 0U)
     {
         gt_input_capture_info.tim_freq = (((float)TIM5_CLK * counter) / delta);
     }
     else
     {
-        gt_input_capture_info.tim_freq = 0;
+        gt_input_capture_info.tim_freq = 0.0f;
     }
 
     return gt_input_capture_info.tim_freq;
