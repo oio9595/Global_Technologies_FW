@@ -300,7 +300,7 @@ void comm_debugging_process(void)
             MGR_TRIM()->cmd(TRIM_CMD_XCR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_trim_start")))
+        else if(!(strcmp(str_in, "xdr_trim_start")) || !(strcmp(str_in, "1")))
         {
             MGR_TRIM()->cmd(TRIM_CMD_XDR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -462,21 +462,60 @@ void comm_debugging_process(void)
             xcr24_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
-        else if(Command_Param_is_("xcr_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if(!(strcmp(str_in, "xc_trim_debug")))
+        {
+            gpio_set_xc_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xcr24_trim_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_g1_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-
             xcr24_write_grp1_reg(addr, &param, 1U);
+
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(Command_Param_is_("xcr_r", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        else if(Command_Param_is_("xc_g1_r", "%x", &u32_recv_param[0]))
         {
-            xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            uint16_t xcr = xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
 
-            //comm_UART_Printf(LOG_LV_INFO, "\r\n XDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], ret);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_g2_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            uint16_t param = (uint16_t)u32_recv_param[1];
+            xcr24_write_grp2_reg(addr, &param, 1U);
+
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_g2_r", "%x", &u32_recv_param[0]))
+        {
+            uint16_t xcr = xcr24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
+
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            uint16_t param = (uint16_t)u32_recv_param[1];
+            xcr24_write_otp_control(addr, &param, 1U);
+
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_rt", "%x", &u32_recv_param[0]))
+        {
+            uint16_t xcr = xcr24_read_otp_control((uint16_t)u32_recv_param[0], 1U);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
 
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -549,9 +588,8 @@ void comm_debugging_process(void)
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
-                float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
                 float iout = JigBD_IF_Convert_Adc_To_Current(adc, gain);
-                comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], m_volt [%f], iout [%f]", adc, (double)(volt), (double)(iout));
+                comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], iout [%f]", adc, (double)(iout));
             }
 
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -590,7 +628,6 @@ void comm_debugging_process(void)
                 if (true == ADS114S08_Wait_Done())
                 {
                     uint16_t adc = ADS114S08_Get_ADC_Value();
-                    float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
                     iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
                 }
             }
@@ -630,7 +667,6 @@ void comm_debugging_process(void)
                 if (true == ADS114S08_Wait_Done())
                 {
                     uint16_t adc = ADS114S08_Get_ADC_Value();
-                    float volt = JigBD_IF_Convert_Adc_To_mVoltage(adc);
                     iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
                 }
             }
