@@ -85,22 +85,22 @@ typedef enum _xd12r_opt_ctrl_addr_
 
 typedef enum _max_curr_level_
 {
-    CURR_LEVEL_4 = 0U,
-    CURR_LEVEL_8,
-    CURR_LEVEL_12,
-    CURR_LEVEL_16,
-    CURR_LEVEL_20,
-    CURR_LEVEL_24,
-    CURR_LEVEL_28,
-    CURR_LEVEL_32,
-    CURR_LEVEL_36,
-    CURR_LEVEL_40,
-    CURR_LEVEL_44,
-    CURR_LEVEL_48,
-    CURR_LEVEL_52,
-    CURR_LEVEL_56,
-    CURR_LEVEL_60,
-    CURR_LEVEL_64,
+    CURR_LEVEL_4 = 0U,      /* 0x00 */
+    CURR_LEVEL_8,           /* 0x01 */
+    CURR_LEVEL_12,          /* 0x02 */
+    CURR_LEVEL_16,          /* 0x03 */
+    CURR_LEVEL_20,          /* 0x04 */
+    CURR_LEVEL_24,          /* 0x05 */
+    CURR_LEVEL_28,          /* 0x06 */
+    CURR_LEVEL_32,          /* 0x07 */
+    CURR_LEVEL_36,          /* 0x08 */
+    CURR_LEVEL_40,          /* 0x09 */
+    CURR_LEVEL_44,          /* 0x0A */
+    CURR_LEVEL_48,          /* 0x0B */
+    CURR_LEVEL_52,          /* 0x0C */
+    CURR_LEVEL_56,          /* 0x0D */
+    CURR_LEVEL_60,          /* 0x0E */
+    CURR_LEVEL_64,          /* 0x0F */
     CURR_LEVEL_MAX,
 }max_curr_level_t;
 

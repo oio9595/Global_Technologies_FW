@@ -8,10 +8,12 @@
 
 const uint8_t gn_block_map[LDIM_BLK_SIZE][3] = /* { xc_ch, xd_daisy, ld_order_max } */
 {
-    { 1, 1,  4 }, /* ld_order  1 ~  4 */
-    { 1, 1,  8 }, /* ld_order  5 ~  8 */
-    { 1, 1, 12 }, /* ld_order  9 ~ 12 */
-    { 1, 1, 16 }, /* ld_order 13 ~ 16 */
+    { 1, 1,  3 }, /* ld_order  1 ~  3 */
+    { 1, 1,  6 }, /* ld_order  4 ~  6 */
+    { 1, 1,  9 }, /* ld_order  7 ~  9 */
+    { 1, 1, 12 }, /* ld_order 10 ~ 12 */
+    { 1, 1, 15 }, /* ld_order 13 ~ 15 */
+    { 1, 1, 18 }, /* ld_order 16 ~ 18 */
 };
 
 typedef union tag_LD_BUFFER
@@ -42,15 +44,14 @@ uint16_t* ldim_get_led_color_buffer(void)
     return gn_led_color_table;
 }
 
-void ldim_set_led_color_buffer(uint16_t red, uint16_t cyan, uint16_t green, uint16_t blue)
+void ldim_set_led_color_buffer(uint16_t red, uint16_t green, uint16_t blue)
 {
     gn_led_color_table[COLOR_RED] = red;
-    gn_led_color_table[COLOR_CYAN] = cyan;
     gn_led_color_table[COLOR_GREEN] = green;
     gn_led_color_table[COLOR_BLUE] = blue;
 }
 
-void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t blue, uint16_t cyan)
+void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t blue)
 {
     const uint8_t xc_ch_max = gn_block_map[block][0];
     const uint8_t xd_daisy_max = gn_block_map[block][1];
@@ -59,7 +60,6 @@ void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t bl
     const uint16_t color_map[COLOR_ORDER_MAX] =
     {
         [COLOR_RED]   = red,
-        [COLOR_CYAN]  = cyan,
         [COLOR_GREEN] = green,
         [COLOR_BLUE]  = blue
     };

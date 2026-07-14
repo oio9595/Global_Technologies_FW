@@ -212,7 +212,8 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define HW_OSC_PRESCALE     (128U)
 #define XCR_PRESCALE        (64U)
 #define XDR_PRESCALE        (64U)
-#define XCR_CONST_OSC       (HW_OSC_PRESCALE * XCR_PRESCALE / CONST_HZ_TO_MHZ)
+//#define XCR_CONST_OSC       (HW_OSC_PRESCALE * XCR_PRESCALE / CONST_HZ_TO_MHZ)
+#define XCR_CONST_OSC       (HW_OSC_PRESCALE / CONST_HZ_TO_MHZ)
 #define XDR_CONST_OSC       (HW_OSC_PRESCALE * XDR_PRESCALE / CONST_HZ_TO_MHZ)
 
 __STATIC_INLINE void us_delay(uint32_t n_delay)

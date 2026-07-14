@@ -21,8 +21,8 @@ extern "C" {
 #define LDIM_BLK_SIZE       (XCR_CH_SIZE * (XDR_DAISY_LENGTH * (BLOCK_PER_XDR)))
 
 uint16_t* ldim_get_led_color_buffer(void);
-void ldim_set_led_color_buffer(uint16_t red, uint16_t cyan, uint16_t green, uint16_t blue);
-void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t blue, uint16_t cyan);
+void ldim_set_led_color_buffer(uint16_t red, uint16_t green, uint16_t blue);
+void ldim_set_ldim_rgb(uint16_t block, uint16_t red, uint16_t green, uint16_t blue);
 
 uint16_t* ldim_get_xcr_ld_transfer_buffer(void);
 uint16_t ldim_get_xcr_ld_transfer_size(void);

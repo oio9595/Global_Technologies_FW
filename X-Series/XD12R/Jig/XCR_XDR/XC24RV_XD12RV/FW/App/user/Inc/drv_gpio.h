@@ -46,6 +46,14 @@ typedef enum tag_XDIC_CHANNEL_T
     XD_CH_MAX,
 } XD_CH_t;
 
+typedef enum tag_XC_DAC_CHANNEL_T
+{
+    XC_DAC_CH_01 = 0U,
+    XC_DAC_CH_02,
+    XC_DAC_CH_03,
+    XC_DAC_CH_MAX,
+} XC_DAC_CH_t;
+
 typedef enum tag_CURRENT_GAIN_T
 {
     GAIN_LOW = 0U,  /* Max 0.5mA */

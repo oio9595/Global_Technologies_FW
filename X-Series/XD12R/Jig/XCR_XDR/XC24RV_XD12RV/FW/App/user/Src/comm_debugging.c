@@ -53,17 +53,17 @@
 #endif
 
 #if (XDR_EFUSE == XDR_EFUSE_SKIP)
-    #define MSG_XDR_EFUSE "XDR EFUSE Skip"
+    #define MSG_XDR_EFUSE "XDR EFUSE SKIP"
 #elif (XDR_EFUSE == XDR_EFUSE_BURN)
-    #define MSG_XDR_EFUSE "XDR EFUSE Burn"
+    #define MSG_XDR_EFUSE "XDR EFUSE BURN"
 #else
     #error "XDR_EFUSE is not defined"
 #endif
 
 #if (XCR_EFUSE == XCR_EFUSE_SKIP)
-    #define MSG_XCR_EFUSE "XCR EFUSE Skip"
+    #define MSG_XCR_EFUSE "XCR EFUSE SKIP"
 #elif (XCR_EFUSE == XCR_EFUSE_BURN)
-    #define MSG_XCR_EFUSE "XCR EFUSE Burn"
+    #define MSG_XCR_EFUSE "XCR EFUSE BURN"
 #else
     #error "XCR_EFUSE is not defined"
 #endif
@@ -320,21 +320,44 @@ void comm_debugging_process(void)
             MGR_TEST()->cmd(TEST_CMD_XDR_SWEEP_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
-        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
+        else if(!(strcmp(str_in, "xcr_sweep_start")))
         {
-            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
+            MGR_TEST()->cmd(TEST_CMD_XCR_SWEEP_START, NULL);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "system_start")))
+        {
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+            gpio_set_xc_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xcr24_init();
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_init();
+            LL_mDelay(9U);
+            ldim_set_led_color_buffer(100U, 100U, 100U);
+            tim_vsync_out_start();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+
+        else if(Command_Param_is_("step", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
+        {
+            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("step", "%u", &u32_recv_param[0]))
         {
-            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0]);
+            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "step")))
         {
             uint16_t* p_led_color_buffer = ldim_get_led_color_buffer();
-            comm_UART_Printf(LOG_LV_INFO, "\r\nR: %u, C : %u, G : %u, B : %u", p_led_color_buffer[0], p_led_color_buffer[1], p_led_color_buffer[2], p_led_color_buffer[3]);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nR: %u, G: %u, B: %u", p_led_color_buffer[0], p_led_color_buffer[1], p_led_color_buffer[2]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xcr_ldim_force")))
@@ -507,15 +530,31 @@ void comm_debugging_process(void)
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-            xcr24_write_otp_control(addr, &param, 1U);
+            if (addr >= XCR_OTP_BASE_ADDR)
+            {
+                xcr24_write_otp_control(addr - XCR_OTP_BASE_ADDR, &param, 1U);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR Write --> [ 0x%02X ] is not OTP address\r\n", u32_recv_param[0]);
+            }
 
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xc_rt", "%x", &u32_recv_param[0]))
         {
-            uint16_t xcr = xcr24_read_otp_control((uint16_t)u32_recv_param[0], 1U);
-            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            if (addr >= XCR_OTP_BASE_ADDR)
+            {
+                uint16_t xcr = xcr24_read_otp_control(addr - XCR_OTP_BASE_ADDR, 1U);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR Read --> [ 0x%02X - 0x%04X ]\r\n", addr, xcr);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR Read --> [ 0x%02X ] is not OTP address\r\n", u32_recv_param[0]);
+            }
 
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);

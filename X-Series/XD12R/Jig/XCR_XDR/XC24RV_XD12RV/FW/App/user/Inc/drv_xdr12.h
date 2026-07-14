@@ -34,15 +34,19 @@ extern "C" {
 
 #define XDR_SV_NO           (32U)
 
-#define XDR_SERIAL_CLK_HIGH (17U)
-#define XDR_SERIAL_CLK_LOW  (8U)
+#define XDR_SERIAL_CLK_HIGH (24U)
+#define XDR_SERIAL_CLK_LOW  (12U)
 #define XDR_SERIAL_CLK      ((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
+
+#define XDR_SYNC_MODE_CMD   (0U) /* cmd + svi */
+#define XDR_SYNC_MODE_SVI   (1U) /*  vo + svi */
+#define XDR_SYNC_MODE       (XDR_SYNC_MODE_SVI)
 
 #define XDR_TYPE_A          (0U) /* NTS + TS */
 #define XDR_TYPE_B          (1U) /* NTS + NTS + TS */
 #define XDR_TYPE_C          (2U) /* NTS + TS + TS */
 #define XDR_TYPE_D          (3U) /* TS + TS */
-#define XDR_TYPE            XDR_TYPE_B
+#define XDR_TYPE            (XDR_TYPE_A)
 
 #if (XDR_TYPE == XDR_TYPE_A)
     #define LED_PER_BLOCK       (3U) /* NTS + TS */
