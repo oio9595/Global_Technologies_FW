@@ -5,12 +5,14 @@
 #include "drv_xcr24.h"
 #include "comm_debugging.h"
 #include "drv_gpio.h"
+#include "drv_timer.h"
 #include "ads124s08.h"
 
 #define SAVE_INFO_MAX_CNT                   (10)
 
 #define XCR_DELAY_DEFAULT                   (1U)
 #define XCR_DELAY_SETTLING                  (5U)
+#define XCR_DELAY_VSYNC_STOP                (100U)
 #define XCR_DELAY_MEASURE                   (10U)
 #define XCR_DELAY_PWR_ON                    (100U)
 #define XCR_DELAY_PWR_OFF                   (100U)
@@ -25,16 +27,17 @@
 #define XCR_DEFAULT_SUB_VAL_OSC_A           (1U << 4U)
 #define XCR_DEFAULT_SUB_VAL_OSC_B           (1U << 4U)
 
-#define XCR_TRIM_ERROR_RANGE                (0.005f) /* 0.5% */
+#define XCR_TRIM_ERROR_RANGE                (0.005f)    /* 0.5% */
+#define XCR_TRIM_OSC_ERROR_RANGE            (0.086f)    /* 8.6% */
 
-#define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)     /* 1.5V */
-#define XCR_TRIM_TGT_DAC_3V0                (3.0f)     /* 3.0V */
-#define XCR_TRIM_TGT_DAC1_OFS               (0.1465f)  /* 146.5mV */
-#define XCR_TRIM_TGT_DAC2_OFS               (0.1465f)  /* 146.5mV */
-#define XCR_TRIM_TGT_DAC3_OFS               (0.1465f)  /* 146.5mV */
-#define XCR_TRIM_TGT_1V5_LDO_OSC            (1.5f)     /* 1.5V */
-#define XCR_TRIM_TGT_OSC_A                  (35.0f)    /* 35MHz */
-#define XCR_TRIM_TGT_OSC_B                  (35.0f)    /* 35MHz */
+#define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)      /* 1.5V */
+#define XCR_TRIM_TGT_DAC_3V0                (3.0f)      /* 3.0V */
+#define XCR_TRIM_TGT_DAC1_OFS               (0.1465f)   /* 146.5mV */
+#define XCR_TRIM_TGT_DAC2_OFS               (0.1465f)   /* 146.5mV */
+#define XCR_TRIM_TGT_DAC3_OFS               (0.1465f)   /* 146.5mV */
+#define XCR_TRIM_TGT_1V5_LDO_OSC            (1.5f)      /* 1.5V */
+#define XCR_TRIM_TGT_OSC_A                  (35.0f)     /* 35MHz */
+#define XCR_TRIM_TGT_OSC_B                  (35.0f)     /* 35MHz */
 
 #define XCR_TRIM_INIT_ADJ_1V5_LDO_DIG       (1U)
 #define XCR_TRIM_INIT_ADJ_DAC_3V0           (1U)
@@ -68,66 +71,67 @@
 #define XDR_TRIM_OFS_INPUT_1                (200U)
 #define XDR_TRIM_OFS_INPUT_2                (300U)
 
-#define XDR_TRIM_ERROR_RANGE                (0.02f)  /* 2% */
-#define XDR_TRIM_OSC_ERROR_RANGE            (0.05f)  /* 5% */
-#define XDR_TRIM_IOUT_ERROR_RANGE           (0.005f) /* 0.5% */
+#define XDR_TRIM_ERROR_RANGE                (0.02f)     /* 2% */
+#define XDR_TRIM_OSC_ERROR_RANGE            (0.05f)     /* 5% */
+#define XDR_TRIM_IOUT_ERROR_RANGE           (0.005f)    /* 0.5% */
 
-#define XDR_TRIM_TGT_CURRENT_REF            (1.4f)  /* 1.4 V */
-#define XDR_TRIM_TGT_LDO_DIG                (1.5f)  /* 1.5 V */
-#define XDR_TRIM_TGT_LDO_DAC                (1.5f)  /* 1.5 V */
-#define XDR_TRIM_TGT_LDO_FLL                (1.5f)  /* 1.5 V */
-#define XDR_TRIM_TGT_OSC                    (51.0f) /* 51.0 MHz */
+#define XDR_TRIM_TGT_CURRENT_REF            (1.4f)      /* 1.4 V */
+#define XDR_TRIM_TGT_LDO_DIG                (1.5f)      /* 1.5 V */
+#define XDR_TRIM_TGT_LDO_DAC                (1.5f)      /* 1.5 V */
+#define XDR_TRIM_TGT_LDO_FLL                (1.5f)      /* 1.5 V */
+#define XDR_TRIM_TGT_OSC                    (51.0f)     /* 51.0 MHz */
 #define XDR_TRIM_TGT_CH_GAIN                (24.0f * (XDR_TRIM_GAIN_INPUT_2 - XDR_TRIM_GAIN_INPUT_1) / 4095.0f)
 #define XDR_TRIM_TGT_CH_OFS                 (24.0f * ((XDR_TRIM_OFS_INPUT_2 + XDR_TRIM_OFS_INPUT_1) / 2.0f) / 4095.0f)
 
-#define XDR_TRIM_INIT_ADJ_CURRENT_REF       (1U)
-#define XDR_TRIM_INIT_ADJ_LDO_DIG           (1U)
-#define XDR_TRIM_INIT_ADJ_LDO_DAC           (1U)
-#define XDR_TRIM_INIT_ADJ_LDO_FLL           (1U)
-#define XDR_TRIM_INIT_ADJ_OSC               (1U)
-#define XDR_TRIM_INIT_ADJ_CH_GAIN           (1U)
-#define XDR_TRIM_INIT_ADJ_CH_OFS            (1U)
+#define XDR_TRIM_INIT_ADJ_CURRENT_REF       (3U)
+#define XDR_TRIM_INIT_ADJ_LDO_DIG           (3U)
+#define XDR_TRIM_INIT_ADJ_LDO_DAC           (3U)
+#define XDR_TRIM_INIT_ADJ_LDO_FLL           (3U)
+#define XDR_TRIM_INIT_ADJ_OSC               (10U)
+#define XDR_TRIM_INIT_ADJ_CH_GAIN           (10U)
+#define XDR_TRIM_INIT_ADJ_CH_OFS            (10U)
 
 typedef struct tag_SAVED_INFO
 {
     float saved_value[SAVE_INFO_MAX_CNT];
     uint16_t sub_val[SAVE_INFO_MAX_CNT];
     uint8_t saved_cnt;
-} saved_info_t;
+    uint8_t try_cnt;
+} saved_info_t; // 64 bytes
 
 typedef struct tag_JUDGE_INFO
 {
     bool in_range;
     bool up;
     bool down;
-} judge_info_t;
+} judge_info_t; // 3 bytes
 
 typedef struct tag_RANGE_INFO
 {
     float target;
     float min;
     float max;
-} range_info_t;
+} range_info_t; // 12 bytes
 
 typedef struct tag_MEASURE_INFO
 {
-    uint16_t adc[2];
     float temp_value[2];
     float value;
-} measure_info_t;
+    uint16_t adc[2];
+} measure_info_t; // 16 bytes
 
 typedef struct tag_TRIM_INFO
 {
+    saved_info_t saved[XD_CH_MAX];
+    measure_info_t measure[XD_CH_MAX];
+    uint16_t sub_val[XD_CH_MAX];
+    uint16_t reg_val[XD_CH_MAX];
+    range_info_t range;
+    current_gain_t gain;
     uint16_t input[2];
     uint16_t initial_adj_size;
     uint8_t repeat;
     uint8_t chx;
-    current_gain_t gain;
-    range_info_t range;
-    measure_info_t measure[XD_CH_MAX];
-    saved_info_t saved[XD_CH_MAX];
-    uint16_t sub_val[XD_CH_MAX];
-    uint16_t reg_val[XD_CH_MAX];
     bool trim_error;
 } trim_info_t;
 
@@ -136,6 +140,7 @@ typedef enum tag_TRIM_STEP_T
     TRIM_STEP_PWR_ON = 0U,
     TRIM_STEP_INITIAL,
     TRIM_STEP_INITIAL_BY_LIST,
+    TRIM_STEP_VSYNC_STOP,
     TRIM_STEP_START_MEASURE,
     TRIM_STEP_GET_MEASURED_VALUE,
     TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER,
@@ -176,21 +181,20 @@ typedef enum tag_XDR_TRIM_LIST
 } xdr_trim_list_t;
 
 static struct{
-    MGRSTATUS   status;
-
-    trim_info_t t_xdr_trim_info[XDR_TRIM_LIST_MAX];
-    trim_info_t t_xcr_trim_info[XCR_TRIM_LIST_MAX];
+    trim_info_t     t_xdr_trim_info[XDR_TRIM_LIST_MAX];
+    trim_info_t     t_xcr_trim_info[XCR_TRIM_LIST_MAX];
+    MGRSTATUS       status;
     xdr_trim_list_t t_xdr_trim_list;
     xcr_trim_list_t t_xcr_trim_list;
-
-    THREAD_ID   trim_thr;
-}__priv_trim;
+    THREAD_ID       trim_thr;
+}__priv_trim; // declare & define private variable for trim manager
 
 static const char* gs_trim_step[TRIM_STEP_MAX] =
 {
     "TRIM_STEP_PWR_ON",
     "TRIM_STEP_INITIAL",
     "TRIM_STEP_INITIAL_BY_LIST",
+    "TRIM_STEP_VSYNC_STOP",
     "TRIM_STEP_START_MEASURE",
     "TRIM_STEP_GET_MEASURED_VALUE",
     "TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER",
@@ -289,6 +293,7 @@ static judge_info_t trim_compare_range(trim_info_t* p_trim_info_t)
         judge_info.up = false;
         judge_info.down = false;
     }
+    ++p_trim_info_t->saved[p_trim_info_t->chx].try_cnt;
 
     return judge_info;
 }
@@ -299,7 +304,7 @@ static uint16_t trim_calculate_adjust_amount(trim_info_t* p_trim_info_t)
     static float previous_value = 0.0f;
     static uint16_t previous_sub_val = 0U;
 
-    if (p_trim_info_t->saved[p_trim_info_t->chx].saved_cnt == 1U) // --> must be changed to loop cnt. NOT SAVED_CNT!!!!
+    if (p_trim_info_t->saved[p_trim_info_t->chx].try_cnt == 1U)
     {
         adj_amount = p_trim_info_t->initial_adj_size;
     }
@@ -315,6 +320,13 @@ static uint16_t trim_calculate_adjust_amount(trim_info_t* p_trim_info_t)
 
     previous_sub_val = p_trim_info_t->sub_val[p_trim_info_t->chx];
     previous_value = p_trim_info_t->measure[p_trim_info_t->chx].value;
+
+    if (adj_amount == 0U)
+    {
+        adj_amount = 1U;
+    }
+
+    comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t\tadj : %u", adj_amount);
 
     return adj_amount;
 }
@@ -383,8 +395,8 @@ static void xcr_trim_param_init(void)
             {
                 __priv_trim.t_xcr_trim_info[trim_list].sub_val[0] = XCR_DEFAULT_SUB_VAL_OSC_A;
                 __priv_trim.t_xcr_trim_info[trim_list].range.target = XCR_TRIM_TGT_OSC_A;
-                __priv_trim.t_xcr_trim_info[trim_list].range.min = XCR_TRIM_TGT_OSC_A * (1.0f - XCR_TRIM_ERROR_RANGE);
-                __priv_trim.t_xcr_trim_info[trim_list].range.max = XCR_TRIM_TGT_OSC_A * (1.0f + XCR_TRIM_ERROR_RANGE);
+                __priv_trim.t_xcr_trim_info[trim_list].range.min = XCR_TRIM_TGT_OSC_A * (1.0f - XCR_TRIM_OSC_ERROR_RANGE);
+                __priv_trim.t_xcr_trim_info[trim_list].range.max = XCR_TRIM_TGT_OSC_A * (1.0f + XCR_TRIM_OSC_ERROR_RANGE);
                 __priv_trim.t_xcr_trim_info[trim_list].initial_adj_size = XCR_TRIM_INIT_ADJ_OSC_A;
                 break;
             }
@@ -392,8 +404,8 @@ static void xcr_trim_param_init(void)
             {
                 __priv_trim.t_xcr_trim_info[trim_list].sub_val[0] = XCR_DEFAULT_SUB_VAL_OSC_B;
                 __priv_trim.t_xcr_trim_info[trim_list].range.target = XCR_TRIM_TGT_OSC_B;
-                __priv_trim.t_xcr_trim_info[trim_list].range.min = XCR_TRIM_TGT_OSC_B * (1.0f - XCR_TRIM_ERROR_RANGE);
-                __priv_trim.t_xcr_trim_info[trim_list].range.max = XCR_TRIM_TGT_OSC_B * (1.0f + XCR_TRIM_ERROR_RANGE);
+                __priv_trim.t_xcr_trim_info[trim_list].range.min = XCR_TRIM_TGT_OSC_B * (1.0f - XCR_TRIM_OSC_ERROR_RANGE);
+                __priv_trim.t_xcr_trim_info[trim_list].range.max = XCR_TRIM_TGT_OSC_B * (1.0f + XCR_TRIM_OSC_ERROR_RANGE);
                 __priv_trim.t_xcr_trim_info[trim_list].initial_adj_size = XCR_TRIM_INIT_ADJ_OSC_B;
                 break;
             }
@@ -411,7 +423,7 @@ static void xcr_trim_log_summary(void)
     for (xcr_trim_list_t list = XCR_TRIM_LIST_1V5_LDO_DIG ; list < XCR_TRIM_LIST_MAX ; ++list)
     {
         trim_info_t* info = &__priv_trim.t_xcr_trim_info[list];
-        comm_UART_Printf(LOG_LV_INFO, "\r\n|%s|[REG|%3u|SUB|%3u|VAL|%06.3f|", \
+        comm_UART_Printf(LOG_LV_INFO, "\r\n|%s|REG|%3u|SUB|%3u|VAL|%6.3f|", \
             gs_xcr_trim_list[list], info->reg_val[0], info->sub_val[0], (double)(info->measure[0].value));
     }
 }
@@ -488,11 +500,11 @@ static bool xcr_trim_update_register_by_sub_val(xcr_trim_list_t in_trim_list, tr
     }
     if (ret == true)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %u) (SUB: %u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
+        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %3u) (SUB: %3u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
     }
     else
     {
-        comm_UART_Printf(LOG_LV_FATAL, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %u) (SUB: %u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
+        comm_UART_Printf(LOG_LV_FATAL, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %3u) (SUB: %3u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
     }
     return ret;
 }
@@ -531,55 +543,86 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_LDO, ADS_AINCOM);
                     xcr24_trim_init_1v5_ldo_dig();
+                    td->step = TRIM_STEP_START_MEASURE;
+                    td->tout = XCR_DELAY_SETTLING;
                     break;
                 }
                 case XCR_TRIM_LIST_DAC_3V0:
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac_3v0();
+                    tim_vsync_out_start();
+                    DEBUG_HI();
+                    td->step = TRIM_STEP_VSYNC_STOP;
+                    td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
                 }
                 case XCR_TRIM_LIST_DAC1_OFS:
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac1_ofs();
+                    tim_vsync_out_start();
+                    DEBUG_HI();
+                    td->step = TRIM_STEP_VSYNC_STOP;
+                    td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
                 }
                 case XCR_TRIM_LIST_DAC2_OFS:
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_2, ADS_AINCOM);
                     xcr24_trim_init_dac2_ofs();
+                    tim_vsync_out_start();
+                    DEBUG_HI();
+                    td->step = TRIM_STEP_VSYNC_STOP;
+                    td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
                 }
                 case XCR_TRIM_LIST_DAC3_OFS:
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_3, ADS_AINCOM);
                     xcr24_trim_init_dac3_ofs();
+                    tim_vsync_out_start();
+                    DEBUG_HI();
+                    td->step = TRIM_STEP_VSYNC_STOP;
+                    td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
                 }
                 case XCR_TRIM_LIST_1V5_LDO_OSC:
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
                     xcr24_trim_init_1v5_ldo_osc();
+                    td->step = TRIM_STEP_START_MEASURE;
+                    td->tout = XCR_DELAY_SETTLING;
                     break;
                 }
                 case XCR_TRIM_LIST_OSC_A:
                 {
                     xcr24_trim_init_osc_a();
+                    td->step = TRIM_STEP_START_MEASURE;
+                    td->tout = XCR_DELAY_SETTLING;
                     break;
                 }
                 case XCR_TRIM_LIST_OSC_B:
                 {
                     xcr24_trim_init_osc_b();
+                    td->step = TRIM_STEP_START_MEASURE;
+                    td->tout = XCR_DELAY_SETTLING;
                     break;
                 }
                 default:
                 {
                     comm_UART_Printf(LOG_LV_FATAL, "\n\r%s, %s invalid in_trim_list (%u)", __func__, trim_step_to_string((trim_step_t)td->step), *list);
                     td->step = TRIM_STEP_PWR_OFF;
+                    info->trim_error = true;
                     return true;
                 }
             }
+            break;
+        }
+        case TRIM_STEP_VSYNC_STOP:
+        {
+            DEBUG_LO();
+            tim_vsync_out_stop();
             td->step = TRIM_STEP_START_MEASURE;
             td->tout = XCR_DELAY_SETTLING;
             break;
@@ -610,6 +653,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     comm_UART_Printf(LOG_LV_FATAL, "\n\r%s, %s invalid in_trim_list (%u)", __func__, trim_step_to_string((trim_step_t)td->step), *list);
                     td->step = TRIM_STEP_PWR_OFF;
+                    info->trim_error = true;
                     return true;
                 }
             }
@@ -633,7 +677,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     if (true == ADS114S08_Wait_Done())
                     {
                         info->measure[info->chx].adc[info->repeat] = ADS114S08_Get_ADC_Value();
-                        info->measure[info->chx].value = JigBD_IF_Convert_Adc_To_mVoltage(info->measure[info->chx].adc[info->repeat]);
+                        info->measure[info->chx].value = JigBD_IF_Convert_Adc_To_Voltage(info->measure[info->chx].adc[info->repeat]);
                         td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
                         td->tout = XCR_DELAY_DEFAULT;
                     }
@@ -669,14 +713,14 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 info->saved[ch].saved_value[info->saved[ch].saved_cnt] = info->measure[ch].value;
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
                     xcr_trim_list_to_string(*list), (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %.3f) -> [%s✕ OUT_RANGE%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
                     xcr_trim_list_to_string(*list), (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
@@ -687,14 +731,14 @@ static bool _xcr_trim_thread(struct thread_data* td)
             if (t_judge.up == true)
             {
                 info->sub_val[ch] += adj_mount;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %u)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %3u)", \
                     ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
             else if (t_judge.down == true)
             {
                 info->sub_val[ch] -= adj_mount;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %u)", \
-                    ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %3u)", \
+                    ANSI_FONT_MAGENTA, ANSI_FONT_NONE, info->sub_val[ch]);
             }
 
             if (info->saved[ch].saved_cnt < SAVE_INFO_MAX_CNT)
@@ -709,6 +753,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     // go to error handling, can't update register, trim thread stop
                     comm_UART_Printf(LOG_LV_ERROR, "\n\r\tlist : %s Failed to update trim register!", xcr_trim_list_to_string(*list));
+                    info->trim_error = true;
                     td->step = TRIM_STEP_PWR_OFF;
                     td->tout = XCR_DELAY_DEFAULT;
                 }
@@ -739,16 +784,14 @@ static bool _xcr_trim_thread(struct thread_data* td)
 
                     info->measure[ch].value = closest_val;
                     info->sub_val[ch] = info->saved[ch].sub_val[closest_idx];
-                    comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value : %.3f) (Sub_Val : %u)", \
+                    comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value: %6.3f) (Sub_Val: %3u)", \
                         ANSI_FONT_GREEN, ANSI_FONT_NONE, (double)(info->measure[ch].value), info->sub_val[ch]);
-
-                    comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t enough save count");
                     xcr_trim_update_register_by_sub_val(*list, info);
 
                     if (++(*list) < XCR_TRIM_LIST_MAX)
                     {
                         td->step = TRIM_STEP_INITIAL_BY_LIST;
-                        comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT LIST>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                        comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT LIST>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                     }
                     else
                     {
@@ -767,7 +810,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
             xcr24_trim_save_mirror_register();
             if (true == xcr24_trim_get_efuse_enable())
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                 // register setting
                 xcr24_trim_init_efuse();
                 //power control
@@ -777,7 +820,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                 td->step = TRIM_STEP_LOG_SUMMARY;
                 td->tout = XCR_DELAY_DEFAULT;
             }
@@ -833,7 +876,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
         case TRIM_STEP_LOG_SUMMARY:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xcr_trim_list_to_string(*list), td->tout);
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<SUMMARY>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<SUMMARY>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
             xcr_trim_log_summary();
             td->step = TRIM_STEP_PWR_OFF;
             td->tout = XCR_DELAY_DEFAULT;
@@ -843,8 +886,16 @@ static bool _xcr_trim_thread(struct thread_data* td)
         case TRIM_STEP_PWR_OFF:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xcr_trim_list_to_string(*list), td->tout);
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
             gpio_set_xc_vdd_5v(VCC_OFF);
+            if (true == info->trim_error)
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\n\r%s[<<<TRIM ERROR>>>]%s", ANSI_FONT_RED, ANSI_FONT_NONE);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<TRIM SUCCESS>>>]%s", ANSI_FONT_GREEN, ANSI_FONT_NONE);
+            }
             td->step = TRIM_STEP_NONE;
             td->tout = XCR_DELAY_DEFAULT;
             break;
@@ -963,12 +1014,12 @@ static void xdr_trim_log_summary(void)
         {
             if (ch == XD_CH_01)
             {
-                comm_UART_Printf(LOG_LV_INFO, "\r\n|%s|CH|%2u|REG|%3u|SUB|%3u|VAL|%06.3f|", \
+                comm_UART_Printf(LOG_LV_INFO, "\r\n|%s|CH|%2u|REG|%3u|SUB|%3u|VAL|%6.3f|", \
                     gs_xdr_trim_list[list], (ch + 1U), info->reg_val[ch], info->sub_val[ch], (double)(info->measure[ch].value));
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\r\n\t\t|CH|%2u|REG|%3u|SUB|%3u|VAL|%06.3f|", \
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\t\t|CH|%2u|REG|%3u|SUB|%3u|VAL|%6.3f|", \
                     (ch + 1U), info->reg_val[ch], info->sub_val[ch], (double)(info->measure[ch].value));
             }
         }
@@ -993,7 +1044,7 @@ static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, tr
         }
         case XDR_TRIM_LIST_LDO_DIG:
         {
-            reg_val = sub_val ^ 8U; // XOR with 8 to invert the bits for the LDO_DIG register
+            reg_val = sub_val ^ 8U;
             in_trim_info->reg_val[ch] = reg_val;
             ret = xdr12_trim_set_ldo_dig(reg_val);
             break;
@@ -1041,11 +1092,11 @@ static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, tr
     }
     if (ret == true)
     {
-        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %u) (SUB: %u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
+        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%sREG_UPDATE%s] (REG: %3u) (SUB: %3u)", ANSI_FONT_YELLOW, ANSI_FONT_NONE, reg_val, sub_val);
     }
     else
     {
-        comm_UART_Printf(LOG_LV_ERROR, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %u) (SUB: %u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
+        comm_UART_Printf(LOG_LV_ERROR, "\n\r\t\t[%sREG_UPDATE_FAIL%s] (REG: %3u) (SUB: %3u)", ANSI_FONT_RED, ANSI_FONT_NONE, reg_val, sub_val);
     }
     return ret;
 }
@@ -1204,7 +1255,6 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 {
                     if (true == ADS114S08_Wait_Done())
                     {
-                        comm_UART_Printf(LOG_LV_INFO, "\n\r\t\tch : %u, repeat : %u, adc : %d", (ch + 1U), info->repeat, ADS114S08_Get_ADC_Value());
                         f_converted_value = JigBD_IF_Convert_Adc_To_Current(ADS114S08_Get_ADC_Value(), info->gain);
                         info->measure[ch].temp_value[info->repeat] = f_converted_value;
                         ++info->repeat;
@@ -1256,31 +1306,30 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 info->saved[ch].saved_value[info->saved[ch].saved_cnt] = info->measure[ch].value;
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
                     xdr_trim_list_to_string(*list), (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %.3f) -> [%s✕ OUT_RANGE%s] (TGT: %.3f, MIN: %.3f, MAX: %.3f)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
                     xdr_trim_list_to_string(*list), (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
 
             uint16_t adj_mount = trim_calculate_adjust_amount(info);
-            adj_mount = 1; // For testing, set adjustment amount to 1 for finer tuning
             if (t_judge.up == true)
             {
                 info->sub_val[ch] += adj_mount;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %u)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▲ TUNE_UP%s] (Next SUB: %3u)", \
                     ANSI_FONT_BLUE, ANSI_FONT_NONE, info->sub_val[ch]);
             }
             else if (t_judge.down == true)
             {
                 info->sub_val[ch] -= adj_mount;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %u)", \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s▼ TUNE_DN%s] (Next SUB: %3u)", \
                     ANSI_FONT_MAGENTA, ANSI_FONT_NONE, info->sub_val[ch]);
             }
 
@@ -1327,7 +1376,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
                     info->measure[ch].value = closest_val;
                     info->sub_val[ch] = info->saved[ch].sub_val[closest_idx];
-                    comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value : %.3f) (Sub_Val : %u)", \
+                    comm_UART_Printf(LOG_LV_INFO, "\n\r\t\t[%s★ CLOSEST%s] (Value: %6.3f) (Sub_Val: %3u)", \
                         ANSI_FONT_GREEN, ANSI_FONT_NONE, (double)(info->measure[ch].value), info->sub_val[ch]);
                     xdr_trim_update_register_by_sub_val(*list, info);
 
@@ -1335,7 +1384,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                     {
                         ++(info->chx);
                         td->step = TRIM_STEP_INITIAL_BY_LIST;
-                        comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT CHANNEL>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                        comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT CHANNEL>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                         td->tout = XDR_DELAY_DEFAULT;
                     }
                     else
@@ -1343,7 +1392,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
                         if (++(*list) < XDR_TRIM_LIST_MAX)
                         {
                             td->step = TRIM_STEP_INITIAL_BY_LIST;
-                            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT LIST>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<NEXT LIST>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                         }
                         else
                         {
@@ -1363,7 +1412,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
             xdr12_trim_save_mirror_register();
             if (true == xdr12_trim_get_efuse_enable())
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE START>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                 // register setting
                 xdr12_trim_init_efuse();
                 //power control
@@ -1373,7 +1422,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+                comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<E-FUSE SKIP>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
                 td->step = TRIM_STEP_LOG_SUMMARY;
                 td->tout = XDR_DELAY_DEFAULT;
             }
@@ -1431,7 +1480,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_LOG_SUMMARY:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<SUMMARY>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<SUMMARY>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
             xdr_trim_log_summary();
             td->step = TRIM_STEP_PWR_OFF;
             td->tout = XDR_DELAY_DEFAULT;
@@ -1441,7 +1490,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
         case TRIM_STEP_PWR_OFF:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
-            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_MAGENTA, ANSI_FONT_NONE);
+            comm_UART_Printf(LOG_LV_INFO, "\n\r%s[<<<POWER OFF>>>]%s", ANSI_FONT_CYAN, ANSI_FONT_NONE);
             gpio_set_xd_vdd_5v(VCC_OFF);
             gpio_set_vled_9v(VLED_OFF);
             if (true == info->trim_error)
