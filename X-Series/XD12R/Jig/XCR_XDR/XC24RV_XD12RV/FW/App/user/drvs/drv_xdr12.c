@@ -62,18 +62,18 @@
 #define XDR_PWM_RES_12BIT       (0U)
 #define XDR_PWM_RES_14BIT       (1U)
 
-#define XDR_FPWM_DIV_1          (0x1AU)
-#define XDR_FPWM_DIV_2          (0x0EU)
-#define XDR_FPWM_DIV_3          (0x09U)
+#define XDR_FPWM_DIV_1          (0x17U)
+#define XDR_FPWM_DIV_2          (0x0CU)
+#define XDR_FPWM_DIV_3          (0x07U)
 
 #define XDR_CH_LD_TYPE_NTS_1ST  (0U) /* non-time-sharing data 1LD 1st */
 #define XDR_CH_LD_TYPE_NTS_2ND  (1U) /* non-time-sharing data 1LD 2nd */
 #define XDR_CH_LD_TYPE_TS_1ST   (2U) /* time-sharing data 2LD 1st */
 #define XDR_CH_LD_TYPE_TS_2ND   (3U) /* time-sharing data 2LD 2nd */
 
-#define XDR_MAX_CURR_VREF_1     (0xA00U)
-#define XDR_MAX_CURR_VREF_2     (0x032U)
-#define XDR_MAX_CURR_VREF_3     (0x032U)
+#define XDR_MAX_CURR_VREF_1     (0xFFFU)
+#define XDR_MAX_CURR_VREF_2     (0xFFFU)
+#define XDR_MAX_CURR_VREF_3     (0xFFFU)
 #define XDR_MAX_CURR_VREF_4     (0x000U)
 #define XDR_MAX_CURR_VREF_5     (0x000U)
 
@@ -89,11 +89,11 @@
 #define XDR_SHORT_LVL_4         (SHORT_LEVEL_36)
 #define XDR_SHORT_LVL_5         (SHORT_LEVEL_36)
 
-#define XDR_MAX_CURR_LVL_1      (CURR_LEVEL_56)
-#define XDR_MAX_CURR_LVL_2      (CURR_LEVEL_40)
-#define XDR_MAX_CURR_LVL_3      (CURR_LEVEL_40)
-#define XDR_MAX_CURR_LVL_4      (CURR_LEVEL_16)
-#define XDR_MAX_CURR_LVL_5      (CURR_LEVEL_16)
+#define XDR_MAX_CURR_LVL_1      (CURR_LEVEL_24)
+#define XDR_MAX_CURR_LVL_2      (CURR_LEVEL_24)
+#define XDR_MAX_CURR_LVL_3      (CURR_LEVEL_24)
+#define XDR_MAX_CURR_LVL_4      (CURR_LEVEL_24)
+#define XDR_MAX_CURR_LVL_5      (CURR_LEVEL_24)
 
 #define XDR_FLL_GAIN            (1U)
 #define XDR_FLL_ERROR_RANGE     (0U)
@@ -733,7 +733,7 @@ static void xdr12_regs_init_table(void)
                 _r1->reg._r26.bit.CHOP_DAC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSCLDO_EN = XDR_FUNCTION_EN;
-                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_EN;
+                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_DIS;
                 _r1->reg._r26.bit.CHOP_EN = XDR_FUNCTION_EN;
                 break;
             }
@@ -915,7 +915,7 @@ static volatile void xdr12_regs_trim_init_table(void)
                 _r1->reg._r26.bit.CHOP_DAC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSCLDO_EN = XDR_FUNCTION_EN;
-                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_EN;
+                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_DIS;
                 _r1->reg._r26.bit.CHOP_EN = XDR_FUNCTION_EN;
                 break;
             }

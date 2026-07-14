@@ -6,7 +6,6 @@
 #include "comm_debugging.h"
 #include "ldim_conversion.h"
 
-
 #define SVSYNC_PHASE_GREEN      (1U)
 #define SVSYNC_PHASE_BLUE       (0U)
 
@@ -21,10 +20,19 @@
 #define SVSYNC_GREEN_FREQ       (6400U)
 #define SVSYNC_BLUE_FREQ        (9600U)
 
+typedef struct tag_XD_RW_INFO
+{
+    uint16_t xd_rw_addr;
+    uint16_t xd_rw_data;
+    bool xd_rw_flag;
+} xd_rw_info_t;
+
+static bool gb_vsync_out_running;
+static xd_rw_info_t gt_xd_read_info;
+static xd_rw_info_t gt_xd_write_info;
+
 static bool gb_vsync_out_flag;
 static uint8_t gn_svsync_count;
-
-static float gf_vsync_sub_freq;
 
 static float gf_svsync_sub_green_freq;
 static uint32_t gn_svsync_sub_green_period;
@@ -32,11 +40,13 @@ static float gf_svsync_sub_blue_freq;
 static uint32_t gn_svsync_sub_blue_period;
 static uint32_t gn_svsync_sub_duty;
 
+static bool gb_xcr_ldim_block_conversion_flag;
+static uint16_t gn_xcr_ldim_block_conversion_index;
+
 static inline void tim_update_vsync_out_freq(void)
 {
     uint32_t AutoReload = LL_TIM_GetAutoReload(TIM8);
     uint32_t Prescaler = LL_TIM_GetPrescaler(TIM8);
-    gf_vsync_sub_freq = (((float)APB2_TIM_CLK / (Prescaler + 1U)) / (AutoReload + 1U));
 }
 
 static inline void tim_update_svsync_out_freq(void)
@@ -54,7 +64,7 @@ static void tim_svsync_timer_start(void)
 {
     LL_TIM_SetCounter(TIM3, 0);
     LL_TIM_ClearFlag_UPDATE(TIM3);
-    LL_TIM_SetAutoReload(TIM3, TIM3_PERIOD_HZ((CONST_HZ_TO_MHZ) /(SVSYNC_VSYNC_MASK_H_US + SVSYNC_VSYNC_MASK_L_US)));  /* 50% of 1-sub frame */
+    LL_TIM_SetAutoReload(TIM3, TIM3_PERIOD_HZ((CONST_HZ_TO_MHZ) /(SVSYNC_VSYNC_MASK_H_US + SVSYNC_VSYNC_MASK_L_US)));
     LL_TIM_OC_SetCompareCH1(TIM3, SVSYNC_OUT_PULSE(SVSYNC_VSYNC_MASK_H_US));
     LL_TIM_EnableCounter(TIM3);
 
@@ -78,12 +88,16 @@ void tim_vsync_out_start(void)
     LL_TIM_OC_SetCompareCH2(TIM8, VSYNC_OUT_PULSE);
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_EnableCounter(TIM8);
+
+    gb_vsync_out_running = true;
 }
 
 void tim_vsync_out_stop(void)
 {
     LL_TIM_OC_SetCompareCH2(TIM8, 0U);
     LL_TIM_DisableCounter(TIM8);
+
+    gb_vsync_out_running = false;
 }
 
 void tim_fllsync_start(void)
@@ -166,9 +180,6 @@ void tim_set_vsync_out_freq(float f)
     tim_update_vsync_out_freq();
 }
 
-static bool gb_xcr_ldim_block_conversion_flag;
-static uint16_t gn_xcr_ldim_block_conversion_index;
-
 void tim_vsync_out_process(void)
 {
     if(true == gb_vsync_out_flag)
@@ -191,4 +202,42 @@ void tim_vsync_out_process(void)
             gn_xcr_ldim_block_conversion_index = 0U;
         }
     }
+
+    if (true == gt_xd_read_info.xd_rw_flag)
+    {
+        gt_xd_read_info.xd_rw_data = xdr12_read_by_type(gt_xd_read_info.xd_rw_addr, XD12R_ADDR_TYPE_GENERAL);
+        comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", gt_xd_read_info.xd_rw_addr, gt_xd_read_info.xd_rw_data);
+        comm_UART_Printf(LOG_LV_INFO, "\n\rJIG> \0");
+        gt_xd_read_info.xd_rw_flag = false;
+    }
+
+    if (true == gt_xd_write_info.xd_rw_flag)
+    {
+        xdr12_write_by_type(gt_xd_write_info.xd_rw_addr, gt_xd_write_info.xd_rw_data, XD12R_ADDR_TYPE_GENERAL);
+        comm_UART_Printf(LOG_LV_INFO, "\n\rJIG> \0");
+        gt_xd_write_info.xd_rw_flag = false;
+    }
+}
+
+void tim_set_vsync_out_running_flag(bool running)
+{
+    gb_vsync_out_running = running;
+}
+
+bool tim_get_vsync_out_running_flag(void)
+{
+    return gb_vsync_out_running;
+}
+
+void tim_set_xd_read_in_vsync(uint16_t addr)
+{
+    gt_xd_read_info.xd_rw_addr = addr;
+    gt_xd_read_info.xd_rw_flag = true;
+}
+
+void tim_set_xd_write_in_vsync(uint16_t addr, uint16_t data)
+{
+    gt_xd_write_info.xd_rw_addr = addr;
+    gt_xd_write_info.xd_rw_data = data;
+    gt_xd_write_info.xd_rw_flag = true;
 }

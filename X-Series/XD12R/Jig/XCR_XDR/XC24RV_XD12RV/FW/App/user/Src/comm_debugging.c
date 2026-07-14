@@ -434,25 +434,53 @@ void comm_debugging_process(void)
         }
         else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            if (true == tim_get_vsync_out_running_flag())
+            {
+                tim_set_xd_write_in_vsync((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+            }
+            else
+            {
+                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
         }
         else if(Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
-            uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-            comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            if (true == tim_get_vsync_out_running_flag())
+            {
+                tim_set_xd_read_in_vsync((uint16_t)u32_recv_param[0]);
+            }
+            else
+            {
+                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
         }
         else if(Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            if (true == tim_get_vsync_out_running_flag())
+            {
+
+            }
+            else
+            {
+                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
         }
         else if(Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
         {
-            uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
-            comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            if (true == tim_get_vsync_out_running_flag())
+            {
+
+            }
+            else
+            {
+                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
         }
         else if(!(strcmp(str_in, "xd_r_all")))
         {
