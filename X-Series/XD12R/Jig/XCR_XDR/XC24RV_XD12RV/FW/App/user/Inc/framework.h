@@ -103,6 +103,7 @@ typedef enum
 {
     TEST_CMD_XCR_START = 0U,
     TEST_CMD_XDR_START,
+    TEST_CMD_XCR_SWEEP_START,
     TEST_CMD_XDR_SWEEP_START,
 }TestCommand_t;
 
