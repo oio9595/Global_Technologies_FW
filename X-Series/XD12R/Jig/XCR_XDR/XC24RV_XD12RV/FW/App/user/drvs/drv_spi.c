@@ -5,8 +5,9 @@
  * Created on 2026. 01. 16.
  */
 
-#include "drv_spi.h"
+#include <stdio.h>
 #include <stdbool.h>
+#include "drv_spi.h"
 
 __STATIC_INLINE bool spi_timeout(uint32_t tick, const uint32_t timeout)
 {

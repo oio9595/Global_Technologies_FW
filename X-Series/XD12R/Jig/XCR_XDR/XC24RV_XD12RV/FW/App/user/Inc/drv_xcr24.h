@@ -16,6 +16,9 @@ extern "C" {
 #include <stdbool.h>
 #include "xcr24_struct.h"
 
+#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (float)(Hz) + 0.5f)
+#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (float)(us)) + 0.5f)
+
 #define XCR_EFUSE_SKIP      (0U)
 #define XCR_EFUSE_BURN      (1U)
 #define XCR_EFUSE           (XCR_EFUSE_SKIP)
@@ -38,6 +41,7 @@ void xcr24_init_param(void);
 
 void xcr24_init(void);
 void xcr24_trim_init(void);
+void xcr24_test_init(void);
 
 const _xcr_group1_regs_t* xcr24_get_xcr24_set_gr1_regs(void);
 const _xcr_group1_regs_t* xcr24_get_xcr24_get_gr1_regs(void);
@@ -65,6 +69,8 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
 
 void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
+
+void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt);
 
 void xcr24_trim_set_efuse_enable(bool en);
 bool xcr24_trim_get_efuse_enable(void);

@@ -8,8 +8,17 @@
 #include "ads124s08.h"
 #include "comm_debugging.h"
 
-#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (float)(Hz) + 0.5f)
-#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (float)(us)) + 0.5f)
+#define FLL_BIT_SHIFT_LSB       (0U)
+#define FLL_BIT_SHIFT_MSB       (16U)
+
+#define FLL_BIT_B15_B0          (0x00FFFFUL)
+#define FLL_BIT_B20_B16         (0x1F0000UL)
+
+#define XCR_FLL_PAD_VSYNC       (0U)
+#define XCR_FLL_PAD_FLLSYNC     (1U)
+
+#define XCR_MCLK_SEL_OSC_A      (1U)
+#define XCR_MCLK_SEL_OSC_B      (0U)
 
 #define XCR_SVO_ON_TIME_US      (10U) /* 10us */
 #define XCR_SVO1_OFF_TIME_US    (100U) /* 100us */
@@ -78,24 +87,59 @@ static _xcr_otp_control_regs_t gt_xcr24_get_otp_regs; /* base address 0xF0 */
 
 static bool gb_xcr_do_efuse;
 
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+static void xcr24_spi_log(const uint16_t* out, uint16_t len)
+{
+    if (out == NULL || len == 0)
+    {
+        return;
+    }
+
+    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+    LL_USART_TransmitData8(USART2, '\r');
+
+    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+    LL_USART_TransmitData8(USART2, '\n');
+
+    for (uint16_t i = 0; i < len; ++i)
+    {
+        uint16_t val = out[i];
+
+        // "0x" 전송
+        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+        LL_USART_TransmitData8(USART2, '0');
+        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+        LL_USART_TransmitData8(USART2, 'x');
+
+        // 16진수 4자리 변환 및 전송 (상위 니블부터 하위 니블까지)
+        for (int8_t shift = 12; shift >= 0; shift -= 4)
+        {
+            uint8_t nibble = (val >> shift) & 0x0F;
+            char hex_char = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
+
+            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+            LL_USART_TransmitData8(USART2, hex_char);
+        }
+
+        // 구분자 ',' 전송
+        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+        LL_USART_TransmitData8(USART2, ',');
+    }
+}
+#endif
+
 static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
 
 static void xcr24_regs_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
 
-    for(xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
+    for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
         switch(addr)
         {
-        case XCR_RESET:
-            _r1->reg._r00.bit.rst1 = 0U;
-            _r1->reg._r00.bit.rst2 = 0U;
-            _r1->reg._r00.bit.rst3 = 0U;
-            _r1->reg._r00.bit.vsync_rst_en1 = 1U;
-            _r1->reg._r00.bit.vsync_rst_en2 = 1U;
-            break;
         case XCR_LD_TRANSFER_COMMAND:
             _r1->reg._r06.bit.ld_type = LED_PER_BLOCK;
             break;
@@ -107,57 +151,35 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r08.bit.sync_auto_en = XCR_FUNCTION_DIS;
             _r1->reg._r08.bit.fault_auto_en = XCR_FUNCTION_EN;
             break;
-        case XCR_LOCAL_RW_POINTER_RESET:
-            _r1->reg._r10.bit.local_transfer_pointer_rst = 1U;
-            _r1->reg._r10.bit.local_receive_pointer_rst = 1U;
-            break;
-        case XCR_INTERRUPT_ENABLE:
-            _r1->reg._r13.bit.int_fb_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_open_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_short_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_thermal_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_ld_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_rd_rec_fail_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_fault_auto_rec_fail_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_fault_rec_fail_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_timeout_err_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_spi_pc_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_acc_cnt_err_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_cmd_pc_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_uv15_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_ov15_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_uv50_en = XCR_FUNCTION_DIS;
-            _r1->reg._r13.bit.int_ov50_en = XCR_FUNCTION_DIS;
-            break;
-        case XCR_SPI_FAULT_STATUS_CONTROL:
-            _r1->reg._r1A.bit.spi_parity_err_det_en = XCR_FUNCTION_DIS;
-            _r1->reg._r1A.bit.spi_acc_cnt_err_det_en = XCR_FUNCTION_DIS;
+        case XCR_LD_START_POINTER_TH:
+            _r1->reg._r0C.bit.ld_transfer_start_pointer = 9U;
             break;
         case XCR_CLK_CONTROL_1:
-            _r1->reg._r1B.bit.serializer_skew_en = XCR_FUNCTION_DIS;
-            _r1->reg._r1B.bit.osc1_spread_en = XCR_FUNCTION_EN;
-            _r1->reg._r1B.bit.serializer_clk_sel1 = XCR_FUNCTION_DIS;
-            _r1->reg._r1B.bit.sprd1_gain = XCR_FUNCTION_DIS;
-            _r1->reg._r1B.bit.serializer_clk_sel2 = XCR_FUNCTION_DIS;
-            _r1->reg._r1B.bit.ld_rd_clk_sel = XCR_FUNCTION_DIS;
-            _r1->reg._r1B.bit.spread1_spd = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.serializer_skew_en = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.osc1_spread_en = XCR_FUNCTION_EN;
+            // _r1->reg._r1B.bit.serializer_clk_sel1 = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.sprd1_gain = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.serializer_clk_sel2 = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.ld_rd_clk_sel = XCR_FUNCTION_DIS;
+            // _r1->reg._r1B.bit.spread1_spd = XCR_FUNCTION_DIS;
+            _r1->reg._r1B.ALL = 0x0808U;
             break;
         case XCR_CLK_CONTROL_2:
-            _r1->reg._r1C.bit.mclk_mode = XCR_FUNCTION_DIS;
-            _r1->reg._r1C.bit.osc2_spread_en = XCR_FUNCTION_DIS;
-            _r1->reg._r1C.bit.sprd2_gain = XCR_FUNCTION_DIS;
-            _r1->reg._r1C.bit.spread2_spd = XCR_FUNCTION_DIS;
+            //_r1->reg._r1C.bit.mclk_mode = XCR_FUNCTION_DIS;
+            //_r1->reg._r1C.bit.osc2_spread_en = XCR_FUNCTION_DIS;
+            //_r1->reg._r1C.bit.sprd2_gain = XCR_FUNCTION_DIS;
+            //_r1->reg._r1C.bit.spread2_spd = XCR_FUNCTION_DIS;
+            _r1->reg._r1C.ALL = 0x0000U;
             break;
         case XCR_SERIALIZER_CLOCK_GEN:
-            _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
-            _r1->reg._r1D.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
+            // _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
+            // _r1->reg._r1D.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
+            _r1->reg._r1D.ALL = 0x0C18U;
             break;
         case XCR_LATENCY:
-            _r1->reg._r1E.bit.cmd_latency = 0U;
-            _r1->reg._r1E.bit.serial_latency = 0U;
-            break;
-        case XCR_TIMEOUT:
-            _r1->reg._r1F.bit.timeout = 0U;
+            // _r1->reg._r1E.bit.cmd_latency = 0U;
+            // _r1->reg._r1E.bit.serial_latency = 0U;
+            _r1->reg._r1E.ALL = 0x70C0U;
             break;
         case XCR_DAISIED_DEVICE_CH_SIZE:
             _r1->reg._r20.bit.daisied_dev_blk_size = gn_xcr_daisied_dev_blk_size;
@@ -265,262 +287,131 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r36.bit.ld_width = XCR_LD_WIDTH;
             break;
         case XCR_FLLCNT11:
-            _r1->reg._r37.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & 0x000FFFU) >>  0U);
+            _r1->reg._r37.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
             break;
         case XCR_FLLCNT12:
-            _r1->reg._r38.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & 0x1FF000U) >> 12U);;
+            _r1->reg._r38.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r38.bit.fll1_err_range = 0U;
             _r1->reg._r38.bit.fll1_range = 0U;
-            _r1->reg._r38.bit.fllsync = 0U;
-            _r1->reg._r38.bit.fll1_en = 0U;
+            _r1->reg._r38.bit.fllsync = XCR_FLL_PAD_FLLSYNC;
+            _r1->reg._r38.bit.fll1_en = XCR_FUNCTION_DIS;
             break;
         case XCR_FLLCNT21:
-            _r1->reg._r39.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & 0x000FFFU) >>  0U);
+            _r1->reg._r39.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
             break;
         case XCR_FLLCNT22:
-            _r1->reg._r3A.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & 0x1FF000U) >> 12U);
+            _r1->reg._r3A.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r3A.bit.fll2_err_range = 0U;
             _r1->reg._r3A.bit.fll2_range = 0U;
-            _r1->reg._r3A.bit.fllsync = 0U;
-            _r1->reg._r3A.bit.fll2_en = 0U;
+            _r1->reg._r3A.bit.fllsync = XCR_FLL_PAD_FLLSYNC;
+            _r1->reg._r3A.bit.fll2_en = XCR_FUNCTION_DIS;
             break;
         case XCR_VO_DELAY:
-            _r1->reg._r3B.bit.vo_delay = 0U;
-            _r1->reg._r3B.bit.gate1_pol = 0U;
-            _r1->reg._r3B.bit.gate2_pol = 0U;
-            _r1->reg._r3B.bit.gate3_pol = 0U;
+            //_r1->reg._r3B.bit.vo_delay = 0U;
+            //_r1->reg._r3B.bit.gate1_pol = 0U;
+            //_r1->reg._r3B.bit.gate2_pol = 0U;
+            //_r1->reg._r3B.bit.gate3_pol = 0U;
+            _r1->reg._r3B.ALL = 0x7000U;
             break;
         case XCR_VO_OFF_ON:
-            _r1->reg._r3C.bit.vo_on = 0U;
-            _r1->reg._r3C.bit.vo_off = 0U;
+            //_r1->reg._r3C.bit.vo_on = 0U;
+            //_r1->reg._r3C.bit.vo_off = 0U;
+            _r1->reg._r3C.ALL = 0x9E9EU;
             break;
-
         case XCR_SVO_ON:
-            _r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
+            //_r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
+            _r1->reg._r3D.ALL = 0x015EU;
             break;
         case XCR_SVO1_OFF:
-            _r1->reg._r3E.bit.svo1_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
+            //_r1->reg._r3E.bit.svo1_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
+            _r1->reg._r3E.ALL = 0x0000U;
             break;
         case XCR_SVO2_OFF:
-            _r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
+            //_r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
+            _r1->reg._r3F.ALL = 0x13BFU;
             break;
         case XCR_SVO3_OFF:
-            _r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
+            //_r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
+            _r1->reg._r40.ALL = 0x0D20U;
             break;
         case XCR_SVO_NUMBER:
-            _r1->reg._r41.bit.sv_no = XDR_SV_NO;
-            _r1->reg._r41.bit.sv_no_type = XCR_SVO_ACTIVE_23;
+            //_r1->reg._r41.bit.sv_no = XDR_SV_NO;
+            //_r1->reg._r41.bit.sv_no_type = XCR_SVO_ACTIVE_23;
+            _r1->reg._r41.ALL = 0x0220U;
             break;
         case XCR_DAC_NF_CONTROL:
-            _r1->reg._r42.bit.dgrjt_en = 0U;
-            _r1->reg._r42.bit.bbkn_en = 0U;
-            _r1->reg._r42.bit.bbkn_th = 0U;
-            _r1->reg._r42.bit.dac_lvl = 0U;
+            //_r1->reg._r42.bit.dgrjt_en = 0U;
+            //_r1->reg._r42.bit.bbkn_en = 0U;
+            //_r1->reg._r42.bit.bbkn_th = 0U;
+            //_r1->reg._r42.bit.dac_lvl = 0U;
+            _r1->reg._r42.ALL = 0x0000U;
             break;
-
         case XCR_DAC_CONTROL:
-            _r1->reg._r43.bit.dac1_auto = 0U;
-            _r1->reg._r43.bit.dac2_auto = 0U;
-            _r1->reg._r43.bit.dac3_auto = 0U;
-            _r1->reg._r43.bit.dac_auto_type = 0U;
-            _r1->reg._r43.bit.dac_sync_mode = 0U;
-            _r1->reg._r43.bit.dac1_fb_mode = 0U;
-            _r1->reg._r43.bit.dac2_fb_mode = 0U;
-            _r1->reg._r43.bit.dac3_fb_mode = 0U;
-            _r1->reg._r43.bit.dac1_dec1_mode = 0U;
-            _r1->reg._r43.bit.dac2_dec1_mode = 0U;
-            _r1->reg._r43.bit.dac3_dec1_mode = 0U;
-            _r1->reg._r43.bit.dac1_hold_en = 0U;
-            _r1->reg._r43.bit.dac2_hold_en = 0U;
-            _r1->reg._r43.bit.dac3_hold_en = 0U;
-            _r1->reg._r43.bit.dac_fault_off = 0U;
+            //_r1->reg._r43.bit.dac1_auto = 0U;
+            //_r1->reg._r43.bit.dac2_auto = 0U;
+            //_r1->reg._r43.bit.dac3_auto = 0U;
+            //_r1->reg._r43.bit.dac_auto_type = 0U;
+            //_r1->reg._r43.bit.dac_sync_mode = 0U;
+            //_r1->reg._r43.bit.dac1_fb_mode = 0U;
+            //_r1->reg._r43.bit.dac2_fb_mode = 0U;
+            //_r1->reg._r43.bit.dac3_fb_mode = 0U;
+            //_r1->reg._r43.bit.dac1_dec1_mode = 0U;
+            //_r1->reg._r43.bit.dac2_dec1_mode = 0U;
+            //_r1->reg._r43.bit.dac3_dec1_mode = 0U;
+            //_r1->reg._r43.bit.dac1_hold_en = 0U;
+            //_r1->reg._r43.bit.dac2_hold_en = 0U;
+            //_r1->reg._r43.bit.dac3_hold_en = 0U;
+            //_r1->reg._r43.bit.dac_fault_off = 0U;
+            _r1->reg._r43.ALL = 0x0000U;
             break;
-        case XCR_CURRENT_TARGET_DAC1:
-            _r1->reg._r44.bit.curr_tgt_dac1 = 0U;
-            break;
-        case XCR_CURRENT_TARGET_DAC2:
-            _r1->reg._r45.bit.curr_tgt_dac2 = 0U;
-            break;
-        case XCR_CURRENT_TARGET_DAC3:
-            _r1->reg._r46.bit.curr_tgt_dac3 = 0U;
-            break;
-        //case XCR_PREVIOUS_TARGET_DAC1:
-        //case XCR_PREVIOUS_TARGET_DAC2:
-        //case XCR_PREVIOUS_TARGET_DAC3:
-        //case XCR_DAC1_OUT:
-        //case XCR_DAC2_OUT:
-        //case XCR_DAC3_OUT:
-        //case XCR_DAC1_STATE:
-        //case XCR_DAC2_STATE:
-        //case XCR_DAC3_STATE:
-
-        case XCR_DAC1_INCREMENT_1:
-            _r1->reg._r50.bit.dac1_inc1 = 0U;
-            _r1->reg._r50.bit.dac1_inc2 = 0U;
-            _r1->reg._r50.bit.dac1_inc3 = 0U;
-            break;
-        case XCR_DAC1_INCREMENT_2_HOLD_LIMIT:
-            _r1->reg._r51.bit.dac1_inc4 = 0U;
-            _r1->reg._r51.bit.dac1_inc_hold_limit = 0U;
-            break;
-        case XCR_DAC1_DECREMENT_INC_WAIT:
-            _r1->reg._r52.bit.dac1_inc1_wait = 0U;
-            _r1->reg._r52.bit.dac1_dec1 = 0U;
-            break;
-        case XCR_DAC1_INCREMENT_HOLD_THRESHOLD:
-            _r1->reg._r53.bit.dac1_inc_hold_threshold = 0U;
-            _r1->reg._r53.bit.bit_signed = 0U;
-            break;
-        case XCR_DAC1_FB_VALID_TIMER:
-            _r1->reg._r54.bit.dac1_fb_valid_timer = 0U;
-            break;
-        case XCR_DAC1_MIN_LIMIT:
-            _r1->reg._r55.bit.dac1_min_limit = 0U;
-            break;
-        case XCR_DAC1_MAX_LIMIT:
-            _r1->reg._r56.bit.dac1_max_limit = 0U;
-            break;
-
-        case XCR_DAC2_INCREMENT_1:
-            _r1->reg._r57.bit.dac2_inc1 = 0U;
-            _r1->reg._r57.bit.dac2_inc2 = 0U;
-            _r1->reg._r57.bit.dac2_inc3 = 0U;
-            break;
-        case XCR_DAC2_INCREMENT_2_HOLD_LIMIT:
-            _r1->reg._r58.bit.dac2_inc4 = 0U;
-            _r1->reg._r58.bit.dac2_inc_hold_limit = 0U;
-            break;
-        case XCR_DAC2_DECREMENT_INC_WAIT:
-            _r1->reg._r59.bit.dac2_inc1_wait = 0U;
-            _r1->reg._r59.bit.dac2_dec1 = 0U;
-            break;
-        case XCR_DAC2_INCREMENT_HOLD_THRESHOLD:
-            _r1->reg._r5A.bit.dac2_inc_hold_threshold = 0U;
-            _r1->reg._r5A.bit.bit_signed = 0U;
-            break;
-        case XCR_DAC2_FB_VALID_TIMER:
-            _r1->reg._r5B.bit.dac2_fb_valid_timer = 0U;
-            break;
-        case XCR_DAC2_MIN_LIMIT:
-            _r1->reg._r5C.bit.dac2_min_limit = 0U;
-            break;
-        case XCR_DAC2_MAX_LIMIT:
-            _r1->reg._r5D.bit.dac2_max_limit = 0U;
-            break;
-
-        case XCR_DAC3_INCREMENT_1:
-            _r1->reg._r5E.bit.dac3_inc1 = 0U;
-            _r1->reg._r5E.bit.dac3_inc2 = 0U;
-            _r1->reg._r5E.bit.dac3_inc3 = 0U;
-            break;
-        case XCR_DAC3_INCREMENT_2_HOLD_LIMIT:
-            _r1->reg._r5F.bit.dac3_inc4 = 0U;
-            _r1->reg._r5F.bit.dac3_inc_hold_limit = 0U;
-            break;
-        case XCR_DAC3_DECREMENT_INC_WAIT:
-            _r1->reg._r60.bit.dac3_inc1_wait = 0U;
-            _r1->reg._r60.bit.dac3_dec1 = 0U;
-            break;
-        case XCR_DAC3_INCREMENT_HOLD_THRESHOLD:
-            _r1->reg._r61.bit.dac3_inc_hold_threshold = 0U;
-            _r1->reg._r61.bit.bit_signed = 0U;
-            break;
-        case XCR_DAC3_FB_VALID_TIMER:
-            _r1->reg._r62.bit.dac3_fb_valid_timer = 0U;
-            break;
-        case XCR_DAC3_MIN_LIMIT:
-            _r1->reg._r63.bit.dac3_min_limit = 0U;
-            break;
-        case XCR_DAC3_MAX_LIMIT:
-            _r1->reg._r64.bit.dac3_max_limit = 0U;
-            break;
-
         case XCR_OSC_FLL_MAN_A1:
-            _r1->reg._r65.bit.FLT_GAIN_A = 0U;
-            _r1->reg._r65.bit.FLT_CTL_A = 0U;
-            _r1->reg._r65.bit.DAC_RNG_A = 0U;
-            _r1->reg._r65.bit.OSC_MAN_EN_A = 0U;
-            break;
-        case XCR_OSC_FLL_MAN_A2:
-            _r1->reg._r66.bit.OSC_FLL_MAN_A = 0U;
+            _r1->reg._r65.bit.OSC_MAN_EN_A = XCR_FUNCTION_EN;
             break;
         case XCR_OSC_FLL_MAN_B1:
-            _r1->reg._r67.bit.FLT_GAIN_B = 0U;
-            _r1->reg._r67.bit.FLT_CTL_B = 0U;
-            _r1->reg._r67.bit.DAC_RNG_B = 0U;
-            _r1->reg._r67.bit.OSC_MAN_EN_B = 0U;
-            break;
-        case XCR_OSC_FLL_MAN_B2:
-            _r1->reg._r68.bit.OSC_FLL_MAN_B = 0U;
+            _r1->reg._r67.bit.OSC_MAN_EN_B = XCR_FUNCTION_EN;
             break;
         default:
             continue;
         }
-
         xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
-
-    for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
+#if 0
+    for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT; addr < XCR_GRP2_MAX; ++addr)
     {
         switch(addr)
         {
-        //case XCR_GRP2_DAC1_FB_VALID_CNT:        /* Read-Only */
-        //case XCR_GRP2_DAC1_INC_HOLD_WAIT_CNT:   /* Read-Only */
-        //case XCR_GRP2_1R2:                      /* Read-Only */
-        case XCR_GRP2_SOA1_N1_N11:
-            _r2->reg._r03.bit.soa_n1 = 8U;
-            _r2->reg._r03.bit.soa1_n11 = 50U;
-            break;
-        case XCR_GRP2_SOA1_P2_P1:
-            _r2->reg._r04.bit.soa1_p1 = 125U;
-            _r2->reg._r04.bit.soa_p2 = 12U;
-            break;
-        case XCR_GRP2_SOA1_P3_P2:
-            _r2->reg._r05.bit.soa1_p2 = 18U;
-            _r2->reg._r05.bit.soa1_p3 = 500U;
-            break;
-        //case XCR_GRP2_DAC2_FB_VALID_CNT:          /* Read-Only */
-        //case XCR_GRP2_DAC2_INC_HOLD_WAIT_CNT:     /* Read-Only */
-        //case XCR_GRP2_2R2:                        /* Read-Only */
-        case XCR_GRP2_SOA2_N1_N11:
-            _r2->reg._r09.bit.soa2_n1 = 8U;
-            _r2->reg._r09.bit.soa2_n11 = 50U;
-            break;
-        case XCR_GRP2_SOA2_P2_P1:
-            _r2->reg._r0A.bit.soa2_p1 = 125U;
-            _r2->reg._r0A.bit.soa2_p2 = 12U;
-            break;
-        case XCR_GRP2_SOA2_P3_P2:
-            _r2->reg._r0B.bit.soa2_p2 = 18U;
-            _r2->reg._r0B.bit.soa2_p3 = 500U;
-            break;
-        //case XCR_GRP2_DAC3_FB_VALID_CNT:          /* Read-Only */
-        //case XCR_GRP2_DAC3_INC_HOLD_WAIT_CNT:     /* Read-Only */
-        //case XCR_GRP2_3R2:                        /* Read-Only */
-        case XCR_GRP2_SOA3_N1_N11:
-            _r2->reg._r0F.bit.soa3_n1 = 8U;
-            _r2->reg._r0F.bit.soa3_n11 = 50U;
-            break;
-        case XCR_GRP2_SOA3_P2_P1:
-            _r2->reg._r10.bit.soa3_p1 = 125U;
-            _r2->reg._r10.bit.soa3_p2 = 12U;
-            break;
-        case XCR_GRP2_SOA3_P3_P2:
-            _r2->reg._r11.bit.soa3_p2 = 18U;
-            _r2->reg._r11.bit.soa3_p3 = 500U;
-            break;
-        case XCR_GRP2_ANA_TEST:
-            _r2->reg._r12.bit.TEST_ANA_EN = 0U;
-            _r2->reg._r12.bit.CHOP_EN_BGR = 0U;
-            _r2->reg._r12.bit.CHOP_EN_OSCLDO = 0U;
-            _r2->reg._r12.bit.CHOP_EN = 0U;
-            break;
         default:
             continue;
-            break;
         }
-
         xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
+    }
+#endif
+    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL; addr < XCR_OTP_MAX; ++addr)
+    {
+        switch (addr)
+        {
+            case XCR_GATE_CONTROL:
+                _rotp->reg._rFA.ALL = 0x0070U;
+                break;
+            case XCR_GATE1_OFFSET:
+                _rotp->reg._rFB.ALL = 0x0202U;
+                break;
+            case XCR_GATE2_OFFSET:
+                _rotp->reg._rFC.ALL = 0x0202U;
+                break;
+            case XCR_GATE3_OFFSET:
+                _rotp->reg._rFD.ALL = 0x0202U;
+                break;
+            case XCR_SV_VAR_CONTROL1:
+                _rotp->reg._rFE.ALL = 0x0000U;
+                break;
+            case XCR_SV_VAR_CONTROL2:
+                _rotp->reg._rFF.ALL = 0x0000U;
+                break;
+            default:
+                continue;
+        }
+        xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
     }
 }
 
@@ -530,7 +421,7 @@ static void xcr24_regs_trim_init_table(void)
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
     _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
 
-    for(xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
+    for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
         switch(addr)
         {
@@ -582,7 +473,7 @@ static void xcr24_regs_trim_init_table(void)
         xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
 
-    for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
+    for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT; addr < XCR_GRP2_MAX; ++addr)
     {
         switch(addr)
         {
@@ -602,7 +493,7 @@ static void xcr24_regs_trim_init_table(void)
         xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
     }
 
-    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
+    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL; addr < XCR_OTP_MAX; ++addr)
     {
         switch (addr)
         {
@@ -616,6 +507,43 @@ static void xcr24_regs_trim_init_table(void)
                 continue;
         }
         xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
+    }
+}
+
+static void xcr24_regs_test_init_table(void)
+{
+    _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
+
+    for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
+    {
+        switch(addr)
+        {
+            case XCR_SERIALIZER_CLOCK_GEN:
+            {
+                _r1->reg._r1D.ALL = 0x1010U;
+                break;
+            }
+            case XCR_CHANNEL_ENABLE_1:
+            {
+                _r1->reg._r35.ALL = 0x0001U;
+                break;
+            }
+            case XCR_DAISIED_DEVICE_CH_SIZE:
+            {
+                _r1->reg._r20.ALL = 0x001FU;
+                break;
+            }
+            case XCR_BLOCK_SIZE_9:
+            {
+                _r1->reg._r31.ALL = 0x00FFU;
+                break;
+            }
+            default:
+            {
+                continue;
+            }
+        }
+        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
 }
 
@@ -635,19 +563,19 @@ void xcr24_reset(void)
 static void xcr24_dump_registers(void)
 {
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP1 Registers");
-    for (xcr_addr_grp1_t addr = XCR_RESET ; addr < XCR_GRP1_MAX ; ++addr)
+    for (xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", addr, gt_xcr24_get_gr1_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP2 Registers");
-    for (xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT ; addr < XCR_GRP2_MAX ; ++addr)
+    for (xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT; addr < XCR_GRP2_MAX; ++addr)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", addr, gt_xcr24_get_gr2_regs.ALL[addr]);
     }
 
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 OTP Control Registers");
-    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL ; addr < XCR_OTP_MAX ; ++addr)
+    for (xcr_addr_otp_t addr = XCR_TEST_CONTROL; addr < XCR_OTP_MAX; ++addr)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", (XCR_OTP_BASE_ADDR + addr), gt_xcr24_get_otp_regs.ALL[addr]);
     }
@@ -667,7 +595,7 @@ void xcr24_read_all(void)
 
     xcr24_read_grp2_reg(XCR_GRP2_DAC1_FB_VALID_CNT, 19U); // 0x00 ~ 0x12, 19EA
 
-    xcr24_read_otp_control(XCR_TEST_CONTROL, 10U);
+    xcr24_read_otp_control(XCR_TEST_CONTROL, 16U);
 
     xcr24_dump_registers();
     xcr24_memory_copy();
@@ -753,8 +681,10 @@ void xcr24_init_param(void)
     gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_blk_size);
     gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_blk_size);
 
-    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
-    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
+    //gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
+    //gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
+    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(240U);
+    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(240U);
 }
 
 void xcr24_init(void)
@@ -770,6 +700,14 @@ void xcr24_trim_init(void)
     XCR_NSS_HI();
     xcr24_reset();
     xcr24_regs_trim_init_table();
+    xcr24_read_all();
+}
+
+void xcr24_test_init(void)
+{
+    XCR_NSS_HI();
+    xcr24_reset();
+    xcr24_regs_test_init_table();
     xcr24_read_all();
 }
 
@@ -830,7 +768,7 @@ uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length)
     else
     {
         _xcr_otp_control_regs_t* _r = &gt_xcr24_get_otp_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
@@ -861,7 +799,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
 
     tx_buffer[spi_len++] = cmd.ALL;
 
-    for(uint16_t i = 0U ; i < burst_size ; ++i)
+    for(uint16_t i = 0U; i < burst_size; ++i)
     {
         tx_buffer[spi_len++] = *q++;
     }
@@ -875,6 +813,10 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+    xcr24_spi_log(tx_buffer, spi_len);
+#endif
+
     if(SPI_TIMEOUT == ret)
     {
         comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
@@ -882,7 +824,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     else
     {
         _xcr_otp_control_regs_t* _r = &gt_xcr24_set_otp_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
@@ -926,7 +868,7 @@ uint16_t xcr24_read_grp1_reg(uint16_t addr, uint16_t length)
     else
     {
         _xcr_group1_regs_t* _r = &gt_xcr24_get_gr1_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
@@ -971,7 +913,7 @@ uint16_t xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
     else
     {
         _xcr_group2_regs_t* _r = &gt_xcr24_get_gr2_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE];
         }
@@ -1002,7 +944,7 @@ void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
 
     tx_buffer[spi_len++] = cmd.ALL;
 
-    for(uint16_t i = 0U ; i < burst_size ; ++i)
+    for(uint16_t i = 0U; i < burst_size; ++i)
     {
         tx_buffer[spi_len++] = *q++;
     }
@@ -1013,6 +955,10 @@ void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+    xcr24_spi_log(tx_buffer, spi_len);
+#endif
+
     if(SPI_TIMEOUT == ret)
     {
         comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
@@ -1020,7 +966,7 @@ void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     else
     {
         _xcr_group1_regs_t* _r = &gt_xcr24_set_gr1_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
@@ -1050,7 +996,7 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
 
     tx_buffer[spi_len++] = cmd.ALL;
 
-    for(uint16_t i = 0U ; i < burst_size ; ++i)
+    for(uint16_t i = 0U; i < burst_size; ++i)
     {
         tx_buffer[spi_len++] = *q++;
     }
@@ -1061,6 +1007,10 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     uint8_t ret = spi_write(SPI1, tx_buffer, spi_len, 20U);
     XCR_NSS_HI();
 
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+    xcr24_spi_log(tx_buffer, spi_len);
+#endif
+
     if(SPI_TIMEOUT == ret)
     {
         comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
@@ -1068,7 +1018,7 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     else
     {
         _xcr_group2_regs_t* _r = &gt_xcr24_set_gr2_regs;
-        for(uint16_t i = 0U ; i < burst_size ; ++i)
+        for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[1U + i];
         }
@@ -1103,6 +1053,10 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
         uint8_t ret = spi_write(SPI1, tx_buffer, 2, 20U);
         XCR_NSS_HI();
 
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+        xcr24_spi_log(tx_buffer, 2);
+#endif
+
         if(SPI_TIMEOUT == ret)
         {
             comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
@@ -1112,6 +1066,15 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
 
 void xcr24_set_ld_transfer(uint16_t* buffer, uint16_t length)
 {
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+    static bool is_first = true;
+    if (is_first)
+    {
+        xcr24_spi_log(buffer, length);
+        is_first = false;
+    }
+#endif
+
     if((NULL == buffer) || (0U == length))
     {
         return ;
@@ -1268,6 +1231,56 @@ void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
     XCR_NSS_HI();
 }
 
+void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
+{
+    if (fll_ch < 3)
+    {
+        if (fll_ch == 0)
+        {
+            _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+            _r37->bit.fll1cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+            _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+            _r38->bit.fll1cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
+
+            _v_fllcnt21_t* _r39 = &gt_xcr24_set_gr1_regs.reg._r39;
+            _r39->bit.fll2cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT21, &_r39->ALL, 1U);
+
+            _v_fllcnt22_t* _r3A = &gt_xcr24_set_gr1_regs.reg._r3A;
+            _r3A->bit.fll2cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT22, &_r3A->ALL, 1U);
+        }
+        else if (fll_ch == 1)
+        {
+            _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
+            _r37->bit.fll1cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT11, &_r37->ALL, 1U);
+
+            _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
+            _r38->bit.fll1cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
+        }
+        else if (fll_ch == 2)
+        {
+            _v_fllcnt21_t* _r39 = &gt_xcr24_set_gr1_regs.reg._r39;
+            _r39->bit.fll2cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT21, &_r39->ALL, 1U);
+
+            _v_fllcnt22_t* _r3A = &gt_xcr24_set_gr1_regs.reg._r3A;
+            _r3A->bit.fll2cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+            xcr24_write_grp1_reg(XCR_FLLCNT22, &_r3A->ALL, 1U);
+        }
+        comm_UART_Printf(LOG_LV_INFO, "\r\nChange FLL[ch:%d] count to %d", fll_ch, fll_cnt);
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(fll_ch);
+    }
+}
+
 void xcr24_trim_set_efuse_enable(bool en)
 {
     gb_xcr_do_efuse = en;
@@ -1381,7 +1394,7 @@ void xcr24_trim_init_osc_a(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 1U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
@@ -1405,7 +1418,7 @@ void xcr24_trim_init_osc_b(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 0U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
@@ -1582,7 +1595,7 @@ void xcr24_trim_save_mirror_register(void)
 uint32_t xcr24_trim_verify_mirror_dump(void)
 {
     uint32_t ret = 0U;
-    for (xcr_addr_otp_t mirror_addr = XCR_MIRROR1 ; mirror_addr < XCR_GATE_CONTROL ; ++mirror_addr) // 0xF5 ~ 0xF9
+    for (xcr_addr_otp_t mirror_addr = XCR_MIRROR1; mirror_addr < XCR_GATE_CONTROL; ++mirror_addr) // 0xF5 ~ 0xF9
     {
         uint16_t saved_reg = gt_xcr24_get_otp_regs.ALL[mirror_addr];
         uint16_t read_reg = xcr24_read_otp_control(mirror_addr, 1U);

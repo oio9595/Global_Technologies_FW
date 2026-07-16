@@ -333,7 +333,7 @@ static uint16_t trim_calculate_adjust_amount(trim_info_t* p_trim_info_t)
 
 static void xcr_trim_param_init(void)
 {
-    for (xcr_trim_list_t trim_list = XCR_TRIM_LIST_1V5_LDO_DIG ; trim_list < XCR_TRIM_LIST_MAX; ++trim_list)
+    for (xcr_trim_list_t trim_list = XCR_TRIM_LIST_1V5_LDO_DIG; trim_list < XCR_TRIM_LIST_MAX; ++trim_list)
     {
         switch (trim_list)
         {
@@ -420,7 +420,7 @@ static void xcr_trim_param_init(void)
 
 static void xcr_trim_log_summary(void)
 {
-    for (xcr_trim_list_t list = XCR_TRIM_LIST_1V5_LDO_DIG ; list < XCR_TRIM_LIST_MAX ; ++list)
+    for (xcr_trim_list_t list = XCR_TRIM_LIST_1V5_LDO_DIG; list < XCR_TRIM_LIST_MAX; ++list)
     {
         trim_info_t* info = &__priv_trim.t_xcr_trim_info[list];
         comm_UART_Printf(LOG_LV_INFO, "\r\n|%s|REG|%3u|SUB|%3u|VAL|%6.3f|", \
@@ -914,7 +914,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
 
 static void xdr_trim_param_init(void)
 {
-    for (xdr_trim_list_t trim_list = XDR_TRIM_LIST_CURRENT_REF ; trim_list < XDR_TRIM_LIST_MAX; ++trim_list)
+    for (xdr_trim_list_t trim_list = XDR_TRIM_LIST_CURRENT_REF; trim_list < XDR_TRIM_LIST_MAX; ++trim_list)
     {
         switch (trim_list)
         {
@@ -965,7 +965,7 @@ static void xdr_trim_param_init(void)
             }
             case XDR_TRIM_LIST_CH_GAIN:
             {
-                for (uint8_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+                for (uint8_t xd_ch = XD_CH_01; xd_ch < XD_CH_MAX; ++xd_ch)
                 {
                     __priv_trim.t_xdr_trim_info[trim_list].sub_val[xd_ch] = XDR_DEFAULT_SUB_VAL_CH_GAIN;
                 }
@@ -981,7 +981,7 @@ static void xdr_trim_param_init(void)
             }
             case XDR_TRIM_LIST_CH_OFS:
             {
-                for (uint8_t xd_ch = XD_CH_01 ; xd_ch < XD_CH_MAX ; ++xd_ch)
+                for (uint8_t xd_ch = XD_CH_01; xd_ch < XD_CH_MAX; ++xd_ch)
                 {
                     __priv_trim.t_xdr_trim_info[trim_list].sub_val[xd_ch] = XDR_DEFAULT_SUB_VAL_CH_OFS;
                 }
@@ -1006,11 +1006,11 @@ static void xdr_trim_param_init(void)
 
 static void xdr_trim_log_summary(void)
 {
-    for (xdr_trim_list_t list = XDR_TRIM_LIST_CURRENT_REF ; list < XDR_TRIM_LIST_MAX ; ++list)
+    for (xdr_trim_list_t list = XDR_TRIM_LIST_CURRENT_REF; list < XDR_TRIM_LIST_MAX; ++list)
     {
         trim_info_t* info = &__priv_trim.t_xdr_trim_info[list];
         uint8_t max_ch = (list < XDR_TRIM_LIST_CH_GAIN) ? (XD_CH_01 + 1U) : ((uint8_t)XD_CH_MAX);
-        for (uint8_t ch = XD_CH_01 ; ch < max_ch ; ++ch)
+        for (uint8_t ch = XD_CH_01; ch < max_ch; ++ch)
         {
             if (ch == XD_CH_01)
             {

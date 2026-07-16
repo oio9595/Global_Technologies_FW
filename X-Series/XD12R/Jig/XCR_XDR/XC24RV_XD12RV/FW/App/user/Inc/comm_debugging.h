@@ -12,6 +12,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define SPI_LOG_DUMP_DISABLE    (0U)
+#define SPI_LOG_DUMP_ENABLE     (1U)
+#define SPI_LOG_DUMP            (SPI_LOG_DUMP_DISABLE)
+
 typedef enum __LOG_LEVEL__
 {
     LOG_LV_DEBUG = 0,

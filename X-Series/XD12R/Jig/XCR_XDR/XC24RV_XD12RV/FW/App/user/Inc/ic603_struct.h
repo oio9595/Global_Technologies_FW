@@ -1218,7 +1218,7 @@ typedef union tag_VO_DELAY
     uint16_t ALL;
     struct
     {
-        uint16_t vo_delay       : 8;    /* vo_delay [7:0] ; max 7.28us */
+        uint16_t vo_delay       : 8;    /* vo_delay [7:0]; max 7.28us */
         uint16_t                : 4;    /* reserved */
         uint16_t gate1_pol      : 1;    /* gate1_pol */
         uint16_t gate2_pol      : 1;    /* gate2_pol */
@@ -1233,8 +1233,8 @@ typedef union tag_VO_OFF_ON
     uint16_t ALL;
     struct
     {
-        uint16_t vo_on          : 8;     /* vo_on [7:0] ; max max 7.28us */
-        uint16_t vo_off         : 8;     /* vo_off [7:0] ; max max 7.28us */
+        uint16_t vo_on          : 8;     /* vo_on [7:0]; max max 7.28us */
+        uint16_t vo_off         : 8;     /* vo_off [7:0]; max max 7.28us */
     }bit;
 }_v_vo_off_on_t;
 

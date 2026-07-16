@@ -332,6 +332,7 @@ void comm_debugging_process(void)
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
             xcr24_init();
+            gpio_set_vled_dcdc(VLED_ON);
 #else
     #error "XDR_CONTROL_TYPE is not defined"
 #endif
@@ -339,25 +340,54 @@ void comm_debugging_process(void)
             LL_mDelay(99U);
             xdr12_init();
             LL_mDelay(9U);
-            ldim_set_led_color_buffer(100U, 100U, 100U);
+            ldim_set_block_color_buffer(LDIM_BLK_INDEX_ALL, 100U, 100U, 100U);
             tim_vsync_out_start();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        else if(Command_Param_is_("step", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
+        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
         {
-            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
+                if (u32_recv_param[0] == 0)
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet all LED color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                else
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
         }
-        else if(Command_Param_is_("step", "%u", &u32_recv_param[0]))
+        else if(Command_Param_is_("step", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
         {
-            ldim_set_led_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[0]);
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                return;
+            }
+            ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "step")))
         {
-            uint16_t* p_led_color_buffer = ldim_get_led_color_buffer();
-            comm_UART_Printf(LOG_LV_INFO, "\r\nR: %u, G: %u, B: %u", p_led_color_buffer[0], p_led_color_buffer[1], p_led_color_buffer[2]);
+            block_color_t* p_block_color_buffer = ldim_get_block_color_buffer();
+            for (uint16_t idx = 0U; idx < LDIM_BLK_SIZE; ++idx)
+            {
+                char log_buf[350] = {0};
+                int log_buf_len = 0U;
+                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[LED: %2u] R: %5u, G: %5u, B: %5u", \
+                (idx + 1U), p_block_color_buffer[idx].r, p_block_color_buffer[idx].g, p_block_color_buffer[idx].b);
+                comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
+            }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xcr_ldim_force")))
@@ -587,9 +617,24 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xc_test")))
+        {
+            gpio_set_xc_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xcr24_test_init();
+            tim_vsync_out_start();
+        }
         else if(!(strcmp(str_in, "xc_r_all")))
         {
             xcr24_read_all();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_fll", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] < 3)
+            {
+                xcr24_set_fll_cnt((uint8_t)u32_recv_param[0], (uint32_t)u32_recv_param[1]);
+            }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -686,7 +731,7 @@ void comm_debugging_process(void)
 
             float iout[2] = { 0.0f };
 
-            for (uint8_t i = 0U; i < 2U ; i++)
+            for (uint8_t i = 0U; i < 2U; i++)
             {
                 uint16_t vref_table[2] = { 300U, 2200U };
                 xdr12_trim_set_max_curr_vref(vref_table[i]);
@@ -725,7 +770,7 @@ void comm_debugging_process(void)
 
             float iout[2] = { 0.0f };
 
-            for (uint8_t i = 0U; i < 2U ; i++)
+            for (uint8_t i = 0U; i < 2U; i++)
             {
                 uint16_t vref_table[2] = { 300U, 300U };
                 xdr12_trim_set_max_curr_vref(vref_table[i]);

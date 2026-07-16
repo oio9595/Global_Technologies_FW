@@ -320,7 +320,7 @@ static const char* test_step_to_string(test_step_t step)
 
 static void xcr_test_log_summary(void)
 {
-    for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY ; list < XCR_TEST_LIST_MAX ; ++list)
+    for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY; list < XCR_TEST_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xcr_test_info[list];
         comm_UART_Printf(LOG_LV_INFO, "\r\n%s|VAL|%6.3f", xcr_test_list_to_string(list), (double)(info->measure[0].value));
@@ -509,7 +509,7 @@ static bool _xcr_sweep_test_thread(struct thread_data* td)
             xcr24_write_otp_control(XCR_MIRROR3, &f7, 1U);
 #if 0
             uint16_t* p_trim_value = xdr12_get_trim_debug_reg();
-            for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_VERSION_0 ; ++mirror_addr)
+            for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1; mirror_addr < XD12R_MIRROR_VERSION_0; ++mirror_addr)
             {
                 xdr12_write_by_type(mirror_addr, p_trim_value[mirror_addr], XD12R_ADDR_TYPE_MIRROR);
             }
@@ -634,11 +634,11 @@ static void xdr_test_log_summary(void)
 {
     char log_buf[350] = {0};
     int log_buf_len = 0U;
-    for (xdr_test_list_t list = XDR_TEST_LIST_ICC_STBY ; list < XDR_TEST_LIST_MAX ; ++list)
+    for (xdr_test_list_t list = XDR_TEST_LIST_ICC_STBY; list < XDR_TEST_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xdr_test_info[list];
         uint8_t max_ch = (list < XDR_TEST_LIST_IOUT_P1) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX;
-        for (uint8_t ch = XD_CH_01 ; ch < max_ch ; ++ch)
+        for (uint8_t ch = XD_CH_01; ch < max_ch; ++ch)
         {
             if (ch == XD_CH_01)
             {
@@ -898,7 +898,7 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
             xdr12_trim_init_ch_gain();
 #if 1
             uint16_t* p_trim_value = xdr12_get_trim_debug_reg();
-            for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1 ; mirror_addr < XD12R_MIRROR_VERSION_0 ; ++mirror_addr)
+            for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1; mirror_addr < XD12R_MIRROR_VERSION_0; ++mirror_addr)
             {
                 xdr12_write_by_type(mirror_addr, p_trim_value[mirror_addr], XD12R_ADDR_TYPE_MIRROR);
             }

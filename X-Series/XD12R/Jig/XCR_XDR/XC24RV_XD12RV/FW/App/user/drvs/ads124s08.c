@@ -434,7 +434,7 @@ static void ADS114S08_Get_ADC_Offset()
     gpio_set_current_gain(GAIN_LOW);
     gpio_set_vled_9v(VLED_ON);
 
-    for (XD_CH_t output_ch = XD_CH_01 ; output_ch < XD_CH_MAX ; ++output_ch)
+    for (XD_CH_t output_ch = XD_CH_01; output_ch < XD_CH_MAX; ++output_ch)
     {
         gpio_set_demux_channel_selection(output_ch);
         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
@@ -502,7 +502,7 @@ void ADS114S08_Init(void)
     ADS114S08_Reset();
     LL_mDelay(1);
 
-    for(uint8_t reg = REG_ADDR_ID ; reg < REG_ADDR_MAX ; ++reg)
+    for(uint8_t reg = REG_ADDR_ID; reg < REG_ADDR_MAX; ++reg)
     {
         gt_ads114s08_regs.ALL[reg] = ADS114S08_Read_Register(reg);
         comm_UART_Printf(LOG_LV_DEBUG, "\r\nreg[0x%02X] = 0x%02X", reg, gt_ads114s08_regs.ALL[reg]);

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "drv_xdr12.h"
+#include "drv_xcr24.h"
 #include "comm_debugging.h"
 #include "ldim_conversion.h"
 
@@ -32,6 +33,7 @@ static xd_rw_info_t gt_xd_read_info;
 static xd_rw_info_t gt_xd_write_info;
 
 static bool gb_vsync_out_flag;
+static float gf_vsync_out_freq;
 static uint8_t gn_svsync_count;
 
 static float gf_svsync_sub_green_freq;
@@ -47,6 +49,8 @@ static inline void tim_update_vsync_out_freq(void)
 {
     uint32_t AutoReload = LL_TIM_GetAutoReload(TIM8);
     uint32_t Prescaler = LL_TIM_GetPrescaler(TIM8);
+    gf_vsync_out_freq = (float)(APB2_TIM_CLK) / ((float)(AutoReload + 1U) * (float)(Prescaler + 1U));
+    xcr24_set_fll_cnt(0U, XCR_CONV_FREQ_TO_XCR_MCLK(gf_vsync_out_freq));
 }
 
 static inline void tim_update_svsync_out_freq(void)
@@ -167,7 +171,11 @@ void tim_vsync_out_handler(void)
     #if (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
         tim_svsync_timer_start();
     #endif
+/*
 
+    uint16_t test_data = 0x8000U;
+    xcr24_write_grp1_reg(XCR_LD_TRANSFER_COMMAND, &test_data, 1U);
+*/
     gb_vsync_out_flag = true;
 }
 
@@ -191,9 +199,11 @@ void tim_vsync_out_process(void)
 
     if(true == gb_xcr_ldim_block_conversion_flag)
     {
-        uint16_t* p_led_color_table = ldim_get_led_color_buffer();
-        ldim_set_ldim_rgb(gn_xcr_ldim_block_conversion_index, \
-            p_led_color_table[COLOR_RED], p_led_color_table[COLOR_GREEN], p_led_color_table[COLOR_BLUE]);
+        block_color_t* p_block_color_table = ldim_get_block_color_buffer();
+        ldim_conversion_block_to_ldim(gn_xcr_ldim_block_conversion_index, \
+            p_block_color_table[gn_xcr_ldim_block_conversion_index].r, \
+            p_block_color_table[gn_xcr_ldim_block_conversion_index].g, \
+            p_block_color_table[gn_xcr_ldim_block_conversion_index].b);
         ++gn_xcr_ldim_block_conversion_index;
         if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
         {

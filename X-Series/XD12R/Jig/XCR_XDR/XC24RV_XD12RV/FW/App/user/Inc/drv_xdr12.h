@@ -23,10 +23,10 @@ extern "C" {
 
 #define XDR_CONTROLLED_MCU  (0U)
 #define XDR_CONTROLLED_XCR  (1U)
-#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_MCU)
+#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_XCR)
 
 #define XDR_CH_SIZE         (12U)
-#define XDR_DAISY_LENGTH    (1U)
+#define XDR_DAISY_LENGTH    (2U)
 
 //#define XDR_LD_DATA_12BIT (12U)
 #define XDR_LD_DATA_14BIT   (14U)
@@ -52,7 +52,7 @@ extern "C" {
     #define LED_PER_BLOCK       (3U) /* NTS + TS */
     #define XDR_CH_PER_BLOCK    (2U)
     #define BLOCK_PER_XDR       (XDR_CH_SIZE / XDR_CH_PER_BLOCK) /* 6 blocks per XDR */
-    #define XDR_LD_SIZE         (18U) /* TYPE-A; 3[NTS(1) + TS(2)] * 6set */
+    #define XDR_LD_SIZE         (LED_PER_BLOCK * BLOCK_PER_XDR) /* TYPE-A; 3[NTS(1) + TS(2)] * 6set */
     typedef enum tag_COLOR_ORDER
     {
         COLOR_RED = 0U,

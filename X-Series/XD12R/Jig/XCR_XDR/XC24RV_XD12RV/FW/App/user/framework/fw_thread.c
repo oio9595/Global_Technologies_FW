@@ -64,7 +64,7 @@ static THREAD_ID fw_begin_thread_trig_ex(bool (*const f)(struct thread_data*), u
 
         is_duplicate = false;
 
-        for(uint32_t i = 0U ; i < NUM_OF_THREAD ; ++i)
+        for(uint32_t i = 0U; i < NUM_OF_THREAD; ++i)
         {
             if(__tdata[i].id == __last_id)
             {
@@ -128,7 +128,7 @@ void _fw_threadmgr_do(void)
 {
     __freeze_sys_clock = __system_clock;
 
-    for(uint32_t i = 0U ; i < NUM_OF_THREAD ; ++i)
+    for(uint32_t i = 0U; i < NUM_OF_THREAD; ++i)
     {
         if(__tdata[i].id != INVALID_THREAD_ID)
         {

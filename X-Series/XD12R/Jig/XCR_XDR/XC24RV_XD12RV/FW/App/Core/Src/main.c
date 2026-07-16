@@ -24,15 +24,16 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "drv_comm.h"
+#include "drv_gpio.h"
 #include "drv_xcr24.h"
 #include "drv_xdr12.h"
-#include "drv_comm.h"
 #include "drv_timer.h"
-#include "drv_gpio.h"
 
+#include "ads124s08.h"
 #include "framework.h"
 #include "comm_debugging.h"
-#include "ads124s08.h"
+#include "ldim_conversion.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -147,6 +148,7 @@ void sys_init(void)
 
     comm_init();
     ADS114S08_Init();
+    ldim_block_map_init();
 }
 
 void sys_normal_mode(void)
@@ -164,7 +166,7 @@ void mcu_peripheral_adc_start(void)
     gn_InternalADC = 0U;
     LL_ADC_Enable(ADC1);
     LL_mDelay(1U);
-    for (uint8_t cnt = 0U ; cnt < MCU_ADC_MEASURE_COUNT ; ++cnt)
+    for (uint8_t cnt = 0U; cnt < MCU_ADC_MEASURE_COUNT; ++cnt)
     {
         LL_ADC_REG_StartConversionSWStart(ADC1);
         while(!LL_ADC_IsActiveFlag_EOCS(ADC1)) {}

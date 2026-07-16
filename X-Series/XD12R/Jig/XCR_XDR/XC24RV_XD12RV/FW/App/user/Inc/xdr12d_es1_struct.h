@@ -137,9 +137,9 @@ typedef union tag_XD12R_RESET_ID
         uint16_t id     :  5;   /* not writable from a host, ID auto-write #1~#31 ('0' invalid) */
         uint16_t        :  2;   /* reserved */
         uint16_t rsi_e  :  1;   /* '1' (rsi duration 31 mclks filtering) -> reset serializer/deserializer state RSO = RSI daisy out */
-        uint16_t lkg_e  :  1;   /* ch leakage mode en (default = enabled ; typ 100nA) */
+        uint16_t lkg_e  :  1;   /* ch leakage mode en (default = enabled; typ 100nA) */
         uint16_t e_rst  :  1;   /* SER/DESER reset @ last svsync and rstcnt expired */
-        uint16_t vs_rst :  1;   /* both cmd and svi(=vsync) signal ; SER/DESER reset @ vsync */
+        uint16_t vs_rst :  1;   /* both cmd and svi(=vsync) signal; SER/DESER reset @ vsync */
         uint16_t rst    :  1;   /* all logics reset, auto-cleared, but the otp value is not downloaded */
         uint16_t        :  4;   /* reserved */
     }bit;
