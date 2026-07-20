@@ -1978,7 +1978,7 @@ typedef union tag_GATE_CONTROL
     struct
     {
         __IO uint16_t gate1_L_en     : 1;     /* gate1_L_en */
-        __IO uint16_t gate2L__en     : 1;     /* gate2L__en */
+        __IO uint16_t gate2_L_en     : 1;     /* gate2_L_en */
         __IO uint16_t gate3_L_en     : 1;     /* gate3_L_en */
         uint16_t                : 1;     /* reserved */
         __IO uint16_t gate1_H_en     : 1;     /* gate1_H_en */
