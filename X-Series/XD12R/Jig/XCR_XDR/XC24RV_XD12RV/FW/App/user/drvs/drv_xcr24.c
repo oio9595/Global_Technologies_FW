@@ -20,10 +20,13 @@
 #define XCR_MCLK_SEL_OSC_A      (1U)
 #define XCR_MCLK_SEL_OSC_B      (0U)
 
-#define XCR_SVO_ON_TIME_US      (10U) /* 10us */
-#define XCR_SVO1_OFF_TIME_US    (100U) /* 100us */
-#define XCR_SVO2_OFF_TIME_US    (100U) /* 100us */
-#define XCR_SVO3_OFF_TIME_US    (100U) /* 100us */
+#define XCR_V_MASK_ON_TIME_US   (4.5f)      /* 4.5us */
+#define XCR_V_MASK_OFF_TIME_US  (4.5f)      /* 4.5us */
+
+#define XCR_SVO_ON_TIME_US      (10.0f)     /* 10us */
+#define XCR_SVO1_OFF_TIME_US    (100.0f)    /* 100us */
+#define XCR_SVO2_OFF_TIME_US    (144.43f)   /* 144.43us */
+#define XCR_SVO3_OFF_TIME_US    (96.0f)     /* 96us */
 
 #define XCR_SPI_HEADER_SIZE     (1U)
 #define XCR_SPI_BURST_MAX_SIZE  (64U)
@@ -61,13 +64,6 @@
 #define XCR_SVO_ACTIVE_23       (2U)
 #define XCR_SVO_ACTIVE_123      (3U)
 
-typedef enum tag_XCR_RW_GRP
-{
-    XCR_RW_GRP1 = 0U,
-    XCR_RW_GRP2,
-    XCR_RW_GRP_MAX,
-} xcr_rw_grp_t;
-
 volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
 static uint8_t gn_xcr_daisied_dev_blk_size;
@@ -88,7 +84,7 @@ static _xcr_otp_control_regs_t gt_xcr24_get_otp_regs; /* base address 0xF0 */
 static bool gb_xcr_do_efuse;
 
 #if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-static void xcr24_spi_log(const uint16_t* out, uint16_t len)
+static void xcr24_spi_log_dump(const uint16_t* out, uint16_t len)
 {
     if (out == NULL || len == 0)
     {
@@ -133,9 +129,6 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
 static void xcr24_regs_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
-    _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
-    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
-
     for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
         switch(addr)
@@ -307,37 +300,31 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r3A.bit.fll2_en = XCR_FUNCTION_DIS;
             break;
         case XCR_VO_DELAY:
-            //_r1->reg._r3B.bit.vo_delay = 0U;
-            //_r1->reg._r3B.bit.gate1_pol = 0U;
-            //_r1->reg._r3B.bit.gate2_pol = 0U;
-            //_r1->reg._r3B.bit.gate3_pol = 0U;
-            _r1->reg._r3B.ALL = 0x7000U;
+            _r1->reg._r3B.bit.gate3_pol = 1U;
+            _r1->reg._r3B.bit.gate2_pol = 1U;
+            _r1->reg._r3B.bit.gate1_pol = 1U;
+            _r1->reg._r3B.bit.vo_delay = 0U;
             break;
         case XCR_VO_OFF_ON:
-            //_r1->reg._r3C.bit.vo_on = 0U;
-            //_r1->reg._r3C.bit.vo_off = 0U;
-            _r1->reg._r3C.ALL = 0x9E9EU;
+            _r1->reg._r3C.bit.vo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_V_MASK_ON_TIME_US);
+            _r1->reg._r3C.bit.vo_off = XCR_CONV_us_TO_XCR_MCLK(XCR_V_MASK_OFF_TIME_US);
             break;
         case XCR_SVO_ON:
-            //_r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
-            _r1->reg._r3D.ALL = 0x015EU;
+            _r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
             break;
         case XCR_SVO1_OFF:
             //_r1->reg._r3E.bit.svo1_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
-            _r1->reg._r3E.ALL = 0x0000U;
+            _r1->reg._r3E.bit.svo1_off = 0U;
             break;
         case XCR_SVO2_OFF:
-            //_r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
-            _r1->reg._r3F.ALL = 0x13BFU;
+            _r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
             break;
         case XCR_SVO3_OFF:
-            //_r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
-            _r1->reg._r40.ALL = 0x0D20U;
+            _r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
             break;
         case XCR_SVO_NUMBER:
-            //_r1->reg._r41.bit.sv_no = XDR_SV_NO;
-            //_r1->reg._r41.bit.sv_no_type = XCR_SVO_ACTIVE_23;
-            _r1->reg._r41.ALL = 0x0220U;
+            _r1->reg._r41.bit.sv_no = XDR_SV_NO;
+            _r1->reg._r41.bit.sv_no_type = XCR_SVO_ACTIVE_23;
             break;
         case XCR_DAC_NF_CONTROL:
             //_r1->reg._r42.bit.dgrjt_en = 0U;
@@ -376,6 +363,7 @@ static void xcr24_regs_init_table(void)
         xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
 #if 0
+    _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
     for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT; addr < XCR_GRP2_MAX; ++addr)
     {
         switch(addr)
@@ -386,12 +374,18 @@ static void xcr24_regs_init_table(void)
         xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
     }
 #endif
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
     for (xcr_addr_otp_t addr = XCR_TEST_CONTROL; addr < XCR_OTP_MAX; ++addr)
     {
         switch (addr)
         {
             case XCR_GATE_CONTROL:
-                _rotp->reg._rFA.ALL = 0x0070U;
+                _rotp->reg._rFA.bit.gate1_H_en = XCR_FUNCTION_EN;
+                _rotp->reg._rFA.bit.gate1_L_en = XCR_FUNCTION_DIS;
+                _rotp->reg._rFA.bit.gate2_H_en = XCR_FUNCTION_EN;
+                _rotp->reg._rFA.bit.gate2_L_en = XCR_FUNCTION_DIS;
+                _rotp->reg._rFA.bit.gate3_H_en = XCR_FUNCTION_EN;
+                _rotp->reg._rFA.bit.gate3_L_en = XCR_FUNCTION_DIS;
                 break;
             case XCR_GATE1_OFFSET:
                 _rotp->reg._rFB.ALL = 0x0202U;
@@ -418,9 +412,6 @@ static void xcr24_regs_init_table(void)
 static void xcr24_regs_trim_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
-    _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
-    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
-
     for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
         switch(addr)
@@ -473,6 +464,7 @@ static void xcr24_regs_trim_init_table(void)
         xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
     }
 
+    _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
     for(xcr_addr_grp2_t addr = XCR_GRP2_DAC1_FB_VALID_CNT; addr < XCR_GRP2_MAX; ++addr)
     {
         switch(addr)
@@ -493,6 +485,7 @@ static void xcr24_regs_trim_init_table(void)
         xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
     }
 
+    _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
     for (xcr_addr_otp_t addr = XCR_TEST_CONTROL; addr < XCR_OTP_MAX; ++addr)
     {
         switch (addr)
@@ -681,10 +674,8 @@ void xcr24_init_param(void)
     gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_blk_size);
     gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_blk_size);
 
-    //gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
-    //gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
-    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(240U);
-    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(240U);
+    gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
+    gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
 }
 
 void xcr24_init(void)
@@ -814,7 +805,7 @@ void xcr24_write_otp_control(uint16_t addr, const uint16_t* q, uint16_t length)
     XCR_NSS_HI();
 
 #if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-    xcr24_spi_log(tx_buffer, spi_len);
+    xcr24_spi_log_dump(tx_buffer, spi_len);
 #endif
 
     if(SPI_TIMEOUT == ret)
@@ -915,7 +906,7 @@ uint16_t xcr24_read_grp2_reg(uint16_t addr, uint16_t length)
         _xcr_group2_regs_t* _r = &gt_xcr24_get_gr2_regs;
         for(uint16_t i = 0U; i < burst_size; ++i)
         {
-            _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE];
+            _r->ALL[addr + i] = rx_buffer[XCR_SPI_HEADER_SIZE + i];
         }
     }
     return rx_buffer[XCR_SPI_HEADER_SIZE];
@@ -956,7 +947,7 @@ void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     XCR_NSS_HI();
 
 #if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-    xcr24_spi_log(tx_buffer, spi_len);
+    xcr24_spi_log_dump(tx_buffer, spi_len);
 #endif
 
     if(SPI_TIMEOUT == ret)
@@ -979,9 +970,9 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     uint16_t tx_buffer[XCR_SPI_BUFF_MAX_SIZE] = { 0U };
     uint16_t burst_size = length;
 
-    if((addr + length) >= XCR_OTP_MAX)
+    if((addr + length) >= XCR_GRP2_MAX)
     {
-        burst_size = (XCR_OTP_MAX - addr);
+        burst_size = (XCR_GRP2_MAX - addr);
     }
     if(burst_size > 63U)
     {
@@ -1008,7 +999,7 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
     XCR_NSS_HI();
 
 #if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-    xcr24_spi_log(tx_buffer, spi_len);
+    xcr24_spi_log_dump(tx_buffer, spi_len);
 #endif
 
     if(SPI_TIMEOUT == ret)
@@ -1054,8 +1045,9 @@ static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
         XCR_NSS_HI();
 
 #if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-        xcr24_spi_log(tx_buffer, 2);
+        xcr24_spi_log_dump(tx_buffer, 2);
 #endif
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nChange GRT TYPE to %u [0x%04X]", in_grp, gt_xcr24_set_otp_regs.reg._rF0.ALL);
 
         if(SPI_TIMEOUT == ret)
         {
@@ -1070,14 +1062,14 @@ void xcr24_set_ld_transfer(uint16_t* buffer, uint16_t length)
     static bool is_first = true;
     if (is_first)
     {
-        xcr24_spi_log(buffer, length);
+        xcr24_spi_log_dump(buffer, length);
         is_first = false;
     }
 #endif
 
     if((NULL == buffer) || (0U == length))
     {
-        return ;
+        return;
     }
 
     gb_xcr_ld_transfer_spi_dma_flag = true;

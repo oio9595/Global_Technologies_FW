@@ -16,8 +16,8 @@ extern "C" {
 #include <stdbool.h>
 #include "xcr24_struct.h"
 
-#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (float)(Hz) + 0.5f)
-#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (float)(us)) + 0.5f)
+#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (Hz) + 0.5f)
+#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
 
 #define XCR_EFUSE_SKIP      (0U)
 #define XCR_EFUSE_BURN      (1U)
@@ -33,6 +33,13 @@ extern "C" {
 #define XCR_SERIAL_CLK          ((float)XCR_INTERNAL_MCLK / (XCR_SERIAL_CLK_HIGH + XCR_SERIAL_CLK_LOW))
 
 #define XCR_SPI_RW_LEN    	    (48U)
+
+typedef enum tag_XCR_RW_GRP
+{
+    XCR_RW_GRP1 = 0U,
+    XCR_RW_GRP2,
+    XCR_RW_GRP_MAX,
+} xcr_rw_grp_t;
 
 extern volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
