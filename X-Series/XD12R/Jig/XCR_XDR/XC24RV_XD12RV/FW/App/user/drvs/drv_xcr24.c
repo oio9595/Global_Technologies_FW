@@ -67,9 +67,9 @@
 volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
 static uint8_t gn_xcr_daisied_dev_blk_size;
-static uint8_t gn_xcr_channel_enable[24];
-static uint8_t gn_xcr_channel_daisy_size[24];
-static uint8_t gn_xcr_channel_block_size[24];
+static uint8_t gn_xcr_channel_enable[XCR_CH_SIZE_MAX];
+static uint8_t gn_xcr_channel_daisy_size[XCR_CH_SIZE_MAX];
+static uint8_t gn_xcr_channel_block_size[XCR_CH_SIZE_MAX];
 static uint32_t gn_xcr_fll_cnt[2];
 
 static _xcr_group1_regs_t gt_xcr24_set_gr1_regs;
@@ -599,80 +599,21 @@ void xcr24_init_param(void)
     gn_xcr_daisied_dev_blk_size = BLOCK_PER_XDR;
 
     /* XC24R channel enable */
-    gn_xcr_channel_enable[ 0U] = 1U;
-    gn_xcr_channel_enable[ 1U] = 0U;
-    gn_xcr_channel_enable[ 2U] = 0U;
-    gn_xcr_channel_enable[ 3U] = 0U;
-    gn_xcr_channel_enable[ 4U] = 0U;
-    gn_xcr_channel_enable[ 5U] = 0U;
-    gn_xcr_channel_enable[ 6U] = 0U;
-    gn_xcr_channel_enable[ 7U] = 0U;
-    gn_xcr_channel_enable[ 8U] = 0U;
-    gn_xcr_channel_enable[ 9U] = 0U;
-    gn_xcr_channel_enable[10U] = 0U;
-    gn_xcr_channel_enable[11U] = 0U;
-    gn_xcr_channel_enable[12U] = 0U;
-    gn_xcr_channel_enable[13U] = 0U;
-    gn_xcr_channel_enable[14U] = 0U;
-    gn_xcr_channel_enable[15U] = 0U;
-    gn_xcr_channel_enable[16U] = 0U;
-    gn_xcr_channel_enable[17U] = 0U;
-    gn_xcr_channel_enable[18U] = 0U;
-    gn_xcr_channel_enable[19U] = 0U;
-    gn_xcr_channel_enable[20U] = 0U;
-    gn_xcr_channel_enable[21U] = 0U;
-    gn_xcr_channel_enable[22U] = 0U;
-    gn_xcr_channel_enable[23U] = 0U;
-
-    gn_xcr_channel_daisy_size[ 0U] = XDR_DAISY_LENGTH;
-    gn_xcr_channel_daisy_size[ 1U] = 0U;
-    gn_xcr_channel_daisy_size[ 2U] = 0U;
-    gn_xcr_channel_daisy_size[ 3U] = 0U;
-    gn_xcr_channel_daisy_size[ 4U] = 0U;
-    gn_xcr_channel_daisy_size[ 5U] = 0U;
-    gn_xcr_channel_daisy_size[ 6U] = 0U;
-    gn_xcr_channel_daisy_size[ 7U] = 0U;
-    gn_xcr_channel_daisy_size[ 8U] = 0U;
-    gn_xcr_channel_daisy_size[ 9U] = 0U;
-    gn_xcr_channel_daisy_size[10U] = 0U;
-    gn_xcr_channel_daisy_size[11U] = 0U;
-    gn_xcr_channel_daisy_size[12U] = 0U;
-    gn_xcr_channel_daisy_size[13U] = 0U;
-    gn_xcr_channel_daisy_size[14U] = 0U;
-    gn_xcr_channel_daisy_size[15U] = 0U;
-    gn_xcr_channel_daisy_size[16U] = 0U;
-    gn_xcr_channel_daisy_size[17U] = 0U;
-    gn_xcr_channel_daisy_size[18U] = 0U;
-    gn_xcr_channel_daisy_size[19U] = 0U;
-    gn_xcr_channel_daisy_size[20U] = 0U;
-    gn_xcr_channel_daisy_size[21U] = 0U;
-    gn_xcr_channel_daisy_size[22U] = 0U;
-    gn_xcr_channel_daisy_size[23U] = 0U;
-
-    gn_xcr_channel_block_size[ 0U] = (gn_xcr_channel_daisy_size[ 0U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 1U] = (gn_xcr_channel_daisy_size[ 1U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 2U] = (gn_xcr_channel_daisy_size[ 2U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 3U] = (gn_xcr_channel_daisy_size[ 3U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 4U] = (gn_xcr_channel_daisy_size[ 4U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 5U] = (gn_xcr_channel_daisy_size[ 5U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 6U] = (gn_xcr_channel_daisy_size[ 6U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 7U] = (gn_xcr_channel_daisy_size[ 7U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 8U] = (gn_xcr_channel_daisy_size[ 8U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[ 9U] = (gn_xcr_channel_daisy_size[ 9U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[10U] = (gn_xcr_channel_daisy_size[10U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[11U] = (gn_xcr_channel_daisy_size[11U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[12U] = (gn_xcr_channel_daisy_size[12U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[13U] = (gn_xcr_channel_daisy_size[13U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[14U] = (gn_xcr_channel_daisy_size[14U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[15U] = (gn_xcr_channel_daisy_size[15U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[16U] = (gn_xcr_channel_daisy_size[16U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[17U] = (gn_xcr_channel_daisy_size[17U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[18U] = (gn_xcr_channel_daisy_size[18U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[19U] = (gn_xcr_channel_daisy_size[19U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[20U] = (gn_xcr_channel_daisy_size[20U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[21U] = (gn_xcr_channel_daisy_size[21U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[22U] = (gn_xcr_channel_daisy_size[22U] * gn_xcr_daisied_dev_blk_size);
-    gn_xcr_channel_block_size[23U] = (gn_xcr_channel_daisy_size[23U] * gn_xcr_daisied_dev_blk_size);
+    for (uint8_t xc_ch = 0; xc_ch < XCR_CH_SIZE_MAX; ++xc_ch)
+    {
+        if (xc_ch < XCR_CH_SIZE)
+        {
+            gn_xcr_channel_enable[xc_ch] = 1U;
+            gn_xcr_channel_daisy_size[xc_ch] = XDR_DAISY_LENGTH;
+            gn_xcr_channel_block_size[xc_ch] = (gn_xcr_channel_daisy_size[xc_ch] * gn_xcr_daisied_dev_blk_size);
+        }
+        else
+        {
+            gn_xcr_channel_enable[xc_ch] = 0U;
+            gn_xcr_channel_daisy_size[xc_ch] = 0U;
+            gn_xcr_channel_block_size[xc_ch] = 0U;
+        }
+    }
 
     gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
     gn_xcr_fll_cnt[1] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);

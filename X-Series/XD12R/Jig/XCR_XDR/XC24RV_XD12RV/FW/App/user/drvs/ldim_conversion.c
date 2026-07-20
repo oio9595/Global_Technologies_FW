@@ -3,17 +3,25 @@
 #include "ldim_conversion.h"
 #include "comm_debugging.h"
 
-#define XDR_LDIM_BURST_SIZE     (XCR_CH_SIZE * XDR_DAISY_LENGTH * XDR_LD_SIZE)
+#define XDR_LDIM_BURST_SIZE     (XDR_DAISY_LENGTH * XDR_LD_SIZE * XCR_CH_SIZE)
 #define XCR_LDIM_BURST_SIZE     (1U + XDR_LDIM_BURST_SIZE + 1U)  /* HDR + Payload + crc16 */
 
-uint8_t gn_block_map[LDIM_BLK_SIZE][3]; /* { xc_ch, xd_daisy, ld_order_max } */
+typedef enum tag_BLOCK_TBL
+{
+    BLK_TBL_XD_DAISY = 0U,
+    BLK_TBL_LD_ORDER,
+    BLK_TBL_XC_CH,
+    BLK_TBL_MAX
+} block_table_t;
+
+uint8_t gn_block_map[LDIM_BLK_SIZE][BLK_TBL_MAX]; /* { xd_daisy, ld_order_max, xc_ch } */
 
 typedef union tag_LD_BUFFER
 {
-    uint16_t buffer[(XCR_CH_SIZE * XDR_DAISY_LENGTH * XDR_LD_SIZE)];
+    uint16_t buffer[(XDR_DAISY_LENGTH * XDR_LD_SIZE * XCR_CH_SIZE)];
     struct
     {
-        uint16_t data16[XCR_CH_SIZE][XDR_DAISY_LENGTH][XDR_LD_SIZE];
+        uint16_t data16[XDR_DAISY_LENGTH][XDR_LD_SIZE][XCR_CH_SIZE];
     };
 } ld_buffer_t;
 
@@ -33,31 +41,34 @@ static block_color_t gt_block_color_buffer[LDIM_BLK_SIZE];
 
 void ldim_block_map_init(void)
 {
-    uint8_t xc, daisy, block = 0U;
-    uint32_t map_idx = 0U;
-    uint8_t current_ld_order = 0U;
-
-    for (xc = 0U; xc < XCR_CH_SIZE; xc++)
+    for (uint16_t blk = 0U; blk < LDIM_BLK_SIZE; ++blk)
     {
-        for (daisy = 0U; daisy < XDR_DAISY_LENGTH; daisy++)
-        {
-            for (block = 0U; block < BLOCK_PER_XDR; block++)
-            {
-                if (map_idx >= LDIM_BLK_SIZE)
-                {
-                    return;
-                }
+        const uint8_t blk_size_per_xc_ch = (XDR_DAISY_LENGTH * (BLOCK_PER_XDR));
+        const uint8_t blk_size_per_xd = BLOCK_PER_XDR;
 
-                gn_block_map[map_idx][0] = xc + 1U;
-                gn_block_map[map_idx][1] = daisy + 1U;
-
-                current_ld_order += LED_PER_BLOCK;
-                gn_block_map[map_idx][2] = current_ld_order;
-
-                map_idx++;
-            }
-        }
+        gn_block_map[blk][BLK_TBL_XD_DAISY] = (blk % blk_size_per_xc_ch) / blk_size_per_xd; /* xd_daisy */
+        gn_block_map[blk][BLK_TBL_LD_ORDER] = ((blk % blk_size_per_xd) + 1U) * COLOR_ORDER_MAX; /* ld_order_max */
+        gn_block_map[blk][BLK_TBL_XC_CH] = blk / blk_size_per_xc_ch; /* xc_ch */
     }
+}
+
+void ldim_block_map_print(void)
+{
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n====== gn_block_map Render Result ======");
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\ngn_block_map = \r\n{");
+
+    for (uint32_t i = 0; i < LDIM_BLK_SIZE; i++)
+    {
+        uint8_t xd_daisy = gn_block_map[i][BLK_TBL_XD_DAISY];
+        uint8_t ld_order_max = gn_block_map[i][BLK_TBL_LD_ORDER];
+        uint8_t xc_ch = gn_block_map[i][BLK_TBL_XC_CH];
+        uint8_t ld_order_min = (ld_order_max - LED_PER_BLOCK) + 1;
+
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nLED [%2u] { %2d, %2d, %2d }, /* ld_order %2d ~ %2d */", i, xd_daisy, ld_order_max, xc_ch, ld_order_min, ld_order_max);
+    }
+
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n};");
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n========================================");
 }
 
 block_color_t* ldim_get_block_color_buffer(void)
@@ -86,9 +97,9 @@ void ldim_set_block_color_buffer(uint16_t index ,uint16_t red, uint16_t green, u
 
 void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green, uint16_t blue)
 {
-    const uint8_t xc_ch_max = gn_block_map[block][0];
-    const uint8_t xd_daisy_max = gn_block_map[block][1];
-    const uint8_t ld_order_max = gn_block_map[block][2];
+    const uint8_t xd_daisy = gn_block_map[block][BLK_TBL_XD_DAISY];
+    const uint8_t ld_order_max = gn_block_map[block][BLK_TBL_LD_ORDER];
+    const uint8_t xc_ch = gn_block_map[block][BLK_TBL_XC_CH];
 
     const uint16_t color_map[COLOR_ORDER_MAX] =
     {
@@ -97,17 +108,11 @@ void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green,
         [COLOR_BLUE]  = blue
     };
 
-    for (uint8_t xc_ch = 0U; xc_ch < xc_ch_max; ++xc_ch)
+    uint16_t (*p_ld_buffer)[XCR_CH_SIZE] = gt_xcr_ld_transfer_table.ld_buffer.data16[xd_daisy];
+    for (uint8_t ld_order = (ld_order_max - LED_PER_BLOCK); ld_order < ld_order_max; ++ld_order)
     {
-        for (uint8_t xd_daisy = 0U; xd_daisy < xd_daisy_max; ++xd_daisy)
-        {
-            uint16_t* p_ld_buffer = gt_xcr_ld_transfer_table.ld_buffer.data16[xc_ch][xd_daisy];
-            for (uint8_t ld_order = (ld_order_max - LED_PER_BLOCK); ld_order < ld_order_max; ++ld_order)
-            {
-                uint8_t color_index = ld_order % COLOR_ORDER_MAX;
-                p_ld_buffer[ld_order] = color_map[color_index];
-            }
-        }
+        uint8_t color_index = ld_order % COLOR_ORDER_MAX;
+        p_ld_buffer[ld_order][xc_ch] = color_map[color_index];
     }
 
     if((LDIM_BLK_SIZE - 1U) == block)

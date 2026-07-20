@@ -29,6 +29,8 @@ typedef struct
 #define LDIM_BLK_INDEX_ALL  (0U)
 
 void ldim_block_map_init(void);
+void ldim_block_map_print(void);
+
 block_color_t* ldim_get_block_color_buffer(void);
 void ldim_set_block_color_buffer(uint16_t index ,uint16_t red, uint16_t green, uint16_t blue);
 void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green, uint16_t blue);

@@ -149,6 +149,7 @@ void sys_init(void)
     comm_init();
     ADS114S08_Init();
     ldim_block_map_init();
+    ldim_block_map_print();
 }
 
 void sys_normal_mode(void)

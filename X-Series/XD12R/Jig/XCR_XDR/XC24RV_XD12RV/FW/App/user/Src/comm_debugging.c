@@ -238,7 +238,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    comm_set_log_lv(LOG_LV_INFO);
+    comm_set_log_lv(LOG_LV_DEBUG);
 }
 
 void comm_debugging_process(void)
@@ -362,7 +362,7 @@ void comm_debugging_process(void)
                 }
                 else
                 {
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%2u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
                 }
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
