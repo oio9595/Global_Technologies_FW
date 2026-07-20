@@ -2264,123 +2264,123 @@ typedef union tag_ANA_TEST
     }bit;
 }_v_ana_test_t;
 
-typedef union _xcr_Group1_regs
+typedef union tag_XCR_GROUP1_REGS
 {
     uint16_t ALL[XCR_GRP1_MAX];
     struct
     {
-        _v_reset_t                                  _r00;
-        _v_global_write_command_t                   _r01;
-        _v_local_write_command_t                    _r02;
-        _v_local_read_command_t                     _r03;
-        _v_id_gen_command_t                         _r04;
-        _v_fault_read_command_t                     _r05;
-        _v_ld_transfer_command_t                    _r06;
-        _v_sync_gen_command_t                       _r07;
-        _v_command_auto_enable_t                    _r08;
-        _v_ld_write_pointer_t                       _r09;   /* Read-only */
-        _v_ld_read_pointer_t                        _r0A;   /* Read-only */
-        _v_ld_difference_pointer_t                  _r0B;   /* Read-only */
-        _v_ld_start_pointer_th_t                    _r0C;
-        _v_local_write_transfer_pointer_t           _r0D;   /* Read-only */
-        _v_local_read_receive_pointer_t             _r0E;   /* Read-only */
-        _v_local_rw_difference_pointer_t            _r0F;   /* Read-only */
-        _v_local_rw_pointer_reset_t                 _r10;   /* Write-only */
-        _v_fault_auto_read_interval_t               _r11;
-        _v_fault_auto_read_event_t                  _r12;
-        _v_interrupt_enable_t                       _r13;
-        _v_command_status_1_t                       _r14;   /* Read-only */
-        _v_command_status_2_t                       _r15;   /* Read-only */
-        _v_receive_status_t                         _r16;   /* Read-only */
-        _v_interrupt_status_t                       _r17;   /* Read-only */
-        _v_cmd_parity_err_status1_t                 _r18;   /* Read-only */
-        _v_cmd_parity_err_status2_t                 _r19;   /* Read-only */
-        _v_spi_fault_status_control_t               _r1A;
-        _v_clk_control_1_t                          _r1B;
-        _v_clk_control_2_t                          _r1C;
-        _v_serializer_clock_gen_t                   _r1D;
-        _v_latency_t                                _r1E;
-        _v_timeout_t                                _r1F;
-        _v_daisied_device_ch_size_t                 _r20;
-        _v_daisy_size_1_t                           _r21;
-        _v_daisy_size_2_t                           _r22;
-        _v_daisy_size_3_t                           _r23;
-        _v_daisy_size_4_t                           _r24;
-        _v_daisy_size_5_t                           _r25;
-        _v_daisy_size_6_t                           _r26;
-        _v_daisy_size_7_t                           _r27;
-        _v_daisy_size_8_t                           _r28;
-        _v_block_size_1_t                           _r29;
-        _v_block_size_2_t                           _r2A;
-        _v_block_size_3_t                           _r2B;
-        _v_block_size_4_t                           _r2C;
-        _v_block_size_5_t                           _r2D;
-        _v_block_size_6_t                           _r2E;
-        _v_block_size_7_t                           _r2F;
-        _v_block_size_8_t                           _r30;
-        _v_block_size_9_t                           _r31;
-        _v_block_size_10_t                          _r32;
-        _v_block_size_11_t                          _r33;
-        _v_block_size_12_t                          _r34;
-        _v_channel_enable_1_t                       _r35;
-        _v_channel_enable_2_t                       _r36;
-        _v_fllcnt11_t                               _r37;
-        _v_fllcnt12_t                               _r38;
-        _v_fllcnt21_t                               _r39;
-        _v_fllcnt22_t                               _r3A;
-        _v_vo_delay_t                               _r3B;
-        _v_vo_off_on_t                              _r3C;
-        _v_svo_on_t                                 _r3D;
-        _v_svo1_off_t                               _r3E;
-        _v_svo2_off_t                               _r3F;
-        _v_svo3_off_t                               _r40;
-        _v_svo_number_t                             _r41;
-        _v_dac_nf_control_t                         _r42;
-        _v_dac_control_t                            _r43;
-        _v_current_target_dac1_t                    _r44;
-        _v_current_target_dac2_t                    _r45;
-        _v_current_target_dac3_t                    _r46;
-        _v_previous_target_dac1_t                   _r47;   /* Read-only */
-        _v_previous_target_dac2_t                   _r48;   /* Read-only */
-        _v_previous_target_dac3_t                   _r49;   /* Read-only */
-        _v_dac1_out_t                               _r4A;   /* Read-only */
-        _v_dac2_out_t                               _r4B;   /* Read-only */
-        _v_dac3_out_t                               _r4C;   /* Read-only */
-        _v_dac1_state_t                             _r4D;   /* Read-only */
-        _v_dac2_state_t                             _r4E;   /* Read-only */
-        _v_dac3_state_t                             _r4F;   /* Read-only */
-        _v_dac1_increment_1_t                       _r50;
-        _v_dac1_increment_2_hold_limit_t            _r51;
-        _v_dac1_decrement_inc_wait_t                _r52;
-        _v_dac1_increment_hold_threshold_t          _r53;
-        _v_dac1_fb_valid_timer_t                    _r54;
-        _v_dac1_min_limit_t                         _r55;
-        _v_dac1_max_limit_t                         _r56;
-        _v_dac2_increment_1_t                       _r57;
-        _v_dac2_increment_2_hold_limit_t            _r58;
-        _v_dac2_decrement_inc_wait_t                _r59;
-        _v_dac2_increment_hold_threshold_t           _r5A;
-        _v_dac2_fb_valid_timer_t                    _r5B;
-        _v_dac2_min_limit_t                         _r5C;
-        _v_dac2_max_limit_t                         _r5D;
-        _v_dac3_increment_1_t                       _r5E;
-        _v_dac3_increment_2_hold_limit_t            _r5F;
-        _v_dac3_decrement_inc_wait_t                _r60;
-        _v_dac3_increment_hold_threshold_t          _r61;
-        _v_dac3_fb_valid_timer_t                    _r62;
-        _v_dac3_min_limit_t                         _r63;
-        _v_dac3_max_limit_t                         _r64;
-        _v_osc_fll_man_a1_t                         _r65;
-        _v_osc_fll_man_a2_t                         _r66;
-        _v_osc_fll_man_b1_t                         _r67;
-        _v_osc_fll_man_b2_t                         _r68;
-        _v_global_write_data_t                      _r69;
-        _v_global_fault_read_data1_t                _r6A;   /* Read-only */
-        _v_global_fault_read_data2_t                _r6B;   /* Read-only */
-        _v_global_fault_read_data3_t                _r6C;   /* Read-only */
-        _v_global_fault_read_data4_t                _r6D;   /* Read-only */
-        _v_global_fault_read_data5_t                _r6E;   /* Read-only */
-        _v_global_fault_read_data6_t                _r6F;   /* Read-only */
+        _v_reset_t                          _r00;
+        _v_global_write_command_t           _r01;
+        _v_local_write_command_t            _r02;
+        _v_local_read_command_t             _r03;
+        _v_id_gen_command_t                 _r04;
+        _v_fault_read_command_t             _r05;
+        _v_ld_transfer_command_t            _r06;
+        _v_sync_gen_command_t               _r07;
+        _v_command_auto_enable_t            _r08;
+        _v_ld_write_pointer_t               _r09;   /* Read-only */
+        _v_ld_read_pointer_t                _r0A;   /* Read-only */
+        _v_ld_difference_pointer_t          _r0B;   /* Read-only */
+        _v_ld_start_pointer_th_t            _r0C;
+        _v_local_write_transfer_pointer_t   _r0D;   /* Read-only */
+        _v_local_read_receive_pointer_t     _r0E;   /* Read-only */
+        _v_local_rw_difference_pointer_t    _r0F;   /* Read-only */
+        _v_local_rw_pointer_reset_t         _r10;   /* Write-only */
+        _v_fault_auto_read_interval_t       _r11;
+        _v_fault_auto_read_event_t          _r12;
+        _v_interrupt_enable_t               _r13;
+        _v_command_status_1_t               _r14;   /* Read-only */
+        _v_command_status_2_t               _r15;   /* Read-only */
+        _v_receive_status_t                 _r16;   /* Read-only */
+        _v_interrupt_status_t               _r17;   /* Read-only */
+        _v_cmd_parity_err_status1_t         _r18;   /* Read-only */
+        _v_cmd_parity_err_status2_t         _r19;   /* Read-only */
+        _v_spi_fault_status_control_t       _r1A;
+        _v_clk_control_1_t                  _r1B;
+        _v_clk_control_2_t                  _r1C;
+        _v_serializer_clock_gen_t           _r1D;
+        _v_latency_t                        _r1E;
+        _v_timeout_t                        _r1F;
+        _v_daisied_device_ch_size_t         _r20;
+        _v_daisy_size_1_t                   _r21;
+        _v_daisy_size_2_t                   _r22;
+        _v_daisy_size_3_t                   _r23;
+        _v_daisy_size_4_t                   _r24;
+        _v_daisy_size_5_t                   _r25;
+        _v_daisy_size_6_t                   _r26;
+        _v_daisy_size_7_t                   _r27;
+        _v_daisy_size_8_t                   _r28;
+        _v_block_size_1_t                   _r29;
+        _v_block_size_2_t                   _r2A;
+        _v_block_size_3_t                   _r2B;
+        _v_block_size_4_t                   _r2C;
+        _v_block_size_5_t                   _r2D;
+        _v_block_size_6_t                   _r2E;
+        _v_block_size_7_t                   _r2F;
+        _v_block_size_8_t                   _r30;
+        _v_block_size_9_t                   _r31;
+        _v_block_size_10_t                  _r32;
+        _v_block_size_11_t                  _r33;
+        _v_block_size_12_t                  _r34;
+        _v_channel_enable_1_t               _r35;
+        _v_channel_enable_2_t               _r36;
+        _v_fllcnt11_t                       _r37;
+        _v_fllcnt12_t                       _r38;
+        _v_fllcnt21_t                       _r39;
+        _v_fllcnt22_t                       _r3A;
+        _v_vo_delay_t                       _r3B;
+        _v_vo_off_on_t                      _r3C;
+        _v_svo_on_t                         _r3D;
+        _v_svo1_off_t                       _r3E;
+        _v_svo2_off_t                       _r3F;
+        _v_svo3_off_t                       _r40;
+        _v_svo_number_t                     _r41;
+        _v_dac_nf_control_t                 _r42;
+        _v_dac_control_t                    _r43;
+        _v_current_target_dac1_t            _r44;
+        _v_current_target_dac2_t            _r45;
+        _v_current_target_dac3_t            _r46;
+        _v_previous_target_dac1_t           _r47;   /* Read-only */
+        _v_previous_target_dac2_t           _r48;   /* Read-only */
+        _v_previous_target_dac3_t           _r49;   /* Read-only */
+        _v_dac1_out_t                       _r4A;   /* Read-only */
+        _v_dac2_out_t                       _r4B;   /* Read-only */
+        _v_dac3_out_t                       _r4C;   /* Read-only */
+        _v_dac1_state_t                     _r4D;   /* Read-only */
+        _v_dac2_state_t                     _r4E;   /* Read-only */
+        _v_dac3_state_t                     _r4F;   /* Read-only */
+        _v_dac1_increment_1_t               _r50;
+        _v_dac1_increment_2_hold_limit_t    _r51;
+        _v_dac1_decrement_inc_wait_t        _r52;
+        _v_dac1_increment_hold_threshold_t  _r53;
+        _v_dac1_fb_valid_timer_t            _r54;
+        _v_dac1_min_limit_t                 _r55;
+        _v_dac1_max_limit_t                 _r56;
+        _v_dac2_increment_1_t               _r57;
+        _v_dac2_increment_2_hold_limit_t    _r58;
+        _v_dac2_decrement_inc_wait_t        _r59;
+        _v_dac2_increment_hold_threshold_t  _r5A;
+        _v_dac2_fb_valid_timer_t            _r5B;
+        _v_dac2_min_limit_t                 _r5C;
+        _v_dac2_max_limit_t                 _r5D;
+        _v_dac3_increment_1_t               _r5E;
+        _v_dac3_increment_2_hold_limit_t    _r5F;
+        _v_dac3_decrement_inc_wait_t        _r60;
+        _v_dac3_increment_hold_threshold_t  _r61;
+        _v_dac3_fb_valid_timer_t            _r62;
+        _v_dac3_min_limit_t                 _r63;
+        _v_dac3_max_limit_t                 _r64;
+        _v_osc_fll_man_a1_t                 _r65;
+        _v_osc_fll_man_a2_t                 _r66;
+        _v_osc_fll_man_b1_t                 _r67;
+        _v_osc_fll_man_b2_t                 _r68;
+        _v_global_write_data_t              _r69;
+        _v_global_fault_read_data1_t        _r6A;   /* Read-only */
+        _v_global_fault_read_data2_t        _r6B;   /* Read-only */
+        _v_global_fault_read_data3_t        _r6C;   /* Read-only */
+        _v_global_fault_read_data4_t        _r6D;   /* Read-only */
+        _v_global_fault_read_data5_t        _r6E;   /* Read-only */
+        _v_global_fault_read_data6_t        _r6F;   /* Read-only */
     }reg;
 }_xcr_group1_regs_t;
 
@@ -2500,7 +2500,7 @@ static const char* xcr_grp1_regs_str[XCR_GRP1_MAX] =
     "GLOBAL FAULT READ DATA6",
 };
 
-typedef union _xcr_otp_control_regs
+typedef union tag_XCR_OTP_CONTROL_REGS
 {
     uint16_t ALL[XCR_OTP_MAX];
     struct
@@ -2515,7 +2515,6 @@ typedef union _xcr_otp_control_regs
         _v_mirror3_t            _rF7;
         _v_mirror4_t            _rF8;
         _v_mirror5_t            _rF9;
-
         _v_gate_control_t       _rFA;
         _v_gate1_offset_t       _rFB;
         _v_gate2_offset_t       _rFC;
@@ -2537,7 +2536,6 @@ static const char* xcr_otp_control_regs_str[XCR_GRP2_MAX] =
     "OTP_MIRROR3",
     "OTP_MIRROR4",
     "OTP_MIRROR5",
-
     "GATE_CONTROL",
     "GATE1_OFFSET",
     "GATE2_OFFSET",
@@ -2546,30 +2544,31 @@ static const char* xcr_otp_control_regs_str[XCR_GRP2_MAX] =
     "SV_VAR_CONTROL2",
 };
 
-typedef union _xcr_Group2_regs
+typedef union tag_XCR_GROUP2_REGS
 {
     uint16_t ALL[XCR_GRP2_MAX];
     struct
     {
-        _v_dac1_fb_valid_cnt_t                      _r00;   /* Read-only */
-        _v_dac1_inc_hold_wait_cnt_t                 _r01;   /* Read-only */
-        _v_1r2_t                                    _r02;   /* Read-only */
-        _v_soa1_n1_n11_t                            _r03;
-        _v_soa1_p2_p1_t                             _r04;
-        _v_soa1_p3_p2_t                             _r05;
-        _v_dac2_fb_valid_cnt_t                      _r06;   /* Read-only */
-        _v_dac2_inc_hold_wait_cnt_t                 _r07;   /* Read-only */
-        _v_2r2_t                                    _r08;   /* Read-only */
-        _v_soa2_n1_n11_t                            _r09;
-        _v_soa2_p2_p1_t                             _r0A;
-        _v_soa2_p3_p2_t                             _r0B;
-        _v_dac3_fb_valid_cnt_t                      _r0C;   /* Read-only */
-        _v_dac3_inc_hold_wait_cnt_t                 _r0D;   /* Read-only */
-        _v_3r2_t                                    _r0E;   /* Read-only */
-        _v_soa3_n1_n11_t                            _r0F;
-        _v_soa3_p2_p1_t                             _r10;
-        _v_soa3_p3_p2_t                             _r11;
-        _v_ana_test_t                               _r12;
+        _v_dac1_fb_valid_cnt_t      _r00;   /* Read-only */
+        _v_dac1_inc_hold_wait_cnt_t _r01;   /* Read-only */
+        _v_1r2_t                    _r02;   /* Read-only */
+        _v_soa1_n1_n11_t            _r03;
+        _v_soa1_p2_p1_t             _r04;
+        _v_soa1_p3_p2_t             _r05;
+        _v_dac2_fb_valid_cnt_t      _r06;   /* Read-only */
+        _v_dac2_inc_hold_wait_cnt_t _r07;   /* Read-only */
+        _v_2r2_t                    _r08;   /* Read-only */
+        _v_soa2_n1_n11_t            _r09;
+        _v_soa2_p2_p1_t             _r0A;
+        _v_soa2_p3_p2_t             _r0B;
+        _v_dac3_fb_valid_cnt_t      _r0C;   /* Read-only */
+        _v_dac3_inc_hold_wait_cnt_t _r0D;   /* Read-only */
+        _v_3r2_t                    _r0E;   /* Read-only */
+        _v_soa3_n1_n11_t            _r0F;
+
+        _v_soa3_p2_p1_t             _r10;
+        _v_soa3_p3_p2_t             _r11;
+        _v_ana_test_t               _r12;
     }reg;
 }_xcr_group2_regs_t;
 
@@ -2601,4 +2600,3 @@ static const char* xcr_grp2_regs_str[XCR_GRP2_MAX] =
 #endif
 
 #endif	/* _XCR_STRUCT_H_ */
-
