@@ -21,16 +21,20 @@
 #define SVSYNC_GREEN_FREQ       (6400U)
 #define SVSYNC_BLUE_FREQ        (9600U)
 
-typedef struct tag_XD_RW_INFO
+typedef struct tag_RW_INFO
 {
-    uint16_t xd_rw_addr;
-    uint16_t xd_rw_data;
-    bool xd_rw_flag;
-} xd_rw_info_t;
+    uint16_t rw_addr;
+    uint16_t rw_data;
+    bool read_flag;
+    bool write_flag;
+    uint8_t addr_type;
+} rw_info_t;
 
 static bool gb_vsync_out_running;
-static xd_rw_info_t gt_xd_read_info;
-static xd_rw_info_t gt_xd_write_info;
+
+static bool gb_x_rw_flag;
+static rw_info_t gt_xd_rw_info;
+static rw_info_t gt_xc_rw_info;
 
 static bool gb_vsync_out_flag;
 static float gf_vsync_out_freq;
@@ -42,8 +46,13 @@ static float gf_svsync_sub_blue_freq;
 static uint32_t gn_svsync_sub_blue_period;
 static uint32_t gn_svsync_sub_duty;
 
-static bool gb_xcr_ldim_block_conversion_flag;
-static uint16_t gn_xcr_ldim_block_conversion_index;
+static bool gb_ldim_blk_xform_flag;
+static uint16_t gn_ldim_blk_xform_idx;
+
+static void tim_read_xd(void);
+static void tim_write_xd(void);
+static void tim_read_xc(void);
+static void tim_write_xc(void);
 
 static inline void tim_update_vsync_out_freq(void)
 {
@@ -192,40 +201,34 @@ void tim_vsync_out_process(void)
 {
     if(true == gb_vsync_out_flag)
     {
-        gn_xcr_ldim_block_conversion_index = 0U;
-        gb_xcr_ldim_block_conversion_flag = true;
+        gn_ldim_blk_xform_idx = 0U;
+        gb_ldim_blk_xform_flag = true;
         gb_vsync_out_flag = false;
     }
 
-    if(true == gb_xcr_ldim_block_conversion_flag)
+    if(true == gb_ldim_blk_xform_flag)
     {
-        block_color_t* p_block_color_table = ldim_get_block_color_buffer();
-        ldim_conversion_block_to_ldim(gn_xcr_ldim_block_conversion_index, \
-            p_block_color_table[gn_xcr_ldim_block_conversion_index].r, \
-            p_block_color_table[gn_xcr_ldim_block_conversion_index].g, \
-            p_block_color_table[gn_xcr_ldim_block_conversion_index].b);
-        ++gn_xcr_ldim_block_conversion_index;
-        if(LDIM_BLK_SIZE == gn_xcr_ldim_block_conversion_index)
+        block_color_t* p_blk_color_tbl = ldim_get_block_color_buffer();
+        ldim_conversion_block_to_ldim(gn_ldim_blk_xform_idx, p_blk_color_tbl[gn_ldim_blk_xform_idx].r, p_blk_color_tbl[gn_ldim_blk_xform_idx].g, p_blk_color_tbl[gn_ldim_blk_xform_idx].b);
+        ++gn_ldim_blk_xform_idx;
+        if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
         {
             xdr12_ld_transfer();
-            gb_xcr_ldim_block_conversion_flag = false;
-            gn_xcr_ldim_block_conversion_index = 0U;
+            gb_ldim_blk_xform_flag = false;
+            gn_ldim_blk_xform_idx = 0U;
+            gb_x_rw_flag = true;
         }
     }
 
-    if (true == gt_xd_read_info.xd_rw_flag)
+    if(true == gb_x_rw_flag)
     {
-        gt_xd_read_info.xd_rw_data = xdr12_read_by_type(gt_xd_read_info.xd_rw_addr, XD12R_ADDR_TYPE_GENERAL);
-        comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", gt_xd_read_info.xd_rw_addr, gt_xd_read_info.xd_rw_data);
-        comm_UART_Printf(LOG_LV_INFO, "\n\rJIG> \0");
-        gt_xd_read_info.xd_rw_flag = false;
-    }
+        tim_read_xd();
+        tim_write_xd();
 
-    if (true == gt_xd_write_info.xd_rw_flag)
-    {
-        xdr12_write_by_type(gt_xd_write_info.xd_rw_addr, gt_xd_write_info.xd_rw_data, XD12R_ADDR_TYPE_GENERAL);
-        comm_UART_Printf(LOG_LV_INFO, "\n\rJIG> \0");
-        gt_xd_write_info.xd_rw_flag = false;
+        tim_read_xc();
+        tim_write_xc();
+
+        gb_x_rw_flag = false;
     }
 }
 
@@ -239,15 +242,167 @@ bool tim_get_vsync_out_running_flag(void)
     return gb_vsync_out_running;
 }
 
-void tim_set_xd_read_in_vsync(uint16_t addr)
+static void tim_read_xd(void)
 {
-    gt_xd_read_info.xd_rw_addr = addr;
-    gt_xd_read_info.xd_rw_flag = true;
+    if (true == gt_xd_rw_info.read_flag)
+    {
+        DEBUG_HI();
+        switch (gt_xd_rw_info.addr_type)
+        {
+            case XD12R_ADDR_TYPE_GENERAL:
+            {
+                gt_xd_rw_info.rw_data = xdr12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC General Read --> [ 0x%02X - 0x%03X ]\r\n\n\rJIG> \0", gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data);
+                break;
+            }
+            case XD12R_ADDR_TYPE_MIRROR:
+            {
+                gt_xd_rw_info.rw_data = xdr12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Mirror Read --> [ 0x%02X - 0x%03X ]\r\n\n\rJIG> \0", gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data);
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(gt_xd_rw_info.addr_type);
+                break;
+            }
+        }
+        gt_xd_rw_info.read_flag = false;
+        DEBUG_LO();
+    }
 }
 
-void tim_set_xd_write_in_vsync(uint16_t addr, uint16_t data)
+static void tim_write_xd(void)
 {
-    gt_xd_write_info.xd_rw_addr = addr;
-    gt_xd_write_info.xd_rw_data = data;
-    gt_xd_write_info.xd_rw_flag = true;
+    if (true == gt_xd_rw_info.write_flag)
+    {
+        DEBUG_HI();
+        switch (gt_xd_rw_info.addr_type)
+        {
+            case XD12R_ADDR_TYPE_GENERAL:
+            {
+                xdr12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
+                break;
+            }
+            case XD12R_ADDR_TYPE_MIRROR:
+            {
+                xdr12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(gt_xd_rw_info.addr_type);
+                break;
+            }
+        }
+        gt_xd_rw_info.write_flag = false;
+        DEBUG_LO();
+    }
+}
+
+static void tim_read_xc(void)
+{
+    if (true == gt_xc_rw_info.read_flag)
+    {
+        DEBUG_HI();
+        switch (gt_xc_rw_info.addr_type)
+        {
+            case XCR_RW_GRP1:
+            {
+                if (gt_xc_rw_info.rw_addr < XCR_OTP_BASE_ADDR)
+                {
+                    gt_xc_rw_info.rw_data = xcr24_read_grp1_reg(gt_xc_rw_info.rw_addr, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                }
+                else
+                {
+                    gt_xc_rw_info.rw_data = xcr24_read_otp_control(gt_xc_rw_info.rw_addr - XCR_OTP_BASE_ADDR, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR OTP Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                }
+                break;
+            }
+            case XCR_RW_GRP2:
+            {
+                gt_xc_rw_info.rw_data = xcr24_read_grp2_reg(gt_xc_rw_info.rw_addr, 1U);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(gt_xc_rw_info.addr_type);
+                break;
+            }
+        }
+        gt_xc_rw_info.read_flag = false;
+        DEBUG_LO();
+    }
+}
+
+static void tim_write_xc(void)
+{
+    if (true == gt_xc_rw_info.write_flag)
+    {
+        DEBUG_HI();
+        switch (gt_xc_rw_info.addr_type)
+        {
+            case XCR_RW_GRP1:
+            {
+                if (gt_xc_rw_info.rw_addr < XCR_OTP_BASE_ADDR)
+                {
+                    xcr24_write_grp1_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
+                }
+                else
+                {
+                    xcr24_write_otp_control(gt_xc_rw_info.rw_addr - XCR_OTP_BASE_ADDR, &gt_xc_rw_info.rw_data, 1U);
+                }
+                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
+                break;
+            }
+            case XCR_RW_GRP2:
+            {
+                xcr24_write_grp2_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
+                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(gt_xc_rw_info.addr_type);
+                break;
+            }
+        }
+        gt_xc_rw_info.write_flag = false;
+        DEBUG_LO();
+    }
+}
+
+void tim_set_xd_read_info(uint16_t addr, uint8_t addr_type)
+{
+    gt_xd_rw_info.rw_addr = addr;
+    gt_xd_rw_info.read_flag = true;
+    gt_xd_rw_info.addr_type = addr_type;
+}
+
+void tim_set_xd_write_info(uint16_t addr, uint16_t data, uint8_t addr_type)
+{
+    gt_xd_rw_info.rw_addr = addr;
+    gt_xd_rw_info.rw_data = data;
+    gt_xd_rw_info.write_flag = true;
+    gt_xd_rw_info.addr_type = addr_type;
+}
+
+void tim_set_xc_read_info(uint16_t addr, uint8_t addr_type)
+{
+    gt_xc_rw_info.rw_addr = addr;
+    gt_xc_rw_info.read_flag = true;
+    gt_xc_rw_info.addr_type = addr_type;
+}
+
+void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type)
+{
+    gt_xc_rw_info.rw_addr = addr;
+    gt_xc_rw_info.rw_data = data;
+    gt_xc_rw_info.write_flag = true;
+    gt_xc_rw_info.addr_type = addr_type;
 }

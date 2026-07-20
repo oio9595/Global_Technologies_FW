@@ -30,8 +30,11 @@ void tim_vsync_out_process(void);
 void tim_set_vsync_out_running_flag(bool running);
 bool tim_get_vsync_out_running_flag(void);
 
-void tim_set_xd_read_in_vsync(uint16_t addr);
-void tim_set_xd_write_in_vsync(uint16_t addr, uint16_t data);
+void tim_set_xd_read_info(uint16_t addr, uint8_t addr_type);
+void tim_set_xd_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
+
+void tim_set_xc_read_info(uint16_t addr, uint8_t addr_type);
+void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
 
 #ifdef __cplusplus
 }
