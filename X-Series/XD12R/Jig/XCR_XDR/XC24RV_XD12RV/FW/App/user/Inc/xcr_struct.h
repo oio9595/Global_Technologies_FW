@@ -325,27 +325,26 @@ typedef enum _xcr_addr_otp_
 
 typedef enum _xcr_addr_grp2_
 {
-    XCR_GRP2_DAC1_FB_VALID_CNT = 0U,/*0x00*/
-    XCR_GRP2_DAC1_INC_HOLD_WAIT_CNT,/*0x01*/
-    XCR_GRP2_1R2,/*0x02*/
-    XCR_GRP2_SOA1_N1_N11,/*0x03*/
-    XCR_GRP2_SOA1_P2_P1,/*0x04*/
-    XCR_GRP2_SOA1_P3_P2,/*0x05*/
-    XCR_GRP2_DAC2_FB_VALID_CNT,/*0x06*/
-    XCR_GRP2_DAC2_INC_HOLD_WAIT_CNT,/*0x07*/
-    XCR_GRP2_2R2,/*0x08*/
-    XCR_GRP2_SOA2_N1_N11,/*0x09*/
-    XCR_GRP2_SOA2_P2_P1,/*0x0A*/
-    XCR_GRP2_SOA2_P3_P2,/*0x0B*/
-    XCR_GRP2_DAC3_FB_VALID_CNT,/*0x0C*/
-    XCR_GRP2_DAC3_INC_HOLD_WAIT_CNT,/*0x0D*/
-    XCR_GRP2_3R2,/*0x0E*/
-    XCR_GRP2_SOA3_N1_N11,/*0x0F*/
-    XCR_GRP2_SOA3_P2_P1,/*0x10*/
-    XCR_GRP2_SOA3_P3_P2,/*0x11*/
-    XCR_GRP2_ANA_TEST,/*0x12*/
-
-    XCR_GRP2_MAX,
+    XCR_GRP2_DAC1_FB_VALID_CNT = 0U,    /*0x00*/
+    XCR_GRP2_DAC1_INC_HOLD_WAIT_CNT,    /*0x01*/
+    XCR_GRP2_1R2,                       /*0x02*/
+    XCR_GRP2_SOA1_N1_N11,               /*0x03*/
+    XCR_GRP2_SOA1_P2_P1,                /*0x04*/
+    XCR_GRP2_SOA1_P3_P2,                /*0x05*/
+    XCR_GRP2_DAC2_FB_VALID_CNT,         /*0x06*/
+    XCR_GRP2_DAC2_INC_HOLD_WAIT_CNT,    /*0x07*/
+    XCR_GRP2_2R2,                       /*0x08*/
+    XCR_GRP2_SOA2_N1_N11,               /*0x09*/
+    XCR_GRP2_SOA2_P2_P1,                /*0x0A*/
+    XCR_GRP2_SOA2_P3_P2,                /*0x0B*/
+    XCR_GRP2_DAC3_FB_VALID_CNT,         /*0x0C*/
+    XCR_GRP2_DAC3_INC_HOLD_WAIT_CNT,    /*0x0D*/
+    XCR_GRP2_3R2,                       /*0x0E*/
+    XCR_GRP2_SOA3_N1_N11,               /*0x0F*/
+    XCR_GRP2_SOA3_P2_P1,                /*0x10*/
+    XCR_GRP2_SOA3_P3_P2,                /*0x11*/
+    XCR_GRP2_ANA_TEST,                  /*0x12*/
+    XCR_GRP2_MAX,                       /*0x13*/
 }xcr_addr_grp2_t;
 
 /* Command packet format */
@@ -354,9 +353,9 @@ typedef union tag_CMD
     uint16_t ALL;
     struct
     {
-        __IO uint16_t size   :  6;   /* BURST SIZE : Amount of data to transfer or receive */
-        __IO uint16_t addr   :  8;   /* START ADDRESS : The start address of registers to access */
-        __IO uint16_t code   :  2;   /* COMMAND CODE : */
+        __IO uint16_t size  : 6;    /* BURST SIZE : Amount of data to transfer or receive */
+        __IO uint16_t addr  : 8;    /* START ADDRESS : The start address of registers to access */
+        __IO uint16_t code  : 2;    /* COMMAND CODE : */
     }bit;
 }_cmd_t;
 
@@ -366,7 +365,7 @@ typedef union tag_DUMMY
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dummy  : 16;   /* for unused address */
+        __IO uint16_t dummy : 16;   /* for unused address */
     }bit;
 }_v_dummy_t;
 
@@ -376,13 +375,13 @@ typedef union tag_RESET
     uint16_t ALL;
     struct
     {
-        __IO uint16_t rst1           : 1;    /* rst1 */
-        __IO uint16_t rst2           : 1;    /* rst2 */
-        __IO uint16_t rst3           : 1;    /* rst3 */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t vsync_rst_en1  : 1;    /* vsync_rst_en1 */
-        __IO uint16_t vsync_rst_en2  : 1;    /* vsync_rst_en2 */
-        uint16_t                : 10;   /* reserved */
+        __IO uint16_t rst1          :  1;   /* rst1 */
+        __IO uint16_t rst2          :  1;   /* rst2 */
+        __IO uint16_t rst3          :  1;   /* rst3 */
+        uint16_t                    :  1;   /* reserved */
+        __IO uint16_t vsync_rst_en1 :  1;   /* vsync_rst_en1 */
+        __IO uint16_t vsync_rst_en2 :  1;   /* vsync_rst_en2 */
+        uint16_t                    : 10;   /* reserved */
     }bit;
 }_v_reset_t;
 
@@ -392,9 +391,9 @@ typedef union tag_GLOBAL_WRITE_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t addr           : 6;    /* addr [5:0] */
+        __IO uint16_t addr      : 6;    /* addr [5:0] */
         uint16_t                : 9;    /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    : 1;    /* enable */
     }bit;
 }_v_global_write_command_t;
 
@@ -404,11 +403,11 @@ typedef union tag_LOCAL_WRITE_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t addr           : 6;    /* addr [5:0] */
+        __IO uint16_t addr      : 6;    /* addr [5:0] */
         uint16_t                : 2;    /* reserved */
-        __IO uint16_t ch_seg         : 2;    /* ch_seg[1:0] */
+        __IO uint16_t ch_seg    : 2;    /* ch_seg[1:0] */
         uint16_t                : 5;    /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    : 1;    /* enable */
     }bit;
 }_v_local_write_command_t;
 
@@ -418,11 +417,11 @@ typedef union tag_LOCAL_READ_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t addr           : 6;    /* addr [5:0] */
+        __IO uint16_t addr      : 6;    /* addr [5:0] */
         uint16_t                : 2;    /* reserved */
-        __IO uint16_t ch_seg         : 2;    /* ch_seg[1:0] */
+        __IO uint16_t ch_seg    : 2;    /* ch_seg[1:0] */
         uint16_t                : 5;    /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    : 1;    /* enable */
     }bit;
 }_v_local_read_command_t;
 
@@ -433,7 +432,7 @@ typedef union tag_ID_GEN_COMMAND
     struct
     {
         uint16_t                : 15;   /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    :  1;   /* enable */
     }bit;
 }_v_id_gen_command_t;
 
@@ -443,9 +442,9 @@ typedef union tag_FAULT_READ_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ft_mode        : 2;    /* ft_mode [1:0] - 0 : fault data = {thermal, short, open, fb1}, 1 : fault data = {fault, fb3, fb2, fb1}, wherein fault= thermal || short || open, 2 : fault data = {fault, open, fb2, fb1}, wherein fault= thermal || short, 3 : nop  */
+        __IO uint16_t ft_mode   :  2;   /* ft_mode [1:0] - 0 : fault data = {thermal, short, open, fb1}, 1 : fault data = {fault, fb3, fb2, fb1}, wherein fault= thermal || short || open, 2 : fault data = {fault, open, fb2, fb1}, wherein fault= thermal || short, 3 : nop  */
         uint16_t                : 13;   /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    :  1;   /* enable */
     }bit;
 }_v_fault_read_command_t;
 
@@ -455,9 +454,9 @@ typedef union tag_LD_TRANSFER_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ld_type         : 3;    /* ld#_blk [2:0] - total ld transmit/dev = ld_type * daisied_dev_ch_size */
+        __IO uint16_t ld_type   :  3;   /* ld#_blk [2:0] - total ld transmit/dev = ld_type * daisied_dev_ch_size */
         uint16_t                : 12;   /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    :  1;   /* enable */
     }bit;
 }_v_ld_transfer_command_t;
 
@@ -467,9 +466,9 @@ typedef union tag_SYNC_GEN_COMMAND
     uint16_t ALL;
     struct
     {
-        __IO uint16_t syncmode       : 2;    /* syncmode [1:0], 00 = nop, 01 = (cmd + svo), 10 = (vo + svo), 11 = (rso + cmd) for xdd */
+        __IO uint16_t syncmode  :  2;   /* syncmode [1:0], 00 = nop, 01 = (cmd + svo), 10 = (vo + svo), 11 = (rso + cmd) for xdd */
         uint16_t                : 13;   /* reserved */
-        __IO uint16_t enable         : 1;    /* enable */
+        __IO uint16_t enable    :  1;   /* enable */
     }bit;
 }_v_sync_gen_command_t;
 
@@ -479,10 +478,12 @@ typedef union tag_COMMAND_AUTO_ENABLE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t sync_auto_en   : 1;    /* sync auto_en */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t fault_auto_en  : 1;    /* fault auto_en */
-        uint16_t                : 11;   /* reserved */
+        __IO uint16_t sync_auto_en  : 1;    /* sync auto_en */
+        uint16_t                    : 3;    /* reserved */
+        __IO uint16_t fault_auto_en : 1;    /* fault auto_en */
+        uint16_t                    : 3;    /* reserved */
+        __IO uint16_t timeout_en    : 1;    /* timeout enable */
+        uint16_t                    : 7;    /* reserved */
     }bit;
 }_v_command_auto_enable_t;
 
@@ -493,7 +494,7 @@ typedef union tag_LD_WRITE_POINTER
     struct
     {
         __I uint16_t ld_wr_pointer  : 9;    /* ld_wr_pointer [8:0] */
-        uint16_t                : 7;    /* reserved */
+        uint16_t                    : 7;    /* reserved */
     }bit;
 }_v_ld_write_pointer_t;
 
@@ -504,7 +505,7 @@ typedef union tag_LD_READ_POINTER
     struct
     {
         __I uint16_t ld_rd_pointer  : 9;    /* ld_rd_pointer [8:0] */
-        uint16_t                : 7;    /* reserved */
+        uint16_t                    : 7;    /* reserved */
     }bit;
 }_v_ld_read_pointer_t;
 
@@ -514,8 +515,8 @@ typedef union tag_LD_DIFFERENCE_POINTER
     uint16_t ALL;
     struct
     {
-        __I uint16_t ld_diff_pointer : 6;    /* ld_diff_pointer [5:0] */
-        uint16_t                 : 10;   /* reserved */
+        __I uint16_t ld_diff_pointer    :  6;   /* ld_diff_pointer [5:0] */
+        uint16_t                        : 10;   /* reserved */
     }bit;
 }_v_ld_difference_pointer_t;
 
@@ -525,11 +526,11 @@ typedef union tag_LD_START_POINTER_TH
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ld_diff_threshold          : 6;    /* ld_diff_threshold [5:0] */
-        uint16_t                            : 1;    /* reserved */
-        __IO uint16_t int_ld_sign                : 1;    /* int_ld_sign */
-        __IO uint16_t ld_transfer_start_pointer  : 6;    /* ld_transfer_start_pointer [5:0] */
-        uint16_t                            : 2;    /* reserved */
+        __IO uint16_t ld_diff_threshold         : 6;    /* ld_diff_threshold [5:0] */
+        uint16_t                                : 1;    /* reserved */
+        __IO uint16_t int_ld_sign               : 1;    /* int_ld_sign */
+        __IO uint16_t ld_transfer_start_pointer : 6;    /* ld_transfer_start_pointer [5:0] */
+        uint16_t                                : 2;    /* reserved */
     }bit;
 }_v_ld_start_pointer_th_t;
 
@@ -539,10 +540,10 @@ typedef union tag_LOCAL_WRITE_TRANSFER_POINTER
     uint16_t ALL;
     struct
     {
-        __I uint16_t local_wr_transfer_write_pointer : 6;   /* local_wr_transfer_write_pointer [5:0] */
-        uint16_t                                 : 2;   /* reserved */
-        __I uint16_t local_wr_transfer_read_pointer  : 6;   /* local_wr_transfer_read_pointer [5:0] */
-        uint16_t                                 : 2;   /* reserved */
+        __I uint16_t local_wr_transfer_write_pointer    : 6;    /* local_wr_transfer_write_pointer [5:0] */
+        uint16_t                                        : 2;    /* reserved */
+        __I uint16_t local_wr_transfer_read_pointer     : 6;    /* local_wr_transfer_read_pointer [5:0] */
+        uint16_t                                        : 2;    /* reserved */
     }bit;
 }_v_local_write_transfer_pointer_t;
 
@@ -553,9 +554,9 @@ typedef union tag_LOCAL_READ_RECEIVE_POINTER
     struct
     {
         __I uint16_t local_rd_receive_write_pointer : 6;    /* local_rd_receive_write_pointer [5:0] */
-        uint16_t                                : 2;    /* reserved */
+        uint16_t                                    : 2;    /* reserved */
         __I uint16_t local_rd_receive_read_pointer  : 6;    /* local_rd_receive_read_pointer [5:0] */
-        uint16_t                                : 2;    /* reserved */
+        uint16_t                                    : 2;    /* reserved */
     }bit;
 }_v_local_read_receive_pointer_t;
 
@@ -566,9 +567,9 @@ typedef union tag_LOCAL_RW_DIFFERENCE_POINTER
     struct
     {
         __I uint16_t local_wr_transfer_diff_pointer : 6;    /* local_wr_transfer_diff_pointer [5:0] */
-        uint16_t                                : 2;    /* reserved */
+        uint16_t                                    : 2;    /* reserved */
         __I uint16_t local_rd_receive_diff_pointer  : 6;    /* local_rd_receive_diff_pointer [5:0] */
-        uint16_t                                : 2;    /* reserved */
+        uint16_t                                    : 2;    /* reserved */
     }bit;
 }_v_local_rw_difference_pointer_t;
 
@@ -578,10 +579,10 @@ typedef union tag_LOCAL_RW_POINTER_RESET
     uint16_t ALL;
     struct
     {
-        __IO uint16_t local_transfer_pointer_rst : 1;    /* local_transfer_pointer_rst */
-        uint16_t                            : 7;    /* reserved */
-        __IO uint16_t local_receive_pointer_rst  : 1;    /* local_receive_pointer_rst */
-        uint16_t                            : 7;    /* reserved */
+        __IO uint16_t local_transfer_pointer_rst    : 1;    /* local_transfer_pointer_rst */
+        uint16_t                                    : 7;    /* reserved */
+        __IO uint16_t local_receive_pointer_rst     : 1;    /* local_receive_pointer_rst */
+        uint16_t                                    : 7;    /* reserved */
     }bit;
 }_v_local_rw_pointer_reset_t;
 
@@ -591,7 +592,7 @@ typedef union tag_FAULT_AUTO_READ_INTERVAL
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fault_auto_rd_interval : 16;    /* fault_auto_rd_interval [15:0] */
+        __IO uint16_t fault_auto_rd_interval    : 16;   /* fault_auto_rd_interval [15:0] */
     }bit;
 }_v_fault_auto_read_interval_t;
 
@@ -601,9 +602,9 @@ typedef union tag_FAULT_AUTO_READ_EVENT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fault_auto_rd_interval    : 1; /* fault_auto_rd_interval [16] */
-        uint16_t                           : 7; /* reserved */
-        __IO uint16_t fault_auto_rd_timer_event : 8; /* fault_auto_rd_timer_event [7:0] */
+        __IO uint16_t fault_auto_rd_interval    : 1;    /* fault_auto_rd_interval [16] */
+        uint16_t                                : 7;    /* reserved */
+        __IO uint16_t fault_auto_rd_timer_event : 8;    /* fault_auto_rd_timer_event [7:0] */
     }bit;
 }_v_fault_auto_read_event_t;
 
@@ -613,22 +614,22 @@ typedef union tag_INTERRUPT_ENABLE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t int_fb_en      : 1;     /* int_fb_en */
-        __IO uint16_t int_open_en    : 1;     /* int_open_en */
-        __IO uint16_t int_short_en   : 1;     /* int_short_en */
-        __IO uint16_t int_thermal_en : 1;     /* int_thermal_en */
-        __IO uint16_t int_ld_en      : 1;     /* int_ld_en */
-        __IO uint16_t int_rd_rec_fail_en : 1;     /* int_rd_rec_fail_en */
-        __IO uint16_t int_fault_auto_rec_fail_en : 1;     /* int_fault_auto_rec_fail_en */
-        __IO uint16_t int_fault_rec_fail_en : 1;     /* int_fault_rec_fail_en */
-        __IO uint16_t int_timeout_err_en : 1;     /* int_timeout_err_en */
-        __IO uint16_t int_spi_pc_en  : 1;     /* int_spi_pc_en */
-        __IO uint16_t int_acc_cnt_err_en : 1;     /* int_acc_cnt_err_en */
-        __IO uint16_t int_cmd_pc_en  : 1;     /* int_cmd_pc_en */
-        __IO uint16_t int_uv15_en    : 1;     /* int_uv15_en */
-        __IO uint16_t int_ov15_en    : 1;     /* int_ov15_en */
-        __IO uint16_t int_uv50_en    : 1;     /* int_uv50_en */
-        __IO uint16_t int_ov50_en    : 1;     /* int_ov50_en */
+        __IO uint16_t int_fb_en                     : 1;    /* int_fb_en */
+        __IO uint16_t int_open_en                   : 1;    /* int_open_en */
+        __IO uint16_t int_short_en                  : 1;    /* int_short_en */
+        __IO uint16_t int_thermal_en                : 1;    /* int_thermal_en */
+        __IO uint16_t int_ld_en                     : 1;    /* int_ld_en */
+        __IO uint16_t int_rd_rec_fail_en            : 1;    /* int_rd_rec_fail_en */
+        __IO uint16_t int_fault_auto_rec_fail_en    : 1;    /* int_fault_auto_rec_fail_en */
+        __IO uint16_t int_fault_rec_fail_en         : 1;    /* int_fault_rec_fail_en */
+        __IO uint16_t int_timeout_err_en            : 1;    /* int_timeout_err_en */
+        __IO uint16_t int_spi_pc_en                 : 1;    /* int_spi_pc_en */
+        __IO uint16_t int_acc_cnt_err_en            : 1;    /* int_acc_cnt_err_en */
+        __IO uint16_t int_cmd_pc_en                 : 1;    /* int_cmd_pc_en */
+        __IO uint16_t int_uv15_en                   : 1;    /* int_uv15_en */
+        __IO uint16_t int_ov15_en                   : 1;    /* int_ov15_en */
+        __IO uint16_t int_uv50_en                   : 1;    /* int_uv50_en */
+        __IO uint16_t int_ov50_en                   : 1;    /* int_ov50_en */
     }bit;
 }_v_interrupt_enable_t;
 
@@ -638,22 +639,22 @@ typedef union tag_COMMAND_STATUS_1
     uint16_t ALL;
     struct
     {
-        __I uint16_t sync_doing     : 1;     /* sync_doing */
-        __I uint16_t sync_done      : 1;     /* sync_done */
-        __I uint16_t sync_auto_doing : 1;     /* sync_auto_doing */
-        __I uint16_t sync_auto_done : 1;     /* sync_auto_done */
-        __I uint16_t fault_auto_doing : 1;     /* fault_auto_doing */
-        __I uint16_t fault_auto_done : 1;     /* fault_auto_done */
-        __I uint16_t fault_doing    : 1;     /* fault_doing */
-        __I uint16_t fault_done     : 1;     /* fault_done */
-        __I uint16_t ld_doing       : 1;     /* ld_doing */
-        __I uint16_t ld_done        : 1;     /* ld_done */
-        __I uint16_t glbl_w_doing   : 1;     /* glbl_w_doing */
-        __I uint16_t glbl_w_done    : 1;     /* glbl_w_done */
-        __I uint16_t local_w_doing  : 1;     /* local_w_doing */
-        __I uint16_t local_w_done   : 1;     /* local_w_done */
-        __I uint16_t local_r_doing  : 1;     /* local_r_doing */
-        __I uint16_t local_r_done   : 1;     /* local_r_done */
+        __I uint16_t sync_doing         : 1;    /* sync_doing */
+        __I uint16_t sync_done          : 1;    /* sync_done */
+        __I uint16_t sync_auto_doing    : 1;    /* sync_auto_doing */
+        __I uint16_t sync_auto_done     : 1;    /* sync_auto_done */
+        __I uint16_t fault_auto_doing   : 1;    /* fault_auto_doing */
+        __I uint16_t fault_auto_done    : 1;    /* fault_auto_done */
+        __I uint16_t fault_doing        : 1;    /* fault_doing */
+        __I uint16_t fault_done         : 1;    /* fault_done */
+        __I uint16_t ld_doing           : 1;    /* ld_doing */
+        __I uint16_t ld_done            : 1;    /* ld_done */
+        __I uint16_t glbl_w_doing       : 1;    /* glbl_w_doing */
+        __I uint16_t glbl_w_done        : 1;    /* glbl_w_done */
+        __I uint16_t local_w_doing      : 1;    /* local_w_doing */
+        __I uint16_t local_w_done       : 1;    /* local_w_done */
+        __I uint16_t local_r_doing      : 1;    /* local_r_doing */
+        __I uint16_t local_r_done       : 1;    /* local_r_done */
     }bit;
 }_v_command_status_1_t;
 
@@ -663,8 +664,8 @@ typedef union tag_COMMAND_STATUS_2
     uint16_t ALL;
     struct
     {
-        __I uint16_t id_doing       : 1;    /* id_doing */
-        __I uint16_t id_done        : 1;    /* id_done */
+        __I uint16_t id_doing   :  1;   /* id_doing */
+        __I uint16_t id_done    :  1;   /* id_done */
         uint16_t                : 14;   /* reserved */
     }bit;
 }_v_command_status_2_t;
@@ -675,19 +676,19 @@ typedef union tag_RECEIVE_STATUS
     uint16_t ALL;
     struct
     {
-        __I uint16_t rd_receive_doing : 1;    /* rd_receive_doing */
-        __I uint16_t rd_receive_done : 1;    /* rd_receive_done */
-        __I uint16_t fault_auto_rec_doing : 1;    /* fault_auto_rec_doing */
-        __I uint16_t fault_auto_rec_done : 1;    /* fault_auto_rec_done */
-        __I uint16_t fault_receive_doing : 1;    /* fault_receive_doing */
-        __I uint16_t fault_receive_done : 1;    /* fault_receive_done */
-        uint16_t                : 2;    /* reserved */
-        __I uint16_t timeout_err    : 1;    /* timeout_err */
-        uint16_t                : 3;    /* reserved */
-        __I uint16_t rd_receive_fail : 1;    /* rd_receive_fail */
-        __I uint16_t fault_auto_rec_fail : 1;    /* fault_auto_rec_fail */
-        __I uint16_t fault_receive_fail : 1;    /* fault_receive_fail */
-        uint16_t                : 1;    /* reserved */
+        __I uint16_t rd_receive_doing       : 1;    /* rd_receive_doing */
+        __I uint16_t rd_receive_done        : 1;    /* rd_receive_done */
+        __I uint16_t fault_auto_rec_doing   : 1;    /* fault_auto_rec_doing */
+        __I uint16_t fault_auto_rec_done    : 1;    /* fault_auto_rec_done */
+        __I uint16_t fault_receive_doing    : 1;    /* fault_receive_doing */
+        __I uint16_t fault_receive_done     : 1;    /* fault_receive_done */
+        uint16_t                            : 2;    /* reserved */
+        __I uint16_t timeout_err            : 1;    /* timeout_err */
+        uint16_t                            : 3;    /* reserved */
+        __I uint16_t rd_receive_fail        : 1;    /* rd_receive_fail */
+        __I uint16_t fault_auto_rec_fail    : 1;    /* fault_auto_rec_fail */
+        __I uint16_t fault_receive_fail     : 1;    /* fault_receive_fail */
+        uint16_t                            : 1;    /* reserved */
     }bit;
 }_v_receive_status_t;
 
@@ -697,21 +698,21 @@ typedef union tag_INTERRUPT_STATUS
     uint16_t ALL;
     struct
     {
-        __I uint16_t int_fault      : 1;    /* int_fault (= nINT_FAULT, OD) */
-        __I uint16_t int_ld         : 1;    /* int_ld (= nINT_LD, OD) */
-        __I uint16_t int_source1    : 1;    /* int_source1 */
-        __I uint16_t int_source2    : 1;    /* int_source2 */
-        __I uint16_t int_source3    : 1;    /* int_source3 */
-        __I uint16_t int_source4    : 1;    /* int_source4 */
-        uint16_t                : 2;    /* reserved */
-        __I uint16_t int_ld_source  : 1;    /* int_ld_source */
-        __I uint16_t int_rd_rec_fail_source         : 1;     /* int_rd_rec_fail_source */
-        __I uint16_t int_fault_auto_rec_fail_source : 1;     /* int_fault_auto_rec_fail_source */
-        __I uint16_t int_fault_rec_fail_source      : 1;     /* int_fault_rec_fail_source */
-        __I uint16_t int_timeout_err_source         : 1;     /* int_timeout_err_source */
-        __I uint16_t int_parity_err_source          : 1;     /* int_parity_err_source */
-        __I uint16_t int_acc_cnt_err_source         : 1;     /* int_acc_cnt_err_source */
-        __I uint16_t int_ovuv_err_source            : 1;     /* int_ovuv_err_source */
+        __I uint16_t int_fault                      : 1;    /* int_fault (= nINT_FAULT, OD) */
+        __I uint16_t int_ld                         : 1;    /* int_ld (= nINT_LD, OD) */
+        __I uint16_t int_source1                    : 1;    /* int_source1 */
+        __I uint16_t int_source2                    : 1;    /* int_source2 */
+        __I uint16_t int_source3                    : 1;    /* int_source3 */
+        __I uint16_t int_source4                    : 1;    /* int_source4 */
+        uint16_t                                    : 2;    /* reserved */
+        __I uint16_t int_ld_source                  : 1;    /* int_ld_source */
+        __I uint16_t int_rd_rec_fail_source         : 1;    /* int_rd_rec_fail_source */
+        __I uint16_t int_fault_auto_rec_fail_source : 1;    /* int_fault_auto_rec_fail_source */
+        __I uint16_t int_fault_rec_fail_source      : 1;    /* int_fault_rec_fail_source */
+        __I uint16_t int_timeout_err_source         : 1;    /* int_timeout_err_source */
+        __I uint16_t int_parity_err_source          : 1;    /* int_parity_err_source */
+        __I uint16_t int_acc_cnt_err_source         : 1;    /* int_acc_cnt_err_source */
+        __I uint16_t int_ovuv_err_source            : 1;    /* int_ovuv_err_source */
     }bit;
 }_v_interrupt_status_t;
 
@@ -721,22 +722,22 @@ typedef union tag_CMD_PARITY_ERR_STATUS1
     uint16_t ALL;
     struct
     {
-        __I uint16_t ch1_par_err    : 1;     /* ch1_par_err */
-        __I uint16_t ch2_par_err    : 1;     /* ch2_par_err */
-        __I uint16_t ch3_par_err    : 1;     /* ch3_par_err */
-        __I uint16_t ch4_par_err    : 1;     /* ch4_par_err */
-        __I uint16_t ch5_par_err    : 1;     /* ch5_par_err */
-        __I uint16_t ch6_par_err    : 1;     /* ch6_par_err */
-        __I uint16_t ch7_par_err    : 1;     /* ch7_par_err */
-        __I uint16_t ch8_par_err    : 1;     /* ch8_par_err */
-        __I uint16_t ch9_par_err    : 1;     /* ch9_par_err */
-        __I uint16_t ch10_par_err   : 1;     /* ch10_par_err */
-        __I uint16_t ch11_par_err   : 1;     /* ch11_par_err */
-        __I uint16_t ch12_par_err   : 1;     /* ch12_par_err */
-        __I uint16_t ch13_par_err   : 1;     /* ch13_par_err */
-        __I uint16_t ch14_par_err   : 1;     /* ch14_par_err */
-        __I uint16_t ch15_par_err   : 1;     /* ch15_par_err */
-        __I uint16_t ch16_par_err   : 1;     /* ch16_par_err */
+        __I uint16_t ch1_par_err    : 1;    /* ch1_par_err */
+        __I uint16_t ch2_par_err    : 1;    /* ch2_par_err */
+        __I uint16_t ch3_par_err    : 1;    /* ch3_par_err */
+        __I uint16_t ch4_par_err    : 1;    /* ch4_par_err */
+        __I uint16_t ch5_par_err    : 1;    /* ch5_par_err */
+        __I uint16_t ch6_par_err    : 1;    /* ch6_par_err */
+        __I uint16_t ch7_par_err    : 1;    /* ch7_par_err */
+        __I uint16_t ch8_par_err    : 1;    /* ch8_par_err */
+        __I uint16_t ch9_par_err    : 1;    /* ch9_par_err */
+        __I uint16_t ch10_par_err   : 1;    /* ch10_par_err */
+        __I uint16_t ch11_par_err   : 1;    /* ch11_par_err */
+        __I uint16_t ch12_par_err   : 1;    /* ch12_par_err */
+        __I uint16_t ch13_par_err   : 1;    /* ch13_par_err */
+        __I uint16_t ch14_par_err   : 1;    /* ch14_par_err */
+        __I uint16_t ch15_par_err   : 1;    /* ch15_par_err */
+        __I uint16_t ch16_par_err   : 1;    /* ch16_par_err */
     }bit;
 }_v_cmd_parity_err_status1_t;
 
@@ -754,7 +755,7 @@ typedef union tag_CMD_PARITY_ERR_STATUS2
         __I uint16_t ch22_par_err   : 1;    /* ch22_par_err */
         __I uint16_t ch23_par_err   : 1;    /* ch23_par_err */
         __I uint16_t ch24_par_err   : 1;    /* ch24_par_err */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    : 4;    /* reserved */
         __I uint16_t uv15_det       : 1;    /* uv15_det */
         __I uint16_t ov15_det       : 1;    /* ov15_det */
         __I uint16_t uv50_det       : 1;    /* uv50_det */
@@ -768,13 +769,13 @@ typedef union tag_SPI_FAULT_STATUS_CONTROL
     uint16_t ALL;
     struct
     {
-        __IO uint16_t spi_parity_err_det_en  : 1;    /* spi_parity_err_det_en '0' disable  '1' enable */
-        __IO uint16_t spi_acc_cnt_err_det_en : 1;    /* spi_acc_cnt_err_det_en '0' disable  '0' enable */
-        uint16_t                        : 2;    /* reserved */
-        __I uint16_t parity_err_status      : 1;    /* parity_err_status */
-        __I uint16_t acc_cnt_err_status     : 1;    /* acc_cnt_err_status */
-        __I uint16_t checksum_status        : 2;    /* checksum_status [1:0] */
-        __IO uint16_t acc_counter            : 8;    /* acc_counter [7:0] */
+        __IO uint16_t spi_parity_err_det_en     : 1;    /* spi_parity_err_det_en '0' disable  '1' enable */
+        __IO uint16_t spi_acc_cnt_err_det_en    : 1;    /* spi_acc_cnt_err_det_en '0' disable  '0' enable */
+        uint16_t                                : 2;    /* reserved */
+        __I uint16_t parity_err_status          : 1;    /* parity_err_status */
+        __I uint16_t acc_cnt_err_status         : 1;    /* acc_cnt_err_status */
+        __I uint16_t checksum_status            : 2;    /* checksum_status [1:0] */
+        __IO uint16_t acc_counter               : 8;    /* acc_counter [7:0] */
     }bit;
 }_v_spi_fault_status_control_t;
 
@@ -784,17 +785,17 @@ typedef union tag_CLK_CONTROL_1
     uint16_t ALL;
     struct
     {
-        uint16_t                        : 1;    /* reserved */
-        __IO uint16_t serializer_skew_en     : 1;    /* serializer_skew_en '0' disable '1' enable */
-        __IO uint16_t osc1_spread_en         : 1;    /* osc1_spread_en '0' disable '1' enable */
-        __IO uint16_t serializer_clk_sel1    : 1;    /* serializer_clk_sel1 '0' osc1 '1' depend on bit8 */
-        __IO uint16_t sprd1_gain             : 3;    /* sprd1_gain [2:0] */
-        uint16_t                        : 1;    /* reserved */
-        __IO uint16_t serializer_clk_sel2    : 1;    /* serializer_clk_sel2 '0' osc2 '1' Ext. clk */
-        uint16_t                        : 2;    /* reserved */
-        __IO uint16_t ld_rd_clk_sel          : 1;    /* ld_rd_clk_sel '0' osc1 '1' depend on bit8 */
-        __IO uint16_t spread1_spd            : 3;    /* spread1_spd [2:0] */
-        uint16_t                        : 1;    /* reserved */
+        uint16_t                            : 1;    /* reserved */
+        __IO uint16_t serializer_skew_en    : 1;    /* serializer_skew_en '0' disable '1' enable */
+        __IO uint16_t osc1_spread_en        : 1;    /* osc1_spread_en '0' disable '1' enable */
+        __IO uint16_t serializer_clk_sel1   : 1;    /* serializer_clk_sel1 '0' osc1 '1' depend on bit8 */
+        __IO uint16_t sprd1_gain            : 3;    /* sprd1_gain [2:0] */
+        uint16_t                            : 1;    /* reserved */
+        __IO uint16_t serializer_clk_sel2   : 1;    /* serializer_clk_sel2 '0' osc2 '1' Ext. clk */
+        uint16_t                            : 2;    /* reserved */
+        __IO uint16_t ld_rd_clk_sel         : 1;    /* ld_rd_clk_sel '0' osc1 '1' depend on bit8 */
+        __IO uint16_t spread1_spd           : 3;    /* spread1_spd [2:0] */
+        uint16_t                            : 1;    /* reserved */
     }bit;
 }_v_clk_control_1_t;
 
@@ -804,14 +805,14 @@ typedef union tag_CLK_CONTROL_2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t mclk_mode      : 1;    /* mclk_mode '0' osc2 (default)  '1' Ext clk (if entered) */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t osc2_spread_en : 1;    /* osc2_spread_en '0' disable '1' enable */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t sprd2_gain     : 3;    /* sprd2_gain [2:0] */
-        uint16_t                : 5;    /* reserved */
-        __IO uint16_t spread2_spd    : 3;    /* spread2_spd [2:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t mclk_mode         : 1;    /* mclk_mode '0' osc2 (default)  '1' Ext clk (if entered) */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t osc2_spread_en    : 1;    /* osc2_spread_en '0' disable '1' enable */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t sprd2_gain        : 3;    /* sprd2_gain [2:0] */
+        uint16_t                        : 5;    /* reserved */
+        __IO uint16_t spread2_spd       : 3;    /* spread2_spd [2:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_clk_control_2_t;
 
@@ -821,10 +822,10 @@ typedef union tag_SERIALIZER_CLOCK_GEN
     uint16_t ALL;
     struct
     {
-        __IO uint16_t serial_clk_high : 7;    /* serial_clk_high [6:0] (default 24ea) */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t serial_clk_low : 7;    /* serial_clk_low [6:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t serial_clk_high   : 7;    /* serial_clk_high [6:0] (default 24ea) */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t serial_clk_low    : 7;    /* serial_clk_low [6:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_serializer_clock_gen_t;
 
@@ -834,8 +835,8 @@ typedef union tag_LATENCY
     uint16_t ALL;
     struct
     {
-        __IO uint16_t cmd_latency    : 8;     /* cmd_latency [7:0] (default 112ea) */
-        __IO uint16_t serial_latency : 8;     /* serial_latency [7:0] (default 192ea) */
+        __IO uint16_t cmd_latency       : 8;    /* cmd_latency [7:0] (default 112ea) */
+        __IO uint16_t serial_latency    : 8;    /* serial_latency [7:0] (default 192ea) */
     }bit;
 }_v_latency_t;
 
@@ -845,7 +846,7 @@ typedef union tag_TIMEOUT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t timeout        : 16;    /* timeout [16:1] (default 3745us) */
+        __IO uint16_t timeout   : 16;   /* timeout [16:1] (default 3745us) */
     }bit;
 }_v_timeout_t;
 
@@ -855,8 +856,8 @@ typedef union tag_DAISIED_DEVICE_CH_SIZE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisied_dev_blk_size   : 5;    /* daisied_dev_blk_size [4:0] */
-        uint16_t                        : 11;   /* reserved */
+        __IO uint16_t daisied_dev_blk_size  :  5;   /* daisied_dev_blk_size [4:0] */
+        uint16_t                            : 11;   /* reserved */
     }bit;
 }_v_daisied_device_ch_size_t;
 
@@ -866,10 +867,10 @@ typedef union tag_DAISY_SIZE_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch1 : 5;    /* daisy_size_ch1[4:0] */
-        __IO uint16_t daisy_size_ch2 : 5;    /* daisy_size_ch2[4:0] */
-        __IO uint16_t daisy_size_ch3 : 5;    /* daisy_size_ch3[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch1    : 5;    /* daisy_size_ch1[4:0] */
+        __IO uint16_t daisy_size_ch2    : 5;    /* daisy_size_ch2[4:0] */
+        __IO uint16_t daisy_size_ch3    : 5;    /* daisy_size_ch3[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_1_t;
 
@@ -879,10 +880,10 @@ typedef union tag_DAISY_SIZE_2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch4 : 5;    /* daisy_size_ch4[4:0] */
-        __IO uint16_t daisy_size_ch5 : 5;    /* daisy_size_ch5[4:0] */
-        __IO uint16_t daisy_size_ch6 : 5;    /* daisy_size_ch6[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch4    : 5;    /* daisy_size_ch4[4:0] */
+        __IO uint16_t daisy_size_ch5    : 5;    /* daisy_size_ch5[4:0] */
+        __IO uint16_t daisy_size_ch6    : 5;    /* daisy_size_ch6[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_2_t;
 
@@ -892,10 +893,10 @@ typedef union tag_DAISY_SIZE_3
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch7 : 5;    /* daisy_size_ch7[4:0] */
-        __IO uint16_t daisy_size_ch8 : 5;    /* daisy_size_ch8[4:0] */
-        __IO uint16_t daisy_size_ch9 : 5;    /* daisy_size_ch9[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch7    : 5;    /* daisy_size_ch7[4:0] */
+        __IO uint16_t daisy_size_ch8    : 5;    /* daisy_size_ch8[4:0] */
+        __IO uint16_t daisy_size_ch9    : 5;    /* daisy_size_ch9[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_3_t;
 
@@ -905,10 +906,10 @@ typedef union tag_DAISY_SIZE_4
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch10 : 5;    /* daisy_size_ch10[4:0] */
-        __IO uint16_t daisy_size_ch11 : 5;    /* daisy_size_ch11[4:0] */
-        __IO uint16_t daisy_size_ch12 : 5;    /* daisy_size_ch12[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch10   : 5;    /* daisy_size_ch10[4:0] */
+        __IO uint16_t daisy_size_ch11   : 5;    /* daisy_size_ch11[4:0] */
+        __IO uint16_t daisy_size_ch12   : 5;    /* daisy_size_ch12[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_4_t;
 
@@ -918,10 +919,10 @@ typedef union tag_DAISY_SIZE_5
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch13 : 5;    /* daisy_size_ch13[4:0] */
-        __IO uint16_t daisy_size_ch14 : 5;    /* daisy_size_ch14[4:0] */
-        __IO uint16_t daisy_size_ch15 : 5;    /* daisy_size_ch15[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch13   : 5;    /* daisy_size_ch13[4:0] */
+        __IO uint16_t daisy_size_ch14   : 5;    /* daisy_size_ch14[4:0] */
+        __IO uint16_t daisy_size_ch15   : 5;    /* daisy_size_ch15[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_5_t;
 
@@ -931,10 +932,10 @@ typedef union tag_DAISY_SIZE_6
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch16 : 5;    /* daisy_size_ch16[4:0] */
-        __IO uint16_t daisy_size_ch17 : 5;    /* daisy_size_ch17[4:0] */
-        __IO uint16_t daisy_size_ch18 : 5;    /* daisy_size_ch18[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch16   : 5;    /* daisy_size_ch16[4:0] */
+        __IO uint16_t daisy_size_ch17   : 5;    /* daisy_size_ch17[4:0] */
+        __IO uint16_t daisy_size_ch18   : 5;    /* daisy_size_ch18[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_6_t;
 
@@ -944,10 +945,10 @@ typedef union tag_DAISY_SIZE_7
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch19 : 5;    /* daisy_size_ch19[4:0] */
-        __IO uint16_t daisy_size_ch20 : 5;    /* daisy_size_ch20[4:0] */
-        __IO uint16_t daisy_size_ch21 : 5;    /* daisy_size_ch21[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch19   : 5;    /* daisy_size_ch19[4:0] */
+        __IO uint16_t daisy_size_ch20   : 5;    /* daisy_size_ch20[4:0] */
+        __IO uint16_t daisy_size_ch21   : 5;    /* daisy_size_ch21[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_7_t;
 
@@ -957,10 +958,10 @@ typedef union tag_DAISY_SIZE_8
     uint16_t ALL;
     struct
     {
-        __IO uint16_t daisy_size_ch22 : 5;    /* daisy_size_ch22[4:0] */
-        __IO uint16_t daisy_size_ch23 : 5;    /* daisy_size_ch23[4:0] */
-        __IO uint16_t daisy_size_ch24 : 5;    /* daisy_size_ch24[4:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t daisy_size_ch22   : 5;    /* daisy_size_ch22[4:0] */
+        __IO uint16_t daisy_size_ch23   : 5;    /* daisy_size_ch23[4:0] */
+        __IO uint16_t daisy_size_ch24   : 5;    /* daisy_size_ch24[4:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_daisy_size_8_t;
 
@@ -970,8 +971,8 @@ typedef union tag_BLOCK_SIZE_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch1 : 8;     /* total_blk_size_ch1 [7:0] */
-        __IO uint16_t total_blk_size_ch2 : 8;     /* total_blk_size_ch2 [7:0] */
+        __IO uint16_t total_blk_size_ch1    : 8;    /* total_blk_size_ch1 [7:0] */
+        __IO uint16_t total_blk_size_ch2    : 8;    /* total_blk_size_ch2 [7:0] */
     }bit;
 }_v_block_size_1_t;
 
@@ -981,8 +982,8 @@ typedef union tag_BLOCK_SIZE_2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch3 : 8;     /* total_blk_size_ch3 [7:0] */
-        __IO uint16_t total_blk_size_ch4 : 8;     /* total_blk_size_ch4 [7:0] */
+        __IO uint16_t total_blk_size_ch3    : 8;    /* total_blk_size_ch3 [7:0] */
+        __IO uint16_t total_blk_size_ch4    : 8;    /* total_blk_size_ch4 [7:0] */
     }bit;
 }_v_block_size_2_t;
 
@@ -992,8 +993,8 @@ typedef union tag_BLOCK_SIZE_3
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch5 : 8;     /* total_blk_size_ch5 [7:0] */
-        __IO uint16_t total_blk_size_ch6 : 8;     /* total_blk_size_ch6 [7:0] */
+        __IO uint16_t total_blk_size_ch5    : 8;    /* total_blk_size_ch5 [7:0] */
+        __IO uint16_t total_blk_size_ch6    : 8;    /* total_blk_size_ch6 [7:0] */
     }bit;
 }_v_block_size_3_t;
 
@@ -1003,8 +1004,8 @@ typedef union tag_BLOCK_SIZE_4
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch7 : 8;     /* total_blk_size_ch7 [7:0] */
-        __IO uint16_t total_blk_size_ch8 : 8;     /* total_blk_size_ch8 [7:0] */
+        __IO uint16_t total_blk_size_ch7    : 8;    /* total_blk_size_ch7 [7:0] */
+        __IO uint16_t total_blk_size_ch8    : 8;    /* total_blk_size_ch8 [7:0] */
     }bit;
 }_v_block_size_4_t;
 
@@ -1014,8 +1015,8 @@ typedef union tag_BLOCK_SIZE_5
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch9  : 8;     /* total_blk_size_ch9 [7:0] */
-        __IO uint16_t total_blk_size_ch10 : 8;     /* total_blk_size_ch10 [7:0] */
+        __IO uint16_t total_blk_size_ch9    : 8;    /* total_blk_size_ch9 [7:0] */
+        __IO uint16_t total_blk_size_ch10   : 8;    /* total_blk_size_ch10 [7:0] */
     }bit;
 }_v_block_size_5_t;
 
@@ -1025,8 +1026,8 @@ typedef union tag_BLOCK_SIZE_6
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch11 : 8;     /* total_blk_size_ch11 [7:0] */
-        __IO uint16_t total_blk_size_ch12 : 8;     /* total_blk_size_ch12 [7:0] */
+        __IO uint16_t total_blk_size_ch11   : 8;    /* total_blk_size_ch11 [7:0] */
+        __IO uint16_t total_blk_size_ch12   : 8;    /* total_blk_size_ch12 [7:0] */
     }bit;
 }_v_block_size_6_t;
 
@@ -1036,8 +1037,8 @@ typedef union tag_BLOCK_SIZE_7
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch13 : 8;     /* total_blk_size_ch13 [7:0] */
-        __IO uint16_t total_blk_size_ch14 : 8;     /* total_blk_size_ch14 [7:0] */
+        __IO uint16_t total_blk_size_ch13   : 8;    /* total_blk_size_ch13 [7:0] */
+        __IO uint16_t total_blk_size_ch14   : 8;    /* total_blk_size_ch14 [7:0] */
     }bit;
 }_v_block_size_7_t;
 
@@ -1047,8 +1048,8 @@ typedef union tag_BLOCK_SIZE_8
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch15 : 8;     /* total_blk_size_ch15 [7:0] */
-        __IO uint16_t total_blk_size_ch16 : 8;     /* total_blk_size_ch16 [7:0] */
+        __IO uint16_t total_blk_size_ch15   : 8;    /* total_blk_size_ch15 [7:0] */
+        __IO uint16_t total_blk_size_ch16   : 8;    /* total_blk_size_ch16 [7:0] */
     }bit;
 }_v_block_size_8_t;
 
@@ -1058,8 +1059,8 @@ typedef union tag_BLOCK_SIZE_9
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch17 : 8;     /* total_blk_size_ch17 [7:0] */
-        __IO uint16_t total_blk_size_ch18 : 8;     /* total_blk_size_ch18 [7:0] */
+        __IO uint16_t total_blk_size_ch17   : 8;    /* total_blk_size_ch17 [7:0] */
+        __IO uint16_t total_blk_size_ch18   : 8;    /* total_blk_size_ch18 [7:0] */
     }bit;
 }_v_block_size_9_t;
 
@@ -1069,8 +1070,8 @@ typedef union tag_BLOCK_SIZE_10
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch19 : 8;     /* total_blk_size_ch19 [7:0] */
-        __IO uint16_t total_blk_size_ch20 : 8;     /* total_blk_size_ch20 [7:0] */
+        __IO uint16_t total_blk_size_ch19   : 8;    /* total_blk_size_ch19 [7:0] */
+        __IO uint16_t total_blk_size_ch20   : 8;    /* total_blk_size_ch20 [7:0] */
     }bit;
 }_v_block_size_10_t;
 
@@ -1080,8 +1081,8 @@ typedef union tag_BLOCK_SIZE_11
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch21 : 8;     /* total_blk_size_ch21 [7:0] */
-        __IO uint16_t total_blk_size_ch22 : 8;     /* total_blk_size_ch22 [7:0] */
+        __IO uint16_t total_blk_size_ch21   : 8;    /* total_blk_size_ch21 [7:0] */
+        __IO uint16_t total_blk_size_ch22   : 8;    /* total_blk_size_ch22 [7:0] */
     }bit;
 }_v_block_size_11_t;
 
@@ -1091,8 +1092,8 @@ typedef union tag_BLOCK_SIZE_12
     uint16_t ALL;
     struct
     {
-        __IO uint16_t total_blk_size_ch23 : 8;     /* total_blk_size_ch23 [7:0] */
-        __IO uint16_t total_blk_size_ch24 : 8;     /* total_blk_size_ch24 [7:0] */
+        __IO uint16_t total_blk_size_ch23   : 8;    /* total_blk_size_ch23 [7:0] */
+        __IO uint16_t total_blk_size_ch24   : 8;    /* total_blk_size_ch24 [7:0] */
     }bit;
 }_v_block_size_12_t;
 
@@ -1102,22 +1103,22 @@ typedef union tag_CHANNEL_ENABLE_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ch1_en         : 1;     /* ch1_en */
-        __IO uint16_t ch2_en         : 1;     /* ch2_en */
-        __IO uint16_t ch3_en         : 1;     /* ch3_en */
-        __IO uint16_t ch4_en         : 1;     /* ch4_en */
-        __IO uint16_t ch5_en         : 1;     /* ch5_en */
-        __IO uint16_t ch6_en         : 1;     /* ch6_en */
-        __IO uint16_t ch7_en         : 1;     /* ch7_en */
-        __IO uint16_t ch8_en         : 1;     /* ch8_en */
-        __IO uint16_t ch9_en         : 1;     /* ch9_en */
-        __IO uint16_t ch10_en        : 1;     /* ch10_en */
-        __IO uint16_t ch11_en        : 1;     /* ch11_en */
-        __IO uint16_t ch12_en        : 1;     /* ch12_en */
-        __IO uint16_t ch13_en        : 1;     /* ch13_en */
-        __IO uint16_t ch14_en        : 1;     /* ch14_en */
-        __IO uint16_t ch15_en        : 1;     /* ch15_en */
-        __IO uint16_t ch16_en        : 1;     /* ch16_en */
+        __IO uint16_t ch1_en    : 1;    /* ch1_en */
+        __IO uint16_t ch2_en    : 1;    /* ch2_en */
+        __IO uint16_t ch3_en    : 1;    /* ch3_en */
+        __IO uint16_t ch4_en    : 1;    /* ch4_en */
+        __IO uint16_t ch5_en    : 1;    /* ch5_en */
+        __IO uint16_t ch6_en    : 1;    /* ch6_en */
+        __IO uint16_t ch7_en    : 1;    /* ch7_en */
+        __IO uint16_t ch8_en    : 1;    /* ch8_en */
+        __IO uint16_t ch9_en    : 1;    /* ch9_en */
+        __IO uint16_t ch10_en   : 1;    /* ch10_en */
+        __IO uint16_t ch11_en   : 1;    /* ch11_en */
+        __IO uint16_t ch12_en   : 1;    /* ch12_en */
+        __IO uint16_t ch13_en   : 1;    /* ch13_en */
+        __IO uint16_t ch14_en   : 1;    /* ch14_en */
+        __IO uint16_t ch15_en   : 1;    /* ch15_en */
+        __IO uint16_t ch16_en   : 1;    /* ch16_en */
     }bit;
 }_v_channel_enable_1_t;
 
@@ -1127,17 +1128,17 @@ typedef union tag_CHANNEL_ENABLE_2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t ch17_en        : 1;     /* ch17_en */
-        __IO uint16_t ch18_en        : 1;     /* ch18_en */
-        __IO uint16_t ch19_en        : 1;     /* ch19_en */
-        __IO uint16_t ch20_en        : 1;     /* ch20_en */
-        __IO uint16_t ch21_en        : 1;     /* ch21_en */
-        __IO uint16_t ch22_en        : 1;     /* ch22_en */
-        __IO uint16_t ch23_en        : 1;     /* ch23_en */
-        __IO uint16_t ch24_en        : 1;     /* ch24_en */
-        __IO uint16_t ch_size        : 5;     /* ch_size [4:0] */
-        uint16_t                : 1;     /* reserved */
-        __IO uint16_t ld_width       : 2;     /* ld_width [1:0] */
+        __IO uint16_t ch17_en   : 1;    /* ch17_en */
+        __IO uint16_t ch18_en   : 1;    /* ch18_en */
+        __IO uint16_t ch19_en   : 1;    /* ch19_en */
+        __IO uint16_t ch20_en   : 1;    /* ch20_en */
+        __IO uint16_t ch21_en   : 1;    /* ch21_en */
+        __IO uint16_t ch22_en   : 1;    /* ch22_en */
+        __IO uint16_t ch23_en   : 1;    /* ch23_en */
+        __IO uint16_t ch24_en   : 1;    /* ch24_en */
+        __IO uint16_t ch_size   : 5;    /* ch_size [4:0] */
+        uint16_t                : 1;    /* reserved */
+        __IO uint16_t ld_width  : 2;    /* ld_width [1:0] */
     }bit;
 }_v_channel_enable_2_t;
 
@@ -1147,7 +1148,7 @@ typedef union tag_FLLCNT11
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fll1cnt        : 16;    /* fll1cnt [15:0] */
+        __IO uint16_t fll1cnt   : 16;   /* fll1cnt [15:0] */
     }bit;
 }_v_fllcnt11_t;
 
@@ -1157,13 +1158,13 @@ typedef union tag_FLLCNT12
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fll1cnt        : 5;    /* fll1cnt [20:16] */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t fll1_err_range : 2;    /* fll1_err_range[1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t fll1_range     : 2;    /* fll1_range[1:0] */
-        __IO uint16_t fllsync        : 1;     /* fllsync '0'  vsync '1'  ext fllsync */
-        __IO uint16_t fll1_en        : 1;     /* fll1_en '0'  disable '1'  enable */
+        __IO uint16_t fll1cnt           : 5;    /* fll1cnt [20:16] */
+        uint16_t                        : 3;    /* reserved */
+        __IO uint16_t fll1_err_range    : 2;    /* fll1_err_range[1:0] */
+        uint16_t                        : 2;    /* reserved */
+        __IO uint16_t fll1_range        : 2;    /* fll1_range[1:0] */
+        __IO uint16_t fllsync           : 1;    /* fllsync '0'  vsync '1'  ext fllsync */
+        __IO uint16_t fll1_en           : 1;    /* fll1_en '0'  disable '1'  enable */
     }bit;
 }_v_fllcnt12_t;
 
@@ -1173,7 +1174,7 @@ typedef union tag_FLLCNT21
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fll2cnt        : 16;    /* fll2cnt [15:0] */
+        __IO uint16_t fll2cnt   : 16;   /* fll2cnt [15:0] */
     }bit;
 }_v_fllcnt21_t;
 
@@ -1183,13 +1184,13 @@ typedef union tag_FLLCNT22
     uint16_t ALL;
     struct
     {
-        __IO uint16_t fll2cnt        : 5;    /* fll2cnt [20:16] */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t fll2_err_range : 2;    /* fll2_err_range[1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t fll2_range     : 2;    /* fll2_range[1:0] */
-        __IO uint16_t fllsync        : 1;     /* fllsync '0'  vsync '1'  ext fllsync */
-        __IO uint16_t fll2_en        : 1;     /* fll2_en '0'  disable '1'  enable */
+        __IO uint16_t fll2cnt           : 5;    /* fll2cnt [20:16] */
+        uint16_t                        : 3;    /* reserved */
+        __IO uint16_t fll2_err_range    : 2;    /* fll2_err_range[1:0] */
+        uint16_t                        : 2;    /* reserved */
+        __IO uint16_t fll2_range        : 2;    /* fll2_range[1:0] */
+        __IO uint16_t fllsync           : 1;    /* fllsync '0'  vsync '1'  ext fllsync */
+        __IO uint16_t fll2_en           : 1;    /* fll2_en '0'  disable '1'  enable */
     }bit;
 }_v_fllcnt22_t;
 
@@ -1199,11 +1200,11 @@ typedef union tag_VO_DELAY
     uint16_t ALL;
     struct
     {
-        __IO uint16_t vo_delay       : 8;    /* vo_delay [7:0]; max 7.28us */
+        __IO uint16_t vo_delay  : 8;    /* vo_delay [7:0]; max 7.28us */
         uint16_t                : 4;    /* reserved */
-        __IO uint16_t gate1_pol      : 1;    /* gate1_pol */
-        __IO uint16_t gate2_pol      : 1;    /* gate2_pol */
-        __IO uint16_t gate3_pol      : 1;    /* gate3_pol */
+        __IO uint16_t gate1_pol : 1;    /* gate1_pol */
+        __IO uint16_t gate2_pol : 1;    /* gate2_pol */
+        __IO uint16_t gate3_pol : 1;    /* gate3_pol */
         uint16_t                : 1;    /* reserved */
     }bit;
 }_v_vo_delay_t;
@@ -1214,8 +1215,8 @@ typedef union tag_VO_OFF_ON
     uint16_t ALL;
     struct
     {
-        __IO uint16_t vo_on          : 8;     /* vo_on [7:0]; max 7.28us */
-        __IO uint16_t vo_off         : 8;     /* vo_off [7:0]; max 7.28us */
+        __IO uint16_t vo_on     : 8;    /* vo_on [7:0]; max 7.28us */
+        __IO uint16_t vo_off    : 8;    /* vo_off [7:0]; max 7.28us */
     }bit;
 }_v_vo_off_on_t;
 
@@ -1225,8 +1226,8 @@ typedef union tag_SVO_ON
     uint16_t ALL;
     struct
     {
-        __IO uint16_t svo_on         : 12;  /* svo_on [11:0] : max 117us */
-        uint16_t                : 4;   /* reserved */
+        __IO uint16_t svo_on    : 12;   /* svo_on [11:0] : max 117us */
+        uint16_t                :  4;   /* reserved */
     }bit;
 }_v_svo_on_t;
 
@@ -1236,7 +1237,7 @@ typedef union tag_SVO1_OFF
     uint16_t ALL;
     struct
     {
-        __IO uint16_t svo1_off       : 16;    /* svo1_off [15:0] : max 1872us */
+        __IO uint16_t svo1_off  : 16;   /* svo1_off [15:0] : max 1872us */
     }bit;
 }_v_svo1_off_t;
 
@@ -1246,7 +1247,7 @@ typedef union tag_SVO2_OFF
     uint16_t ALL;
     struct
     {
-        __IO uint16_t svo2_off       : 16;    /* svo2_off [15:0] : max 1872us */
+        __IO uint16_t svo2_off  : 16;   /* svo2_off [15:0] : max 1872us */
     }bit;
 }_v_svo2_off_t;
 
@@ -1256,7 +1257,7 @@ typedef union tag_SVO3_OFF
     uint16_t ALL;
     struct
     {
-        __IO uint16_t svo3_off       : 16;    /* svo3_off [15:0] : max 1872us */
+        __IO uint16_t svo3_off  : 16;   /* svo3_off [15:0] : max 1872us */
     }bit;
 }_v_svo3_off_t;
 
@@ -1266,10 +1267,10 @@ typedef union tag_SVO_NUMBER
     uint16_t ALL;
     struct
     {
-        __IO uint16_t sv_no          : 6;    /* sv_no [5:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t sv_no_type     : 2;    /* sv_no_type [1:0] */
-        uint16_t                : 6;    /* reserved */
+        __IO uint16_t sv_no         : 6;    /* sv_no [5:0] */
+        uint16_t                    : 2;    /* reserved */
+        __IO uint16_t sv_no_type    : 2;    /* sv_no_type [1:0] */
+        uint16_t                    : 6;    /* reserved */
     }bit;
 }_v_svo_number_t;
 
@@ -1279,12 +1280,12 @@ typedef union tag_DAC_NF_CONTROL
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dgrjt_en       : 1;    /* dgrjt_en */
-        __IO uint16_t bbkn_en        : 1;    /* bbkn_en */
+        __IO uint16_t dgrjt_en  : 1;    /* dgrjt_en */
+        __IO uint16_t bbkn_en   : 1;    /* bbkn_en */
         uint16_t                : 2;    /* reserved */
-        __IO uint16_t bbkn_th        : 6;    /* bbkn_th [5:0] */
+        __IO uint16_t bbkn_th   : 6;    /* bbkn_th [5:0] */
         uint16_t                : 2;    /* reserved */
-        __IO uint16_t dac_lvl        : 2;    /* dac_lvl [1:0] */
+        __IO uint16_t dac_lvl   : 2;    /* dac_lvl [1:0] */
         uint16_t                : 2;    /* reserved */
     }bit;
 }_v_dac_nf_control_t;
@@ -1295,22 +1296,22 @@ typedef union tag_DAC_CONTROL
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_auto      : 1;     /* dac1_auto '0' manual '1' auto */
-        __IO uint16_t dac2_auto      : 1;     /* dac2_auto '0' manual '1' auto */
-        __IO uint16_t dac3_auto      : 1;     /* dac3_auto '0' manual '1' auto */
-        __IO uint16_t dac_auto_type  : 1;     /* dac_auto_type '0' by FB '1' by Target control */
-        __IO uint16_t dac_sync_mode  : 1;     /* dac_sync_mode '0' cmd (sync_done) '1' ext (rising edge) */
-        __IO uint16_t dac1_fb_mode   : 1;     /* dac1_fb_mode '0' internal '1' ext multiple XC */
-        __IO uint16_t dac2_fb_mode   : 1;     /* dac2_fb_mode '0' internal '1' ext multiple XC */
-        __IO uint16_t dac3_fb_mode   : 1;     /* dac3_fb_mode '0' internal '1' ext multiple XC */
-        __IO uint16_t dac1_dec1_mode : 1;     /* dac1_dec1_mode '0' static '1' arithmetic exp */
-        __IO uint16_t dac2_dec1_mode : 1;     /* dac2_dec1_mode '0' static '1' arithmetic exp */
-        __IO uint16_t dac3_dec1_mode : 1;     /* dac3_dec1_mode '0' static '1' arithmetic exp */
-        uint16_t                : 1;     /* reserved */
-        __IO uint16_t dac1_hold_en   : 1;     /* dac1_hold_en '0' disable '1' enable */
-        __IO uint16_t dac2_hold_en   : 1;     /* dac2_hold_en '0' disable '1' enable */
-        __IO uint16_t dac3_hold_en   : 1;     /* dac3_hold_en '0' disable '1' enable */
-        __IO uint16_t dac_fault_off  : 1;     /* dac_fault_off '0' disable '1' enable */
+        __IO uint16_t dac1_auto         : 1;    /* dac1_auto '0' manual '1' auto */
+        __IO uint16_t dac2_auto         : 1;    /* dac2_auto '0' manual '1' auto */
+        __IO uint16_t dac3_auto         : 1;    /* dac3_auto '0' manual '1' auto */
+        __IO uint16_t dac_auto_type     : 1;    /* dac_auto_type '0' by FB '1' by Target control */
+        __IO uint16_t dac_sync_mode     : 1;    /* dac_sync_mode '0' cmd (sync_done) '1' ext (rising edge) */
+        __IO uint16_t dac1_fb_mode      : 1;    /* dac1_fb_mode '0' internal '1' ext multiple XC */
+        __IO uint16_t dac2_fb_mode      : 1;    /* dac2_fb_mode '0' internal '1' ext multiple XC */
+        __IO uint16_t dac3_fb_mode      : 1;    /* dac3_fb_mode '0' internal '1' ext multiple XC */
+        __IO uint16_t dac1_dec1_mode    : 1;    /* dac1_dec1_mode '0' static '1' arithmetic exp */
+        __IO uint16_t dac2_dec1_mode    : 1;    /* dac2_dec1_mode '0' static '1' arithmetic exp */
+        __IO uint16_t dac3_dec1_mode    : 1;    /* dac3_dec1_mode '0' static '1' arithmetic exp */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t dac1_hold_en      : 1;    /* dac1_hold_en '0' disable '1' enable */
+        __IO uint16_t dac2_hold_en      : 1;    /* dac2_hold_en '0' disable '1' enable */
+        __IO uint16_t dac3_hold_en      : 1;    /* dac3_hold_en '0' disable '1' enable */
+        __IO uint16_t dac_fault_off     : 1;    /* dac_fault_off '0' disable '1' enable */
     }bit;
 }_v_dac_control_t;
 
@@ -1320,8 +1321,8 @@ typedef union tag_CURRENT_TARGET_DAC1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t curr_tgt_dac1  : 12;   /* curr_tgt_dac1 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t curr_tgt_dac1 : 12;   /* curr_tgt_dac1 [11:0] */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_current_target_dac1_t;
 
@@ -1331,8 +1332,8 @@ typedef union tag_CURRENT_TARGET_DAC2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t curr_tgt_dac2  : 12;   /* curr_tgt_dac2 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t curr_tgt_dac2 : 12;   /* curr_tgt_dac2 [11:0] */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_current_target_dac2_t;
 
@@ -1342,8 +1343,8 @@ typedef union tag_CURRENT_TARGET_DAC3
     uint16_t ALL;
     struct
     {
-        __IO uint16_t curr_tgt_dac3  : 12;   /* curr_tgt_dac3 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t curr_tgt_dac3 : 12;   /* curr_tgt_dac3 [11:0] */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_current_target_dac3_t;
 
@@ -1354,7 +1355,7 @@ typedef union tag_PREVIOUS_TARGET_DAC1
     struct
     {
         __I uint16_t prev_tgt_dac1  : 12;   /* prev_tgt_dac1 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_previous_target_dac1_t;
 
@@ -1365,7 +1366,7 @@ typedef union tag_PREVIOUS_TARGET_DAC2
     struct
     {
         __I uint16_t prev_tgt_dac2  : 12;   /* prev_tgt_dac2 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_previous_target_dac2_t;
 
@@ -1376,7 +1377,7 @@ typedef union tag_PREVIOUS_TARGET_DAC3
     struct
     {
         __I uint16_t prev_tgt_dac3  : 12;   /* prev_tgt_dac3 [11:0] */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_previous_target_dac3_t;
 
@@ -1387,7 +1388,7 @@ typedef union tag_DAC1_OUT
     struct
     {
         __I uint16_t dac1_out       : 12;   /* dac1_out [11:0] */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_dac1_out_t;
 
@@ -1398,7 +1399,7 @@ typedef union tag_DAC2_OUT
     struct
     {
         __I uint16_t dac2_out       : 12;   /* dac2_out [11:0] */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_dac2_out_t;
 
@@ -1409,7 +1410,7 @@ typedef union tag_DAC3_OUT
     struct
     {
         __I uint16_t dac3_out       : 12;    /* dac3_out [11:0] */
-        uint16_t                : 4;     /* reserved */
+        uint16_t                    :  4;   /* reserved */
     }bit;
 }_v_dac3_out_t;
 
@@ -1419,9 +1420,9 @@ typedef union tag_DAC1_STATE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_st_en     : 4;    /* dac1_st_en [3:0] */
+        __IO uint16_t dac1_st_en    : 4;    /* dac1_st_en [3:0] */
         __I uint16_t dac1_state     : 4;    /* dac1_state [3:0] */
-        uint16_t                : 8;    /* reserved */
+        uint16_t                    : 8;    /* reserved */
     }bit;
 }_v_dac1_state_t;
 
@@ -1431,9 +1432,9 @@ typedef union tag_DAC2_STATE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_st_en     : 4;    /* dac2_st_en [3:0] */
+        __IO uint16_t dac2_st_en    : 4;    /* dac2_st_en [3:0] */
         __I uint16_t dac2_state     : 4;    /* dac2_state [3:0] */
-        uint16_t                : 8;    /* reserved */
+        uint16_t                    : 8;    /* reserved */
     }bit;
 }_v_dac2_state_t;
 
@@ -1443,9 +1444,9 @@ typedef union tag_DAC3_STATE
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_st_en     : 4;    /* dac3_st_en [3:0] */
+        __IO uint16_t dac3_st_en    : 4;    /* dac3_st_en [3:0] */
         __I uint16_t dac3_state     : 4;    /* dac3_state [3:0] */
-        uint16_t                : 8;    /* reserved */
+        uint16_t                    : 8;    /* reserved */
     }bit;
 }_v_dac3_state_t;
 
@@ -1455,9 +1456,9 @@ typedef union tag_DAC1_INCREMENT_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_inc1      : 5;     /* dac1_inc1 [4:0] */
-        __IO uint16_t dac1_inc2      : 5;     /* dac1_inc2 [4:0] */
-        __IO uint16_t dac1_inc3      : 6;     /* dac1_inc3 [5:0] */
+        __IO uint16_t dac1_inc1 : 5;    /* dac1_inc1 [4:0] */
+        __IO uint16_t dac1_inc2 : 5;    /* dac1_inc2 [4:0] */
+        __IO uint16_t dac1_inc3 : 6;    /* dac1_inc3 [5:0] */
     }bit;
 }_v_dac1_increment_1_t;
 
@@ -1467,8 +1468,8 @@ typedef union tag_DAC1_INCREMENT_2_HOLD_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_inc4           : 7;     /* dac1_int4 [6:0] */
-        __IO uint16_t dac1_inc_hold_limit : 9;     /* dac1_inc_hold_limit [8:0] */
+        __IO uint16_t dac1_inc4             : 7;    /* dac1_int4 [6:0] */
+        __IO uint16_t dac1_inc_hold_limit   : 9;    /* dac1_inc_hold_limit [8:0] */
     }bit;
 }_v_dac1_increment_2_hold_limit_t;
 
@@ -1478,10 +1479,10 @@ typedef union tag_DAC1_DECREMENT_INC_WAIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_inc1_wait : 7;    /* dac1_inc1_wait [6:0] */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t dac1_dec1      : 7;    /* dac1_dec1 [6:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t dac1_inc1_wait    : 7;    /* dac1_inc1_wait [6:0] */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t dac1_dec1         : 7;    /* dac1_dec1 [6:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_dac1_decrement_inc_wait_t;
 
@@ -1491,9 +1492,9 @@ typedef union tag_DAC1_INCREMENT_HOLD_THRESHOLD
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_inc_hold_threshold : 9;   /* dac1_inc_hold_threshold [8:0] */
-        __IO uint16_t bit_signed                  : 1;   /* signed */
-        uint16_t                         : 6;   /* reserved */
+        __IO uint16_t dac1_inc_hold_threshold   : 9;    /* dac1_inc_hold_threshold [8:0] */
+        __IO uint16_t bit_signed                : 1;    /* signed */
+        uint16_t                                : 6;    /* reserved */
     }bit;
 }_v_dac1_increment_hold_threshold_t;
 
@@ -1503,7 +1504,7 @@ typedef union tag_DAC1_FB_VALID_TIMER
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_fb_valid_timer : 16;    /* dac1_fb_valid_timer [17:2] */
+        __IO uint16_t dac1_fb_valid_timer   : 16;   /* dac1_fb_valid_timer [17:2] */
     }bit;
 }_v_dac1_fb_valid_timer_t;
 
@@ -1513,8 +1514,8 @@ typedef union tag_DAC1_MIN_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_min_limit : 12;   /* dac1_min_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac1_min_limit    : 12;   /* dac1_min_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac1_min_limit_t;
 
@@ -1524,8 +1525,8 @@ typedef union tag_DAC1_MAX_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_max_limit : 12;   /* dac1_max_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac1_max_limit    : 12;   /* dac1_max_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac1_max_limit_t;
 
@@ -1535,9 +1536,9 @@ typedef union tag_DAC2_INCREMENT_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_inc1      : 5;     /* dac2_inc1 [4:0] */
-        __IO uint16_t dac2_inc2      : 5;     /* dac2_inc2 [4:0] */
-        __IO uint16_t dac2_inc3      : 6;     /* dac2inc3 [5:0] */
+        __IO uint16_t dac2_inc1 : 5;    /* dac2_inc1 [4:0] */
+        __IO uint16_t dac2_inc2 : 5;    /* dac2_inc2 [4:0] */
+        __IO uint16_t dac2_inc3 : 6;    /* dac2inc3 [5:0] */
     }bit;
 }_v_dac2_increment_1_t;
 
@@ -1547,8 +1548,8 @@ typedef union tag_DAC2_INCREMENT_2_HOLD_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_inc4           : 7;     /* dac2_int4 [6:0] */
-        __IO uint16_t dac2_inc_hold_limit : 9;     /* dac2_inc_hold_limit [8:0] */
+        __IO uint16_t dac2_inc4             : 7;    /* dac2_int4 [6:0] */
+        __IO uint16_t dac2_inc_hold_limit   : 9;    /* dac2_inc_hold_limit [8:0] */
     }bit;
 }_v_dac2_increment_2_hold_limit_t;
 
@@ -1558,10 +1559,10 @@ typedef union tag_DAC2_DECREMENT_INC_WAIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_inc1_wait : 7;    /* dac2_inc1_wait [6:0] */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t dac2_dec1      : 7;    /* dac2_dec1 [6:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t dac2_inc1_wait    : 7;    /* dac2_inc1_wait [6:0] */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t dac2_dec1         : 7;    /* dac2_dec1 [6:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_dac2_decrement_inc_wait_t;
 
@@ -1571,9 +1572,9 @@ typedef union tag_DAC2_INCREMENT_HOLD_THRESHOLD
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_inc_hold_threshold : 9;   /* dac2_inc_hold_threshold [8:0] */
-        __IO uint16_t bit_signed                  : 1;   /* signed */
-        uint16_t                         : 6;   /* reserved */
+        __IO uint16_t dac2_inc_hold_threshold   : 9;    /* dac2_inc_hold_threshold [8:0] */
+        __IO uint16_t bit_signed                : 1;    /* signed */
+        uint16_t                                : 6;    /* reserved */
     }bit;
 }_v_dac2_increment_hold_threshold_t;
 
@@ -1583,7 +1584,7 @@ typedef union tag_DAC2_FB_VALID_TIMER
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_fb_valid_timer : 16;    /* dac2_fb_valid_timer [17:2] */
+        __IO uint16_t dac2_fb_valid_timer   : 16;   /* dac2_fb_valid_timer [17:2] */
     }bit;
 }_v_dac2_fb_valid_timer_t;
 
@@ -1593,8 +1594,8 @@ typedef union tag_DAC2_MIN_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_min_limit : 12;   /* dac2_min_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac2_min_limit    : 12;   /* dac2_min_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac2_min_limit_t;
 
@@ -1604,8 +1605,8 @@ typedef union tag_DAC2_MAX_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_max_limit : 12;   /* dac2_max_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac2_max_limit    : 12;   /* dac2_max_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac2_max_limit_t;
 
@@ -1615,9 +1616,9 @@ typedef union tag_DAC3_INCREMENT_1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_inc1      : 5;     /* dac3_inc1 [4:0] */
-        __IO uint16_t dac3_inc2      : 5;     /* dac3_inc2 [4:0] */
-        __IO uint16_t dac3_inc3      : 6;     /* dac3_inc3 [5:0] */
+        __IO uint16_t dac3_inc1 : 5;    /* dac3_inc1 [4:0] */
+        __IO uint16_t dac3_inc2 : 5;    /* dac3_inc2 [4:0] */
+        __IO uint16_t dac3_inc3 : 6;    /* dac3_inc3 [5:0] */
     }bit;
 }_v_dac3_increment_1_t;
 
@@ -1627,8 +1628,8 @@ typedef union tag_DAC3_INCREMENT_2_HOLD_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_inc4           : 7;     /* dac3_int4 [6:0] */
-        __IO uint16_t dac3_inc_hold_limit : 9;     /* dac3_inc_hold_limit [8:0] */
+        __IO uint16_t dac3_inc4             : 7;    /* dac3_int4 [6:0] */
+        __IO uint16_t dac3_inc_hold_limit   : 9;    /* dac3_inc_hold_limit [8:0] */
     }bit;
 }_v_dac3_increment_2_hold_limit_t;
 
@@ -1638,10 +1639,10 @@ typedef union tag_DAC3_DECREMENT_INC_WAIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_inc1_wait : 7;    /* dac3_inc1_wait [6:0] */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t dac3_dec1      : 7;    /* dac3_dec1 [6:0] */
-        uint16_t                : 1;    /* reserved */
+        __IO uint16_t dac3_inc1_wait    : 7;    /* dac3_inc1_wait [6:0] */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t dac3_dec1         : 7;    /* dac3_dec1 [6:0] */
+        uint16_t                        : 1;    /* reserved */
     }bit;
 }_v_dac3_decrement_inc_wait_t;
 
@@ -1651,9 +1652,9 @@ typedef union tag_DAC3_INCREMENT_HOLD_THRESHOLD
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_inc_hold_threshold : 9;   /* dac3_inc_hold_threshold [8:0] */
-        __IO uint16_t bit_signed                  : 1;   /* signed */
-        uint16_t                         : 6;   /* reserved */
+        __IO uint16_t dac3_inc_hold_threshold   : 9;    /* dac3_inc_hold_threshold [8:0] */
+        __IO uint16_t bit_signed                : 1;    /* signed */
+        uint16_t                                : 6;    /* reserved */
     }bit;
 }_v_dac3_increment_hold_threshold_t;
 
@@ -1663,7 +1664,7 @@ typedef union tag_DAC3_FB_VALID_TIMER
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_fb_valid_timer : 16;    /* dac3_fb_valid_timer [17:2] */
+        __IO uint16_t dac3_fb_valid_timer   : 16;   /* dac3_fb_valid_timer [17:2] */
     }bit;
 }_v_dac3_fb_valid_timer_t;
 
@@ -1673,8 +1674,8 @@ typedef union tag_DAC3_MIN_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_min_limit : 12;   /* dac3_min_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac3_min_limit    : 12;   /* dac3_min_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac3_min_limit_t;
 
@@ -1684,8 +1685,8 @@ typedef union tag_DAC3_MAX_LIMIT
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac3_max_limit : 12;   /* dac3_max_limit [11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t dac3_max_limit    : 12;   /* dac3_max_limit [11:0] */
+        uint16_t                        :  4;   /* reserved */
     }bit;
 }_v_dac3_max_limit_t;
 
@@ -1695,13 +1696,13 @@ typedef union tag_OSC_FLL_MAN_A1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t FLT_GAIN_A     : 2;    /* FLT_GAIN_A [1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t FLT_CTL_A      : 2;    /* FLT_CTL_A [1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t DAC_RNG_A      : 1;    /* DAC_RNG_A */
-        uint16_t                : 6;    /* reserved */
-        __IO uint16_t OSC_MAN_EN_A   : 1;    /* OSC_MAN_EN_A */
+        __IO uint16_t FLT_GAIN_A    : 2;    /* FLT_GAIN_A [1:0] */
+        uint16_t                    : 2;    /* reserved */
+        __IO uint16_t FLT_CTL_A     : 2;    /* FLT_CTL_A [1:0] */
+        uint16_t                    : 2;    /* reserved */
+        __IO uint16_t DAC_RNG_A     : 1;    /* DAC_RNG_A */
+        uint16_t                    : 6;    /* reserved */
+        __IO uint16_t OSC_MAN_EN_A  : 1;    /* OSC_MAN_EN_A */
     }bit;
 }_v_osc_fll_man_a1_t;
 
@@ -1711,7 +1712,7 @@ typedef union tag_OSC_FLL_MAN_A2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t OSC_FLL_MAN_A  : 16;    /* OSC_FLL_MAN_A [15:0] */
+        __IO uint16_t OSC_FLL_MAN_A : 16;   /* OSC_FLL_MAN_A [15:0] */
     }bit;
 }_v_osc_fll_man_a2_t;
 
@@ -1721,13 +1722,13 @@ typedef union tag_OSC_FLL_MAN_B1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t FLT_GAIN_B     : 2;    /* FLT_GAIN_B[1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t FLT_CTL_B      : 2;    /* FLT_CTL_B [1:0] */
-        uint16_t                : 2;    /* reserved */
-        __IO uint16_t DAC_RNG_B      : 1;    /* DAC_RNG_B */
-        uint16_t                : 6;    /* reserved */
-        __IO uint16_t OSC_MAN_EN_B   : 1;    /* OSC_MAN_EN_B */
+        __IO uint16_t FLT_GAIN_B    : 2;    /* FLT_GAIN_B[1:0] */
+        uint16_t                    : 2;    /* reserved */
+        __IO uint16_t FLT_CTL_B     : 2;    /* FLT_CTL_B [1:0] */
+        uint16_t                    : 2;    /* reserved */
+        __IO uint16_t DAC_RNG_B     : 1;    /* DAC_RNG_B */
+        uint16_t                    : 6;    /* reserved */
+        __IO uint16_t OSC_MAN_EN_B  : 1;    /* OSC_MAN_EN_B */
     }bit;
 }_v_osc_fll_man_b1_t;
 
@@ -1737,7 +1738,7 @@ typedef union tag_OSC_FLL_MAN_B2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t OSC_FLL_MAN_B  : 16;    /* OSC_FLL_MAN_B [15:0] */
+        __IO uint16_t OSC_FLL_MAN_B : 16;   /* OSC_FLL_MAN_B [15:0] */
     }bit;
 }_v_osc_fll_man_b2_t;
 
@@ -1747,8 +1748,8 @@ typedef union tag_GLOBAL_WRITE_DATA
     uint16_t ALL;
     struct
     {
-        __IO uint16_t data           : 12;   /* data[11:0] */
-        uint16_t                : 4;    /* reserved */
+        __IO uint16_t data  : 12;   /* data[11:0] */
+        uint16_t            :  4;   /* reserved */
     }bit;
 }_v_global_write_data_t;
 
@@ -1758,10 +1759,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA1
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch1      : 4;     /* fault_ch1 [3:0] */
-        __I uint16_t fault_ch2      : 4;     /* fault_ch2 [3:0] */
-        __I uint16_t fault_ch3      : 4;     /* fault_ch3 [3:0] */
-        __I uint16_t fault_ch4      : 4;     /* fault_ch4 [3:0] */
+        __I uint16_t fault_ch1  : 4;    /* fault_ch1 [3:0] */
+        __I uint16_t fault_ch2  : 4;    /* fault_ch2 [3:0] */
+        __I uint16_t fault_ch3  : 4;    /* fault_ch3 [3:0] */
+        __I uint16_t fault_ch4  : 4;    /* fault_ch4 [3:0] */
     }bit;
 }_v_global_fault_read_data1_t;
 
@@ -1771,10 +1772,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA2
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch5      : 4;     /* fault_ch5 [3:0] */
-        __I uint16_t fault_ch6      : 4;     /* fault_ch6 [3:0] */
-        __I uint16_t fault_ch7      : 4;     /* fault_ch7 [3:0] */
-        __I uint16_t fault_ch8      : 4;     /* fault_ch8 [3:0] */
+        __I uint16_t fault_ch5  : 4;    /* fault_ch5 [3:0] */
+        __I uint16_t fault_ch6  : 4;    /* fault_ch6 [3:0] */
+        __I uint16_t fault_ch7  : 4;    /* fault_ch7 [3:0] */
+        __I uint16_t fault_ch8  : 4;    /* fault_ch8 [3:0] */
     }bit;
 }_v_global_fault_read_data2_t;
 
@@ -1784,10 +1785,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA3
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch9      : 4;     /* fault_ch9 [3:0] */
-        __I uint16_t fault_ch10     : 4;     /* fault_ch10 [3:0] */
-        __I uint16_t fault_ch11     : 4;     /* fault_ch11 [3:0] */
-        __I uint16_t fault_ch12     : 4;     /* fault_ch12 [3:0] */
+        __I uint16_t fault_ch9  : 4;    /* fault_ch9 [3:0] */
+        __I uint16_t fault_ch10 : 4;    /* fault_ch10 [3:0] */
+        __I uint16_t fault_ch11 : 4;    /* fault_ch11 [3:0] */
+        __I uint16_t fault_ch12 : 4;    /* fault_ch12 [3:0] */
     }bit;
 }_v_global_fault_read_data3_t;
 
@@ -1797,10 +1798,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA4
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch13     : 4;     /* fault_ch13 [3:0] */
-        __I uint16_t fault_ch14     : 4;     /* fault_ch14 [3:0] */
-        __I uint16_t fault_ch15     : 4;     /* fault_ch15 [3:0] */
-        __I uint16_t fault_ch16     : 4;     /* fault_ch16 [3:0] */
+        __I uint16_t fault_ch13 : 4;    /* fault_ch13 [3:0] */
+        __I uint16_t fault_ch14 : 4;    /* fault_ch14 [3:0] */
+        __I uint16_t fault_ch15 : 4;    /* fault_ch15 [3:0] */
+        __I uint16_t fault_ch16 : 4;    /* fault_ch16 [3:0] */
     }bit;
 }_v_global_fault_read_data4_t;
 
@@ -1810,10 +1811,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA5
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch17     : 4;     /* fault_ch17 [3:0] */
-        __I uint16_t fault_ch18     : 4;     /* fault_ch18 [3:0] */
-        __I uint16_t fault_ch19     : 4;     /* fault_ch19 [3:0] */
-        __I uint16_t fault_ch20     : 4;     /* fault_ch20 [3:0] */
+        __I uint16_t fault_ch17 : 4;    /* fault_ch17 [3:0] */
+        __I uint16_t fault_ch18 : 4;    /* fault_ch18 [3:0] */
+        __I uint16_t fault_ch19 : 4;    /* fault_ch19 [3:0] */
+        __I uint16_t fault_ch20 : 4;    /* fault_ch20 [3:0] */
     }bit;
 }_v_global_fault_read_data5_t;
 
@@ -1823,10 +1824,10 @@ typedef union tag_GLOBAL_FAULT_READ_DATA6
     uint16_t ALL;
     struct
     {
-        __I uint16_t fault_ch21     : 4;     /* fault_ch21 [3:0] */
-        __I uint16_t fault_ch22     : 4;     /* fault_ch22 [3:0] */
-        __I uint16_t fault_ch23     : 4;     /* fault_ch23 [3:0] */
-        __I uint16_t fault_ch24     : 4;     /* fault_ch24 [3:0] */
+        __I uint16_t fault_ch21 : 4;    /* fault_ch21 [3:0] */
+        __I uint16_t fault_ch22 : 4;    /* fault_ch22 [3:0] */
+        __I uint16_t fault_ch23 : 4;    /* fault_ch23 [3:0] */
+        __I uint16_t fault_ch24 : 4;    /* fault_ch24 [3:0] */
     }bit;
 }_v_global_fault_read_data6_t;
 
@@ -1837,8 +1838,8 @@ typedef union tag_PORT_LOCAL_RW_DATA
     uint16_t ALL;
     struct
     {
-        __IO uint16_t data               : 12;   /* data[11:0] */
-        uint16_t                    :  4;   /* reserved */
+        __IO uint16_t data  : 12;   /* data[11:0] */
+        uint16_t            :  4;   /* reserved */
     }bit;
 }_v_port_local_rw_data_t;
 
@@ -1869,7 +1870,7 @@ typedef union tag_OTP_PG_ACCESS
     uint16_t ALL;
     struct
     {
-        __IO uint16_t OTP_PG_ACC_CYCLE : 16;    /* OTP_PG_ACC_CYCLE [15:0] */
+        __IO uint16_t OTP_PG_ACC_CYCLE  : 16;   /* OTP_PG_ACC_CYCLE [15:0] */
     }bit;
 }_v_otp_pg_access_t;
 
@@ -1892,9 +1893,9 @@ typedef union tag_OTP_RD_PROG
     uint16_t ALL;
     struct
     {
-        __IO uint16_t OTP_PG_S       : 1;    /* OTP_PG_S */
-        __IO uint16_t OTP_RD_S       : 1;    /* OTP_RD_S */
-        uint16_t                    : 14;   /* reserved */
+        __IO uint16_t OTP_PG_S  :  1;   /* OTP_PG_S */
+        __IO uint16_t OTP_RD_S  :  1;   /* OTP_RD_S */
+        uint16_t                : 14;   /* reserved */
     }bit;
 }_v_otp_rd_prog_t;
 
@@ -1905,7 +1906,7 @@ typedef union tag_OTP_PROTECT
     struct
     {
         __IO uint16_t PROTECT   : 12;   /* PROTECT_EN (0x5A5), PROTECT_DIS (0xA5A) */
-        uint16_t                : 4;    /* reserved */
+        uint16_t                :  4;   /* reserved */
     }bit;
 }_v_otp_protect_t;
 
@@ -1915,9 +1916,9 @@ typedef union tag_MIRROR1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t vctl_ldo       : 5;    /* vctl_ldo [4:0] */
+        __IO uint16_t vctl_ldo  : 5;    /* vctl_ldo [4:0] */
         uint16_t                : 3;    /* reserved */
-        __IO uint16_t bgr_tc         : 5;    /* bgr_tc [4:0] */
+        __IO uint16_t bgr_tc    : 5;    /* bgr_tc [4:0] */
         uint16_t                : 3;    /* reserved */
     }bit;
 }_v_mirror1_t;
@@ -1928,8 +1929,8 @@ typedef union tag_MIRROR2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac1_ofs       : 8;    /* dac1_ofs[7:0] */
-        __IO uint16_t dac_ctl        : 6;    /* dac_ctl [5:0] */
+        __IO uint16_t dac1_ofs  : 8;    /* dac1_ofs[7:0] */
+        __IO uint16_t dac_ctl   : 6;    /* dac_ctl [5:0] */
         uint16_t                : 2;    /* reserved */
     }bit;
 }_v_mirror2_t;
@@ -1940,8 +1941,8 @@ typedef union tag_MIRROR3
     uint16_t ALL;
     struct
     {
-        __IO uint16_t dac2_ofs       : 8;     /* dac2_ofs[7:0] */
-        __IO uint16_t dac3_ofs       : 8;     /* dac3_ofs[7:0] */
+        __IO uint16_t dac2_ofs  : 8;    /* dac2_ofs[7:0] */
+        __IO uint16_t dac3_ofs  : 8;    /* dac3_ofs[7:0] */
     }bit;
 }_v_mirror3_t;
 
@@ -1951,10 +1952,10 @@ typedef union tag_MIRROR4
     uint16_t ALL;
     struct
     {
-        __IO uint16_t osc_rctl       : 5;    /* osc_rctl [4:0] */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t ldo_osc_ctl    : 5;    /* ldo_osc_ctl [4:0] */
-        uint16_t                : 3;    /* reserved */
+        __IO uint16_t osc_rctl      : 5;    /* osc_rctl [4:0] */
+        uint16_t                    : 3;    /* reserved */
+        __IO uint16_t ldo_osc_ctl   : 5;    /* ldo_osc_ctl [4:0] */
+        uint16_t                    : 3;    /* reserved */
     }bit;
 }_v_mirror4_t;
 
@@ -1964,10 +1965,10 @@ typedef union tag_MIRROR5
     uint16_t ALL;
     struct
     {
-        __IO uint16_t osc_rctl2      : 5;    /* osc_rctl2 [4:0] */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t otp_checksum   : 6;    /* otp_checksum [5:0] */
-        __IO uint16_t version        : 2;    /* version [1:0] */
+        __IO uint16_t osc_rctl2     : 5;    /* osc_rctl2 [4:0] */
+        uint16_t                    : 3;    /* reserved */
+        __IO uint16_t otp_checksum  : 6;    /* otp_checksum [5:0] */
+        __IO uint16_t version       : 2;    /* version [1:0] */
     }bit;
 }_v_mirror5_t;
 
@@ -1977,14 +1978,14 @@ typedef union tag_GATE_CONTROL
     uint16_t ALL;
     struct
     {
-        __IO uint16_t gate1_L_en     : 1;     /* gate1_L_en */
-        __IO uint16_t gate2_L_en     : 1;     /* gate2_L_en */
-        __IO uint16_t gate3_L_en     : 1;     /* gate3_L_en */
-        uint16_t                : 1;     /* reserved */
-        __IO uint16_t gate1_H_en     : 1;     /* gate1_H_en */
-        __IO uint16_t gate2_H_en     : 1;     /* gate2_H_en */
-        __IO uint16_t gate3_H_en     : 1;     /* gate3_H_en */
-        uint16_t                : 9;     /* reserved */
+        __IO uint16_t gate1_L_en    : 1;    /* gate1_L_en */
+        __IO uint16_t gate2_L_en    : 1;    /* gate2_L_en */
+        __IO uint16_t gate3_L_en    : 1;    /* gate3_L_en */
+        uint16_t                    : 1;    /* reserved */
+        __IO uint16_t gate1_H_en    : 1;    /* gate1_H_en */
+        __IO uint16_t gate2_H_en    : 1;    /* gate2_H_en */
+        __IO uint16_t gate3_H_en    : 1;    /* gate3_H_en */
+        uint16_t                    : 9;    /* reserved */
     }bit;
 }_v_gate_control_t;
 
@@ -1994,8 +1995,8 @@ typedef union tag_GATE1_OFFSET
     uint16_t ALL;
     struct
     {
-        __IO uint16_t gate1_offset1  : 8;     /* gate1_offset1 [7:0] */
-        __IO uint16_t gate1_offset2  : 8;     /* gate1_offset2 [7:0] */
+        __IO uint16_t gate1_offset1 : 8;    /* gate1_offset1 [7:0] */
+        __IO uint16_t gate1_offset2 : 8;    /* gate1_offset2 [7:0] */
     }bit;
 }_v_gate1_offset_t;
 
@@ -2005,8 +2006,8 @@ typedef union tag_GATE2_OFFSET
     uint16_t ALL;
     struct
     {
-        __IO uint16_t gate2_offset1  : 8;     /* gate2_offset1 [7:0] */
-        __IO uint16_t gate2_offset2  : 8;     /* gate2_offset2 [7:0] */
+        __IO uint16_t gate2_offset1 : 8;    /* gate2_offset1 [7:0] */
+        __IO uint16_t gate2_offset2 : 8;    /* gate2_offset2 [7:0] */
     }bit;
 }_v_gate2_offset_t;
 
@@ -2016,8 +2017,8 @@ typedef union tag_GATE3_OFFSET
     uint16_t ALL;
     struct
     {
-        __IO uint16_t gate3_offset1  : 8;     /* gate3_offset1 [7:0] */
-        __IO uint16_t gate3_offset2  : 8;     /* gate3_offset2 [7:0] */
+        __IO uint16_t gate3_offset1 : 8;    /* gate3_offset1 [7:0] */
+        __IO uint16_t gate3_offset2 : 8;    /* gate3_offset2 [7:0] */
     }bit;
 }_v_gate3_offset_t;
 
@@ -2038,8 +2039,8 @@ typedef union tag_SV_VAR_CONTROL2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t sv_var_size2   : 8;     /* sv_var_size2 [7:0] */
-        __IO uint16_t sv_var_size3   : 8;     /* sv_var_size3 [7:0] */
+        __IO uint16_t sv_var_size2  : 8;    /* sv_var_size2 [7:0] */
+        __IO uint16_t sv_var_size3  : 8;    /* sv_var_size3 [7:0] */
     }bit;
 }_v_sv_var_control2_t;
 
@@ -2051,7 +2052,7 @@ typedef union tag_DAC1_FB_VALID_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac1_fb_valid_cnt : 16;    /* dac1_fb_valid_cnt [17:2] */
+        __I uint16_t dac1_fb_valid_cnt  : 16;   /* dac1_fb_valid_cnt [17:2] */
     }bit;
 }_v_dac1_fb_valid_cnt_t;
 
@@ -2061,8 +2062,8 @@ typedef union tag_DAC1_INC_HOLD_WAIT_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac1_inc1_wait_cnt      : 7;     /* dac1_inc1_wait_cnt [6:0] */
-        __I uint16_t dac1_inc_hold_limit_cnt : 9;     /* dac1_inc_hold_limit_cnt [8:0] */
+        __I uint16_t dac1_inc1_wait_cnt         : 7;    /* dac1_inc1_wait_cnt [6:0] */
+        __I uint16_t dac1_inc_hold_limit_cnt    : 9;    /* dac1_inc_hold_limit_cnt [8:0] */
     }bit;
 }_v_dac1_inc_hold_wait_cnt_t;
 
@@ -2072,9 +2073,9 @@ typedef union tag_1R2
     uint16_t ALL;
     struct
     {
-        __I uint16_t bit_1r2            : 12;   /* 1r2 [ 11:0] */
-        __I uint16_t bit_signed         : 1;    /* signed */
-        uint16_t                : 3;    /* reserved */
+        __I uint16_t bit_1r2    : 12;   /* 1r2 [ 11:0] */
+        __I uint16_t bit_signed :  1;   /* signed */
+        uint16_t                :  3;   /* reserved */
     }bit;
 }_v_1r2_t;
 
@@ -2084,8 +2085,8 @@ typedef union tag_SOA1_N1_N11
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa_n1         : 7;     /* soa_n1 [6:0] */
-        __IO uint16_t soa1_n11       : 9;     /* soa1_n11 [8:0] */
+        __IO uint16_t soa_n1    : 7;    /* soa_n1 [6:0] */
+        __IO uint16_t soa1_n11  : 9;    /* soa1_n11 [8:0] */
     }bit;
 }_v_soa1_n1_n11_t;
 
@@ -2095,9 +2096,9 @@ typedef union tag_SOA1_P2_P1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa1_p1        : 9;    /* soa1_p1 [8:0] */
+        __IO uint16_t soa1_p1   : 9;    /* soa1_p1 [8:0] */
         uint16_t                : 3;    /* reserved */
-        __IO uint16_t soa_p2         : 4;    /* soa_p2 [3:0] */
+        __IO uint16_t soa_p2    : 4;    /* soa_p2 [3:0] */
     }bit;
 }_v_soa1_p2_p1_t;
 
@@ -2107,8 +2108,8 @@ typedef union tag_SOA1_P3_P2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa1_p2        : 6;     /* soa1_p2 [9:4] */
-        __IO uint16_t soa1_p3        : 10;    /* soa1_p3 [9:0] */
+        __IO uint16_t soa1_p2   :  6;   /* soa1_p2 [9:4] */
+        __IO uint16_t soa1_p3   : 10;   /* soa1_p3 [9:0] */
     }bit;
 }_v_soa1_p3_p2_t;
 
@@ -2118,7 +2119,7 @@ typedef union tag_DAC2_FB_VALID_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac2_fb_valid_cnt : 16;    /* dac2_fb_valid_cnt [17:2] */
+        __I uint16_t dac2_fb_valid_cnt  : 16;   /* dac2_fb_valid_cnt [17:2] */
     }bit;
 }_v_dac2_fb_valid_cnt_t;
 
@@ -2128,8 +2129,8 @@ typedef union tag_DAC2_INC_HOLD_WAIT_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac2_inc1_wait_cnt      : 7;     /* dac2_inc1_wait_cnt [6:0] */
-        __I uint16_t dac2_inc_hold_limit_cnt : 9;     /* dac2_inc_hold_limit_cnt [8:0] */
+        __I uint16_t dac2_inc1_wait_cnt         : 7;    /* dac2_inc1_wait_cnt [6:0] */
+        __I uint16_t dac2_inc_hold_limit_cnt    : 9;    /* dac2_inc_hold_limit_cnt [8:0] */
     }bit;
 }_v_dac2_inc_hold_wait_cnt_t;
 
@@ -2139,9 +2140,9 @@ typedef union tag_2R2
     uint16_t ALL;
     struct
     {
-        __I uint16_t bit_2r2            : 12;   /* 2r2 [11:0] */
-        __I uint16_t bit_signed         : 1;    /* signed */
-        uint16_t                : 3;    /* reserved */
+        __I uint16_t bit_2r2    : 12;   /* 2r2 [11:0] */
+        __I uint16_t bit_signed :  1;   /* signed */
+        uint16_t                :  3;   /* reserved */
     }bit;
 }_v_2r2_t;
 
@@ -2151,8 +2152,8 @@ typedef union tag_SOA2_N1_N11
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa2_n1        : 7;     /* soa2_n1 [6:0] */
-        __IO uint16_t soa2_n11       : 9;     /* soa2_n11 [8:0] */
+        __IO uint16_t soa2_n1   : 7;    /* soa2_n1 [6:0] */
+        __IO uint16_t soa2_n11  : 9;    /* soa2_n11 [8:0] */
     }bit;
 }_v_soa2_n1_n11_t;
 
@@ -2162,9 +2163,9 @@ typedef union tag_SOA2_P2_P1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa2_p1        : 9;    /* soa2_p1 [8:0] */
+        __IO uint16_t soa2_p1   : 9;    /* soa2_p1 [8:0] */
         uint16_t                : 3;    /* reserved */
-        __IO uint16_t soa2_p2        : 4;    /* soa2_p2 [3:0] */
+        __IO uint16_t soa2_p2   : 4;    /* soa2_p2 [3:0] */
     }bit;
 }_v_soa2_p2_p1_t;
 
@@ -2174,8 +2175,8 @@ typedef union tag_SOA2_P3_P2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa2_p2        : 6;     /* soa2_p2 [9:4] */
-        __IO uint16_t soa2_p3        : 10;    /* soa2_p3 [9:0] */
+        __IO uint16_t soa2_p2   :  6;   /* soa2_p2 [9:4] */
+        __IO uint16_t soa2_p3   : 10;   /* soa2_p3 [9:0] */
     }bit;
 }_v_soa2_p3_p2_t;
 
@@ -2185,7 +2186,7 @@ typedef union tag_DAC3_FB_VALID_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac3_fb_valid_cnt : 16;    /* dac3_fb_valid_cnt [17:2] */
+        __I uint16_t dac3_fb_valid_cnt  : 16;   /* dac3_fb_valid_cnt [17:2] */
     }bit;
 }_v_dac3_fb_valid_cnt_t;
 
@@ -2195,8 +2196,8 @@ typedef union tag_DAC3_INC_HOLD_WAIT_CNT
     uint16_t ALL;
     struct
     {
-        __I uint16_t dac3_inc1_wait_cnt      : 7;     /* dac3_inc1_wait_cnt [6:0] */
-        __I uint16_t dac3_inc_hold_limit_cnt : 9;     /* dac3_inc_hold_limit_cnt [8:0] */
+        __I uint16_t dac3_inc1_wait_cnt         : 7;    /* dac3_inc1_wait_cnt [6:0] */
+        __I uint16_t dac3_inc_hold_limit_cnt    : 9;    /* dac3_inc_hold_limit_cnt [8:0] */
     }bit;
 }_v_dac3_inc_hold_wait_cnt_t;
 
@@ -2206,9 +2207,9 @@ typedef union tag_3R2
     uint16_t ALL;
     struct
     {
-        __I uint16_t bit_3r2            : 12;   /* 3r2 [11:0] */
-        __I uint16_t bit_signed         : 1;    /* signed */
-        uint16_t                : 3;    /* reserved */
+        __I uint16_t bit_3r2    : 12;   /* 3r2 [11:0] */
+        __I uint16_t bit_signed :  1;   /* signed */
+        uint16_t                :  3;   /* reserved */
     }bit;
 }_v_3r2_t;
 
@@ -2218,8 +2219,8 @@ typedef union tag_SOA3_N1_N11
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa3_n1        : 7;     /* soa3_n1 [6:0] */
-        __IO uint16_t soa3_n11       : 9;     /* soa3_n11 [8:0] */
+        __IO uint16_t soa3_n1   : 7;    /* soa3_n1 [6:0] */
+        __IO uint16_t soa3_n11  : 9;    /* soa3_n11 [8:0] */
     }bit;
 }_v_soa3_n1_n11_t;
 
@@ -2229,9 +2230,9 @@ typedef union tag_SOA3_P2_P1
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa3_p1        : 9;    /* soa3_p1 [8:0] */
+        __IO uint16_t soa3_p1   : 9;    /* soa3_p1 [8:0] */
         uint16_t                : 3;    /* reserved */
-        __IO uint16_t soa3_p2        : 4;    /* soa3_p2 [3:0] */
+        __IO uint16_t soa3_p2   : 4;    /* soa3_p2 [3:0] */
     }bit;
 }_v_soa3_p2_p1_t;
 
@@ -2241,8 +2242,8 @@ typedef union tag_SOA3_P3_P2
     uint16_t ALL;
     struct
     {
-        __IO uint16_t soa3_p2        : 6;     /* soa3_p2 [9:4] */
-        __IO uint16_t soa3_p3        : 10;    /* soa3_p3 [9:0] */
+        __IO uint16_t soa3_p2   :  6;   /* soa3_p2 [9:4] */
+        __IO uint16_t soa3_p3   : 10;   /* soa3_p3 [9:0] */
     }bit;
 }_v_soa3_p3_p2_t;
 
@@ -2252,14 +2253,14 @@ typedef union tag_ANA_TEST
     uint16_t ALL;
     struct
     {
-        __IO uint16_t TEST_ANA_EN    : 3;    /* TEST_ANA_EN[2:0] */
-        uint16_t                : 1;    /* reserved */
-        __IO uint16_t CHOP_EN_BGR    : 1;    /* CHOP_EN_BGR */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t CHOP_EN_OSCLDO : 1;    /* CHOP_EN_OSCLDO */
-        uint16_t                : 3;    /* reserved */
-        __IO uint16_t CHOP_EN        : 1;    /* CHOP_EN */
-        uint16_t                : 3;    /* reserved */
+        __IO uint16_t TEST_ANA_EN       : 3;    /* TEST_ANA_EN[2:0] */
+        uint16_t                        : 1;    /* reserved */
+        __IO uint16_t CHOP_EN_BGR       : 1;    /* CHOP_EN_BGR */
+        uint16_t                        : 3;    /* reserved */
+        __IO uint16_t CHOP_EN_OSCLDO    : 1;    /* CHOP_EN_OSCLDO */
+        uint16_t                        : 3;    /* reserved */
+        __IO uint16_t CHOP_EN           : 1;    /* CHOP_EN */
+        uint16_t                        : 3;    /* reserved */
     }bit;
 }_v_ana_test_t;
 
