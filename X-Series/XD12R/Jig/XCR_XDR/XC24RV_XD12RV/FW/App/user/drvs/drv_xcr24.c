@@ -124,8 +124,6 @@ static void xcr24_spi_log_dump(const uint16_t* out, uint16_t len)
 }
 #endif
 
-static void xcr24_change_rw_grp_type(xcr_rw_grp_t rw_grp);
-
 static void xcr24_regs_init_table(void)
 {
     _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
@@ -133,6 +131,9 @@ static void xcr24_regs_init_table(void)
     {
         switch(addr)
         {
+        case XCR_FAULT_READ_COMMAND:
+            _r1->reg._r05.bit.ft_mode = 1U;
+            break;
         case XCR_LD_TRANSFER_COMMAND:
             _r1->reg._r06.bit.ld_type = LED_PER_BLOCK;
             break;
@@ -143,9 +144,17 @@ static void xcr24_regs_init_table(void)
         case XCR_COMMAND_AUTO_ENABLE:
             _r1->reg._r08.bit.sync_auto_en = XCR_FUNCTION_DIS;
             _r1->reg._r08.bit.fault_auto_en = XCR_FUNCTION_EN;
+            _r1->reg._r08.bit.timeout_en = XCR_FUNCTION_EN;
             break;
         case XCR_LD_START_POINTER_TH:
             _r1->reg._r0C.bit.ld_transfer_start_pointer = 9U;
+            break;
+        case XCR_FAULT_AUTO_READ_INTERVAL:
+            _r1->reg._r11.bit.fault_auto_rd_interval = 0xFFFFU;
+            break;
+        case XCR_FAULT_AUTO_READ_EVENT:
+            _r1->reg._r12.bit.fault_auto_rd_interval = 1U;
+            _r1->reg._r12.bit.fault_auto_rd_timer_event = 1U;
             break;
         case XCR_CLK_CONTROL_1:
             // _r1->reg._r1B.bit.serializer_skew_en = XCR_FUNCTION_DIS;
@@ -165,14 +174,12 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r1C.ALL = 0x0000U;
             break;
         case XCR_SERIALIZER_CLOCK_GEN:
-            // _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
-            // _r1->reg._r1D.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
-            _r1->reg._r1D.ALL = 0x0C18U;
+            _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
+            _r1->reg._r1D.bit.serial_clk_low = XCR_SERIAL_CLK_LOW;
             break;
         case XCR_LATENCY:
-            // _r1->reg._r1E.bit.cmd_latency = 0U;
-            // _r1->reg._r1E.bit.serial_latency = 0U;
-            _r1->reg._r1E.ALL = 0x70C0U;
+            _r1->reg._r1E.bit.cmd_latency = 0xC0U;
+            _r1->reg._r1E.bit.serial_latency = 0x70U;
             break;
         case XCR_DAISIED_DEVICE_CH_SIZE:
             _r1->reg._r20.bit.daisied_dev_blk_size = gn_xcr_daisied_dev_blk_size;
@@ -306,21 +313,21 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r3B.bit.vo_delay = 0U;
             break;
         case XCR_VO_OFF_ON:
-            _r1->reg._r3C.bit.vo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_V_MASK_ON_TIME_US);
-            _r1->reg._r3C.bit.vo_off = XCR_CONV_us_TO_XCR_MCLK(XCR_V_MASK_OFF_TIME_US);
+            _r1->reg._r3C.bit.vo_on = XCR_CONV_US_TO_XCR_MCLK(XCR_V_MASK_ON_TIME_US);
+            _r1->reg._r3C.bit.vo_off = XCR_CONV_US_TO_XCR_MCLK(XCR_V_MASK_OFF_TIME_US);
             break;
         case XCR_SVO_ON:
-            _r1->reg._r3D.bit.svo_on = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
+            _r1->reg._r3D.bit.svo_on = XCR_CONV_US_TO_XCR_MCLK(XCR_SVO_ON_TIME_US);
             break;
         case XCR_SVO1_OFF:
-            //_r1->reg._r3E.bit.svo1_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
+            //_r1->reg._r3E.bit.svo1_off = XCR_CONV_US_TO_XCR_MCLK(XCR_SVO1_OFF_TIME_US);
             _r1->reg._r3E.bit.svo1_off = 0U;
             break;
         case XCR_SVO2_OFF:
-            _r1->reg._r3F.bit.svo2_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
+            _r1->reg._r3F.bit.svo2_off = XCR_CONV_US_TO_XCR_MCLK(XCR_SVO2_OFF_TIME_US);
             break;
         case XCR_SVO3_OFF:
-            _r1->reg._r40.bit.svo3_off = XCR_CONV_us_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
+            _r1->reg._r40.bit.svo3_off = XCR_CONV_US_TO_XCR_MCLK(XCR_SVO3_OFF_TIME_US);
             break;
         case XCR_SVO_NUMBER:
             _r1->reg._r41.bit.sv_no = XDR_SV_NO;
@@ -555,6 +562,7 @@ void xcr24_reset(void)
 
 static void xcr24_dump_registers(void)
 {
+#if 0
     comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 GROUP1 Registers");
     for (xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
     {
@@ -572,6 +580,92 @@ static void xcr24_dump_registers(void)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", (XCR_OTP_BASE_ADDR + addr), gt_xcr24_get_otp_regs.ALL[addr]);
     }
+#else
+    char line_buf[128];
+    int len = 0;
+
+    // 1. XCR24 GROUP1 Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n=== XCR24 GROUP1 Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    for (uint16_t addr = 0; addr < (uint16_t)XCR_GRP1_MAX; ++addr)
+    {
+        if ((addr % 16) == 0)
+        {
+            if (addr > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", addr);
+        }
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, " %04X ", gt_xcr24_get_gr1_regs.ALL[addr]);
+    }
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    // 2. XCR24 GROUP2 Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\r\n=== XCR24 GROUP2 Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    len = 0;
+    for (uint16_t addr = 0; addr < (uint16_t)XCR_GRP2_MAX; ++addr)
+    {
+        if ((addr % 16) == 0)
+        {
+            if (addr > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", addr);
+        }
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, " %04X ", gt_xcr24_get_gr2_regs.ALL[addr]);
+    }
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    // 3. XCR24 OTP Control Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\r\n=== XCR24 OTP Control Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    len = 0;
+    for (uint16_t offset = 0; offset < (uint16_t)XCR_OTP_MAX; ++offset)
+    {
+        uint16_t real_addr = (uint16_t)XCR_OTP_BASE_ADDR + offset;
+        if ((offset % 16) == 0)
+        {
+            if (offset > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", real_addr & 0xF0U);
+        }
+
+        if (offset == 0 && (real_addr % 16) != 0)
+        {
+            for (uint8_t pad = 0; pad < (real_addr % 16); ++pad)
+            {
+                len += snprintf(&line_buf[len], sizeof(line_buf) - len, " ---- ");
+            }
+        }
+
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, " %04X ", gt_xcr24_get_otp_regs.ALL[offset]);
+    }
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n");
+#endif
 }
 
 static void xcr24_memory_copy(void)
@@ -658,6 +752,46 @@ const _xcr_group2_regs_t* xcr24_get_xcr24_set_gr2_regs(void)
 const _xcr_group2_regs_t* xcr24_get_xcr24_get_gr2_regs(void)
 {
     return &gt_xcr24_get_gr2_regs;
+}
+
+static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
+{
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
+    xcr_rw_grp_t now_grp = (xcr_rw_grp_t)(_rF0->bit.ADDR_EXT);
+
+    if (in_grp >= XCR_RW_GRP_MAX)
+    {
+        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid group type", __func__);
+        return;
+    }
+
+    if (now_grp != in_grp)
+    {
+        _rF0->bit.ADDR_EXT = (uint16_t)(in_grp);
+        _cmd_t cmd = { 0U };
+        uint16_t tx_buffer[2] = { 0U };
+
+        cmd.bit.code = CMD_CODE2;
+        cmd.bit.addr = (XCR_OTP_BASE_ADDR + XCR_TEST_CONTROL);
+        cmd.bit.size = 1U;
+
+        tx_buffer[0] = cmd.ALL;
+        tx_buffer[1] = _rF0->ALL;
+
+        XCR_NSS_LO();
+        uint8_t ret = spi_write(SPI1, tx_buffer, 2, 20U);
+        XCR_NSS_HI();
+
+#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
+        xcr24_spi_log_dump(tx_buffer, 2);
+#endif
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nChange GRP TYPE to %u [0x%04X]", in_grp, gt_xcr24_set_otp_regs.reg._rF0.ALL);
+
+        if(SPI_TIMEOUT == ret)
+        {
+            comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
+        }
+    }
 }
 
 uint16_t xcr24_read_otp_control(uint16_t addr, uint16_t length)
@@ -953,46 +1087,6 @@ void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length)
         for(uint16_t i = 0U; i < burst_size; ++i)
         {
             _r->ALL[addr + i] = tx_buffer[1U + i];
-        }
-    }
-}
-
-static void xcr24_change_rw_grp_type(xcr_rw_grp_t in_grp)
-{
-    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
-    xcr_rw_grp_t now_grp = (xcr_rw_grp_t)(_rF0->bit.ADDR_EXT);
-
-    if (in_grp >= XCR_RW_GRP_MAX)
-    {
-        comm_UART_Printf(LOG_LV_ERROR, "\r\n%s invalid group type", __func__);
-        return;
-    }
-
-    if (now_grp != in_grp)
-    {
-        _rF0->bit.ADDR_EXT = (uint16_t)(in_grp);
-        _cmd_t cmd = { 0U };
-        uint16_t tx_buffer[2] = { 0U };
-
-        cmd.bit.code = CMD_CODE2;
-        cmd.bit.addr = (XCR_OTP_BASE_ADDR + XCR_TEST_CONTROL);
-        cmd.bit.size = 1U;
-
-        tx_buffer[0] = cmd.ALL;
-        tx_buffer[1] = _rF0->ALL;
-
-        XCR_NSS_LO();
-        uint8_t ret = spi_write(SPI1, tx_buffer, 2, 20U);
-        XCR_NSS_HI();
-
-#if (SPI_LOG_DUMP == SPI_LOG_DUMP_ENABLE)
-        xcr24_spi_log_dump(tx_buffer, 2);
-#endif
-        comm_UART_Printf(LOG_LV_ERROR, "\r\nChange GRT TYPE to %u [0x%04X]", in_grp, gt_xcr24_set_otp_regs.reg._rF0.ALL);
-
-        if(SPI_TIMEOUT == ret)
-        {
-            comm_UART_Printf(LOG_LV_ERROR, "\r\nspi write timeout");
         }
     }
 }

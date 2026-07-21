@@ -146,61 +146,63 @@ __STATIC_INLINE uint8_t comm_get_tx_packet(tx_packet_t** pData)
 
 __STATIC_INLINE void comm_print_help(void)
 {
-    comm_UART_Printf(LOG_LV_INFO, "\n\r------------------ Command Help -----------------------------");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n------------------ Command Help -----------------------------");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  help / ?\t\t : Show command help");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_ic_start\t\t : Start timer for frequency input capture");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_ic_stop\t\t : Stop input capture and print measured frequency");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_vref_start\t : Start MCU ADC");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  help / ?                : Show command help");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  jig_vref                : Get MCU ADC value");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  jig_ic_start            : Start timer input capture");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  jig_ic_stop             : Stop input capture & print freq");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  mclk_enable / disable   : Enable/Disable MCO2 clock");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  fllsync_start / stop    : Start/Stop FLL sync timer");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  vsync_start / stop      : Start/Stop VSYNC output");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  vsync_freq [u]          : Set VSYNC output frequency");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_ch_sel [d]\t : Select output channel (0 ~ XD_CH_MAX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_xd_vcc [u]\t : XD VCC On/Off (1=On, 0=Off)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_xd_vcc_level [u]\t : XD VCC level (0=5V, 1=5.7V)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_xc_vcc [u]\t : XC VCC On/Off (1=On, 0=Off)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_vled [u]\t\t : VLED 9V On/Off (1=On, 0=Off)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_gain [u]\t\t : Set current gain (0 ~ GAIN_MAX-1)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  jig_vsync [d]\t\t : Start/Stop Vsync (1=Start, 0=Stop)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  vsync [lf]\t\t : Set vsync frequency (Hz)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  pwm_freq [lf]\t\t : Set PWM frequency (kHz)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_trim_start          : Run XCR Trim Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_trim_start / 1      : Run XDR Trim Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_test_start          : Run XCR Test Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_test_start          : Run XDR Test Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_sweep_start         : Run XCR Sweep Test");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_sweep_start         : Run XDR Sweep Test");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  launch                  : Launch system (VDD ON + XDR Init + LDIM + VSYNC)");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_idgen\t\t : Send IDGEN command to XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_reset\t\t : Reset XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_syncgen\t\t : Send SYNCGEN command to XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_test_en\t\t : Enter trim mode of XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_r_all\t\t : Read all registers of XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_r [x]\t\t : Read general register [x] (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_rt [x]\t\t : Read trim register [x] (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_w [x] [y]\t\t : Write [y] to general register [x] (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_wt [x] [y]\t\t : Write [y] to trim register [x] (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_ldim [d]\t\t : Set LDIM value [0 ~ 65535]");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_ldim\t\t : Show current LDIM value");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_fbi [x]\t\t : Set FBI pin (1=HI, 0=LO)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_fbo\t\t : Read FBO pin status");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_ch [d]\t\t : Set XDIC channel (0 ~ XD_CH_MAX)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_icc                  : Read XCR Standby ICC via ADS114S08");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_debug                : Power ON & Init XCR24");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_trim_debug           : Power ON & Init XCR24 Trim");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_w [hex_addr] [val]: Write XCR24 Group 1 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_r [hex_addr]      : Read XCR24 Group 1 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_w [hex_addr] [val]: Write XCR24 Group 2 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_r [hex_addr]      : Read XCR24 Group 2 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_wt [hex_addr] [val]  : Write XCR24 OTP Control Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_rt [hex_addr]        : Read XCR24 OTP Control Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_test                 : Init XCR24 Test Mode & Start VSYNC");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_r_all                : Read all XCR24 registers");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_fll [idx] [cnt]      : Set XCR24 FLL count (idx < 3)");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_debug\t\t : Initialize XD debug environment");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_debug\t : Initialize XD trim environment");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_vref\t\t : Trim VREF of XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_osc\t\t : Trim OSC of XDIC");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_ofs [x]\t : Trim offset and fix LD to 1<<12");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_gain [x]\t : Trim gain and fix LD to 6<<12");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_osc_debug\t\t : Auto scan OSC trim values");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_icc                  : Read XDR Standby ICC via ADS114S08");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_reset                : Reset XDR12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_idgen                : Send IDGEN command to XDR12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_syncgen              : Send SYNCGEN command to XDR12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_debug                : Power ON & Init XDR12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_trim_debug           : Power ON & Init XDR12 Trim");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_w [hex_addr] [val]   : Write XDR12 General Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r [hex_addr]         : Read XDR12 General Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_wt [hex_addr] [val]  : Write XDR12 Mirror Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_rt [hex_addr]        : Read XDR12 Mirror Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r_all                : Read all XDR12 registers");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_ldim                : Run XDR12 Local Dimming Transfer");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_debug\t\t : Initialize XC24");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_r [x]\t\t : Read register [x] of XC24 (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_w [x] [y]\t\t : Write [y] to register [x] of XC24 (HEX)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_r_all\t\t : Read all registers of XC24");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_use [d]\t\t : Enable/Disable XC24 usage (0/1)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  step [idx] [r] [g] [b]  : Set specific/all LED color (idx 0=All)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  step [idx] [val]        : Set specific/all LED grayscale");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  step                    : Print current buffer values for all LEDs");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_trim_start / 1\t : Start XDIC trim process");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_screen_start / 2\t : Start XDIC screen process");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xd_dimming_start / 3\t : Start XDIC dimming process");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  xc_trim_start / 4\t : Start XC24 trim process");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  vled_dcdc [u]           : Set VLED DCDC Power state");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  vled [u]                : Set VLED 9V Power state");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_vcc [u]              : Set XD VDD 5V Power state");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_vcc [u]              : Set XC VDD 5V Power state");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  log_lv [d]              : Set system log level");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  reset                   : Perform MCU System Reset");
 
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  log_lv [d]\t\t : Set log level (0 ~ LOG_MAX-1)");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r  reset\t\t\t : Reset MCU");
-
-    comm_UART_Printf(LOG_LV_INFO, "\n\r--------------------------------------------------------------\n\r");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n--------------------------------------------------------------\r\n");
 }
 
 static void comm_set_log_lv(LOG_LV_t log_lv)
@@ -238,7 +240,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    comm_set_log_lv(LOG_LV_DEBUG);
+    comm_set_log_lv(LOG_LV_INFO);
 }
 
 void comm_debugging_process(void)
@@ -259,7 +261,6 @@ void comm_debugging_process(void)
             comm_print_help();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
         else if (Command_is_("jig_vref"))
         {
             mcu_peripheral_adc_start();
@@ -268,7 +269,6 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "JigBD_IF_Get_MCU_ADC()-%d\r\n", mcu_adc_value);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
         else if (Command_is_("jig_ic_start"))
         {
             mcu_peripheral_tim_input_capture_start();
@@ -281,8 +281,6 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f Hz\r\n", (double)(freq));
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
-        /*********** MCO output enable/disable *************/
         else if(!(strcmp(str_in, "mclk_enable")))
         {
             MCO2_ENABLE();
@@ -291,6 +289,31 @@ void comm_debugging_process(void)
         else if(!(strcmp(str_in, "mclk_disable")))
         {
             MCO2_DISABLE();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "fllsync_start")))
+        {
+            tim_fllsync_start();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "fllsync_stop")))
+        {
+            tim_fllsync_stop();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "vsync_start")))
+        {
+            tim_vsync_out_start();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "vsync_stop")))
+        {
+            tim_vsync_out_stop();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("vsync_freq", "%u", &u32_recv_param[0]))
+        {
+            tim_set_vsync_out_freq((float)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -327,15 +350,6 @@ void comm_debugging_process(void)
         }
         else if(!(strcmp(str_in, "launch")))
         {
-#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-            gpio_set_xc_vdd_5v(VCC_ON_3V3);
-            LL_mDelay(99U);
-            xcr24_init();
-            gpio_set_vled_dcdc(VLED_ON);
-#else
-    #error "XDR_CONTROL_TYPE is not defined"
-#endif
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
             xdr12_init();
@@ -343,185 +357,6 @@ void comm_debugging_process(void)
 
             ldim_set_block_color_buffer(LDIM_BLK_INDEX_ALL, 100U, 100U, 100U);
             tim_vsync_out_start();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-
-        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
-        {
-            if (u32_recv_param[0] > LDIM_BLK_SIZE)
-            {
-                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-            else
-            {
-                ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
-                if (u32_recv_param[0] == 0)
-                {
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet all LED color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
-                }
-                else
-                {
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%2u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
-                }
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-        }
-        else if(Command_Param_is_("step", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            if (u32_recv_param[0] > LDIM_BLK_SIZE)
-            {
-                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-                return;
-            }
-            ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "step")))
-        {
-            block_color_t* p_block_color_buffer = ldim_get_block_color_buffer();
-            for (uint16_t idx = 0U; idx < LDIM_BLK_SIZE; ++idx)
-            {
-                char log_buf[350] = {0};
-                int log_buf_len = 0U;
-                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[LED: %2u] R: %5u, G: %5u, B: %5u", \
-                (idx + 1U), p_block_color_buffer[idx].r, p_block_color_buffer[idx].g, p_block_color_buffer[idx].b);
-                comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
-            }
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xcr_ldim_force")))
-        {
-            uint16_t* p = ldim_get_xcr_ld_transfer_buffer();
-            uint16_t len = ldim_get_xcr_ld_transfer_size();
-
-            xcr24_set_ld_transfer(p, len);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        /*************** GPIO ON/OFF *******************/
-        else if(Command_Param_is_("vled_dcdc", "%u", &u32_recv_param[0]))
-        {
-            gpio_set_vled_dcdc((vled_state_t)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("vled", "%u", &u32_recv_param[0]))
-        {
-            gpio_set_vled_9v((vled_state_t)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xd_vcc", "%u", &u32_recv_param[0]))
-        {
-            gpio_set_xd_vdd_5v((vcc_state_t)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xc_vcc", "%u", &u32_recv_param[0]))
-        {
-            gpio_set_xc_vdd_5v((vcc_state_t)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-
-        /*************** XDR12 *******************/
-        else if(!(strcmp(str_in, "xd_icc")))
-        {
-            xdr12_test_init_icc_stby();
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
-            }
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_reset")))
-        {
-            xdr12_reset();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_idgen")))
-        {
-            xdr12_idgen();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xdr_syncgen")))
-        {
-            xdr12_syncgen();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_debug")))
-        {
-            gpio_set_xd_vdd_5v(VCC_ON_3V3);
-            LL_mDelay(99U);
-            xdr12_init();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_trim_debug")))
-        {
-            gpio_set_xd_vdd_5v(VCC_ON_3V3);
-            LL_mDelay(99U);
-            xdr12_trim_init();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            if (true == tim_get_vsync_out_running_flag())
-            {
-                tim_set_xd_write_info((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
-            }
-            else
-            {
-                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-        }
-        else if(Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
-        {
-            if (true == tim_get_vsync_out_running_flag())
-            {
-                tim_set_xd_read_info((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-            }
-            else
-            {
-                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-        }
-        else if(Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            if (true == tim_get_vsync_out_running_flag())
-            {
-                tim_set_xd_write_info((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
-            }
-            else
-            {
-                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-        }
-        else if(Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
-        {
-            if (true == tim_get_vsync_out_running_flag())
-            {
-                tim_set_xd_read_info((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
-            }
-            else
-            {
-                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-            }
-        }
-        else if(!(strcmp(str_in, "xd_r_all")))
-        {
-            xdr12_read_all();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xdr_ldim")))
-        {
-            xdr12_ld_transfer();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
@@ -674,192 +509,221 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        /* TIMER */
-        else if(!(strcmp(str_in, "vsync_start")))
+        /*************** XDR12 *******************/
+        else if(!(strcmp(str_in, "xd_icc")))
         {
-            tim_vsync_out_start();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "vsync_stop")))
-        {
-            tim_vsync_out_stop();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("vsync_freq", "%u", &u32_recv_param[0]))
-        {
-            tim_set_vsync_out_freq((float)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "fllsync_start")))
-        {
-            tim_fllsync_start();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "fllsync_stop")))
-        {
-            tim_fllsync_stop();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        /* test with previous IC */
-        else if(Command_Param_is_("xd_curr", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
-        {
-            current_gain_t gain = (current_gain_t)u32_recv_param[0];
-            XD_CH_t ch = (XD_CH_t)(u32_recv_param[1]);
-            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
-
-            gpio_set_vled_9v(VLED_ON);
-            gpio_set_current_gain(gain);
-            gpio_set_demux_channel_selection(ch);
-
-            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
-
-            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0xAAA, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_write_by_type((uint16_t)0x0B, (uint16_t)u32_recv_param[2], XD12R_ADDR_TYPE_GENERAL); /* vref */
-            xdr12_write_by_type((uint16_t)0x0C, (uint16_t)u32_recv_param[2], XD12R_ADDR_TYPE_GENERAL); /* vref */
-            xdr12_write_by_type((uint16_t)0x0D, (uint16_t)u32_recv_param[2], XD12R_ADDR_TYPE_GENERAL); /* vref */
-
-            xdr12_write_by_type((uint16_t)0x1C, (uint16_t)0x555, XD12R_ADDR_TYPE_GENERAL);
-            xdr12_write_by_type((uint16_t)0x0A, (uint16_t)0x000, XD12R_ADDR_TYPE_GENERAL);
-
-            xdr12_write_by_type((uint16_t)0x3F, (uint16_t)0x820, XD12R_ADDR_TYPE_GENERAL);
-
-            xdr12_read_by_type((uint16_t)0x05, XD12R_ADDR_TYPE_GENERAL);
-
-            tim_vsync_out_start();
-            LL_mDelay(1000U);
-            tim_vsync_out_stop();
-
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+            xdr12_test_init_icc_stby();
             ADS114S08_Set_Start(true);
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
-                float iout = JigBD_IF_Convert_Adc_To_Current(adc, gain);
-                comm_UART_Printf(LOG_LV_INFO, "\r\n adc [%u], iout [%f]", adc, (double)(iout));
+                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
             }
-
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        /* test XDR */
-        else if(Command_Param_is_("xd_gain", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        else if(!(strcmp(str_in, "xd_reset")))
         {
-            current_gain_t gain = GAIN_MID;
-            xdr12_write_by_type((uint16_t)0x00, (uint16_t)0x000, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x01, (uint16_t)0x230, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x02, (uint16_t)0x814, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x03, (uint16_t)0x08F, XD12R_ADDR_TYPE_MIRROR);
-
-            xdr12_trim_init_ch_ofs();
-            gpio_set_vled_9v(VLED_ON);
-            gpio_set_current_gain(gain);
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
-
-            uint8_t ch = (uint8_t)(u32_recv_param[0] - 1U);
-            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
-            gpio_set_demux_channel_selection((XD_CH_t)ch);
-            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
-
-            xdr12_write_by_type(XD12R_MIRROR_GAIN_CH01 + ch, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
-
-            LL_mDelay(50U);
-
-            float iout[2] = { 0.0f };
-
-            for (uint8_t i = 0U; i < 2U; i++)
+            xdr12_reset();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_idgen")))
+        {
+            xdr12_idgen();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_syncgen")))
+        {
+            xdr12_syncgen();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_debug")))
+        {
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_trim_debug")))
+        {
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_trim_init();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (true == tim_get_vsync_out_running_flag())
             {
-                uint16_t vref_table[2] = { 300U, 2200U };
-                xdr12_trim_set_max_curr_vref(vref_table[i]);
-                LL_mDelay(50U);
-                ADS114S08_Set_Start(true);
-                if (true == ADS114S08_Wait_Done())
-                {
-                    uint16_t adc = ADS114S08_Get_ADC_Value();
-                    iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
-                }
+                tim_set_xd_write_info((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
             }
-            comm_UART_Printf(LOG_LV_INFO, "\r\n iout[0] : %.3f, iout[1] : %.3f, delta : %.3f", (double)(iout[0]), (double)(iout[1]), (double)(iout[1] - iout[0]));
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xd_ofs", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
-        {
-            current_gain_t gain = GAIN_MID;
-            xdr12_write_by_type((uint16_t)0x00, (uint16_t)0x000, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x01, (uint16_t)0x1B0, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x02, (uint16_t)0x814, XD12R_ADDR_TYPE_MIRROR);
-            xdr12_write_by_type((uint16_t)0x03, (uint16_t)0x08F, XD12R_ADDR_TYPE_MIRROR);
-
-            xdr12_trim_init_ch_ofs();
-            gpio_set_vled_9v(VLED_ON);
-            gpio_set_current_gain(gain);
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
-
-            uint8_t ch = (uint8_t)(u32_recv_param[0] - 1U);
-            uint16_t xd_ch_val = (uint16_t)pow(2, (double)ch);
-            gpio_set_demux_channel_selection((XD_CH_t)ch);
-            xdr12_write_by_type((uint16_t)0x05, xd_ch_val, XD12R_ADDR_TYPE_GENERAL);
-
-            xdr12_write_by_type(XD12R_MIRROR_OFS_CH01 + ch, (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
-
-            LL_mDelay(50U);
-
-            float iout[2] = { 0.0f };
-
-            for (uint8_t i = 0U; i < 2U; i++)
+            else
             {
-                uint16_t vref_table[2] = { 300U, 300U };
-                xdr12_trim_set_max_curr_vref(vref_table[i]);
-                LL_mDelay(50U);
-                ADS114S08_Set_Start(true);
-                if (true == ADS114S08_Wait_Done())
-                {
-                    uint16_t adc = ADS114S08_Get_ADC_Value();
-                    iout[i] = JigBD_IF_Convert_Adc_To_Current(adc, gain);
-                }
+                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
-            comm_UART_Printf(LOG_LV_INFO, "\r\n iout[0] : %.3f, iout[1] : %.3f, avg : %.3f", (double)(iout[0]), (double)(iout[1]), ((double)(iout[0] + iout[1]) / 2.0f));
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xd_osc")))
+        else if(Command_Param_is_("xd_r", "%x", &u32_recv_param[0]))
         {
-            xdr12_trim_init_osc();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xd_fll", "%u", &u32_recv_param[0]))
-        {
-            xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[0]);
-            tim_vsync_out_start();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(Command_Param_is_("xd_fll_change", "%u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2]))
-        {
-            if (u32_recv_param[2] < 5)
+            if (true == tim_get_vsync_out_running_flag())
             {
-                xdr12_test(u32_recv_param[2]);
-                xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[0]);
-                tim_vsync_out_start();
-                LL_mDelay(1000U);
-                xdr12_test_init_fll_MHz((uint16_t)u32_recv_param[1]);
-                /*
-
-                uint16_t cnt = 250U;
-                float freq[250] = {0.0f};
-
-                for (uint16_t i = 0U; i < cnt; ++i)
-                {
-                    mcu_peripheral_tim_input_capture_start();
-                    freq[i] = mcu_peripheral_tim_conversion_freq() * XDR_CONST_OSC;
-                }
-
-                tim_vsync_out_stop();
-
-                for (uint16_t i = 0U; i < cnt; ++i)
-                {
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n freq[%u] : %.3f", i, (double)(freq[i]));
-                }
-                */
+                tim_set_xd_read_info((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
             }
+            else
+            {
+                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("xd_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (true == tim_get_vsync_out_running_flag())
+            {
+                tim_set_xd_write_info((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+            }
+            else
+            {
+                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("xd_rt", "%x", &u32_recv_param[0]))
+        {
+            if (true == tim_get_vsync_out_running_flag())
+            {
+                tim_set_xd_read_info((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
+            }
+            else
+            {
+                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(!(strcmp(str_in, "xd_r_all")))
+        {
+            xdr12_read_all();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_vref", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] >= XD12R_SETTING_GRP_MAX)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid XDIC channel index (%u). Must be 0 ~ %u", u32_recv_param[0], XD12R_SETTING_GRP_MAX - 1);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                xdr12_set_max_curr_vref((xd12r_setting_grp_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("xd_max_curr_lvl", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] >= XD12R_SETTING_GRP_MAX)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid XDIC channel index (%u). Must be 0 ~ %u", u32_recv_param[0], XD12R_SETTING_GRP_MAX - 1);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                xdr12_set_max_curr_lvl((xd12r_setting_grp_t)u32_recv_param[0], (max_curr_level_t)u32_recv_param[1]);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("xd_fb", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] >= XD12R_SETTING_GRP_MAX)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid XDIC channel index (%u). Must be 0 ~ %u", u32_recv_param[0], XD12R_SETTING_GRP_MAX - 1);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                xdr12_set_fb_lvl((xd12r_setting_grp_t)u32_recv_param[0], (fb_level_t)u32_recv_param[1]);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("xd_short", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] >= XD12R_SETTING_GRP_MAX)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid XDIC channel index (%u). Must be 0 ~ %u", u32_recv_param[0], XD12R_SETTING_GRP_MAX - 1);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                xdr12_set_short_lvl((xd12r_setting_grp_t)u32_recv_param[0], (short_level_t)u32_recv_param[1]);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        /************* common **************/
+        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
+        {
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
+                if (u32_recv_param[0] == 0)
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet all LED color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                else
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%2u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("step", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                return;
+            }
+            ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "step")))
+        {
+            block_color_t* p_block_color_buffer = ldim_get_block_color_buffer();
+            for (uint16_t idx = 0U; idx < LDIM_BLK_SIZE; ++idx)
+            {
+                char log_buf[350] = {0};
+                int log_buf_len = 0U;
+                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[LED: %2u] R: %5u, G: %5u, B: %5u", \
+                (idx + 1U), p_block_color_buffer[idx].r, p_block_color_buffer[idx].g, p_block_color_buffer[idx].b);
+                comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        /*************** GPIO ON/OFF *******************/
+        else if(Command_Param_is_("vled_dcdc", "%u", &u32_recv_param[0]))
+        {
+            gpio_set_vled_dcdc((vled_state_t)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("vled", "%u", &u32_recv_param[0]))
+        {
+            gpio_set_vled_9v((vled_state_t)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_vcc", "%u", &u32_recv_param[0]))
+        {
+            gpio_set_xd_vdd_5v((vcc_state_t)u32_recv_param[0]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xc_vcc", "%u", &u32_recv_param[0]))
+        {
+            gpio_set_xc_vdd_5v((vcc_state_t)u32_recv_param[0]);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("log_lv", "%u", &u32_recv_param[0]))

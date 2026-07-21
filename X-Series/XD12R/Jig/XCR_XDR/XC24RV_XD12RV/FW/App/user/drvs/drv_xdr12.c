@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "main.h"
@@ -544,8 +545,8 @@ static void xdr12_regs_init_table(void)
                 _r1->reg._r06.bit.o_off_e = XDR_FUNCTION_DIS;
                 _r1->reg._r06.bit.s_off_e = XDR_FUNCTION_DIS;
                 _r1->reg._r06.bit.t_off_e = XDR_FUNCTION_DIS;
-                _r1->reg._r06.bit.o_det_e = XDR_FUNCTION_DIS;
-                _r1->reg._r06.bit.s_det_e = XDR_FUNCTION_DIS;
+                _r1->reg._r06.bit.o_det_e = XDR_FUNCTION_EN;
+                _r1->reg._r06.bit.s_det_e = XDR_FUNCTION_EN;
                 _r1->reg._r06.bit.o_fb_e = XDR_FUNCTION_DIS;
                 _r1->reg._r06.bit.fb_mode = 0U;
                 _r1->reg._r06.bit.auto_fault_fb_no = 2U;
@@ -1015,6 +1016,7 @@ void xdr12_syncgen(void)
 
 static void xdr12_dump_registers(void)
 {
+#if 0
     comm_UART_Printf(LOG_LV_INFO, "\r\nXDR12 General Registers");
     for (xd12_addr_t addr = XD12R_RESET_ID; addr < XD12R_MAX; ++addr)
     {
@@ -1032,6 +1034,93 @@ static void xdr12_dump_registers(void)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xdr12_mirror_get_regs[0].ALL[addr]);
     }
+#else
+    char line_buf[128];
+    int len = 0;
+
+    // 1. XDR12 General Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n=== XDR12 General Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    for (uint16_t addr = 0; addr < (uint16_t)XD12R_MAX; ++addr)
+    {
+        if ((addr % 16) == 0)
+        {
+            if (addr > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", addr);
+        }
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, "  %03X ", gt_xdr12_get_regs[0].ALL[addr]);
+    }
+
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    // 2. XDR12 OTP Control Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\r\n=== XDR12 OTP Control Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    len = 0;
+    for (uint16_t offset = 0; offset < (uint16_t)XD12R_OTP_MAX; ++offset)
+    {
+        uint16_t real_addr = (uint16_t)XD12R_OTP_CTRL_BASE + offset;
+        if ((offset % 16) == 0)
+        {
+            if (offset > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", real_addr & 0xF0U);
+        }
+
+        if (offset == 0 && (real_addr % 16) != 0)
+        {
+            for (uint8_t pad = 0; pad < (real_addr % 16); ++pad)
+            {
+                len += snprintf(&line_buf[len], sizeof(line_buf) - len, " ---- ");
+            }
+        }
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, "  %03X ", gt_xdr12_otp_ctrl_get_regs[0].ALL[offset]);
+    }
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    // 3. XDR12 Mirror Registers
+    comm_UART_Printf(LOG_LV_INFO, "\r\n\r\n=== XDR12 Mirror Registers ===");
+    comm_UART_Printf(LOG_LV_INFO, "\r\nADDR |  00    01    02    03    04    05    06    07    08    09    0A    0B    0C    0D    0E    0F");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    len = 0;
+    for (uint16_t addr = 0; addr < (uint16_t)XD12R_MIRROR_MAX; ++addr)
+    {
+        if ((addr % 16) == 0)
+        {
+            if (addr > 0)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+            }
+            len = snprintf(line_buf, sizeof(line_buf), "\r\n0x%02X |", addr);
+        }
+        len += snprintf(&line_buf[len], sizeof(line_buf) - len, "  %03X ", gt_xdr12_mirror_get_regs[0].ALL[addr]);
+    }
+    if (len > 0)
+    {
+        comm_UART_Printf(LOG_LV_INFO, "%s", line_buf);
+    }
+    comm_UART_Printf(LOG_LV_INFO, "\r\n-----+--------------------------------------------------------------------------------------------------");
+
+    comm_UART_Printf(LOG_LV_INFO, "\r\n");
+#endif
 }
 
 static void xdr12_memory_copy(void)
@@ -1082,6 +1171,16 @@ void xdr12_init_param(void)
 
 void xdr12_init(void)
 {
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    gpio_set_xc_vdd_5v(VCC_ON_3V3);
+    LL_mDelay(99U);
+    xcr24_init();
+    gpio_set_vled_dcdc(VLED_ON);
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+
     xdr12_reset();
     xdr12_idgen();
     xdr12_make_readable();
@@ -1091,6 +1190,16 @@ void xdr12_init(void)
 
 void xdr12_trim_init(void)
 {
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    gpio_set_xc_vdd_5v(VCC_ON_3V3);
+    LL_mDelay(99U);
+    xcr24_init();
+    gpio_set_vled_dcdc(VLED_ON);
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+
     xdr12_reset();
     xdr12_idgen();
     xdr12_make_readable();
@@ -1298,6 +1407,252 @@ void xdr12_ld_transfer(void)
     #error "XDR_CONTROL_TYPE is not defined"
 #endif
     us_delay(CMD_DELAY_LD);
+}
+
+void xdr12_fault_readout(void)
+{
+    static uint8_t prev_fault_data = 0x0FU;
+    uint8_t fault_data = 0x0FU;
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    fault_data = (uint8_t)(xcr24_read_grp1_reg(XCR_GLOBAL_FAULT_READ_DATA1, 1U) & 0x000FU);
+#else
+    #error "XDR_CONTROL_TYPE is not defined"
+#endif
+    if (prev_fault_data != fault_data)
+    {
+        const uint8_t fault_fault = ((fault_data & 0x08U) >> 3U);
+        const uint8_t fault_fb3 = ((fault_data & 0x04U) >> 2U);
+        const uint8_t fault_fb2 = ((fault_data & 0x02U) >> 1U);
+        const uint8_t fault_fb1 = ((fault_data & 0x01U) >> 0U);
+        comm_UART_Printf(LOG_LV_INFO, "\r\n Fault Detect> [FAULT: %u, FB3: %u, FB2: %u, FB1: %u]\n\rJIG> \0", fault_fault, fault_fb3, fault_fb2, fault_fb1);
+        prev_fault_data = fault_data;
+    }
+    us_delay(CMD_DELAY_FAULT_READ);
+}
+
+void xdr12_set_max_curr_vref(xd12r_setting_grp_t set_grp, uint16_t vref)
+{
+    if ((set_grp >= XD12R_SETTING_GRP_MAX) || (vref > 4095U))
+    {
+        FATAL_INVALID_INPUT(set_grp);
+        FATAL_INVALID_INPUT(vref);
+        return;
+    }
+
+    const uint16_t vref_addr[5] = { XD12R_MAX_CURR_VREF1, XD12R_MAX_CURR_VREF2, XD12R_MAX_CURR_VREF3, XD12R_MAX_CURR_VREF4, XD12R_MAX_CURR_VREF5 };
+    _v_xdr12_max_curr_vref_t* p_vref = &gt_xdr12_set_regs.reg._r0A;
+
+    if (set_grp == XD12R_SETTING_GRP_ALL)
+    {
+        for (uint8_t i = 0U; i < 5U; ++i)
+        {
+            (p_vref + i)->bit.max_curr_vref = vref;
+            xdr12_write_by_type(vref_addr[i], (p_vref + i)->ALL, XD12R_ADDR_TYPE_GENERAL);
+        }
+    }
+    else if ((set_grp >= XD12R_SETTING_GRP_1) && (set_grp <= XD12R_SETTING_GRP_5))
+    {
+        uint8_t idx = (uint8_t)set_grp - (uint8_t)XD12R_SETTING_GRP_1;
+        (p_vref + idx)->bit.max_curr_vref = vref;
+        xdr12_write_by_type(vref_addr[idx], (p_vref + idx)->ALL, XD12R_ADDR_TYPE_GENERAL);
+    }
+    else
+    {
+        FATAL_INVALID_INPUT(set_grp);
+    }
+}
+
+void xdr12_set_max_curr_lvl(xd12r_setting_grp_t set_grp, max_curr_level_t curr_lvl)
+{
+    if ((set_grp >= XD12R_SETTING_GRP_MAX) || (curr_lvl > CURR_LEVEL_MAX))
+    {
+        FATAL_INVALID_INPUT(set_grp);
+        FATAL_INVALID_INPUT(curr_lvl);
+        return;
+    }
+    uint16_t lvl_val = (uint16_t)curr_lvl & 0x0FU;
+
+    if (set_grp == XD12R_SETTING_GRP_ALL)
+    {
+        gt_xdr12_set_regs.reg._r19.bit.max_curr1_level = lvl_val;
+        gt_xdr12_set_regs.reg._r19.bit.max_curr2_level = lvl_val;
+        gt_xdr12_set_regs.reg._r19.bit.max_curr3_level = lvl_val;
+        xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL1, gt_xdr12_set_regs.reg._r19.ALL, XD12R_ADDR_TYPE_GENERAL);
+
+        gt_xdr12_set_regs.reg._r1A.bit.max_curr4_level = lvl_val;
+        gt_xdr12_set_regs.reg._r1A.bit.max_curr5_level = lvl_val;
+        xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, gt_xdr12_set_regs.reg._r1A.ALL, XD12R_ADDR_TYPE_GENERAL);
+    }
+    else
+    {
+        switch (set_grp)
+        {
+            case XD12R_SETTING_GRP_1:
+            {
+                gt_xdr12_set_regs.reg._r19.bit.max_curr1_level = lvl_val;
+                xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL1, gt_xdr12_set_regs.reg._r19.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_2:
+            {
+                gt_xdr12_set_regs.reg._r19.bit.max_curr2_level = lvl_val;
+                xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL1, gt_xdr12_set_regs.reg._r19.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_3:
+            {
+                gt_xdr12_set_regs.reg._r19.bit.max_curr3_level = lvl_val;
+                xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL1, gt_xdr12_set_regs.reg._r19.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_4:
+            {
+                gt_xdr12_set_regs.reg._r1A.bit.max_curr4_level = lvl_val;
+                xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, gt_xdr12_set_regs.reg._r1A.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_5:
+            {
+                gt_xdr12_set_regs.reg._r1A.bit.max_curr5_level = lvl_val;
+                xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, gt_xdr12_set_regs.reg._r1A.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(set_grp);
+                break;
+            }
+        }
+    }
+}
+
+void xdr12_set_fb_lvl(xd12r_setting_grp_t set_grp, fb_level_t fb_lvl)
+{
+    if ((set_grp >= XD12R_SETTING_GRP_MAX) || (fb_lvl > FB_LEVEL_MAX))
+    {
+        FATAL_INVALID_INPUT(set_grp);
+        FATAL_INVALID_INPUT(fb_lvl);
+        return;
+    }
+    uint16_t lvl_val = (uint16_t)fb_lvl & 0x07U;
+
+    if (set_grp == XD12R_SETTING_GRP_ALL)
+    {
+        gt_xdr12_set_regs.reg._r16.bit.fb1_level = lvl_val;
+        gt_xdr12_set_regs.reg._r16.bit.fb2_level = lvl_val;
+        gt_xdr12_set_regs.reg._r16.bit.fb3_level = lvl_val;
+        gt_xdr12_set_regs.reg._r16.bit.fb4_level = lvl_val;
+        xdr12_write_by_type(XD12R_FB_LEVEL, gt_xdr12_set_regs.reg._r16.ALL, XD12R_ADDR_TYPE_GENERAL);
+
+        gt_xdr12_set_regs.reg._r17.bit.fb5_level = lvl_val;
+        xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+    }
+    else
+    {
+        switch (set_grp)
+        {
+            case XD12R_SETTING_GRP_1:
+            {
+                gt_xdr12_set_regs.reg._r16.bit.fb1_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_LEVEL, gt_xdr12_set_regs.reg._r16.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_2:
+            {
+                gt_xdr12_set_regs.reg._r16.bit.fb2_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_LEVEL, gt_xdr12_set_regs.reg._r16.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_3:
+            {
+                gt_xdr12_set_regs.reg._r16.bit.fb3_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_LEVEL, gt_xdr12_set_regs.reg._r16.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_4:
+            {
+                gt_xdr12_set_regs.reg._r16.bit.fb4_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_LEVEL, gt_xdr12_set_regs.reg._r16.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_5:
+            {
+                gt_xdr12_set_regs.reg._r17.bit.fb5_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(set_grp);
+                break;
+            }
+        }
+    }
+}
+
+void xdr12_set_short_lvl(xd12r_setting_grp_t set_grp, short_level_t short_lvl)
+{
+    if ((set_grp >= XD12R_SETTING_GRP_MAX) || (short_lvl > SHORT_LEVEL_MAX))
+    {
+        FATAL_INVALID_INPUT(set_grp);
+        FATAL_INVALID_INPUT(short_lvl);
+        return;
+    }
+    uint16_t lvl_val = (uint16_t)short_lvl & 0x07U;
+
+    if (set_grp == XD12R_SETTING_GRP_ALL)
+    {
+        gt_xdr12_set_regs.reg._r17.bit.short1_level = lvl_val;
+        gt_xdr12_set_regs.reg._r17.bit.short2_level = lvl_val;
+        gt_xdr12_set_regs.reg._r17.bit.short3_level = lvl_val;
+        xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+
+        gt_xdr12_set_regs.reg._r18.bit.short4_level = lvl_val;
+        gt_xdr12_set_regs.reg._r18.bit.short5_level = lvl_val;
+        xdr12_write_by_type(XD12R_SHORT_LEVEL, gt_xdr12_set_regs.reg._r18.ALL, XD12R_ADDR_TYPE_GENERAL);
+    }
+    else
+    {
+        switch (set_grp)
+        {
+            case XD12R_SETTING_GRP_1:
+            {
+                gt_xdr12_set_regs.reg._r17.bit.short1_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_2:
+            {
+                gt_xdr12_set_regs.reg._r17.bit.short2_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_3:
+            {
+                gt_xdr12_set_regs.reg._r17.bit.short3_level = lvl_val;
+                xdr12_write_by_type(XD12R_FB_SHORT_LEVEL, gt_xdr12_set_regs.reg._r17.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_4:
+            {
+                gt_xdr12_set_regs.reg._r18.bit.short4_level = lvl_val;
+                xdr12_write_by_type(XD12R_SHORT_LEVEL, gt_xdr12_set_regs.reg._r18.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            case XD12R_SETTING_GRP_5:
+            {
+                gt_xdr12_set_regs.reg._r18.bit.short5_level = lvl_val;
+                xdr12_write_by_type(XD12R_SHORT_LEVEL, gt_xdr12_set_regs.reg._r18.ALL, XD12R_ADDR_TYPE_GENERAL);
+                break;
+            }
+            default:
+            {
+                FATAL_INVALID_INPUT(set_grp);
+                break;
+            }
+        }
+    }
 }
 
 void xdr12_trim_set_efuse_enable(bool en)

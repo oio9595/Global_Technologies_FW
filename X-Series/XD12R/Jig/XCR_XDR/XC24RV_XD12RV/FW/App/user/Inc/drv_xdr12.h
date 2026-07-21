@@ -26,7 +26,7 @@ extern "C" {
 #define XDR_CONTROL_TYPE    (XDR_CONTROLLED_XCR)
 
 #define XDR_CH_SIZE         (12U)
-#define XDR_DAISY_LENGTH    (2U)
+#define XDR_DAISY_LENGTH    (1U)
 
 //#define XDR_LD_DATA_12BIT (12U)
 #define XDR_LD_DATA_14BIT   (14U)
@@ -108,6 +108,17 @@ typedef enum tag_XD12R_ADDR_TYPE
     XD12R_ADDR_TYPE_MIRROR = 1U
 } xd12r_addr_type_t;
 
+typedef enum tag_XD12R_SETTING_GRP
+{
+    XD12R_SETTING_GRP_ALL = 0U,
+    XD12R_SETTING_GRP_1,
+    XD12R_SETTING_GRP_2,
+    XD12R_SETTING_GRP_3,
+    XD12R_SETTING_GRP_4,
+    XD12R_SETTING_GRP_5,
+    XD12R_SETTING_GRP_MAX,
+} xd12r_setting_grp_t;
+
 extern volatile bool gb_xd_pwm_out_flag;
 extern volatile bool gb_xd_pwm_in_flag;
 extern volatile bool gb_xd_pwm_in_timeout;
@@ -125,6 +136,12 @@ void xdr12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_t
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);
 
 void xdr12_ld_transfer(void);
+void xdr12_fault_readout(void);
+
+void xdr12_set_max_curr_vref(xd12r_setting_grp_t set_grp, uint16_t vref);
+void xdr12_set_max_curr_lvl(xd12r_setting_grp_t set_grp, max_curr_level_t curr_lvl);
+void xdr12_set_fb_lvl(xd12r_setting_grp_t set_grp, fb_level_t fb_lvl);
+void xdr12_set_short_lvl(xd12r_setting_grp_t set_grp, short_level_t short_lvl);
 
 void xdr12_trim_set_efuse_enable(bool en);
 bool xdr12_trim_get_efuse_enable(void);

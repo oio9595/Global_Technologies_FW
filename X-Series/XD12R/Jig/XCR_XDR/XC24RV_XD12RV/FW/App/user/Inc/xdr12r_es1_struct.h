@@ -778,11 +778,11 @@ typedef union _xdr12_regs
         _v_xdr12_max_curr_vref_t        _r0E;
         _v_xdr12_dummy_t                _r0F;
         _v_xdr12_delay_ch1_2_t          _r10;
-        _v_xdr12_delay_ch3_4_t           _r11;
-        _v_xdr12_delay_ch5_6_t           _r12;
-        _v_xdr12_delay_ch7_8_t           _r13;
-        _v_xdr12_delay_ch9_10_t          _r14;
-        _v_xdr12_delay_ch11_12_t         _r15;
+        _v_xdr12_delay_ch3_4_t          _r11;
+        _v_xdr12_delay_ch5_6_t          _r12;
+        _v_xdr12_delay_ch7_8_t          _r13;
+        _v_xdr12_delay_ch9_10_t         _r14;
+        _v_xdr12_delay_ch11_12_t        _r15;
         _v_xdr12_fb_level_t             _r16;
         _v_xdr12_fb_short_level_t       _r17;
         _v_xdr12_short_level_t          _r18;

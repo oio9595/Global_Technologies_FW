@@ -17,7 +17,7 @@ extern "C" {
 #include "xcr24_struct.h"
 
 #define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (Hz) + 0.5f)
-#define XCR_CONV_us_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
+#define XCR_CONV_US_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
 
 #define XCR_EFUSE_SKIP          (0U)
 #define XCR_EFUSE_BURN          (1U)

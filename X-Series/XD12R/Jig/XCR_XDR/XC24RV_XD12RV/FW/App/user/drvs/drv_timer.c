@@ -32,7 +32,9 @@ typedef struct tag_RW_INFO
 
 static bool gb_vsync_out_running;
 
-static bool gb_x_rw_flag;
+static bool gb_fault_read_flag;
+
+static bool gb_xd_xc_rw_flag;
 static rw_info_t gt_xd_rw_info;
 static rw_info_t gt_xc_rw_info;
 
@@ -216,11 +218,11 @@ void tim_vsync_out_process(void)
             xdr12_ld_transfer();
             gb_ldim_blk_xform_flag = false;
             gn_ldim_blk_xform_idx = 0U;
-            gb_x_rw_flag = true;
+            gb_xd_xc_rw_flag = true;
         }
     }
 
-    if(true == gb_x_rw_flag)
+    if(true == gb_xd_xc_rw_flag)
     {
         tim_read_xd();
         tim_write_xd();
@@ -228,7 +230,15 @@ void tim_vsync_out_process(void)
         tim_read_xc();
         tim_write_xc();
 
-        gb_x_rw_flag = false;
+        gb_xd_xc_rw_flag = false;
+
+        gb_fault_read_flag = true;
+    }
+
+    if (true == gb_fault_read_flag)
+    {
+        xdr12_fault_readout();
+        gb_fault_read_flag = false;
     }
 }
 
