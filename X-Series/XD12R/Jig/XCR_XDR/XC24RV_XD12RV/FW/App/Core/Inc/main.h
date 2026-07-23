@@ -119,6 +119,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define DEMUX_CHSEL_3_GPIO_Port GPIOB
 #define nINT_LD_Pin LL_GPIO_PIN_13
 #define nINT_LD_GPIO_Port GPIOB
+#define nINT_LD_EXTI_IRQn EXTI15_10_IRQn
 #define XD_5V5_EN_Pin LL_GPIO_PIN_14
 #define XD_5V5_EN_GPIO_Port GPIOB
 #define FREQ_MEASURE_RESET_Pin LL_GPIO_PIN_15
@@ -137,6 +138,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define ADC_NSS_GPIO_Port GPIOA
 #define nINT_FT_Pin LL_GPIO_PIN_10
 #define nINT_FT_GPIO_Port GPIOA
+#define nINT_FT_EXTI_IRQn EXTI15_10_IRQn
 #define DEBUG_Pin LL_GPIO_PIN_11
 #define DEBUG_GPIO_Port GPIOA
 #define DEMUX_CHSEL_2_Pin LL_GPIO_PIN_12
@@ -187,7 +189,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define TIM8_CLK                ((float)APB2_TIM_CLK / (TIM8_PRESCALER + 1U))
 #define TIM8_PERIOD             ((uint16_t)((TIM8_CLK / 120U) - 1U))
 #define TIM8_PERIOD_HZ(f)       ((uint32_t)((TIM8_CLK / (f)) - 1U))
-#define VSYNC_OUT_PULSE         ((uint16_t)((10.0f * TIM8_CLK) / 1000000UL)) /* 10us pwm width */
+#define VSYNC_OUT_PULSE         ((uint16_t)((100.0f * TIM8_CLK) / 1000000UL)) /* 10us pwm width */
 
 /* us_delay, TIMER12 */
 #define TIM12_PRESCALER         ((uint16_t)((APB1_TIM_CLK/1000000UL) - 1U))    /* prescaler for 1us */

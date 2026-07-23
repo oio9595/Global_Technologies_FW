@@ -156,6 +156,9 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r12.bit.fault_auto_rd_interval = 1U;
             _r1->reg._r12.bit.fault_auto_rd_timer_event = 1U;
             break;
+        case XCR_INTERRUPT_ENABLE:
+            _r1->reg._r13.bit.int_fb_en = XCR_FUNCTION_EN;
+            break;
         case XCR_CLK_CONTROL_1:
             // _r1->reg._r1B.bit.serializer_skew_en = XCR_FUNCTION_DIS;
             // _r1->reg._r1B.bit.osc1_spread_en = XCR_FUNCTION_EN;
@@ -180,6 +183,9 @@ static void xcr24_regs_init_table(void)
         case XCR_LATENCY:
             _r1->reg._r1E.bit.cmd_latency = 0xC0U;
             _r1->reg._r1E.bit.serial_latency = 0x70U;
+            break;
+        case XCR_TIMEOUT:
+            _r1->reg._r1F.bit.timeout = 0x06D6U;
             break;
         case XCR_DAISIED_DEVICE_CH_SIZE:
             _r1->reg._r20.bit.daisied_dev_blk_size = gn_xcr_daisied_dev_blk_size;
@@ -255,6 +261,22 @@ static void xcr24_regs_init_table(void)
         case XCR_BLOCK_SIZE_8:
             _r1->reg._r30.bit.total_blk_size_ch15 = gn_xcr_channel_block_size[14U];
             _r1->reg._r30.bit.total_blk_size_ch16 = gn_xcr_channel_block_size[15U];
+            break;
+        case XCR_BLOCK_SIZE_9:
+            _r1->reg._r31.bit.total_blk_size_ch17 = gn_xcr_channel_block_size[16U];
+            _r1->reg._r31.bit.total_blk_size_ch18 = gn_xcr_channel_block_size[17U];
+            break;
+        case XCR_BLOCK_SIZE_10:
+            _r1->reg._r32.bit.total_blk_size_ch19 = gn_xcr_channel_block_size[18U];
+            _r1->reg._r32.bit.total_blk_size_ch20 = gn_xcr_channel_block_size[19U];
+            break;
+        case XCR_BLOCK_SIZE_11:
+            _r1->reg._r33.bit.total_blk_size_ch21 = gn_xcr_channel_block_size[20U];
+            _r1->reg._r33.bit.total_blk_size_ch22 = gn_xcr_channel_block_size[21U];
+            break;
+        case XCR_BLOCK_SIZE_12:
+            _r1->reg._r34.bit.total_blk_size_ch23 = gn_xcr_channel_block_size[22U];
+            _r1->reg._r34.bit.total_blk_size_ch24 = gn_xcr_channel_block_size[23U];
             break;
         case XCR_CHANNEL_ENABLE_1:
             _r1->reg._r35.bit.ch1_en = gn_xcr_channel_enable[0U];
@@ -341,22 +363,39 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r42.ALL = 0x0000U;
             break;
         case XCR_DAC_CONTROL:
-            //_r1->reg._r43.bit.dac1_auto = 0U;
-            //_r1->reg._r43.bit.dac2_auto = 0U;
-            //_r1->reg._r43.bit.dac3_auto = 0U;
-            //_r1->reg._r43.bit.dac_auto_type = 0U;
-            //_r1->reg._r43.bit.dac_sync_mode = 0U;
-            //_r1->reg._r43.bit.dac1_fb_mode = 0U;
-            //_r1->reg._r43.bit.dac2_fb_mode = 0U;
-            //_r1->reg._r43.bit.dac3_fb_mode = 0U;
-            //_r1->reg._r43.bit.dac1_dec1_mode = 0U;
-            //_r1->reg._r43.bit.dac2_dec1_mode = 0U;
-            //_r1->reg._r43.bit.dac3_dec1_mode = 0U;
-            //_r1->reg._r43.bit.dac1_hold_en = 0U;
-            //_r1->reg._r43.bit.dac2_hold_en = 0U;
-            //_r1->reg._r43.bit.dac3_hold_en = 0U;
-            //_r1->reg._r43.bit.dac_fault_off = 0U;
-            _r1->reg._r43.ALL = 0x0000U;
+            _r1->reg._r43.bit.dac1_auto = 1U;
+            _r1->reg._r43.bit.dac2_auto = 1U;
+            _r1->reg._r43.bit.dac3_auto = 1U;
+            _r1->reg._r43.bit.dac_auto_type = 0U;
+            _r1->reg._r43.bit.dac_sync_mode = 1U;
+            _r1->reg._r43.bit.dac1_fb_mode = 0U;
+            _r1->reg._r43.bit.dac2_fb_mode = 0U;
+            _r1->reg._r43.bit.dac3_fb_mode = 0U;
+            _r1->reg._r43.bit.dac1_dec1_mode = 1U;
+            _r1->reg._r43.bit.dac2_dec1_mode = 1U;
+            _r1->reg._r43.bit.dac3_dec1_mode = 1U;
+            _r1->reg._r43.bit.dac1_hold_en = 0U;
+            _r1->reg._r43.bit.dac2_hold_en = 0U;
+            _r1->reg._r43.bit.dac3_hold_en = 0U;
+            _r1->reg._r43.bit.dac_fault_off = 0U;
+            break;
+        case XCR_DAC1_MIN_LIMIT:
+            _r1->reg._r55.bit.dac1_min_limit = XCR_CONV_DAC_V_TO_INPUT(0.3f);
+            break;
+        case XCR_DAC1_MAX_LIMIT:
+            _r1->reg._r56.bit.dac1_max_limit = XCR_CONV_DAC_V_TO_INPUT(2.9f);
+            break;
+        case XCR_DAC2_MIN_LIMIT:
+            _r1->reg._r5C.bit.dac2_min_limit = XCR_CONV_DAC_V_TO_INPUT(0.5f);
+            break;
+        case XCR_DAC2_MAX_LIMIT:
+            _r1->reg._r5D.bit.dac2_max_limit = XCR_CONV_DAC_V_TO_INPUT(2.7f);
+            break;
+        case XCR_DAC3_MIN_LIMIT:
+            _r1->reg._r63.bit.dac3_min_limit = XCR_CONV_DAC_V_TO_INPUT(0.7f);
+            break;
+        case XCR_DAC3_MAX_LIMIT:
+            _r1->reg._r64.bit.dac3_max_limit = XCR_CONV_DAC_V_TO_INPUT(2.5f);
             break;
         case XCR_OSC_FLL_MAN_A1:
             _r1->reg._r65.bit.OSC_MAN_EN_A = XCR_FUNCTION_EN;
@@ -695,6 +734,7 @@ void xcr24_init_param(void)
     /* XC24R channel enable */
     for (uint8_t xc_ch = 0; xc_ch < XCR_CH_SIZE_MAX; ++xc_ch)
     {
+#if 1 //Sequential Enable
         if (xc_ch < XCR_CH_SIZE)
         {
             gn_xcr_channel_enable[xc_ch] = 1U;
@@ -707,6 +747,20 @@ void xcr24_init_param(void)
             gn_xcr_channel_daisy_size[xc_ch] = 0U;
             gn_xcr_channel_block_size[xc_ch] = 0U;
         }
+#else //Selective Enable
+        if (xc_ch == XCR_CH_02 || xc_ch == XCR_CH_17) // ch3, ch17
+        {
+            gn_xcr_channel_enable[xc_ch] = 1U;
+            gn_xcr_channel_daisy_size[xc_ch] = XDR_DAISY_LENGTH;
+            gn_xcr_channel_block_size[xc_ch] = (gn_xcr_channel_daisy_size[xc_ch] * gn_xcr_daisied_dev_blk_size);
+        }
+        else
+        {
+            gn_xcr_channel_enable[xc_ch] = 0U;
+            gn_xcr_channel_daisy_size[xc_ch] = 0U;
+            gn_xcr_channel_block_size[xc_ch] = 0U;
+        }
+#endif
     }
 
     gn_xcr_fll_cnt[0] = XCR_CONV_FREQ_TO_XCR_MCLK(TIM4_CLK);
@@ -1308,6 +1362,17 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
     }
 }
 
+void xcr24_nINT_FT_handler(void)
+{
+    uint16_t cause_of_INT = xcr24_read_grp1_reg(XCR_INTERRUPT_STATUS, 1U);
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%04X", cause_of_INT);
+}
+
+void xcr24_nINT_LD_handler(void)
+{
+    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_LD interrupt");
+}
+
 void xcr24_trim_set_efuse_enable(bool en)
 {
     gb_xcr_do_efuse = en;
@@ -1636,12 +1701,12 @@ uint32_t xcr24_trim_verify_mirror_dump(void)
         {
             ret |= (1UL << mirror_addr);
             comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✕]%s ADDR [0x%02X] - [0x%04X - 0x%04X]", \
-                ANSI_FONT_RED, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
+                ANSI_FONT_RED, ANSI_FONT_NONE, (XCR_OTP_BASE_ADDR + mirror_addr), saved_reg, read_reg);
         }
         else
         {
             comm_UART_Printf(LOG_LV_ERROR, "\r\n\t%s[✔]%s ADDR [0x%02X] - [0x%04X - 0x%04X]", \
-                ANSI_FONT_GREEN, ANSI_FONT_NONE, mirror_addr, saved_reg, read_reg);
+                ANSI_FONT_GREEN, ANSI_FONT_NONE, (XCR_OTP_BASE_ADDR + mirror_addr), saved_reg, read_reg);
         }
     }
     return ret;
@@ -1715,7 +1780,7 @@ void xcr24_test_init_fll_a_30m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 1U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
@@ -1745,7 +1810,7 @@ void xcr24_test_init_fll_a_35m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 1U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
@@ -1775,7 +1840,7 @@ void xcr24_test_init_fll_a_40m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 1U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xcr24_set_gr1_regs.reg._r65;
@@ -1804,7 +1869,7 @@ void xcr24_test_init_fll_b_30m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 0U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
@@ -1834,7 +1899,7 @@ void xcr24_test_init_fll_b_35m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 0U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;
@@ -1864,7 +1929,7 @@ void xcr24_test_init_fll_b_40m(void)
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
 
-    _rF0->bit.MCLK_SEL = 0U;
+    _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xcr24_set_gr1_regs.reg._r67;

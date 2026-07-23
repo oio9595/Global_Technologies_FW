@@ -215,6 +215,7 @@ void tim_vsync_out_process(void)
         ++gn_ldim_blk_xform_idx;
         if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
         {
+            us_delay(1000U);
             xdr12_ld_transfer();
             gb_ldim_blk_xform_flag = false;
             gn_ldim_blk_xform_idx = 0U;

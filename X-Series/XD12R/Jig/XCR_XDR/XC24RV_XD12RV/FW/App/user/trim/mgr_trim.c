@@ -28,7 +28,7 @@
 #define XCR_DEFAULT_SUB_VAL_OSC_B           (1U << 4U)
 
 #define XCR_TRIM_ERROR_RANGE                (0.005f)    /* 0.5% */
-#define XCR_TRIM_OSC_ERROR_RANGE            (0.086f)    /* 8.6% */
+#define XCR_TRIM_OSC_ERROR_RANGE            (0.0285f)   /* 2.85% */
 
 #define XCR_TRIM_TGT_1V5_LDO_DIG            (1.5f)      /* 1.5V */
 #define XCR_TRIM_TGT_DAC_3V0                (3.0f)      /* 3.0V */
@@ -39,11 +39,11 @@
 #define XCR_TRIM_TGT_OSC_A                  (35.0f)     /* 35MHz */
 #define XCR_TRIM_TGT_OSC_B                  (35.0f)     /* 35MHz */
 
-#define XCR_TRIM_INIT_ADJ_1V5_LDO_DIG       (1U)
-#define XCR_TRIM_INIT_ADJ_DAC_3V0           (1U)
-#define XCR_TRIM_INIT_ADJ_DAC1_OFS          (1U)
-#define XCR_TRIM_INIT_ADJ_DAC2_OFS          (1U)
-#define XCR_TRIM_INIT_ADJ_DAC3_OFS          (1U)
+#define XCR_TRIM_INIT_ADJ_1V5_LDO_DIG       (2U)
+#define XCR_TRIM_INIT_ADJ_DAC_3V0           (2U)
+#define XCR_TRIM_INIT_ADJ_DAC1_OFS          (10U)
+#define XCR_TRIM_INIT_ADJ_DAC2_OFS          (10U)
+#define XCR_TRIM_INIT_ADJ_DAC3_OFS          (10U)
 #define XCR_TRIM_INIT_ADJ_1V5_LDO_OSC       (1U)
 #define XCR_TRIM_INIT_ADJ_OSC_A             (1U)
 #define XCR_TRIM_INIT_ADJ_OSC_B             (1U)
@@ -605,8 +605,13 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 case XCR_TRIM_LIST_OSC_B:
                 {
                     xcr24_trim_init_osc_b();
+#if 0
                     td->step = TRIM_STEP_START_MEASURE;
                     td->tout = XCR_DELAY_SETTLING;
+#else
+                    td->step = TRIM_STEP_PREPARE_EFUSE;
+                    td->tout = XCR_DELAY_DEFAULT;
+#endif
                     break;
                 }
                 default:
@@ -727,7 +732,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
             }
 
             uint16_t adj_mount = trim_calculate_adjust_amount(info);
-            adj_mount = 1; // For testing, set adjustment amount to 1 for finer tuning
             if (t_judge.up == true)
             {
                 info->sub_val[ch] += adj_mount;

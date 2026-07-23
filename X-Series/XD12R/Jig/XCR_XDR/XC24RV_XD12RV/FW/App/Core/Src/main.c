@@ -130,8 +130,6 @@ void sys_init(void)
     #error "XCR_EFUSE is not defined"
 #endif
 
-    xcr24_trim_set_efuse_enable(false);
-
 #if 0
     LL_TIM_EnableARRPreload(TIM3);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH1);
@@ -1432,6 +1430,8 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   NVIC_SetPriority(EXTI4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(EXTI4_IRQn);
+  NVIC_SetPriority(EXTI15_10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

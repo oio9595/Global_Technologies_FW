@@ -19,12 +19,13 @@ extern "C" {
 #define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (Hz) + 0.5f)
 #define XCR_CONV_US_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
 
+#define XCR_CONV_DAC_V_TO_INPUT(voltage)     (uint16_t)((((voltage) * 4095.0f) / 3.0f) + 0.5f)
+
 #define XCR_EFUSE_SKIP          (0U)
 #define XCR_EFUSE_BURN          (1U)
 #define XCR_EFUSE               (XCR_EFUSE_SKIP)
 
 #define XCR_CH_SIZE             (1U)
-#define XCR_CH_SIZE_MAX         (24U)
 #define XCR_SEG_CH_SIZE       	(8U)
 
 #define MODEL_XCR24_SEG         ((uint16_t)((XCR_CH_SIZE + XCR_SEG_CH_SIZE - 1)  / XCR_SEG_CH_SIZE))     /* make ceiled value */
@@ -34,6 +35,35 @@ extern "C" {
 #define XCR_SERIAL_CLK          ((float)XCR_INTERNAL_MCLK / (XCR_SERIAL_CLK_HIGH + XCR_SERIAL_CLK_LOW))
 
 #define XCR_SPI_RW_LEN    	    (48U)
+
+typedef enum tag_XCR_CH
+{
+    XCR_CH_01 = 0U,
+    XCR_CH_02,
+    XCR_CH_03,
+    XCR_CH_04,
+    XCR_CH_05,
+    XCR_CH_06,
+    XCR_CH_07,
+    XCR_CH_08,
+    XCR_CH_09,
+    XCR_CH_10,
+    XCR_CH_11,
+    XCR_CH_12,
+    XCR_CH_13,
+    XCR_CH_14,
+    XCR_CH_15,
+    XCR_CH_16,
+    XCR_CH_17,
+    XCR_CH_18,
+    XCR_CH_19,
+    XCR_CH_20,
+    XCR_CH_21,
+    XCR_CH_22,
+    XCR_CH_23,
+    XCR_CH_24,
+    XCR_CH_SIZE_MAX,
+} xcr_ch_t;
 
 typedef enum tag_XCR_RW_GRP
 {
@@ -79,6 +109,9 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 
 void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt);
+
+void xcr24_nINT_FT_handler(void);
+void xcr24_nINT_LD_handler(void);
 
 void xcr24_trim_set_efuse_enable(bool en);
 bool xcr24_trim_get_efuse_enable(void);

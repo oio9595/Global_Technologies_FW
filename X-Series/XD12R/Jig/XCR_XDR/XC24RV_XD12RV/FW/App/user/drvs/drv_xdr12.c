@@ -734,7 +734,11 @@ static void xdr12_regs_init_table(void)
                 _r1->reg._r26.bit.CHOP_DAC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSCLDO_EN = XDR_FUNCTION_EN;
+#if 0
                 _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_DIS;
+#else
+                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_EN;
+#endif
                 _r1->reg._r26.bit.CHOP_EN = XDR_FUNCTION_EN;
                 break;
             }
@@ -1176,7 +1180,7 @@ void xdr12_init(void)
     gpio_set_xc_vdd_5v(VCC_ON_3V3);
     LL_mDelay(99U);
     xcr24_init();
-    gpio_set_vled_dcdc(VLED_ON);
+    //gpio_set_vled_dcdc(VLED_ON);
 #else
     #error "XDR_CONTROL_TYPE is not defined"
 #endif
