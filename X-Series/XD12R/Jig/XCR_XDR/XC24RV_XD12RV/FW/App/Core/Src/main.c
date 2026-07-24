@@ -129,14 +129,8 @@ void sys_init(void)
 #else
     #error "XCR_EFUSE is not defined"
 #endif
-
-#if 0
-    LL_TIM_EnableARRPreload(TIM3);
-    LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH1);
-#else
     LL_TIM_DisableARRPreload(TIM3);
     LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
-#endif
 
     LL_TIM_ClearFlag_UPDATE(TIM3);
     LL_TIM_ClearFlag_UPDATE(TIM8);

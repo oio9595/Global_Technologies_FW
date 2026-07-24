@@ -32,7 +32,11 @@
 #define XCR_SPI_BURST_MAX_SIZE  (64U)
 #define XCR_SPI_BUFF_MAX_SIZE   (XCR_SPI_HEADER_SIZE + XCR_SPI_BURST_MAX_SIZE)
 
-#define XCR_DAC_TRIM_INPUT      (0xC8U)
+#define XCR_TRIM_DAC_INPUT      (0xC8U)
+
+#define XCR_TEST_DAC_INPUT_P1   (0x0C8U)
+#define XCR_TEST_DAC_INPUT_P2   (0x3E8U)
+#define XCR_TEST_DAC_INPUT_P3   (0xBB8U)
 
 #define XCR_MAX_1V5_LDO_DIG     (0x001FU)
 #define XCR_MAX_DAC_3V0         (0x003FU)
@@ -1354,7 +1358,7 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
             _r3A->bit.fll2cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             xcr24_write_grp1_reg(XCR_FLLCNT22, &_r3A->ALL, 1U);
         }
-        comm_UART_Printf(LOG_LV_INFO, "\r\nChange FLL[ch:%d] count to %d", fll_ch, fll_cnt);
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nChange FLL[ch:%d] count to %d", fll_ch, fll_cnt);
     }
     else
     {
@@ -1364,8 +1368,53 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
 
 void xcr24_nINT_FT_handler(void)
 {
+    static uint16_t prev_cause_of_INT = 0xFFFFU;
+    static uint16_t duplicate_vsync_cnt = 0U;
+
     uint16_t cause_of_INT = xcr24_read_grp1_reg(XCR_INTERRUPT_STATUS, 1U);
-    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%04X", cause_of_INT);
+
+    if (cause_of_INT != prev_cause_of_INT)
+    {
+        static const struct
+        {
+            uint16_t mask;
+            const char *msg;
+        } int_flags[] = {
+            {0x20U, "int_fault_source_1"},
+            {0x10U, "int_fb3"},
+            {0x08U, "int_fb2"},
+            {0x04U, "int_fb1"},
+            {0x02U, "int_ld"},
+            {0x01U, "int_fault_source_2"}
+        };
+
+        const uint8_t fault_1 = ((cause_of_INT & 0x20U) >> 5U);
+        const uint8_t fb3 =     ((cause_of_INT & 0x10U) >> 4U);
+        const uint8_t fb2 =     ((cause_of_INT & 0x08U) >> 3U);
+        const uint8_t fb1 =     ((cause_of_INT & 0x04U) >> 2U);
+        const uint8_t LD =      ((cause_of_INT & 0x02U) >> 1U);
+        const uint8_t fault_2 = ((cause_of_INT & 0x01U) >> 0U);
+        comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%02X: 0x%04X", XCR_INTERRUPT_STATUS, cause_of_INT);
+
+        for (uint8_t i = 0; i < sizeof(int_flags) / sizeof(int_flags[0]); ++i)
+        {
+            if (cause_of_INT & int_flags[i].mask)
+            {
+                comm_UART_Printf(LOG_LV_INFO, int_flags[i].msg);
+            }
+        }
+
+        prev_cause_of_INT = cause_of_INT;
+        duplicate_vsync_cnt = 0U;
+    }
+    else
+    {
+        if ((++duplicate_vsync_cnt) == 240) // Log every 240 duplicates to avoid flooding the log
+        {
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%02X: 0x%04X (duplicate %d times)", XCR_INTERRUPT_STATUS, cause_of_INT, duplicate_vsync_cnt);
+            duplicate_vsync_cnt = 0;
+        }
+    }
 }
 
 void xcr24_nINT_LD_handler(void)
@@ -1417,7 +1466,7 @@ void xcr24_trim_init_dac1_ofs(void)
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_current_target_dac1_t* _r44 = &gt_xcr24_set_gr1_regs.reg._r44;
-    _r44->bit.curr_tgt_dac1 = XCR_DAC_TRIM_INPUT;
+    _r44->bit.curr_tgt_dac1 = XCR_TRIM_DAC_INPUT;
     xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC1, &_r44->ALL, 1U);
 
     _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
@@ -1435,7 +1484,7 @@ void xcr24_trim_init_dac2_ofs(void)
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_current_target_dac2_t* _r45 = &gt_xcr24_set_gr1_regs.reg._r45;
-    _r45->bit.curr_tgt_dac2 = XCR_DAC_TRIM_INPUT;
+    _r45->bit.curr_tgt_dac2 = XCR_TRIM_DAC_INPUT;
     xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC2, &_r45->ALL, 1U);
 
     _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
@@ -1453,7 +1502,7 @@ void xcr24_trim_init_dac3_ofs(void)
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_current_target_dac3_t* _r46 = &gt_xcr24_set_gr1_regs.reg._r46;
-    _r46->bit.curr_tgt_dac3 = XCR_DAC_TRIM_INPUT;
+    _r46->bit.curr_tgt_dac3 = XCR_TRIM_DAC_INPUT;
     xcr24_write_grp1_reg(XCR_CURRENT_TARGET_DAC3, &_r46->ALL, 1U);
 
     _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
@@ -1715,13 +1764,13 @@ uint32_t xcr24_trim_verify_mirror_dump(void)
 void xcr24_test_init_icc_stby(void)
 {
     /* change adc ch_p, ch_n */
-    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_P, ADS114S08_CH_XC_ICC_N);
 }
 
 void xcr24_test_init_icc_actv(void)
 {
     /* change adc ch_p, ch_n */
-    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XC_ICC_P, ADS114S08_CH_XC_ICC_N);
     // set proper xdr12 register
     xcr24_trim_init();
 }
@@ -1776,6 +1825,9 @@ void xcr24_test_init_fll_a_30m(void)
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1806,6 +1858,9 @@ void xcr24_test_init_fll_a_35m(void)
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1836,6 +1891,9 @@ void xcr24_test_init_fll_a_40m(void)
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1860,11 +1918,15 @@ void xcr24_test_init_fll_a_40m(void)
     _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
     xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
 }
+
 void xcr24_test_init_fll_b_30m(void)
 {
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1895,6 +1957,9 @@ void xcr24_test_init_fll_b_35m(void)
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1925,6 +1990,9 @@ void xcr24_test_init_fll_b_40m(void)
     // set proper xdr12 register
     _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
     _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 0U;
+    _rF0->bit.DACO2_DIRECT = 0U;
+    _rF0->bit.DACO3_DIRECT = 0U;
 
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
@@ -1948,6 +2016,58 @@ void xcr24_test_init_fll_b_40m(void)
     _v_fllcnt12_t* _r38 = &gt_xcr24_set_gr1_regs.reg._r38;
     _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
     xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
+}
+
+void xcr24_test_init_dac_p1(void)
+{
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
+    _rF0->ALL = 0U;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    xcr24_test_set_curr_tgt_dac(XCR_TEST_DAC_INPUT_P1);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
+}
+
+void xcr24_test_init_dac_p2(void)
+{
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    xcr24_test_set_curr_tgt_dac(XCR_TEST_DAC_INPUT_P2);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
+}
+
+void xcr24_test_init_dac_p3(void)
+{
+    // set proper xdr12 register
+    _v_test_control_t* _rF0 = &gt_xcr24_set_otp_regs.reg._rF0;
+    _rF0->bit.TEST_EN = 1U;
+    _rF0->bit.DACO1_DIRECT = 1U;
+    _rF0->bit.DACO2_DIRECT = 1U;
+    _rF0->bit.DACO3_DIRECT = 1U;
+    xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
+
+    xcr24_test_set_curr_tgt_dac(XCR_TEST_DAC_INPUT_P3);
+
+    _v_dac_nf_control_t* _r42 = &gt_xcr24_set_gr1_regs.reg._r42;
+    _r42->bit.dac_lvl = 0U;
+    xcr24_write_grp1_reg(XCR_DAC_NF_CONTROL, &_r42->ALL, 1U);
 }
 
 void xcr24_test_start_icc_stby(void)
@@ -1993,6 +2113,18 @@ void xcr24_test_start_fll_b_35m(void)
 void xcr24_test_start_fll_b_40m(void)
 {
     mcu_peripheral_tim_input_capture_start();
+}
+void xcr24_test_start_dac_p1(void)
+{
+    ADS114S08_Set_Start(true);
+}
+void xcr24_test_start_dac_p2(void)
+{
+    ADS114S08_Set_Start(true);
+}
+void xcr24_test_start_dac_p3(void)
+{
+    ADS114S08_Set_Start(true);
 }
 
 void xcr24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac)

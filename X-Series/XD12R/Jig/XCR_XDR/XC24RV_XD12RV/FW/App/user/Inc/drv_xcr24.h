@@ -150,6 +150,9 @@ void xcr24_test_init_fll_a_40m(void);
 void xcr24_test_init_fll_b_30m(void);
 void xcr24_test_init_fll_b_35m(void);
 void xcr24_test_init_fll_b_40m(void);
+void xcr24_test_init_dac_p1(void);
+void xcr24_test_init_dac_p2(void);
+void xcr24_test_init_dac_p3(void);
 
 void xcr24_test_start_icc_stby(void);
 void xcr24_test_start_icc_actv(void);
@@ -162,6 +165,9 @@ void xcr24_test_start_fll_a_40m(void);
 void xcr24_test_start_fll_b_30m(void);
 void xcr24_test_start_fll_b_35m(void);
 void xcr24_test_start_fll_b_40m(void);
+void xcr24_test_start_dac_p1(void);
+void xcr24_test_start_dac_p2(void);
+void xcr24_test_start_dac_p3(void);
 
 void xcr24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac);
 

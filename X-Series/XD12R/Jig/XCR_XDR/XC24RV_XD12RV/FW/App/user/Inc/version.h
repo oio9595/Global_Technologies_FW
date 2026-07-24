@@ -12,10 +12,10 @@
 extern "C" {
 #endif
 
-#define FW_MAJOR    0
-#define FW_MINOR    6
-#define FW_BUILD    72
-#define FW_GIT_REV "477360f-dirty"
+#define FW_MAJOR    1
+#define FW_MINOR    0
+#define FW_BUILD    0
+#define FW_GIT_REV "af1cac8-dirty"
 
 #ifdef __cplusplus
 }

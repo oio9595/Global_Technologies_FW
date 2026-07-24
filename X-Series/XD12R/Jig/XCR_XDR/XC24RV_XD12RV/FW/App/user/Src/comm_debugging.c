@@ -318,12 +318,12 @@ void comm_debugging_process(void)
         }
 
         /************* thread start **************/
-        else if(!(strcmp(str_in, "xcr_trim_start")))
+        else if(!(strcmp(str_in, "xcr_trim_start")) || !(strcmp(str_in, "1")))
         {
             MGR_TRIM()->cmd(TRIM_CMD_XCR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_trim_start")) || !(strcmp(str_in, "1")))
+        else if(!(strcmp(str_in, "xdr_trim_start")))
         {
             MGR_TRIM()->cmd(TRIM_CMD_XDR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -368,7 +368,7 @@ void comm_debugging_process(void)
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XC(adc);
                 comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3f", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -517,7 +517,7 @@ void comm_debugging_process(void)
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC(adc);
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
                 comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);

@@ -63,7 +63,8 @@
 #define LTC_R_RS_MID            (75.0f)
 #define LTC_R_RS_LOW            (3900.0f)
 
-#define ICC_R                   (22.0f)
+#define ICC_XD_R                (22.0f)
+#define ICC_XC_R                (4.7f)
 
 #define ADC_VREF                (5000.0f) /* mV */
 #define ADC_RES                 (32767U)
@@ -614,8 +615,14 @@ float JigBD_IF_Convert_Adc_To_Voltage(uint16_t adc)
     return ret; //mV
 }
 
-float JigBD_IF_Convert_Adc_To_ICC(uint16_t adc)
+float JigBD_IF_Convert_Adc_To_ICC_XD(uint16_t adc)
 {
-    float ret = ((float)adc * mVOLTAGE_PER_ADC) / ICC_R;
+    float ret = ((float)adc * mVOLTAGE_PER_ADC) / ICC_XD_R;
+    return ret; //mA
+}
+
+float JigBD_IF_Convert_Adc_To_ICC_XC(uint16_t adc)
+{
+    float ret = ((float)adc * mVOLTAGE_PER_ADC) / ICC_XC_R;
     return ret; //mA
 }

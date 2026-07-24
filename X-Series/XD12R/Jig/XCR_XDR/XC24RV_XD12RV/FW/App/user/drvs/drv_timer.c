@@ -31,6 +31,7 @@ typedef struct tag_RW_INFO
 } rw_info_t;
 
 static bool gb_vsync_out_running;
+static bool gb_vsync_out_for_test;
 
 static bool gb_fault_read_flag;
 
@@ -115,6 +116,25 @@ void tim_vsync_out_stop(void)
     gb_vsync_out_running = false;
 }
 
+void tim_vsync_out_for_test_start(void)
+{
+    tim_update_vsync_out_freq();
+
+    LL_TIM_OC_SetCompareCH2(TIM8, VSYNC_OUT_PULSE);
+    LL_TIM_EnableIT_UPDATE(TIM8);
+    LL_TIM_EnableCounter(TIM8);
+
+    gb_vsync_out_for_test = true;
+}
+
+void tim_vsync_out_for_test_stop(void)
+{
+    LL_TIM_OC_SetCompareCH2(TIM8, 0U);
+    LL_TIM_DisableCounter(TIM8);
+
+    gb_vsync_out_for_test = false;
+}
+
 void tim_fllsync_start(void)
 {
     FLLSYNC_ENABLE();
@@ -175,19 +195,26 @@ void tim_svsync_out_handler(void)
 
 void tim_vsync_out_handler(void)
 {
-    #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-        xdr12_syncgen();
-    #endif
+    if (gb_vsync_out_for_test == true)
+    {
 
-    #if (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
-        tim_svsync_timer_start();
-    #endif
-/*
+    }
+    else
+    {
+        #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+            xdr12_syncgen();
+        #endif
 
-    uint16_t test_data = 0x8000U;
-    xcr24_write_grp1_reg(XCR_LD_TRANSFER_COMMAND, &test_data, 1U);
-*/
-    gb_vsync_out_flag = true;
+        #if (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
+            tim_svsync_timer_start();
+        #endif
+    /*
+
+        uint16_t test_data = 0x8000U;
+        xcr24_write_grp1_reg(XCR_LD_TRANSFER_COMMAND, &test_data, 1U);
+    */
+        gb_vsync_out_flag = true;
+    }
 }
 
 void tim_set_vsync_out_freq(float f)

@@ -9,6 +9,7 @@
 #include "ads124s08.h"
 
 #define SAVE_INFO_MAX_CNT                   (10)
+#define MAX_TRIM_TRY_CNT                    (30)
 
 #define XCR_DELAY_DEFAULT                   (1U)
 #define XCR_DELAY_SETTLING                  (5U)
@@ -511,6 +512,10 @@ static bool xcr_trim_update_register_by_sub_val(xcr_trim_list_t in_trim_list, tr
 
 static bool _xcr_trim_thread(struct thread_data* td)
 {
+    if (td == NULL)
+    {
+        return false;
+    }
     xcr_trim_list_t* list = &__priv_trim.t_xcr_trim_list;
     trim_info_t* info = &__priv_trim.t_xcr_trim_info[*list];
 
@@ -551,7 +556,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac_3v0();
-                    tim_vsync_out_start();
+                    tim_vsync_out_for_test_start();
                     DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
@@ -561,7 +566,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac1_ofs();
-                    tim_vsync_out_start();
+                    tim_vsync_out_for_test_start();
                     DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
@@ -571,7 +576,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_2, ADS_AINCOM);
                     xcr24_trim_init_dac2_ofs();
-                    tim_vsync_out_start();
+                    tim_vsync_out_for_test_start();
                     DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
@@ -581,7 +586,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 {
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_3, ADS_AINCOM);
                     xcr24_trim_init_dac3_ofs();
-                    tim_vsync_out_start();
+                    tim_vsync_out_for_test_start();
                     DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
@@ -627,7 +632,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
         case TRIM_STEP_VSYNC_STOP:
         {
             DEBUG_LO();
-            tim_vsync_out_stop();
+            tim_vsync_out_for_test_stop();
             td->step = TRIM_STEP_START_MEASURE;
             td->tout = XCR_DELAY_SETTLING;
             break;
@@ -711,6 +716,17 @@ static bool _xcr_trim_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xcr_trim_list_to_string(*list), td->tout);
             judge_info_t t_judge = trim_compare_range(info);
             uint8_t ch = info->chx;
+
+            if (info->saved[ch].try_cnt > MAX_TRIM_TRY_CNT)
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\n\r\t[FAIL] list: %s (ch: %u) Max try count exceeded! (%u/%u)",\
+                    xcr_trim_list_to_string(*list), (ch + 1U), info->saved[ch].try_cnt, MAX_TRIM_TRY_CNT);
+
+                info->trim_error = true;
+                td->step = TRIM_STEP_PWR_OFF; // 또는 에러 처리 단계
+                td->tout = XCR_DELAY_DEFAULT;
+                break;
+            }
 
             if (true == t_judge.in_range)
             {
@@ -1107,6 +1123,10 @@ static bool xdr_trim_update_register_by_sub_val(xdr_trim_list_t in_trim_list, tr
 
 static bool _xdr_trim_thread(struct thread_data* td)
 {
+    if (td == NULL)
+    {
+        return false;
+    }
     xdr_trim_list_t* list = &__priv_trim.t_xdr_trim_list;
     trim_info_t* info = &__priv_trim.t_xdr_trim_info[*list];
 
@@ -1303,6 +1323,17 @@ static bool _xdr_trim_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xdr_trim_list_to_string(*list), td->tout);
             judge_info_t t_judge = trim_compare_range(info);
             uint8_t ch = info->chx;
+
+            if (info->saved[ch].try_cnt > MAX_TRIM_TRY_CNT)
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\n\r\t[FAIL] list: %s (ch: %u) Max try count exceeded! (%u/%u)",\
+                    xdr_trim_list_to_string(*list), (ch + 1U), info->saved[ch].try_cnt, MAX_TRIM_TRY_CNT);
+
+                info->trim_error = true;
+                td->step = TRIM_STEP_PWR_OFF; // 또는 에러 처리 단계
+                td->tout = XDR_DELAY_DEFAULT;
+                break;
+            }
 
             if (true == t_judge.in_range)
             {
