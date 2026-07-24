@@ -1180,7 +1180,7 @@ void xdr12_init(void)
     gpio_set_xc_vdd_5v(VCC_ON_3V3);
     LL_mDelay(99U);
     xcr24_init();
-    //gpio_set_vled_dcdc(VLED_ON);
+    gpio_set_vled_dcdc(VLED_ON);
 #else
     #error "XDR_CONTROL_TYPE is not defined"
 #endif

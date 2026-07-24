@@ -25,11 +25,11 @@ uint32_t get_system_tick(void)
 
 static struct thread_data* _search_tdata(THREAD_ID tid)
 {
-    for(uint32_t i=0;i<NUM_OF_THREAD;++i)
+    for(uint32_t i = 0; i < NUM_OF_THREAD ;++i)
     {
-        if(__tdata[i].id==tid)
+        if(__tdata[i].id == tid)
         {
-            return __tdata+i;
+            return (__tdata + i);
         }
     }
 
