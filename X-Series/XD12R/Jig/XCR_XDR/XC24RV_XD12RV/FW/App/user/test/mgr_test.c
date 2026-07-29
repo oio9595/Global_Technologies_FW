@@ -10,7 +10,7 @@
 
 #define STEP_DELAY_DEFAULT      (1U)
 #define STEP_DELAY_SETTLING     (10U)
-#define STEP_DELAY_VSYNC_STOP   (100U)
+#define STEP_DELAY_VSYNC_STOP   (200U)
 #define STEP_DELAY_MEASURE      (10U)
 #define STEP_DELAY_VSYNC        (100U)
 #define STEP_DELAY_PWR_ON       (100U)
@@ -765,7 +765,6 @@ static bool _xdr_test_thread(struct thread_data* td)
         case TEST_STEP_INITIAL:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, test_step_to_string((test_step_t)td->step), td->tout);
-            info->gain = GAIN_MID;
             td->step = TEST_STEP_INITIAL_BY_LIST;
             td->tout = STEP_DELAY_DEFAULT;
             break;
@@ -777,6 +776,7 @@ static bool _xdr_test_thread(struct thread_data* td)
             if (*list < XDR_TEST_LIST_MAX)
             {
                 gp_xdr12_test_init_func[*list]();
+                info->gain = GAIN_MID;
                 if ((*list == XDR_TEST_LIST_FLL_40M) || (*list == XDR_TEST_LIST_FLL_50M) || (*list == XDR_TEST_LIST_FLL_60M))
                 {
                     tim_vsync_out_for_test_start();
@@ -992,13 +992,6 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
             info->gain = GAIN_MID;
             xdr12_trim_init();
             xdr12_trim_init_ch_gain();
-#if 1
-            uint16_t* p_trim_value = xdr12_get_trim_debug_reg();
-            for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1; mirror_addr < XD12R_MIRROR_VERSION_0; ++mirror_addr)
-            {
-                xdr12_write_by_type(mirror_addr, p_trim_value[mirror_addr], XD12R_ADDR_TYPE_MIRROR);
-            }
-#endif
             xdr12_read_all();
 
             info->chx = XD_CH_01;

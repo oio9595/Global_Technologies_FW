@@ -109,6 +109,7 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 
 void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt);
+void xcr24_set_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3);
 
 void xcr24_nINT_FT_handler(void);
 void xcr24_nINT_LD_handler(void);

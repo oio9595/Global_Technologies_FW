@@ -39,6 +39,12 @@ static bool gb_xd_xc_rw_flag;
 static rw_info_t gt_xd_rw_info;
 static rw_info_t gt_xc_rw_info;
 
+static bool gb_xc_svo_change;
+static uint16_t gn_xc_svo_on;
+static uint16_t gn_xc_svo_off1;
+static uint16_t gn_xc_svo_off2;
+static uint16_t gn_xc_svo_off3;
+
 static bool gb_vsync_out_flag;
 static float gf_vsync_out_freq;
 static uint8_t gn_svsync_count;
@@ -197,22 +203,18 @@ void tim_vsync_out_handler(void)
 {
     if (gb_vsync_out_for_test == true)
     {
-
+        xdr12_syncgen();
     }
     else
     {
-        #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-            xdr12_syncgen();
-        #endif
+#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+        xdr12_syncgen();
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+        tim_svsync_timer_start();
+#else
+        #error "XDR_CONTROL_TYPE is not defined"
+#endif
 
-        #if (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
-            tim_svsync_timer_start();
-        #endif
-    /*
-
-        uint16_t test_data = 0x8000U;
-        xcr24_write_grp1_reg(XCR_LD_TRANSFER_COMMAND, &test_data, 1U);
-    */
         gb_vsync_out_flag = true;
     }
 }
@@ -259,6 +261,15 @@ void tim_vsync_out_process(void)
         tim_write_xc();
 
         gb_xd_xc_rw_flag = false;
+        #if 1
+        if (true == gb_xc_svo_change)
+        {
+            DEBUG_HI();
+            xcr24_set_svo(gn_xc_svo_on, gn_xc_svo_off1, gn_xc_svo_off2, gn_xc_svo_off3);
+            gb_xc_svo_change = false;
+            DEBUG_LO();
+        }
+        #endif
 
         gb_fault_read_flag = true;
     }
@@ -284,7 +295,6 @@ static void tim_read_xd(void)
 {
     if (true == gt_xd_rw_info.read_flag)
     {
-        DEBUG_HI();
         switch (gt_xd_rw_info.addr_type)
         {
             case XD12R_ADDR_TYPE_GENERAL:
@@ -314,7 +324,6 @@ static void tim_write_xd(void)
 {
     if (true == gt_xd_rw_info.write_flag)
     {
-        DEBUG_HI();
         switch (gt_xd_rw_info.addr_type)
         {
             case XD12R_ADDR_TYPE_GENERAL:
@@ -344,7 +353,6 @@ static void tim_read_xc(void)
 {
     if (true == gt_xc_rw_info.read_flag)
     {
-        DEBUG_HI();
         switch (gt_xc_rw_info.addr_type)
         {
             case XCR_RW_GRP1:
@@ -382,7 +390,6 @@ static void tim_write_xc(void)
 {
     if (true == gt_xc_rw_info.write_flag)
     {
-        DEBUG_HI();
         switch (gt_xc_rw_info.addr_type)
         {
             case XCR_RW_GRP1:
@@ -443,4 +450,13 @@ void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type)
     gt_xc_rw_info.rw_data = data;
     gt_xc_rw_info.write_flag = true;
     gt_xc_rw_info.addr_type = addr_type;
+}
+
+void tim_set_xc_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3)
+{
+    gn_xc_svo_on = svo_on;
+    gn_xc_svo_off1 = svo_off1;
+    gn_xc_svo_off2 = svo_off2;
+    gn_xc_svo_off3 = svo_off3;
+    gb_xc_svo_change = true;
 }

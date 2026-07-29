@@ -734,11 +734,7 @@ static void xdr12_regs_init_table(void)
                 _r1->reg._r26.bit.CHOP_DAC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSCLDO_EN = XDR_FUNCTION_EN;
-#if 0
-                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_DIS;
-#else
                 _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_EN;
-#endif
                 _r1->reg._r26.bit.CHOP_EN = XDR_FUNCTION_EN;
                 break;
             }
@@ -804,16 +800,6 @@ static volatile void xdr12_regs_trim_init_table(void)
                 _r1->reg._r00.bit.e_rst = XDR_FUNCTION_DIS;
                 _r1->reg._r00.bit.vs_rst = XDR_FUNCTION_DIS;
                 _r1->reg._r00.bit.rst = XDR_FUNCTION_DIS;
-                break;
-            }
-            case XD12R_LD_CONTROL:
-            {
-                _r1->reg._r01.bit.ld_mode = XDR_LD_MODE_NORMAL;
-                _r1->reg._r01.bit.ld_dir = XDR_LD_DIR_HEAD;
-                _r1->reg._r01.bit.ld_res = XDR_PWM_RES_14BIT;
-                _r1->reg._r01.bit.syncmode = XDR_SYNC_MODE;
-                _r1->reg._r01.bit.delay_mode_en = XDR_FUNCTION_DIS;
-                _r1->reg._r01.bit.sv_no = XDR_SV_NO;
                 break;
             }
             case XD12R_FAULT_CONTROL:
@@ -920,7 +906,7 @@ static volatile void xdr12_regs_trim_init_table(void)
                 _r1->reg._r26.bit.CHOP_DAC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSC_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_OSCLDO_EN = XDR_FUNCTION_EN;
-                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_DIS;
+                _r1->reg._r26.bit.CHOP_DRV_EN = XDR_FUNCTION_EN;
                 _r1->reg._r26.bit.CHOP_EN = XDR_FUNCTION_EN;
                 break;
             }
@@ -1731,17 +1717,6 @@ void xdr12_trim_init_ch_gain(void)
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-    const uint16_t osc_fll_man = 0x8000U; /* 16b' 1000_0000_0000_0000*/
-
-    _v_xdr12_osc_fll_man1_t* _r28 = &gt_xdr12_set_regs.reg._r28;
-    _r28->bit.osc_fll_man = ((osc_fll_man & 0x0FFFU) >>  0U);
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN1, _r28->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_osc_fll_man2_t* _r29 = &gt_xdr12_set_regs.reg._r29;
-    _r29->bit.osc_fll_man = ((osc_fll_man & 0xF000U) >> 12U);
-    _r29->bit.osc_man_en = 1U;
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN2, _r29->ALL, XD12R_ADDR_TYPE_GENERAL);
-
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
     _r19->bit.max_curr1_level = CURR_LEVEL_24;
@@ -1772,17 +1747,6 @@ void xdr12_trim_init_ch_ofs(void)
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    const uint16_t osc_fll_man = 0x8000U; /* 16b' 1000_0000_0000_0000*/
-
-    _v_xdr12_osc_fll_man1_t* _r28 = &gt_xdr12_set_regs.reg._r28;
-    _r28->bit.osc_fll_man = ((osc_fll_man & 0x0FFFU) >>  0U);
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN1, _r28->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_osc_fll_man2_t* _r29 = &gt_xdr12_set_regs.reg._r29;
-    _r29->bit.osc_fll_man = ((osc_fll_man & 0xF000U) >> 12U);
-    _r29->bit.osc_man_en = 1U;
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN2, _r29->ALL, XD12R_ADDR_TYPE_GENERAL);
 
 #if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
@@ -2301,50 +2265,14 @@ void xdr12_test_start_max_sweep(void)
     ADS114S08_Set_Start(true);
 }
 
-void xdr12_test(uint32_t test_no)
+void xdr12_test(void)
 {
-    uint16_t flt_gain = 0U;
-    uint16_t osc_fll_error_range = 0U;
+    xdr12_trim_init_ch_gain();
 
-    switch (test_no) //(FLT_GAIN, ERROR_RANGE) = (0, 0), (0, 3), (3, 0), (3, 3)
-    {
-        case 0U:
-        {
-            flt_gain = 0U;
-            osc_fll_error_range = 0U;
-            break;
-        }
-        case 1U:
-        {
-            flt_gain = 0U;
-            osc_fll_error_range = 3U;
-            break;
-        }
-        case 2U:
-        {
-            flt_gain = 3U;
-            osc_fll_error_range = 0U;
-            break;
-        }
-        case 3U:
-        {
-            flt_gain = 3U;
-            osc_fll_error_range = 3U;
-            break;
-        }
-        case 4U:
-        {
-            flt_gain = 2U;
-            osc_fll_error_range = 0U;
-            break;
-        }
-    }
+    _v_xdr12_channel_enable_t* _r05 = &gt_xdr12_set_regs.reg._r05;
+    _r05->ALL = 0xFFFFU;
+    xdr12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-    _v_xdr12_temp_t* _r27 = &gt_xdr12_set_regs.reg._r27;
-    _r27->bit.flt_gain = flt_gain;
-    xdr12_write_by_type(XD12R_TEMP, _r27->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_osc_fll_man2_t* _r29 = &gt_xdr12_set_regs.reg._r29;
-    _r29->bit.osc_fll_err_range = osc_fll_error_range;
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN2, _r29->ALL, XD12R_ADDR_TYPE_GENERAL);
+    xdr12_trim_set_max_curr_vref(4095U);
+    xdr12_trim_set_max_curr_lvl(CURR_LEVEL_24);
 }

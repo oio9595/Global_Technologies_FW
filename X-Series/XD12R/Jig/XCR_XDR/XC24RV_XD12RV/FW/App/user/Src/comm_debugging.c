@@ -34,10 +34,10 @@
 #define CLI_KEY_END         0x34
 
 #define RX_BUFF_SIZE        (4U)
-#define TX_BUFF_SIZE        (255U)
+#define TX_BUFF_SIZE        (127U)
 
 #define RX_PACKET_SIZE      (32U)
-#define TX_PACKET_SIZE      (400U)
+#define TX_PACKET_SIZE      (256U)
 
 #define VA_GENERIC(_1, _2, _3, _4, _5, _6,x, ...) x
 // #define Command_Param_is_(x, ...) (sscanf(str_in, x, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
@@ -318,7 +318,7 @@ void comm_debugging_process(void)
         }
 
         /************* thread start **************/
-        else if(!(strcmp(str_in, "xcr_trim_start")) || !(strcmp(str_in, "1")))
+        else if(!(strcmp(str_in, "xcr_trim_start")))
         {
             MGR_TRIM()->cmd(TRIM_CMD_XCR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
@@ -487,6 +487,25 @@ void comm_debugging_process(void)
                 comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR OTP Read --> [ 0x%02X ] is not OTP address\r\n", u32_recv_param[0]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
+        }
+        else if(Command_Param_is_("xc_svo", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
+        {
+            uint16_t svo_on = (uint16_t)u32_recv_param[0];
+            uint16_t svo_off1 = (uint16_t)u32_recv_param[1];
+            uint16_t svo_off2 = (uint16_t)u32_recv_param[2];
+            uint16_t svo_off3 = (uint16_t)u32_recv_param[3];
+            tim_set_xc_svo(svo_on, svo_off1, svo_off2, svo_off3);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR SVO Setting --> [ on:%u, off1:%u, off2:%u, off3:%u ]", svo_on, svo_off1, svo_off2, svo_off3);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xc_svo")))
+        {
+            uint16_t svo_on = xcr24_read_grp1_reg(XCR_SVO_ON, 1U);
+            uint16_t svo1_off = xcr24_read_grp1_reg(XCR_SVO1_OFF, 1U);
+            uint16_t svo2_off = xcr24_read_grp1_reg(XCR_SVO2_OFF, 1U);
+            uint16_t svo3_off = xcr24_read_grp1_reg(XCR_SVO3_OFF, 1U);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR SVO Read --> [ on:%u, off1:%u, off2:%u, off3:%u ]", svo_on, svo1_off, svo2_off, svo3_off);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_test")))
         {
@@ -658,6 +677,61 @@ void comm_debugging_process(void)
                 xdr12_set_short_lvl((xd12r_setting_grp_t)u32_recv_param[0], (short_level_t)u32_recv_param[1]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
+        }
+        else if(!(strcmp(str_in, "xd_test")))
+        {
+            xdr12_test();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "xd_icc_test")))
+        {
+            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+
+            /* icc @ power on */
+            gpio_set_xd_vdd_5v(VCC_ON_3V3);
+            LL_mDelay(99U);
+            xdr12_test_init_icc_stby();
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
+            }
+
+            /* icc @ reset */
+            xdr12_reset();
+            LL_mDelay(99U);
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
+            }
+
+            /* icc @ idgen */
+            xdr12_idgen();
+            LL_mDelay(99U);
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
+            }
+
+            /* icc @ test_mode */
+            xdr12_write_by_type(XD12R_OP_MODE, 0x800U, XD12R_ADDR_TYPE_GENERAL);
+            LL_mDelay(99U);
+            ADS114S08_Set_Start(true);
+            if (true == ADS114S08_Wait_Done())
+            {
+                uint16_t adc = ADS114S08_Get_ADC_Value();
+                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         /************* common **************/
         else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))

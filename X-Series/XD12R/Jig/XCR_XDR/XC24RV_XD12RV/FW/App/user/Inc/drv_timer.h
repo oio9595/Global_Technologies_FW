@@ -39,6 +39,8 @@ void tim_set_xd_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
 void tim_set_xc_read_info(uint16_t addr, uint8_t addr_type);
 void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
 
+void tim_set_xc_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3);
+
 #ifdef __cplusplus
 }
 #endif

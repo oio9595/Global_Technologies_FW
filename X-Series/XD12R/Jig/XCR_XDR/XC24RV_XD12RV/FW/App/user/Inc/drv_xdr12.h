@@ -23,7 +23,7 @@ extern "C" {
 
 #define XDR_CONTROLLED_MCU  (0U)
 #define XDR_CONTROLLED_XCR  (1U)
-#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_XCR)
+#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_MCU)
 
 #define XDR_CH_SIZE         (12U)
 #define XDR_DAISY_LENGTH    (1U)
@@ -200,7 +200,7 @@ void xdr12_test_start_fll_60M(void);
 void xdr12_test_start_iout_3P(void);
 void xdr12_test_start_max_sweep(void);
 
-void xdr12_test(uint32_t test_no);
+void xdr12_test(void);
 
 #ifdef __cplusplus
 }

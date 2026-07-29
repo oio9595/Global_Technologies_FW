@@ -557,7 +557,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac_3v0();
                     tim_vsync_out_for_test_start();
-                    DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
@@ -567,7 +566,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_1, ADS_AINCOM);
                     xcr24_trim_init_dac1_ofs();
                     tim_vsync_out_for_test_start();
-                    DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
@@ -577,7 +575,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_2, ADS_AINCOM);
                     xcr24_trim_init_dac2_ofs();
                     tim_vsync_out_for_test_start();
-                    DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
@@ -587,7 +584,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
                     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_DAC_3, ADS_AINCOM);
                     xcr24_trim_init_dac3_ofs();
                     tim_vsync_out_for_test_start();
-                    DEBUG_HI();
                     td->step = TRIM_STEP_VSYNC_STOP;
                     td->tout = XCR_DELAY_VSYNC_STOP;
                     break;
@@ -734,15 +730,15 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 info->saved[ch].saved_value[info->saved[ch].saved_cnt] = info->measure[ch].value;
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
-                    xcr_trim_list_to_string(*list), (ch + 1U), (double)(info->measure[ch].value), \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(try: %3u)(ch: %2u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
+                    xcr_trim_list_to_string(*list), info->saved[ch].try_cnt, (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
-                    xcr_trim_list_to_string(*list), (ch + 1U), (double)(info->measure[ch].value), \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(try: %3u)(ch: %2u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
+                    xcr_trim_list_to_string(*list), info->saved[ch].try_cnt, (ch + 1U), (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
@@ -763,7 +759,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
 
             if (info->saved[ch].saved_cnt < SAVE_INFO_MAX_CNT)
             {
-                comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t not enough save count");
+                comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t Not Enough Save Count");
                 if (true == xcr_trim_update_register_by_sub_val(*list, info))
                 {
                     td->step = TRIM_STEP_INITIAL_BY_LIST;
@@ -1341,15 +1337,15 @@ static bool _xdr_trim_thread(struct thread_data* td)
                 info->saved[ch].saved_value[info->saved[ch].saved_cnt] = info->measure[ch].value;
                 info->saved[ch].sub_val[info->saved[ch].saved_cnt] = info->sub_val[ch];
                 ++info->saved[ch].saved_cnt;
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
-                    xdr_trim_list_to_string(*list), (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(try: %3u)(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✔ IN_RANGE (%2u)%s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
+                    xdr_trim_list_to_string(*list), info->saved[ch].try_cnt, (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
                     ANSI_FONT_GREEN, info->saved[ch].saved_cnt, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
             else
             {
-                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
-                    xdr_trim_list_to_string(*list), (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
+                comm_UART_Printf(LOG_LV_INFO, "\n\r[%s]\r\n\t\t(try: %3u)(ch: %2u, Sub: %u) (Value: %6.3f) -> [%s✕   OUT_RANGE   %s] (TGT: %6.3f, MIN: %6.3f, MAX: %6.3f)", \
+                    xdr_trim_list_to_string(*list), info->saved[ch].try_cnt, (ch + 1U), info->sub_val[ch], (double)(info->measure[ch].value), \
                     ANSI_FONT_RED, ANSI_FONT_NONE, \
                     (double)(info->range.target), (double)(info->range.min), (double)(info->range.max));
             }
@@ -1370,7 +1366,7 @@ static bool _xdr_trim_thread(struct thread_data* td)
 
             if (info->saved[ch].saved_cnt < SAVE_INFO_MAX_CNT)
             {
-                comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t not enough save count");
+                comm_UART_Printf(LOG_LV_DEBUG, "\n\r\t Not Enough Save Count");
                 if (true == xdr_trim_update_register_by_sub_val(*list, info))
                 {
                     td->step = TRIM_STEP_INITIAL_BY_LIST;
