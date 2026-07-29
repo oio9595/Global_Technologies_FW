@@ -229,10 +229,6 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_CTL);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_EFUSE);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XCR_EFUSE);
-
-    //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (IS_XC24_Support() ? "XC24 ES2 REV ES2 IS SELECTED!" : "NOT SUPPORT XC24"), ANSI_FONT_NONE);
-    //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XD_Trim_IF_Get_OTP_Enable() ? "XDIC OTP WRITE ENABLE" : "XDIC OTP WRITE DISABLE"), ANSI_FONT_NONE);
-    //comm_UART_Printf(LOG_LV_INFO, "\r\n -%s %s %s", ANSI_FONT_YELLOW, (XC_Trim_IF_Get_OTP_Enable() ? "XC24 OTP WRITE ENABLE" : "XC24 OTP WRITE DISABLE"), ANSI_FONT_NONE);
     comm_UART_Printf(LOG_LV_INFO, "\n\r--------------------------------------\r\n");
     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
 }
@@ -266,19 +262,19 @@ void comm_debugging_process(void)
             mcu_peripheral_adc_start();
             uint16_t mcu_adc_value = mcu_peripheral_adc_get();
 
-            comm_UART_Printf(LOG_LV_INFO, "JigBD_IF_Get_MCU_ADC()-%d\r\n", mcu_adc_value);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nJigBD_IF_Get_MCU_ADC()-%d", mcu_adc_value);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if (Command_is_("jig_ic_start"))
         {
             mcu_peripheral_tim_input_capture_start();
-            comm_UART_Printf(LOG_LV_INFO, "Timer input capture started\r\n");
+            comm_UART_Printf(LOG_LV_INFO, "\r\nTimer input capture started");
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if (Command_is_("jig_ic_stop"))
         {
             float freq = mcu_peripheral_tim_conversion_freq();
-            comm_UART_Printf(LOG_LV_INFO, "Timer input capture freq: %.3f Hz\r\n", (double)(freq));
+            comm_UART_Printf(LOG_LV_INFO, "\r\nTimer input capture freq: %.3f MHz   (MCU : %.3f Hz)", (double)((freq) * XDR_CONST_OSC), (double)freq);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "mclk_enable")))
@@ -369,7 +365,7 @@ void comm_debugging_process(void)
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC_XC(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3f", (double)(icc));
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3fmA", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
@@ -411,7 +407,7 @@ void comm_debugging_process(void)
             else
             {
                 uint16_t xcr = xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -439,7 +435,7 @@ void comm_debugging_process(void)
             else
             {
                 uint16_t xcr = xcr24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -462,7 +458,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR Write --> [ 0x%02X ] is not OTP address\r\n", u32_recv_param[0]);
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR Write --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -478,13 +474,13 @@ void comm_debugging_process(void)
                 else
                 {
                     uint16_t xcr = xcr24_read_otp_control(addr - XCR_OTP_BASE_ADDR, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR OTP Read --> [ 0x%02X - 0x%04X ]\r\n", u32_recv_param[0], xcr);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR OTP Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
             }
             else
             {
-                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR OTP Read --> [ 0x%02X ] is not OTP address\r\n", u32_recv_param[0]);
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR OTP Read --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -537,7 +533,7 @@ void comm_debugging_process(void)
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3fmA", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
@@ -592,7 +588,7 @@ void comm_debugging_process(void)
             else
             {
                 uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xdr);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -617,7 +613,7 @@ void comm_debugging_process(void)
             else
             {
                 uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]\r\n", u32_recv_param[0], xdr);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xdr);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -681,56 +677,6 @@ void comm_debugging_process(void)
         else if(!(strcmp(str_in, "xd_test")))
         {
             xdr12_test();
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
-        else if(!(strcmp(str_in, "xd_icc_test")))
-        {
-            ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
-
-            /* icc @ power on */
-            gpio_set_xd_vdd_5v(VCC_ON_3V3);
-            LL_mDelay(99U);
-            xdr12_test_init_icc_stby();
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
-            }
-
-            /* icc @ reset */
-            xdr12_reset();
-            LL_mDelay(99U);
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
-            }
-
-            /* icc @ idgen */
-            xdr12_idgen();
-            LL_mDelay(99U);
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
-            }
-
-            /* icc @ test_mode */
-            xdr12_write_by_type(XD12R_OP_MODE, 0x800U, XD12R_ADDR_TYPE_GENERAL);
-            LL_mDelay(99U);
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                uint16_t adc = ADS114S08_Get_ADC_Value();
-                float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3f", (double)(icc));
-            }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         /************* common **************/

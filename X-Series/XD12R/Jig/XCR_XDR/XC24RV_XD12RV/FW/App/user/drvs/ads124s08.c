@@ -450,7 +450,7 @@ static void ADS114S08_Get_ADC_Offset()
 
     gpio_set_vled_9v(VLED_OFF);
     gpio_set_demux_channel_selection(XD_CH_MAX);
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X, \r\n", gn_ads114s08_offset[0]);
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Done...0x%04X", gn_ads114s08_offset[0]);
 }
 
 void ADS114S08_Select_Input_CH(uint8_t input_p, uint8_t input_n)
@@ -521,7 +521,7 @@ void ADS114S08_Init(void)
 #ifdef USE_DISPLAY_DEVICE_REGS
     ADS114S08_Dump_Registers();
 #endif
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\nFunction[%s] Done\r\n", __func__);
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\nFunction[%s] Done", __func__);
 }
 
 void ADC_DRDY_INT_Handler(void)

@@ -126,11 +126,13 @@ extern volatile bool gb_xd_pwm_in_timeout;
 void xdr12_read_all(void);
 void xdr12_init_param(void);
 
+void xdr12_make_readable(void);
 void xdr12_reset(void);
 void xdr12_idgen(void);
 void xdr12_syncgen(void);
 void xdr12_init(void);
 void xdr12_trim_init(void);
+
 
 void xdr12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_type);
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);

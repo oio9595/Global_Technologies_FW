@@ -469,7 +469,7 @@ static uint16_t xdr12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, 
     return id;
 }
 
-static volatile void xdr12_make_readable(void)
+void xdr12_make_readable(void)
 {
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->ALL = 0U;
@@ -1691,7 +1691,7 @@ void xdr12_trim_init_osc(void)
 {
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    //_r3F->bit.test_ana_en = 5U; /* ??? */
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
