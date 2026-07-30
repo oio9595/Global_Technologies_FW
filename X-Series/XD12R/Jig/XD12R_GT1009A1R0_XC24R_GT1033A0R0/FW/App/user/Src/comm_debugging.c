@@ -369,6 +369,11 @@ void comm_debugging_process(void)
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xc_reset")))
+        {
+            xcr24_reset();
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
         else if(!(strcmp(str_in, "xc_debug")))
         {
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
@@ -387,56 +392,87 @@ void comm_debugging_process(void)
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-            if (true == tim_get_vsync_out_running_flag())
+
+            if (addr < XCR_GRP1_MAX)
             {
-                tim_set_xc_write_info(addr, param, XCR_RW_GRP1);
+                if (true == tim_get_vsync_out_running_flag())
+                {
+                    tim_set_xc_write_info(addr, param, XCR_RW_GRP1);
+                }
+                else
+                {
+                    xcr24_write_grp1_reg(addr, &param, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                }
             }
             else
             {
-                xcr24_write_grp1_reg(addr, &param, 1U);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                FATAL_INVALID_INPUT(addr);
             }
         }
         else if(Command_Param_is_("xc_g1_r", "%x", &u32_recv_param[0]))
         {
-            if (true == tim_get_vsync_out_running_flag())
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            if (addr < XCR_GRP1_MAX)
             {
-                tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP1);
+                if (true == tim_get_vsync_out_running_flag())
+                {
+                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP1);
+                }
+                else
+                {
+                    uint16_t xcr = xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                }
             }
             else
             {
-                uint16_t xcr = xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                FATAL_INVALID_INPUT(addr);
             }
         }
         else if(Command_Param_is_("xc_g2_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-            if (true == tim_get_vsync_out_running_flag())
+            if (addr < XCR_GRP2_MAX)
             {
-                tim_set_xc_write_info(addr, param, XCR_RW_GRP2);
+                if (true == tim_get_vsync_out_running_flag())
+                {
+                    tim_set_xc_write_info(addr, param, XCR_RW_GRP2);
+                }
+                else
+                {
+                    xcr24_write_grp2_reg(addr, &param, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                }
             }
             else
             {
-                xcr24_write_grp2_reg(addr, &param, 1U);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                FATAL_INVALID_INPUT(addr);
             }
         }
         else if(Command_Param_is_("xc_g2_r", "%x", &u32_recv_param[0]))
         {
-            if (true == tim_get_vsync_out_running_flag())
+            uint16_t addr = (uint16_t)u32_recv_param[0];
+            if (addr < XCR_GRP2_MAX)
             {
-                tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP2);
+                if (true == tim_get_vsync_out_running_flag())
+                {
+                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP2);
+                }
+                else
+                {
+                    uint16_t xcr = xcr24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
+                    comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                }
             }
             else
             {
-                uint16_t xcr = xcr24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
-                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                FATAL_INVALID_INPUT(addr);
             }
         }
         else if(Command_Param_is_("xc_wt", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
@@ -679,6 +715,7 @@ void comm_debugging_process(void)
             xdr12_test();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+
         /************* common **************/
         else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
         {

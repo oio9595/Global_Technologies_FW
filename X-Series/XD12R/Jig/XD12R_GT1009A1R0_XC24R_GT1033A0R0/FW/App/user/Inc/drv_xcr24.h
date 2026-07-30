@@ -74,6 +74,8 @@ typedef enum tag_XCR_RW_GRP
 
 extern volatile bool gb_xcr_ld_transfer_spi_dma_flag;
 
+void xcr24_reset(void);
+
 void xcr24_read_all(void);
 void xcr24_init_param(void);
 

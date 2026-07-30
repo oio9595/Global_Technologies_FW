@@ -58,10 +58,8 @@ static uint32_t gn_svsync_sub_duty;
 static bool gb_ldim_blk_xform_flag;
 static uint16_t gn_ldim_blk_xform_idx;
 
-static void tim_read_xd(void);
-static void tim_write_xd(void);
-static void tim_read_xc(void);
-static void tim_write_xc(void);
+static void tim_read_write_xd(void);
+static void tim_read_write_xc(void);
 
 static inline void tim_update_vsync_out_freq(void)
 {
@@ -244,7 +242,6 @@ void tim_vsync_out_process(void)
         ++gn_ldim_blk_xform_idx;
         if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
         {
-            us_delay(1000U);
             xdr12_ld_transfer();
             gb_ldim_blk_xform_flag = false;
             gn_ldim_blk_xform_idx = 0U;
@@ -252,25 +249,12 @@ void tim_vsync_out_process(void)
         }
     }
 
-    if(true == gb_xd_xc_rw_flag)
+    if (true == gb_xd_xc_rw_flag)
     {
-        tim_read_xd();
-        tim_write_xd();
-
-        tim_read_xc();
-        tim_write_xc();
+        tim_read_write_xd();
+        tim_read_write_xc();
 
         gb_xd_xc_rw_flag = false;
-        #if 1
-        if (true == gb_xc_svo_change)
-        {
-            DEBUG_HI();
-            xcr24_set_svo(gn_xc_svo_on, gn_xc_svo_off1, gn_xc_svo_off2, gn_xc_svo_off3);
-            gb_xc_svo_change = false;
-            DEBUG_LO();
-        }
-        #endif
-
         gb_fault_read_flag = true;
     }
 
@@ -291,7 +275,7 @@ bool tim_get_vsync_out_running_flag(void)
     return gb_vsync_out_running;
 }
 
-static void tim_read_xd(void)
+static void tim_read_write_xd(void)
 {
     if (true == gt_xd_rw_info.read_flag)
     {
@@ -316,12 +300,8 @@ static void tim_read_xd(void)
             }
         }
         gt_xd_rw_info.read_flag = false;
-        DEBUG_LO();
     }
-}
 
-static void tim_write_xd(void)
-{
     if (true == gt_xd_rw_info.write_flag)
     {
         switch (gt_xd_rw_info.addr_type)
@@ -345,11 +325,10 @@ static void tim_write_xd(void)
             }
         }
         gt_xd_rw_info.write_flag = false;
-        DEBUG_LO();
     }
 }
 
-static void tim_read_xc(void)
+static void tim_read_write_xc(void)
 {
     if (true == gt_xc_rw_info.read_flag)
     {
@@ -382,12 +361,8 @@ static void tim_read_xc(void)
             }
         }
         gt_xc_rw_info.read_flag = false;
-        DEBUG_LO();
     }
-}
 
-static void tim_write_xc(void)
-{
     if (true == gt_xc_rw_info.write_flag)
     {
         switch (gt_xc_rw_info.addr_type)
@@ -418,7 +393,6 @@ static void tim_write_xc(void)
             }
         }
         gt_xc_rw_info.write_flag = false;
-        DEBUG_LO();
     }
 }
 

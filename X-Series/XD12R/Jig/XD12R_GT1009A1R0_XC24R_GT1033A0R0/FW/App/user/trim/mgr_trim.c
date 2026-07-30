@@ -627,7 +627,6 @@ static bool _xcr_trim_thread(struct thread_data* td)
         }
         case TRIM_STEP_VSYNC_STOP:
         {
-            DEBUG_LO();
             tim_vsync_out_for_test_stop();
             td->step = TRIM_STEP_START_MEASURE;
             td->tout = XCR_DELAY_SETTLING;

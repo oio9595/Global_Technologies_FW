@@ -97,7 +97,6 @@ static void xcr24_spi_log_dump(const uint16_t* out, uint16_t len)
 
     while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
     LL_USART_TransmitData8(USART2, '\r');
-
     while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
     LL_USART_TransmitData8(USART2, '\n');
 

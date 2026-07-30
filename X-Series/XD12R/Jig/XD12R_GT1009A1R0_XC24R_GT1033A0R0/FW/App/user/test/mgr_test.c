@@ -8,6 +8,10 @@
 #include "ads124s08.h"
 #include "comm_debugging.h"
 
+#define TEST_LOG_PARTIAL        (0U)
+#define TEST_LOG_ALL            (1U)
+#define TEST_LOG_TYPE           (TEST_LOG_PARTIAL)
+
 #define STEP_DELAY_DEFAULT      (1U)
 #define STEP_DELAY_SETTLING     (10U)
 #define STEP_DELAY_VSYNC_STOP   (200U)
@@ -334,6 +338,8 @@ static void xcr_test_log_summary(void)
 {
     char log_buf[350] = {0};
     int log_buf_len = 0U;
+
+#if (TEST_LOG_TYPE == TEST_LOG_ALL)
     for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY; list < XCR_TEST_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xcr_test_info[list];
@@ -353,6 +359,32 @@ static void xcr_test_log_summary(void)
         memset(log_buf, 0, sizeof(log_buf));
         log_buf_len = 0U;
     }
+#elif (TEST_LOG_TYPE == TEST_LOG_PARTIAL)
+    for (xcr_test_list_t list = XCR_TEST_LIST_ICC_STBY; list < XCR_TEST_LIST_MAX; ++list)
+    {
+        if ((list == XCR_TEST_LIST_ICC_STBY) || (list == XCR_TEST_LIST_FLL_B_35M) || (list == XCR_TEST_LIST_DAC_P3))
+        {
+            test_info_t* info = &__priv_test.t_xcr_test_info[list];
+            uint8_t max_ch = (list < XCR_TEST_LIST_DAC_P1) ? (uint8_t)(1U) : (uint8_t)(3U);
+            for (uint8_t ch = 0U; ch < max_ch; ++ch)
+            {
+                if (ch == 0U)
+                {
+                    log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n%s|VAL|%6.3f", xcr_test_list_to_string(list), (double)(info->measure[ch].value));
+                }
+                else
+                {
+                    log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "|%6.3f", (double)(info->measure[ch].value));
+                }
+            }
+            comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
+            memset(log_buf, 0, sizeof(log_buf));
+            log_buf_len = 0U;
+        }
+    }
+#else
+        #error "TEST_LOG_TYPE is not defined"
+#endif
 }
 
 static bool _xcr_test_thread(struct thread_data* td)
@@ -722,6 +754,7 @@ static void xdr_test_log_summary(void)
 {
     char log_buf[350] = {0};
     int log_buf_len = 0U;
+#if (TEST_LOG_TYPE == TEST_LOG_ALL)
     for (xdr_test_list_t list = XDR_TEST_LIST_ICC_STBY; list < XDR_TEST_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xdr_test_info[list];
@@ -741,6 +774,32 @@ static void xdr_test_log_summary(void)
         memset(log_buf, 0, sizeof(log_buf));
         log_buf_len = 0U;
     }
+#elif (TEST_LOG_TYPE == TEST_LOG_PARTIAL)
+    for (xdr_test_list_t list = XDR_TEST_LIST_ICC_STBY; list < XDR_TEST_LIST_MAX; ++list)
+    {
+        if ((list == XDR_TEST_LIST_ICC_STBY) || (list == XDR_TEST_LIST_FLL_50M) || (list == XDR_TEST_LIST_IOUT_P1))
+        {
+            test_info_t* info = &__priv_test.t_xdr_test_info[list];
+            uint8_t max_ch = (list < XDR_TEST_LIST_IOUT_P1) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX;
+            for (uint8_t ch = XD_CH_01; ch < max_ch; ++ch)
+            {
+                if (ch == XD_CH_01)
+                {
+                    log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n%s|VAL|%6.3f", xdr_test_list_to_string(list), (double)(info->measure[ch].value));
+                }
+                else
+                {
+                    log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "|%6.3f", (double)(info->measure[ch].value));
+                }
+            }
+            comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
+            memset(log_buf, 0, sizeof(log_buf));
+            log_buf_len = 0U;
+        }
+    }
+#else
+    #error "TEST_LOG_TYPE is not defined"
+#endif
 }
 
 static bool _xdr_test_thread(struct thread_data* td)
