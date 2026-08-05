@@ -98,10 +98,6 @@ uint16_t xcr24_read_grp2_reg(uint16_t addr, uint16_t length);
 void xcr24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 void xcr24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 
-//void xcr24_get_xcr12_reg(uint16_t addr);
-//void xcr24_set_xcr12_reg(uint16_t addr, uint16_t data);
-
-void xcr24_set_ld_color(uint16_t red, uint16_t green, uint16_t blue);
 void xcr24_set_ld_transfer(uint16_t* table, uint16_t length);
 
 bool xcr24_read_local(uint16_t ch_seg, uint16_t addr);
@@ -111,7 +107,6 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len);
 
 void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt);
-void xcr24_set_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3);
 
 void xcr24_nINT_FT_handler(void);
 void xcr24_nINT_LD_handler(void);

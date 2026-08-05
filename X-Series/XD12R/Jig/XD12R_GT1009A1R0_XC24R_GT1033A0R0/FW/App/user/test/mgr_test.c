@@ -1055,19 +1055,13 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
             info->chx = XD_CH_01;
             info->max_curr_level = CURR_LEVEL_8; // start from 8mA
             info->max_curr_level_target = CURR_LEVEL_32; // end at 32mA
-            if (info->max_curr_level < CURR_LEVEL_28)
-            {
-                info->gain = GAIN_MID;
-            }
-            else
-            {
-                info->gain = GAIN_HIGH;
-            }
             info->vref = 0U;
             info->vref_gap = XDR_SWEEP_VREF_GAP;
 
             gpio_set_vled_9v(VLED_ON);
             ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+
+            info->gain = GAIN_HIGH;
             gpio_set_current_gain(info->gain);
 
             td->step = TEST_STEP_INITIAL_BY_LIST;

@@ -1392,21 +1392,6 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
     }
 }
 
-void xcr24_set_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3)
-{
-    gt_xcr24_set_gr1_regs.reg._r3D.bit.svo_on = svo_on;
-    xcr24_write_grp1_reg(XCR_SVO_ON, &gt_xcr24_set_gr1_regs.reg._r3D.ALL, 1U);
-
-    gt_xcr24_set_gr1_regs.reg._r3E.bit.svo1_off = svo_off1;
-    xcr24_write_grp1_reg(XCR_SVO1_OFF, &gt_xcr24_set_gr1_regs.reg._r3E.ALL, 1U);
-
-    gt_xcr24_set_gr1_regs.reg._r3F.bit.svo2_off = svo_off2;
-    xcr24_write_grp1_reg(XCR_SVO2_OFF, &gt_xcr24_set_gr1_regs.reg._r3F.ALL, 1U);
-
-    gt_xcr24_set_gr1_regs.reg._r40.bit.svo3_off = svo_off3;
-    xcr24_write_grp1_reg(XCR_SVO3_OFF, &gt_xcr24_set_gr1_regs.reg._r40.ALL, 1U);
-}
-
 void xcr24_nINT_FT_handler(void)
 {
     static uint16_t prev_cause_of_INT = 0xFFFFU;
