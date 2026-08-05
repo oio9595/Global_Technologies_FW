@@ -520,16 +520,6 @@ void comm_debugging_process(void)
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
-        else if(Command_Param_is_("xc_svo", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
-        {
-            uint16_t svo_on = (uint16_t)u32_recv_param[0];
-            uint16_t svo_off1 = (uint16_t)u32_recv_param[1];
-            uint16_t svo_off2 = (uint16_t)u32_recv_param[2];
-            uint16_t svo_off3 = (uint16_t)u32_recv_param[3];
-            tim_set_xc_svo(svo_on, svo_off1, svo_off2, svo_off3);
-            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR SVO Setting --> [ on:%u, off1:%u, off2:%u, off3:%u ]", svo_on, svo_off1, svo_off2, svo_off3);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
         else if(!(strcmp(str_in, "xc_svo")))
         {
             uint16_t svo_on = xcr24_read_grp1_reg(XCR_SVO_ON, 1U);

@@ -44,12 +44,12 @@
 #define XDR_CMD_READOUT         (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT)
 
 #define CMD_DELAY_DUMMY         (10U) /* 10us */
-#define CMD_DELAY_REG_WR        (XDR_DAISY_LENGTH * (XDR_CMD_WRITE + CMD_DELAY_DUMMY))           /* CMD_DELAY_DUMMY * 1 */
-#define CMD_DELAY_LD            (XDR_DAISY_LENGTH * (XDR_LD_TRANSFER + CMD_DELAY_DUMMY))         /* CMD_DELAY_DUMMY * 1 */
-#define CMD_DELAY_SYNCGEN       (XDR_DAISY_LENGTH * (XDR_BIT_SYNCGEN + CMD_DELAY_DUMMY))         /* CMD_DELAY_DUMMY * 1 */
-#define CMD_DELAY_IDGEN         (XDR_DAISY_LENGTH * (XDR_BIT_IDGEN + CMD_DELAY_DUMMY))           /* CMD_DELAY_DUMMY * 1 */
-#define CMD_DELAY_FAULT_READ    (XDR_DAISY_LENGTH * (XDR_CMD_READOUT + (CMD_DELAY_DUMMY * 4U)))  /* CMD_DELAY_DUMMY * 4 */
-#define CMD_DELAY_REG_RD        (XDR_DAISY_LENGTH * (XDR_CMD_READ + (CMD_DELAY_DUMMY * 8U)))     /* CMD_DELAY_DUMMY * 8 */
+#define CMD_DELAY_REG_WR        ((XDR_DAISY_LENGTH * XDR_CMD_WRITE) + CMD_DELAY_DUMMY)           /* CMD_DELAY_DUMMY * 1 */
+#define CMD_DELAY_LD            ((XDR_DAISY_LENGTH * XDR_LD_TRANSFER) + CMD_DELAY_DUMMY)         /* CMD_DELAY_DUMMY * 1 */
+#define CMD_DELAY_SYNCGEN       ((XDR_DAISY_LENGTH * XDR_BIT_SYNCGEN) + CMD_DELAY_DUMMY)         /* CMD_DELAY_DUMMY * 1 */
+#define CMD_DELAY_IDGEN         ((XDR_DAISY_LENGTH * XDR_BIT_IDGEN) + CMD_DELAY_DUMMY)           /* CMD_DELAY_DUMMY * 1 */
+#define CMD_DELAY_FAULT_READ    ((XDR_DAISY_LENGTH * XDR_CMD_READOUT) + (CMD_DELAY_DUMMY * 4U))  /* CMD_DELAY_DUMMY * 4 */
+#define CMD_DELAY_REG_RD        ((XDR_DAISY_LENGTH * XDR_CMD_READ) + (CMD_DELAY_DUMMY * 8U))     /* CMD_DELAY_DUMMY * 8 */
 
 #define XDR_FUNCTION_DIS        (0U)
 #define XDR_FUNCTION_EN         (1U)
@@ -1211,8 +1211,8 @@ static void xdr12_write(uint16_t addr, uint16_t data)
             gt_xd_write_command[daisy].bit.addr = addr;
             gt_xd_write_command[daisy].bit.data = data;
             len += xdr12_make_pwm_out_stream(gt_xd_write_command[daisy].ALL, &p_pwm_out[len], XDR_CMD_WRITE);
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Write Packet\r\n\tADDR - 0x%02X, DATA - 0x%03X", gt_xd_write_command->bit.addr, gt_xd_write_command->bit.data);
         }
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Write Packet\r\n\tADDR - 0x%02X, DATA - 0x%03X", gt_xd_write_command[0].bit.addr, gt_xd_write_command[0].bit.data);
         p_pwm_out[len++] = 0U;
 
         xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
@@ -1243,8 +1243,8 @@ static uint16_t xdr12_read(uint16_t addr, uint16_t* p_xdr_buffer)
         {
             gt_xd_read_command[daisy].bit.addr = addr;
             len += xdr12_make_pwm_out_stream(gt_xd_read_command[daisy].ALL, &p_pwm_out[len], XDR_CMD_READ);
-            comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tIN_LENGTH [%u] CMD[0x%01X] ADDR[0x%02X]", pwm_in_length, gt_xd_read_command->bit.cmd_code, gt_xd_read_command->bit.addr);
         }
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Read Packet\r\n\tIN_LENGTH [%u] CMD[0x%01X] ADDR[0x%02X]", pwm_in_length, gt_xd_read_command[0].bit.cmd_code, gt_xd_read_command[0].bit.addr);
         p_pwm_out[len++] = 0U;
 
         memset(gn_pwm_in_xd_response_freq, 0U, sizeof(gn_pwm_in_xd_response_freq));

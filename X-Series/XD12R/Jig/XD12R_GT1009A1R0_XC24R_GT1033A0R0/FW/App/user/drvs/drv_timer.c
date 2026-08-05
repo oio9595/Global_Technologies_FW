@@ -39,12 +39,6 @@ static bool gb_xd_xc_rw_flag;
 static rw_info_t gt_xd_rw_info;
 static rw_info_t gt_xc_rw_info;
 
-static bool gb_xc_svo_change;
-static uint16_t gn_xc_svo_on;
-static uint16_t gn_xc_svo_off1;
-static uint16_t gn_xc_svo_off2;
-static uint16_t gn_xc_svo_off3;
-
 static bool gb_vsync_out_flag;
 static float gf_vsync_out_freq;
 static uint8_t gn_svsync_count;
@@ -201,18 +195,29 @@ void tim_vsync_out_handler(void)
 {
     if (gb_vsync_out_for_test == true)
     {
+#if (XDR_SYNC_MODE == XDR_SYNC_MODE_CMD)
         xdr12_syncgen();
+#elif (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
+        tim_svsync_timer_start();
+#else
+        #error "XDR_SYNC_MODE is not defined"
+#endif
     }
     else
     {
 #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    #if (XDR_SYNC_MODE == XDR_SYNC_MODE_CMD)
         xdr12_syncgen();
-#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+    #elif (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
         tim_svsync_timer_start();
+    #else
+        #error "XDR_SYNC_MODE is not defined"
+    #endif
+#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
+        // no need to do anything for XCR controlled mode
 #else
         #error "XDR_CONTROL_TYPE is not defined"
 #endif
-
         gb_vsync_out_flag = true;
     }
 }
@@ -424,13 +429,4 @@ void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type)
     gt_xc_rw_info.rw_data = data;
     gt_xc_rw_info.write_flag = true;
     gt_xc_rw_info.addr_type = addr_type;
-}
-
-void tim_set_xc_svo(uint16_t svo_on, uint16_t svo_off1, uint16_t svo_off2, uint16_t svo_off3)
-{
-    gn_xc_svo_on = svo_on;
-    gn_xc_svo_off1 = svo_off1;
-    gn_xc_svo_off2 = svo_off2;
-    gn_xc_svo_off3 = svo_off3;
-    gb_xc_svo_change = true;
 }

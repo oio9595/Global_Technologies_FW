@@ -40,7 +40,7 @@ extern "C" {
 
 #define XDR_SYNC_MODE_CMD   (0U) /* cmd + svi */
 #define XDR_SYNC_MODE_SVI   (1U) /*  vo + svi */
-#define XDR_SYNC_MODE       (XDR_SYNC_MODE_SVI)
+#define XDR_SYNC_MODE       (XDR_SYNC_MODE_CMD)
 
 #define XDR_TYPE_A          (0U) /* NTS + TS */
 #define XDR_TYPE_B          (1U) /* NTS + NTS + TS */

@@ -318,8 +318,8 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r38.bit.fll1cnt = ((gn_xcr_fll_cnt[0] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r38.bit.fll1_err_range = 0U;
             _r1->reg._r38.bit.fll1_range = 0U;
-            _r1->reg._r38.bit.fllsync = XCR_FLL_PAD_FLLSYNC;
-            _r1->reg._r38.bit.fll1_en = XCR_FUNCTION_DIS;
+            _r1->reg._r38.bit.fllsync = XCR_FLL_PAD_VSYNC;
+            _r1->reg._r38.bit.fll1_en = XCR_FUNCTION_EN;
             break;
         case XCR_FLLCNT21:
             _r1->reg._r39.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
@@ -328,8 +328,8 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r3A.bit.fll2cnt = ((gn_xcr_fll_cnt[1] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r3A.bit.fll2_err_range = 0U;
             _r1->reg._r3A.bit.fll2_range = 0U;
-            _r1->reg._r3A.bit.fllsync = XCR_FLL_PAD_FLLSYNC;
-            _r1->reg._r3A.bit.fll2_en = XCR_FUNCTION_DIS;
+            _r1->reg._r3A.bit.fllsync = XCR_FLL_PAD_VSYNC;
+            _r1->reg._r3A.bit.fll2_en = XCR_FUNCTION_EN;
             break;
         case XCR_VO_DELAY:
             _r1->reg._r3B.bit.gate3_pol = 1U;
@@ -401,10 +401,12 @@ static void xcr24_regs_init_table(void)
             _r1->reg._r64.bit.dac3_max_limit = XCR_CONV_DAC_V_TO_INPUT(2.5f);
             break;
         case XCR_OSC_FLL_MAN_A1:
-            _r1->reg._r65.bit.OSC_MAN_EN_A = XCR_FUNCTION_EN;
+            _r1->reg._r65.bit.OSC_MAN_EN_A = XCR_FUNCTION_DIS;
+            _r1->reg._r65.bit.FLT_GAIN_A = 2U;
             break;
         case XCR_OSC_FLL_MAN_B1:
-            _r1->reg._r67.bit.OSC_MAN_EN_B = XCR_FUNCTION_EN;
+            _r1->reg._r67.bit.OSC_MAN_EN_B = XCR_FUNCTION_DIS;
+            _r1->reg._r67.bit.FLT_GAIN_B = 2U;
             break;
         default:
             continue;
@@ -560,6 +562,11 @@ static void xcr24_regs_test_init_table(void)
     {
         switch(addr)
         {
+            case XCR_CLK_CONTROL_1:
+            {
+                _r1->reg._r1B.ALL = 0x0808U;
+                break;
+            }
             case XCR_SERIALIZER_CLOCK_GEN:
             {
                 _r1->reg._r1D.ALL = 0x1010U;
@@ -578,6 +585,26 @@ static void xcr24_regs_test_init_table(void)
             case XCR_BLOCK_SIZE_9:
             {
                 _r1->reg._r31.ALL = 0x00FFU;
+                break;
+            }
+            case XCR_OSC_FLL_MAN_A1:
+            {
+                _r1->reg._r65.ALL = 0x8012U;
+                break;
+            }
+            case XCR_OSC_FLL_MAN_B1:
+            {
+                _r1->reg._r67.ALL = 0x8012U;
+                break;
+            }
+            case XCR_FLLCNT12:
+            {
+                _r1->reg._r38.ALL = 0x8000U;
+                break;
+            }
+            case XCR_FLLCNT22:
+            {
+                _r1->reg._r3A.ALL = 0x8000U;
                 break;
             }
             default:
@@ -1401,13 +1428,6 @@ void xcr24_nINT_FT_handler(void)
             {0x02U, "int_ld"},
             {0x01U, "int_fault_source_2"}
         };
-
-        const uint8_t fault_1 = ((cause_of_INT & 0x20U) >> 5U);
-        const uint8_t fb3 =     ((cause_of_INT & 0x10U) >> 4U);
-        const uint8_t fb2 =     ((cause_of_INT & 0x08U) >> 3U);
-        const uint8_t fb1 =     ((cause_of_INT & 0x04U) >> 2U);
-        const uint8_t LD =      ((cause_of_INT & 0x02U) >> 1U);
-        const uint8_t fault_2 = ((cause_of_INT & 0x01U) >> 0U);
         comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%02X: 0x%04X", XCR_INTERRUPT_STATUS, cause_of_INT);
 
         for (uint8_t i = 0; i < sizeof(int_flags) / sizeof(int_flags[0]); ++i)

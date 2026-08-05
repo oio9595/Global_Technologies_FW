@@ -10,7 +10,7 @@
 
 #define TEST_LOG_PARTIAL        (0U)
 #define TEST_LOG_ALL            (1U)
-#define TEST_LOG_TYPE           (TEST_LOG_PARTIAL)
+#define TEST_LOG_TYPE           (TEST_LOG_ALL)
 
 #define STEP_DELAY_DEFAULT      (1U)
 #define STEP_DELAY_SETTLING     (10U)
@@ -1048,14 +1048,21 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
         case TEST_STEP_INITIAL:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r%s, id : %u, step : %s, timeout : %u", __func__, td->id, test_step_to_string((test_step_t)td->step), td->tout);
-            info->gain = GAIN_MID;
             xdr12_trim_init();
             xdr12_trim_init_ch_gain();
             xdr12_read_all();
 
             info->chx = XD_CH_01;
-            info->max_curr_level = CURR_LEVEL_24; // start from 24mA
-            info->max_curr_level_target = CURR_LEVEL_24; // end at 24mA
+            info->max_curr_level = CURR_LEVEL_8; // start from 8mA
+            info->max_curr_level_target = CURR_LEVEL_32; // end at 32mA
+            if (info->max_curr_level < CURR_LEVEL_28)
+            {
+                info->gain = GAIN_MID;
+            }
+            else
+            {
+                info->gain = GAIN_HIGH;
+            }
             info->vref = 0U;
             info->vref_gap = XDR_SWEEP_VREF_GAP;
 
@@ -1106,7 +1113,7 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
                 }
                 else
                 {
-                    comm_UART_Printf(LOG_LV_INFO, "\r\n%u, %4u, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f",
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n%2u, %4u, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f, %06.3f",
                         ((info->max_curr_level + 1) * 4), info->vref,
                         (double)(info->measure[XD_CH_01].value), (double)(info->measure[XD_CH_02].value), (double)(info->measure[XD_CH_03].value),
                         (double)(info->measure[XD_CH_04].value), (double)(info->measure[XD_CH_05].value), (double)(info->measure[XD_CH_06].value),
@@ -1121,7 +1128,18 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
                         }
                         else
                         {
-                            ++info->max_curr_level;
+                            if (info->max_curr_level < info->max_curr_level_target)
+                            {
+                                //++info->max_curr_level;
+                                if (info->max_curr_level == CURR_LEVEL_8)
+                                {
+                                    info->max_curr_level = CURR_LEVEL_16;
+                                }
+                                else
+                                {
+                                    info->max_curr_level = CURR_LEVEL_32;
+                                }
+                            }
                             info->vref = 0U;
                             td->step = TEST_STEP_INITIAL_BY_LIST;
                         }

@@ -199,7 +199,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 /* FLLSYNC, TIMER4 */
 #define TIM4_PRESCALER          (14U)
 #define TIM4_PERIOD             (59999UL)
-#define TIM4_CLK                ((float)APB1_TIM_CLK / ((TIM4_PRESCALER + 1U) * (TIM4_PERIOD + 1U)))
+#define TIM4_CLK                ((float)APB1_TIM_CLK / ((TIM4_PRESCALER + 1U) * (TIM4_PERIOD + 1U))) /* TIM4 for FLLSYNC */
 #define FLLSYNC_OUT_PULSE       ((uint16_t)((10.0f * TIM4_CLK) / 1000000UL)) /* 10us pwm width */
 
 /* XD_PWM_IN, TIMER2 */
