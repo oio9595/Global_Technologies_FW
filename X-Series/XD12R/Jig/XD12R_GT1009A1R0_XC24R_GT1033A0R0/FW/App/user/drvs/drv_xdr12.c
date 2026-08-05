@@ -1025,7 +1025,7 @@ static void xdr12_dump_registers(void)
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%03X", addr, gt_xdr12_mirror_get_regs[0].ALL[addr]);
     }
 #else
-    char line_buf[128];
+    char line_buf[128] = { 0 };
     int len = 0;
 
     // 1. XDR12 General Registers

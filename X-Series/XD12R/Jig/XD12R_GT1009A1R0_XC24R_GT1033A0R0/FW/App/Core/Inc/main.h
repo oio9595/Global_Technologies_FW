@@ -220,7 +220,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 
 __STATIC_INLINE void us_delay(uint32_t n_delay)
 {
-    if(n_delay > 65535)
+    if(n_delay > 65535U)
     {
         n_delay = 65535U;
     }
@@ -233,9 +233,10 @@ __STATIC_INLINE void us_delay(uint32_t n_delay)
 
 __STATIC_INLINE void user_delay(volatile uint32_t delay)
 {
-    while(delay--)
+    while(delay > 0U)
     {
         __NOP();
+        --delay;
     }
 }
 

@@ -75,25 +75,25 @@
 
 typedef enum tag_REG_ADDR_T
 {
-    REG_ADDR_ID       = 0x00,
-    REG_ADDR_STATUS,
-    REG_ADDR_INPMUX,
-    REG_ADDR_PGA,
-    REG_ADDR_DATARATE,
-    REG_ADDR_REF,
-    REG_ADDR_IDACMAG,
-    REG_ADDR_IDACMUX,
-    REG_ADDR_VBIAS,
-    REG_ADDR_SYS,
-    REG_ADDR_RESERVED1,
-    REG_ADDR_OFCAL0,
-    REG_ADDR_OFCAL1,
-    REG_ADDR_RESERVED2,
-    REG_ADDR_FSCAL0,
-    REG_ADDR_FSCAL1,
-    REG_ADDR_GPIODAT,
-    REG_ADDR_GPIOCON,
-    REG_ADDR_MAX
+    REG_ADDR_ID         = 0x00U, // 0x00
+    REG_ADDR_STATUS     = 0x01U, // 0x01
+    REG_ADDR_INPMUX     = 0x02U, // 0x02
+    REG_ADDR_PGA        = 0x03U, // 0x03
+    REG_ADDR_DATARATE   = 0x04U, // 0x04
+    REG_ADDR_REF        = 0x05U, // 0x05
+    REG_ADDR_IDACMAG    = 0x06U, // 0x06
+    REG_ADDR_IDACMUX    = 0x07U, // 0x07
+    REG_ADDR_VBIAS      = 0x08U, // 0x08
+    REG_ADDR_SYS        = 0x09U, // 0x09
+    REG_ADDR_RESERVED1  = 0x0AU, // 0x0A
+    REG_ADDR_OFCAL0     = 0x0BU, // 0x0B
+    REG_ADDR_OFCAL1     = 0x0CU, // 0x0C
+    REG_ADDR_RESERVED2  = 0x0DU, // 0x0D
+    REG_ADDR_FSCAL0     = 0x0EU, // 0x0E
+    REG_ADDR_FSCAL1     = 0x0FU, // 0x0F
+    REG_ADDR_GPIODAT    = 0x10U, // 0x10
+    REG_ADDR_GPIOCON    = 0x11U, // 0x11
+    REG_ADDR_MAX        = 0x12U  // 0x12
 }reg_addr_t;
 
 /* 00h ID xxh RESERVED DEV_ID[2:0] */
@@ -382,54 +382,53 @@ static void ADS114S08_Dump_Registers(void)
 
 static uint8_t ADS114S08_Read_Register(uint8_t reg_addr)
 {
-    uint8_t TxBuffer[3U] = {0, };
-    uint8_t RxBuffer[3U] = {0, };
+    uint8_t TxBuffer[3] = { 0U };
+    uint8_t RxBuffer[3] = { 0U };
 
-    TxBuffer[0U] = (CMD_RREG | (reg_addr & 0x1F));
+    TxBuffer[0] = (CMD_RREG | (reg_addr & 0x1FU));
 
     ADS_CS_LO();
     spi_read8(SPI2, TxBuffer, RxBuffer, 3U, 20U);
     ADS_CS_HI();
 
-    return RxBuffer[2U];
+    return RxBuffer[2];
 }
 
 static int32_t ADS114S08_Get_RData(void)
 {
-    uint8_t TxBuffer[3U] = {0, };
-    uint8_t RxBuffer[3U] = {0, };
+    uint8_t TxBuffer[3] = { 0U };
+    uint8_t RxBuffer[3] = { 0U };
 
-    TxBuffer[0U] = CMD_RDATA;
+    TxBuffer[0] = CMD_RDATA;
 
     ADS_CS_LO();
-    spi_read8(SPI2, TxBuffer, RxBuffer, 3U, 20);
+    spi_read8(SPI2, TxBuffer, RxBuffer, 3U, 20U);
     ADS_CS_HI();
 
-    return (int32_t)((RxBuffer[1U] << 8U) | RxBuffer[2U]);
+    return (int32_t)(((uint32_t)RxBuffer[1] << 8U) | (uint32_t)RxBuffer[2]);
 }
 
 static void ADS114S08_Write_Register(uint8_t reg_addr, uint8_t reg_data)
 {
-    uint8_t TxBuffer[3U];
+    uint8_t TxBuffer[3] = { 0U };
 
-    TxBuffer[0U] = (CMD_WREG | (reg_addr & 0x1F));
-    TxBuffer[1U] = 0x00;
-    TxBuffer[2U] = reg_data;
+    TxBuffer[0] = (CMD_WREG | (reg_addr & 0x1FU));
+    TxBuffer[1] = 0x00U;
+    TxBuffer[2] = reg_data;
 
     ADS_CS_LO();
-    spi_write8(SPI2, TxBuffer, 3U, 20);
+    spi_write8(SPI2, TxBuffer, 3U, 20U);
     ADS_CS_HI();
 }
 
 static void ADS114S08_Set_CMD(uint8_t cmd_code)
 {
     ADS_CS_LO();
-    spi_write8(SPI2, &cmd_code, 1U, 20);
+    spi_write8(SPI2, &cmd_code, 1U, 20U);
     ADS_CS_HI();
 }
 
-#pragma optimize=none
-static void ADS114S08_Get_ADC_Offset()
+static void ADS114S08_Get_ADC_Offset(void)
 {
     comm_UART_Printf(LOG_LV_DEBUG, "\r\n ...Get ADC Offset Start...\r\n");
     gpio_set_current_gain(GAIN_LOW);
@@ -439,7 +438,7 @@ static void ADS114S08_Get_ADC_Offset()
     {
         gpio_set_demux_channel_selection(output_ch);
         ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
-        LL_mDelay(10);
+        LL_mDelay(10U);
 
         ADS114S08_Set_Start(true);
         if(true == ADS114S08_Wait_Done())
@@ -455,7 +454,7 @@ static void ADS114S08_Get_ADC_Offset()
 
 void ADS114S08_Select_Input_CH(uint8_t input_p, uint8_t input_n)
 {
-    ads114s08_inpmux_t t = {0,};
+    ads114s08_inpmux_t t = { 0U };
 
     t.u.muxp = input_p;
     t.u.muxn = input_n;
@@ -473,9 +472,9 @@ void ADS114S08_Set_Start(bool b_start)
     if(true == b_start)
     {
         gb_ads114s08_drdy_done = false;
-        gn_ads114s08_adc_temp = 0;
+        gn_ads114s08_adc_temp = 0U;
         gn_adc_read_count = ADS114S08_READ_COUNT;
-        gn_ads114s08_read_timeout = 15; // 2000SPS * 16 EA = 8ms
+        gn_ads114s08_read_timeout = 15U; // 2000SPS * 16 EA = 8ms
         ADS114S08_Set_CMD(CMD_START);
     }
     else
@@ -501,7 +500,7 @@ bool ADS114S08_Wait_Done(void)
 void ADS114S08_Init(void)
 {
     ADS114S08_Reset();
-    LL_mDelay(1);
+    LL_mDelay(1U);
 
     for(uint8_t reg = REG_ADDR_ID; reg < REG_ADDR_MAX; ++reg)
     {
@@ -533,7 +532,7 @@ void ADC_DRDY_INT_Handler(void)
         temp = 0U;
     }
 
-    if(gn_adc_read_count)
+    if(gn_adc_read_count > 0U)
     {
         gn_ads114s08_adc_temp += temp;
         --gn_adc_read_count;
@@ -553,7 +552,7 @@ uint16_t ADS114S08_Get_ADC_Value(void)
 
 float JigBD_IF_Convert_Adc_To_Current(uint16_t adc, current_gain_t gain)
 {
-    float ret = 0;
+    float ret = 0.0f;
     switch (gain)
     {
         case GAIN_HIGH:
@@ -587,17 +586,17 @@ uint16_t JigBD_IF_Convert_Current_To_ADC(double current_A, current_gain_t gain)
     {
         case GAIN_HIGH:
         {
-            ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_HIGH + 0.5f); /* mA -> ADC */
+            ret = (uint16_t)(current_A * 1000U / ADC_CONV_COEFF_HIGH + 0.5f); /* mA -> ADC */
             break;
         }
         case GAIN_MID:
         {
-            ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_MID + 0.5f); /* mA -> ADC */
+            ret = (uint16_t)(current_A * 1000U / ADC_CONV_COEFF_MID + 0.5f); /* mA -> ADC */
             break;
         }
         case GAIN_LOW:
         {
-            ret = (uint16_t)(current_A * 1000 / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
+            ret = (uint16_t)(current_A * 1000U / ADC_CONV_COEFF_LOW + 0.5f); /* mA -> ADC */
             break;
         }
         default:

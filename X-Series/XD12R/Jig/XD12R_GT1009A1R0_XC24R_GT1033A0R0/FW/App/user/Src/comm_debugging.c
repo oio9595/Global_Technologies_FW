@@ -262,7 +262,7 @@ void comm_debugging_process(void)
             mcu_peripheral_adc_start();
             uint16_t mcu_adc_value = mcu_peripheral_adc_get();
 
-            comm_UART_Printf(LOG_LV_INFO, "\r\nJigBD_IF_Get_MCU_ADC()-%d", mcu_adc_value);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nJigBD_IF_Get_MCU_ADC()-%d (%.3f)", mcu_adc_value, (double)((float)mcu_adc_value * 3.3f / 4095.0f));
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if (Command_is_("jig_ic_start"))

@@ -12,7 +12,7 @@ static uint32_t __freeze_sys_clock;	/* thread를 run하는 시점과 run중 begi
 void fw_systick_handler(void)
 {
     ++__system_clock;
-    if(__system_clock == 0xffffffff)
+    if(__system_clock == 0xffffffffU)
     {
         __system_clock = 0U;
     }

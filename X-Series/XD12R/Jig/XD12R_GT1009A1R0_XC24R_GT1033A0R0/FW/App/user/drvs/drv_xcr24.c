@@ -411,7 +411,7 @@ static void xcr24_regs_init_table(void)
         default:
             continue;
         }
-        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
+        xcr24_write_grp1_reg(addr, &(_r1->reg._r00.ALL) + addr, 1U);
     }
 #if 0
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
@@ -456,7 +456,7 @@ static void xcr24_regs_init_table(void)
             default:
                 continue;
         }
-        xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
+        xcr24_write_otp_control(addr, &(_rotp->reg._rF0.ALL) + addr, 1U);
     }
 }
 
@@ -512,7 +512,7 @@ static void xcr24_regs_trim_init_table(void)
                 continue;
             }
         }
-        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
+        xcr24_write_grp1_reg(addr, &(_r1->reg._r00.ALL) + addr, 1U);
     }
 
     _xcr_group2_regs_t* _r2 = &gt_xcr24_set_gr2_regs;
@@ -533,7 +533,7 @@ static void xcr24_regs_trim_init_table(void)
                 continue;
             }
         }
-        xcr24_write_grp2_reg(addr, &_r2->ALL[addr], 1U);
+        xcr24_write_grp2_reg(addr, &(_r2->reg._r00.ALL) + addr, 1U);
     }
 
     _xcr_otp_control_regs_t* _rotp = &gt_xcr24_set_otp_regs;
@@ -550,7 +550,7 @@ static void xcr24_regs_trim_init_table(void)
             default:
                 continue;
         }
-        xcr24_write_otp_control(addr, &_rotp->ALL[addr], 1U);
+        xcr24_write_otp_control(addr, &(_rotp->reg._rF0.ALL) + addr, 1U);
     }
 }
 
@@ -612,7 +612,7 @@ static void xcr24_regs_test_init_table(void)
                 continue;
             }
         }
-        xcr24_write_grp1_reg(addr, &_r1->ALL[addr], 1U);
+        xcr24_write_grp1_reg(addr, &(_r1->reg._r00.ALL) + addr, 1U);
     }
 }
 
@@ -650,7 +650,7 @@ static void xcr24_dump_registers(void)
         comm_UART_Printf(LOG_LV_INFO, "\r\n\t\tADDR|0x%02X|DATA|0x%04X", (XCR_OTP_BASE_ADDR + addr), gt_xcr24_get_otp_regs.ALL[addr]);
     }
 #else
-    char line_buf[128];
+    char line_buf[128] = { 0 };
     int len = 0;
 
     // 1. XCR24 GROUP1 Registers
@@ -1243,7 +1243,7 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
         uint16_t retry = 32U;
         uint16_t offset = 0U;
 
-        _v_local_write_command_t _r02 = {0, };
+        _v_local_write_command_t _r02 = {0U, };
         _v_local_rw_pointer_reset_t _r10 = {0U, };
         _v_command_status_1_t* _r14 = &gt_xcr24_get_gr1_regs.reg._r14;
 
@@ -1276,8 +1276,8 @@ void xcr24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t 
 
 void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 {
-    uint16_t spi_buffer[XCR_SPI_RW_LEN + 1U] = { 0, };
-    uint16_t temp[XCR_SPI_RW_LEN + 1U] = { 0, };
+    uint16_t spi_buffer[XCR_SPI_RW_LEN + 1 + 1] = { 0U, };
+    uint16_t temp[XCR_SPI_RW_LEN + 1 + 1] = { 0U, };
 
     _cmd_t _cmd = { 0U, };
 
@@ -1293,7 +1293,7 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 
     uint16_t crc16 = Calculate_CRC16_CCITT_False(spi_buffer, 1U);
 
-    temp[1U] = crc16;
+    temp[1] = crc16;
 
     xcr24_change_rw_grp_type(XCR_RW_GRP1);
 
@@ -1317,7 +1317,7 @@ void xcr24_get_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 
 void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 {
-    uint16_t spi_buffer[XCR_SPI_RW_LEN + 1U] = { 0, };
+    uint16_t spi_buffer[XCR_SPI_RW_LEN + 1U + 1U] = { 0U, };
 
     _cmd_t _cmd = { 0U, };
 
@@ -1344,9 +1344,9 @@ void xcr24_set_local_rw_data(uint16_t addr, uint16_t* p_data, uint16_t len)
 
 void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
 {
-    if (fll_ch < 3)
+    if (fll_ch < 3U)
     {
-        if (fll_ch == 0)
+        if (fll_ch == 0U)
         {
             _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
             _r37->bit.fll1cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
@@ -1364,7 +1364,7 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
             _r3A->bit.fll2cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             xcr24_write_grp1_reg(XCR_FLLCNT22, &_r3A->ALL, 1U);
         }
-        else if (fll_ch == 1)
+        else if (fll_ch == 1U)
         {
             _v_fllcnt11_t* _r37 = &gt_xcr24_set_gr1_regs.reg._r37;
             _r37->bit.fll1cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
@@ -1374,7 +1374,7 @@ void xcr24_set_fll_cnt(uint8_t fll_ch, uint32_t fll_cnt)
             _r38->bit.fll1cnt = ((fll_cnt & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             xcr24_write_grp1_reg(XCR_FLLCNT12, &_r38->ALL, 1U);
         }
-        else if (fll_ch == 2)
+        else if (fll_ch == 2U)
         {
             _v_fllcnt21_t* _r39 = &gt_xcr24_set_gr1_regs.reg._r39;
             _r39->bit.fll2cnt = ((fll_cnt & FLL_BIT_B15_B0) >>  FLL_BIT_SHIFT_LSB);
@@ -1415,7 +1415,7 @@ void xcr24_nINT_FT_handler(void)
         };
         comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%02X: 0x%04X", XCR_INTERRUPT_STATUS, cause_of_INT);
 
-        for (uint8_t i = 0; i < sizeof(int_flags) / sizeof(int_flags[0]); ++i)
+        for (uint8_t i = 0U; i < sizeof(int_flags) / sizeof(int_flags[0]); ++i)
         {
             if (cause_of_INT & int_flags[i].mask)
             {
@@ -1428,10 +1428,10 @@ void xcr24_nINT_FT_handler(void)
     }
     else
     {
-        if ((++duplicate_vsync_cnt) == 240) // Log every 240 duplicates to avoid flooding the log
+        if ((++duplicate_vsync_cnt) == 240U) // Log every 240 duplicates to avoid flooding the log
         {
             comm_UART_Printf(LOG_LV_INFO, "\r\nXCR24 nINT_FT interrupt 0x%02X: 0x%04X (duplicate %d times)", XCR_INTERRUPT_STATUS, cause_of_INT, duplicate_vsync_cnt);
-            duplicate_vsync_cnt = 0;
+            duplicate_vsync_cnt = 0U;
         }
     }
 }

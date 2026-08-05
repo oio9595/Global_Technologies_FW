@@ -97,6 +97,7 @@ static uint32_t _noti(uint32_t type, void* val)
         default:
             break;
         }
+        break;
     default:
         break;
     }

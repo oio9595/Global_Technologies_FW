@@ -2499,7 +2499,7 @@ typedef union _xcr_otp_control_regs
     }reg;
 }_xcr_otp_control_regs_t;
 
-static const char* xcr_otp_control_regs_str[XCR_GRP2_MAX] =
+static const char* xcr_otp_control_regs_str[XCR_OTP_MAX] =
 {
     "TEST CONTROL",
     "OTP PG ACCESS",

@@ -14,8 +14,6 @@ typedef enum tag_BLOCK_TBL
     BLK_TBL_MAX
 } block_table_t;
 
-uint8_t gn_block_map[LDIM_BLK_SIZE][BLK_TBL_MAX]; /* { xd_daisy, ld_order_max, xc_ch } */
-
 typedef union tag_LD_BUFFER
 {
     uint16_t buffer[(XDR_DAISY_LENGTH * XDR_LD_SIZE * XCR_CH_SIZE)];
@@ -35,6 +33,8 @@ typedef union tag_XCR_LD_TRANSFER
         uint16_t    crc16;
     };
 } xcr_ld_transfer_t;
+
+static uint8_t gn_block_map[LDIM_BLK_SIZE][BLK_TBL_MAX]; /* { xd_daisy, ld_order_max, xc_ch } */
 
 static xcr_ld_transfer_t gt_xcr_ld_transfer_table;
 static block_color_t gt_block_color_buffer[LDIM_BLK_SIZE];
