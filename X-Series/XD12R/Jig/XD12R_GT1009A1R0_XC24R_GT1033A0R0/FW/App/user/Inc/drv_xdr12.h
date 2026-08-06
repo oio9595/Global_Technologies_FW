@@ -185,7 +185,6 @@ void xdr12_test_init_osc(void);
 void xdr12_test_init_fll_40M(void);
 void xdr12_test_init_fll_50M(void);
 void xdr12_test_init_fll_60M(void);
-void xdr12_test_init_fll_MHz(uint32_t freq_mhz);
 void xdr12_test_init_iout_3P(void);
 void xdr12_test_init_max_sweep(void);
 
@@ -204,6 +203,21 @@ void xdr12_test_start_max_sweep(void);
 
 void xdr12_test(void);
 
+void xdr12_aging_init_icc_test(void);
+void xdr12_aging_init_current_ref(void);
+void xdr12_aging_init_ldo_dig(void);
+void xdr12_aging_init_ldo_dac(void);
+void xdr12_aging_init_ldo_fll(void);
+void xdr12_aging_init_osc(void);
+void xdr12_aging_init_iout(void);
+
+void xdr12_aging_start_icc_test(void);
+void xdr12_aging_start_current_ref(void);
+void xdr12_aging_start_ldo_dig(void);
+void xdr12_aging_start_ldo_dac(void);
+void xdr12_aging_start_ldo_fll(void);
+void xdr12_aging_start_osc(void);
+void xdr12_aging_start_iout(void);
 #ifdef __cplusplus
 }
 #endif

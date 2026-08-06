@@ -1691,7 +1691,7 @@ void xdr12_trim_init_osc(void)
 {
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    //_r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
@@ -2041,7 +2041,7 @@ void xdr12_test_init_osc(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
@@ -2062,7 +2062,7 @@ void xdr12_test_init_fll_40M(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
@@ -2090,7 +2090,7 @@ void xdr12_test_init_fll_50M(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
@@ -2118,7 +2118,7 @@ void xdr12_test_init_fll_60M(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.mclk64_o = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
@@ -2141,33 +2141,7 @@ void xdr12_test_init_fll_60M(void)
     xdr12_write_by_type(XD12R_FLLCNT2, _r23->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
-void xdr12_test_init_fll_MHz(uint32_t freq_mhz)
-{
-    // set proper xdr12 register
-    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
-    _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
-    _r3F->bit.mclk64_o = 1U;
-    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-    _v_xdr12_osc_fll_man2_t* _r29 = &gt_xdr12_set_regs.reg._r29;
-    _r29->bit.osc_man_en = 0U;
-    xdr12_write_by_type(XD12R_OSC_FLL_MAN2, _r29->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    const float xd_mclk = (float)(freq_mhz * 1000000.0f);
-    const float vsync = 120.0f; /* 120Hz */
-    const uint32_t fll_out = (uint32_t)(xd_mclk / (vsync * 2.0f) + 0.5f); /* round up */
-
-    _v_xdr12_fllcnt1_t* _r22 = &gt_xdr12_set_regs.reg._r22;
-    _r22->bit.fllcnt = (uint16_t)((fll_out & 0x000FFFU) >>  0U);
-    xdr12_write_by_type(XD12R_FLLCNT1, _r22->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    _v_xdr12_fllcnt2_t* _r23 = &gt_xdr12_set_regs.reg._r23;
-    _r23->bit.fllcnt = (uint16_t)((fll_out & 0x1FF000U) >> 12U);
-    _r23->bit.fll_range = 3U;
-    _r23->bit.fll_en = 1U;
-    xdr12_write_by_type(XD12R_FLLCNT2, _r23->ALL, XD12R_ADDR_TYPE_GENERAL);
-}
 
 void xdr12_test_init_iout_3P(void)
 {
@@ -2179,7 +2153,7 @@ void xdr12_test_init_iout_3P(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
@@ -2207,7 +2181,7 @@ void xdr12_test_init_max_sweep(void)
     // set proper xdr12 register
     _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
     _r3F->bit.test_en = 1U;
-    _r3F->bit.test_ana_en = 5U; /* ??? */
+    _r3F->bit.test_ana_en = 0U;
     _r3F->bit.sw_sel = 1U;
     _r3F->bit.mclk64_o = 0U;
     _r3F->bit.pwmout_full = 1U;
@@ -2275,4 +2249,135 @@ void xdr12_test(void)
 
     xdr12_trim_set_max_curr_vref(4095U);
     xdr12_trim_set_max_curr_lvl(CURR_LEVEL_24);
+}
+
+void xdr12_aging_init_icc_test(void)
+{
+    /* change adc ch_p, ch_n */
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_ICC_P, ADS114S08_CH_XD_ICC_N);
+    /* set proper xdr12 register */
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 0U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_current_ref(void)
+{
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 0U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_ldo_dig(void)
+{
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 2U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_ldo_dac(void)
+{
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 1U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_ldo_fll(void)
+{
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 5U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_osc(void)
+{
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 0U;
+    _r3F->bit.mclk64_o = 1U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    const uint16_t osc_fll_man = 0x8000U; /* 16b' 1000_0000_0000_0000*/
+
+    _v_xdr12_osc_fll_man1_t* _r28 = &gt_xdr12_set_regs.reg._r28;
+    _r28->bit.osc_fll_man = ((osc_fll_man & 0x0FFFU) >>  0U);
+    xdr12_write_by_type(XD12R_OSC_FLL_MAN1, _r28->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    _v_xdr12_osc_fll_man2_t* _r29 = &gt_xdr12_set_regs.reg._r29;
+    _r29->bit.osc_fll_man = ((osc_fll_man & 0xF000U) >> 12U);
+    _r29->bit.osc_man_en = 1U;
+    xdr12_write_by_type(XD12R_OSC_FLL_MAN2, _r29->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_init_iout(void)
+{
+    // turn on proper power if needed like VLED
+    gpio_set_vled_9v(VLED_ON);
+    // change adc ch_p, ch_n
+    ADS114S08_Select_Input_CH(ADS114S08_CH_XD_IOUT, ADS_AINCOM);
+
+    // set proper xdr12 register
+    _v_xdr12_op_mode_t* _r3F = &gt_xdr12_otp_ctrl_set_regs.reg._r3F;
+    _r3F->bit.test_en = 1U;
+    _r3F->bit.test_ana_en = 0U;
+    _r3F->bit.sw_sel = 1U;
+    _r3F->bit.mclk64_o = 0U;
+    _r3F->bit.pwmout_full = 1U;
+    xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
+    _r19->bit.max_curr1_level = CURR_LEVEL_24;
+    _r19->bit.max_curr2_level = CURR_LEVEL_24;
+    _r19->bit.max_curr3_level = CURR_LEVEL_24;
+    xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL1, _r19->ALL, XD12R_ADDR_TYPE_GENERAL);
+
+    _v_xdr12_max_current_level2_t* _r1A = &gt_xdr12_set_regs.reg._r1A;
+    _r1A->bit.max_curr4_level = CURR_LEVEL_24;
+    _r1A->bit.max_curr5_level = CURR_LEVEL_24;
+    xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, _r1A->ALL, XD12R_ADDR_TYPE_GENERAL);
+}
+
+void xdr12_aging_start_icc_test(void)
+{
+    ADS114S08_Set_Start(true);
+}
+
+void xdr12_aging_start_current_ref(void)
+{
+    mcu_peripheral_adc_start();
+}
+
+void xdr12_aging_start_ldo_dig(void)
+{
+    mcu_peripheral_adc_start();
+}
+
+void xdr12_aging_start_ldo_dac(void)
+{
+    mcu_peripheral_adc_start();
+}
+
+void xdr12_aging_start_ldo_fll(void)
+{
+    mcu_peripheral_adc_start();
+}
+
+void xdr12_aging_start_osc(void)
+{
+    mcu_peripheral_tim_input_capture_start();
+}
+
+void xdr12_aging_start_iout(void)
+{
+    ADS114S08_Set_Start(true);
 }

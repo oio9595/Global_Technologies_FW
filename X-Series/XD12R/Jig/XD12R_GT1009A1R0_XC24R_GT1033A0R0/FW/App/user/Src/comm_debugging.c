@@ -334,15 +334,46 @@ void comm_debugging_process(void)
             MGR_TEST()->cmd(TEST_CMD_XDR_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(!(strcmp(str_in, "xcr_sweep_start")))
+        {
+            MGR_TEST()->cmd(TEST_CMD_XCR_SWEEP_START, NULL);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
         else if(!(strcmp(str_in, "xdr_sweep_start")))
         {
             MGR_TEST()->cmd(TEST_CMD_XDR_SWEEP_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xcr_sweep_start")))
+#if 0
+        else if(!(strcmp(str_in, "xcr_aging_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XCR_SWEEP_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XCR_AGING_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+#endif
+        else if(Command_Param_is_("xdr_aging_start", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (((u32_recv_param[0] % 4U) == 0) && ((u32_recv_param[0] / 4U) <= 16U) && (u32_recv_param[1] <= 4095U)) // 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDR Aging Start, Max Current Level : %u, Max Current Vref : %u, Ideal Iout : %.3f", u32_recv_param[0], u32_recv_param[1], (((double)(u32_recv_param[0] * u32_recv_param[1])) / 4095.0f));
+
+                uint16_t xdr_max_curr_lvl = ((((uint16_t)u32_recv_param[0]) / 4U) - 1U);
+                uint16_t xdr_max_curr_vref = (uint16_t)u32_recv_param[1];
+
+                MGR_TEST()->cmd(TEST_CMD_XDR_AGING_START, NULL);
+
+                MGR_TEST()->write(0U, &xdr_max_curr_lvl, sizeof(uint16_t));
+                MGR_TEST()->write(1U, &xdr_max_curr_vref, sizeof(uint16_t));
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid Input, Max Current Level : %u, Max Current Vref : %u", u32_recv_param[0], u32_recv_param[1]);
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\t Max Current Level : 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64");
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\t Max Current Vref  : 0 - 4095");
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                return;
+            }
         }
         else if(!(strcmp(str_in, "launch")))
         {

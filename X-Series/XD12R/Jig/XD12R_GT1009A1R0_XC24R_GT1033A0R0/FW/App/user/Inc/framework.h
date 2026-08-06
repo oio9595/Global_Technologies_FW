@@ -105,6 +105,8 @@ typedef enum
     TEST_CMD_XDR_START,
     TEST_CMD_XCR_SWEEP_START,
     TEST_CMD_XDR_SWEEP_START,
+    TEST_CMD_XCR_AGING_START,
+    TEST_CMD_XDR_AGING_START,
 }TestCommand_t;
 
 struct manager
