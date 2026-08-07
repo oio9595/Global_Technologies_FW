@@ -189,7 +189,7 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define TIM8_CLK                ((float)APB2_TIM_CLK / (TIM8_PRESCALER + 1U))
 #define TIM8_PERIOD             ((uint16_t)((TIM8_CLK / 120U) - 1U))
 #define TIM8_PERIOD_HZ(f)       ((uint32_t)((TIM8_CLK / (f)) - 1U))
-#define VSYNC_OUT_PULSE         ((uint16_t)((100.0f * TIM8_CLK) / 1000000UL)) /* 10us pwm width */
+#define VSYNC_OUT_PULSE         ((uint16_t)((100.0f * TIM8_CLK) / 1000000UL)) /* 100us pwm width */
 
 /* us_delay, TIMER12 */
 #define TIM12_PRESCALER         ((uint16_t)((APB1_TIM_CLK/1000000UL) - 1U))    /* prescaler for 1us */

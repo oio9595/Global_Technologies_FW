@@ -784,7 +784,7 @@ static void xdr12_regs_init_table(void)
     }
 }
 
-static volatile void xdr12_regs_trim_init_table(void)
+static void xdr12_regs_trim_init_table(void)
 {
     _xdr12_regs_t* _r1 = &gt_xdr12_set_regs;
     //_xdr12_mirror_regs_t* _r2 = &gt_xdr12_mirror_set_regs;
@@ -936,7 +936,7 @@ static volatile void xdr12_regs_trim_init_table(void)
     }
 }
 
-volatile void xdr12_reset(void)
+void xdr12_reset(void)
 {
     _v_xdr12_reset_id_t _r00 = { 0U };
     _r00.bit.lkg_e = 0U;
@@ -946,7 +946,7 @@ volatile void xdr12_reset(void)
     xdr12_write_by_type(XD12R_RESET_ID, _r00.ALL, XD12R_ADDR_TYPE_GENERAL);
 }
 
-volatile void xdr12_idgen(void)
+void xdr12_idgen(void)
 {
     #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
     {
@@ -1717,7 +1717,6 @@ void xdr12_trim_init_ch_gain(void)
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-#if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
     _r19->bit.max_curr1_level = CURR_LEVEL_24;
     _r19->bit.max_curr2_level = CURR_LEVEL_24;
@@ -1728,14 +1727,6 @@ void xdr12_trim_init_ch_gain(void)
     _r1A->bit.max_curr4_level = CURR_LEVEL_24;
     _r1A->bit.max_curr5_level = CURR_LEVEL_24;
     xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, _r1A->ALL, XD12R_ADDR_TYPE_GENERAL);
-#elif (XD_MODEL_TYPE == XD_TYPE_XDR12D)
-    _v_xdr12_max_current_level_t* _r0A = &gt_xdr12_set_regs.reg._r0A;
-    _r0A->bit.max_curr1_level = CURR_LEVEL_16;
-    _r0A->bit.max_curr2_level = CURR_LEVEL_16;
-    _r0A->bit.max_curr3_level = CURR_LEVEL_16;
-    xdr12_write_by_type(XD12R_MAX_CURR_LEVEL, _r0A->ALL, XD12R_ADDR_TYPE_GENERAL);
-#elif (XD_MODEL_TYPE == XD_TYPE_IC601)
-#endif
 }
 
 void xdr12_trim_init_ch_ofs(void)
@@ -1748,7 +1739,6 @@ void xdr12_trim_init_ch_ofs(void)
     _r3F->bit.pwmout_full = 1U;
     xdr12_write_by_type(XD12R_OTP_CTRL_BASE + XD12R_OP_MODE, _r3F->ALL, XD12R_ADDR_TYPE_GENERAL);
 
-#if (XD_MODEL_TYPE == XD_TYPE_XDR12R)
     _v_xdr12_max_current_level1_t* _r19 = &gt_xdr12_set_regs.reg._r19;
     _r19->bit.max_curr1_level = CURR_LEVEL_24;
     _r19->bit.max_curr2_level = CURR_LEVEL_24;
@@ -1759,14 +1749,6 @@ void xdr12_trim_init_ch_ofs(void)
     _r1A->bit.max_curr4_level = CURR_LEVEL_24;
     _r1A->bit.max_curr5_level = CURR_LEVEL_24;
     xdr12_write_by_type(XD12R_MAX_CURRENT_LEVEL2, _r1A->ALL, XD12R_ADDR_TYPE_GENERAL);
-#elif (XD_MODEL_TYPE == XD_TYPE_XDR12D)
-    _v_xdr12_max_current_level_t* _r0A = &gt_xdr12_set_regs.reg._r0A;
-    _r0A->bit.max_curr1_level = CURR_LEVEL_16;
-    _r0A->bit.max_curr2_level = CURR_LEVEL_16;
-    _r0A->bit.max_curr3_level = CURR_LEVEL_16;
-    xdr12_write_by_type(XD12R_MAX_CURR_LEVEL, _r0A->ALL, XD12R_ADDR_TYPE_GENERAL);
-#elif (XD_MODEL_TYPE == XD_TYPE_IC601)
-#endif
 }
 
 void xdr12_trim_set_channel_enable(uint8_t chx)
@@ -1959,7 +1941,7 @@ void xdr12_trim_save_mirror_register(void)
     }
 }
 
-uint16_t*  xdr12_get_trim_debug_reg(void)
+uint16_t* xdr12_get_trim_debug_reg(void)
 {
     return gt_xdr12_trim_debug_regs.ALL;
 }
@@ -2140,8 +2122,6 @@ void xdr12_test_init_fll_60M(void)
     _r23->bit.fll_en = 1U;
     xdr12_write_by_type(XD12R_FLLCNT2, _r23->ALL, XD12R_ADDR_TYPE_GENERAL);
 }
-
-
 
 void xdr12_test_init_iout_3P(void)
 {
@@ -2351,32 +2331,26 @@ void xdr12_aging_start_icc_test(void)
 {
     ADS114S08_Set_Start(true);
 }
-
 void xdr12_aging_start_current_ref(void)
 {
     mcu_peripheral_adc_start();
 }
-
 void xdr12_aging_start_ldo_dig(void)
 {
     mcu_peripheral_adc_start();
 }
-
 void xdr12_aging_start_ldo_dac(void)
 {
     mcu_peripheral_adc_start();
 }
-
 void xdr12_aging_start_ldo_fll(void)
 {
     mcu_peripheral_adc_start();
 }
-
 void xdr12_aging_start_osc(void)
 {
     mcu_peripheral_tim_input_capture_start();
 }
-
 void xdr12_aging_start_iout(void)
 {
     ADS114S08_Set_Start(true);

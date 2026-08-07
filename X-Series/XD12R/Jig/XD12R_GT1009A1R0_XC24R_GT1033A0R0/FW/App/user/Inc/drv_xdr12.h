@@ -133,7 +133,6 @@ void xdr12_syncgen(void);
 void xdr12_init(void);
 void xdr12_trim_init(void);
 
-
 void xdr12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_type);
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);
 
@@ -172,7 +171,7 @@ void xdr12_trim_init_efuse(void);
 void xdr12_trim_start_efuse(void);
 
 void xdr12_trim_save_mirror_register(void);
-uint16_t*  xdr12_get_trim_debug_reg(void);
+uint16_t* xdr12_get_trim_debug_reg(void);
 uint32_t xdr12_trim_verify_mirror_dump(void);
 
 void xdr12_test_init_icc_stby(void);

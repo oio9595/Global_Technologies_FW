@@ -9,4 +9,3 @@ void fw_memset(void* ptr, uint8_t val, uint32_t size)
         p[i] = val;
     }
 }
-

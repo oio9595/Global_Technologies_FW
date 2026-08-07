@@ -5,7 +5,6 @@
  * Created on 2026. 01. 16.
  */
 
-#include <stdio.h>
 #include <stdbool.h>
 #include "drv_spi.h"
 

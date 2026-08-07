@@ -1550,10 +1550,8 @@ void xcr24_trim_init_osc_a(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1574,10 +1572,8 @@ void xcr24_trim_init_osc_b(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1847,10 +1843,8 @@ void xcr24_test_init_fll_a_30m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1880,10 +1874,8 @@ void xcr24_test_init_fll_a_35m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1913,10 +1905,8 @@ void xcr24_test_init_fll_a_40m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_A;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1946,10 +1936,8 @@ void xcr24_test_init_fll_b_30m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -1979,10 +1967,8 @@ void xcr24_test_init_fll_b_35m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 
@@ -2012,10 +1998,8 @@ void xcr24_test_init_fll_b_40m(void)
     _rF0->bit.DACO1_DIRECT = 0U;
     _rF0->bit.DACO2_DIRECT = 0U;
     _rF0->bit.DACO3_DIRECT = 0U;
-
     //_rF0->bit.MCLK64_O = 1U;
     _rF0->bit.MCLK1_O = 1U;
-
     _rF0->bit.MCLK_SEL = XCR_MCLK_SEL_OSC_B;
     xcr24_write_otp_control(XCR_TEST_CONTROL, &_rF0->ALL, 1U);
 

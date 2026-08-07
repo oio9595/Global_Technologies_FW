@@ -606,7 +606,7 @@ static bool _xcr_trim_thread(struct thread_data* td)
                 case XCR_TRIM_LIST_OSC_B:
                 {
                     xcr24_trim_init_osc_b();
-#if 0
+#if 0 // skip osc_b trim
                     td->step = TRIM_STEP_START_MEASURE;
                     td->tout = XCR_DELAY_SETTLING;
 #else
