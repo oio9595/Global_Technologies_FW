@@ -57,8 +57,11 @@
 #define PACKET_SIZE_EXCEPT_DATA_FIELD   5U   // SOP(1) + LEN(1) + CMD(1) + /* DATA(1) */ + CHK(1) + EOP(1)
 #define PACKET_SIZE_SOP_TO_COMMAND      3U   // SOP(1) + LEN(1) + CMD(1)
 
-#define INVALID_PACKET     0U
-#define VALID_PACKET       1U
+#define INVALID_PACKET  0U
+#define VALID_PACKET    1U
+
+#define XC_CHECK_NG     0U
+#define XC_CHECK_OK     1U
 
 enum tag_PROTOCOL_LIST
 {
@@ -79,6 +82,7 @@ enum tag_PROTOCOL_LIST
     CMD_TEST_CH_DEPENDENCY  = 0xA0U, // 0xA0
     CMD_TEST_SCAN_NO        = 0xA1U, // 0xA1
     CMD_TEST_LINE_DELAY     = 0xA2U, // 0xA2
+    CMD_XC_CHECK            = 0xFEU, // 0xFE, hidden
 } protocol_list_t;
 
 typedef enum tag_KEY_LIST
@@ -280,6 +284,7 @@ bool comm_is_valid_command(uint8_t in_cmd)
         case CMD_TEST_CH_DEPENDENCY:
         case CMD_TEST_SCAN_NO:
         case CMD_TEST_LINE_DELAY:
+        case CMD_XC_CHECK:
             ret = true;
             break;
         default:
@@ -332,6 +337,30 @@ static void comm_tx_response(uint8_t status)
         for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
         {
             UART_PutChar(response_ng[i]);
+        }
+    }
+}
+
+static void comm_tx_xc_check(uint8_t status)
+{
+    uint8_t check_ok[PACKET_SIZE] = { SOP, 0x01U, CMD_XC_CHECK, 0xA5U, 0x00U, 0x5AU };
+    uint8_t check_ng[PACKET_SIZE] = { SOP, 0x01U, CMD_XC_CHECK, 0x5AU, 0x00U, 0x5AU };
+
+    check_ok[4] = check_ok[0] + check_ok[1] + check_ok[2] + check_ok[3];
+    check_ng[4] = check_ng[0] + check_ng[1] + check_ng[2] + check_ng[3];
+
+    if (status)
+    {
+        for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
+        {
+            UART_PutChar(check_ok[i]);
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0U ; i < PACKET_SIZE ; ++i)
+        {
+            UART_PutChar(check_ng[i]);
         }
     }
 }
@@ -435,79 +464,117 @@ static void Uart_Task(void)
         switch(p_packet->command)
         {
             case CMD_INIT:
+            {
                 LED_System_Init();
                 print(LOG_PC, "CMD_INIT\r\n");
                 break;
+            }
             case CMD_QUIT:
+            {
                 LED_System_DeInit();
                 print(LOG_PC, "CMD_QUIT\r\n");
                 break;
+            }
             case CMD_STATUS:
+            {
                 print(LOG_PC, "CMD_STATUS\r\n");
                 break;
+            }
             case CMD_VERSION:
+            {
                 print(LOG_PC, "CMD_VERSION\r\n");
                 break;
+            }
             case CMD_CURRENT:
+            {
                 LED_Current_Select((float)(p_packet->data[0]));
                 print(LOG_PC, "CMD_CURRENT: %d\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_BAR_ON_SELECT:
+            {
                 for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BAR_On_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BAR_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_BAR_OFF_SELECT:
+            {
                 for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BAR_Off_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BAR_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_BLK_ON_SELECT:
+            {
                 for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BLK_On_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BLK_ON_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_BLK_OFF_SELECT:
+            {
                 for (uint8_t i = 0U ; i < p_packet->length ; ++i)
                 {
                     LED_BLK_Off_Select(p_packet->data[i]);
                 }
                 print(LOG_PC, "CMD_BLK_OFF_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_LOW_CURRENT_MODE:
+            {
                 LED_Low_Current_Mode(p_packet->data[0]);
                 print(LOG_PC, "CMD_LOW_CURRENT_MODE: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_DUTY:
+            {
                 LED_Duty_Select((float)p_packet->data[0]);
                 print(LOG_PC, "CMD_DUTY: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_MODEL_SELECT:
+            {
                 XDIC_Set_Daisy_Chain_Size(p_packet->data[0]);
                 print(LOG_PC, "CMD_MODEL_SELECT: %u\r\n", p_packet->data[0]);
                 break;
+            }
             case CMD_TEST_CH_DEPENDENCY:
+            {
                 XDIC_Test_CH_Dependency();
                 print(LOG_PC, "CMD_TEST_CH_DEPENDENCY\r\n");
                 break;
+            }
             case CMD_TEST_SCAN_NO:
+            {
                 LED_System_Init();
                 LED_BAR_On_Select(0U);
                 LED_Enable_Scan_No_Test(p_packet->data[0]);
                 print(LOG_PC, "CMD_TEST_SCAN_NO.\r\n");
                 break;
+            }
             case CMD_TEST_LINE_DELAY:
+            {
                 LED_System_Init();
                 LED_BAR_On_Select(0U);
                 LED_Enable_Line_Delay_Test(p_packet->data[0]);
                 print(LOG_PC, "CMD_TEST_LINE_DELAY\r\n");
                 break;
+            }
+            case CMD_XC_CHECK:
+            {
+                bool xc_init_done = XC24_Is_Init_Done();
+                comm_tx_xc_check(xc_init_done);
+                print(LOG_PC, "CMD_XC_CHECK\r\n");
+                break;
+            }
+
         }
         ++gt_rx_packet_buffer.idx;
         gt_rx_packet_buffer.idx &= (RX_PACKET_SIZE - 1U);

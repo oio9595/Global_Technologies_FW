@@ -23,6 +23,8 @@
 static SPI_TypeDef *g_hSPIx;
 volatile uint8_t gn_xc_spi_timeout;
 
+static bool gb_xc24_init_done = false;
+
 static _xc24_general_regs_t gt_xc24_general_regs;
 static _xc24_mirror_regs_t gt_xc24_mirror_regs;
 
@@ -370,8 +372,13 @@ static void XC24_Read_Register_All(void)
 {
     for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
     {
-        XC24_Read_Register(xc_addr);
+        uint16_t val = XC24_Read_Register(xc_addr);
         us_delay(10U);
+
+        if ((xc_addr == XC24_ADDR_SERIALIZER_CLOCK_GEN) && val == ((XC_SERIAL_CLK_CNT_LOW << 8) | XC_SERIAL_CLK_CNT_HIGH))
+        {
+            gb_xc24_init_done = true;
+        }
     }
     XC24_Dump_All_Register();
 }
@@ -405,7 +412,7 @@ static void XC24_Test_Init_OSC(void)
 }
 
 void XC24_Update_Channel_Enable_By_XDIC_ID_Check(void)
-{   
+{
     bool* p_xd_id_error_table = XDIC_Get_ID_Error_Channel_Table();
 
     for (uint8_t xc_addr = XC24_ADDR_SOFT_RESET ; xc_addr < XC24_ADDR_MAX ; ++xc_addr)
@@ -660,6 +667,7 @@ void XC24_DeInit(void)
 
     XC_NSCS_LO();
     XC_VCC_OFF();
+    gb_xc24_init_done = false;
 }
 
 void XC24_Test_Init(void)
@@ -780,7 +788,7 @@ uint16_t* XC24_IF_Read_XDIC(uint8_t in_XDIC_addr)
         XC24_Write_Local_Register(XC24_ADDR_PORT7_LOCAL_RW_DATA2, 0U);
         XC24_Write_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA1, 0U);
         XC24_Write_Local_Register(XC24_ADDR_PORT8_LOCAL_RW_DATA2, 0U);
-        
+
         LL_mDelay(1U);
 
         gt_xc24_general_regs._r11.ALL = 0U;
@@ -881,6 +889,11 @@ void XC24_Turn_On_Sync_Auto(void)
     gt_xc24_general_regs._r08.sync_auto_en = 1U;
     gt_xc24_general_regs._r08.fault_auto_en = 0U;
     XC24_Write_Register(XC24_ADDR_AUTO_ENABLE, gt_xc24_general_regs._r08.ALL);
+}
+
+bool XC24_Is_Init_Done(void)
+{
+    return gb_xc24_init_done;
 }
 
 /* END - INTERFACE FUNCTIONS ************************************************************************/

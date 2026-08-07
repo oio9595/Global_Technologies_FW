@@ -25,6 +25,7 @@ CMD_STATUS = 0xF0
 CMD_VERSION = 0xF1
 CMD_QUIT = 0xFF
 CMD_CURRENT = 0x01
+CMD_XC_CHECK = 0xFE
 
 CMD_BAR_ON = 0x10
 CMD_BAR_OFF = 0x20
@@ -51,6 +52,7 @@ commands = {
     "0xA1 (Test SCAN_No.)": 0xA1,
     "0xA2 (Test Line Delay)": 0xA2,
     "0xA3 (Test)": 0xA3,
+    "0xFE (XC Check)": 0xFE,
 }
 
 class MacroApp(QWidget):
@@ -403,39 +405,54 @@ class MacroApp(QWidget):
             self.log("⚠️ COM 포트가 연결되어 있지 않습니다.")
 
     def read_serial_data(self):
-        # MCU → PC UART 데이터 읽기 스레드
+        rx_buffer = bytearray()
+        last_rx_time = time.time()  # 마지막 데이터 수신 시각 기록
+
         while self.thread_running and self.ser and self.ser.is_open:
             try:
+                # 1. 들어온 데이터 전부 내부 버퍼에 추가 및 타임스탬프 갱신
                 if self.ser.in_waiting > 0:
-                    data = self.ser.read(self.ser.in_waiting)  # 들어온 데이터 모두 읽기
+                    data = self.ser.read(self.ser.in_waiting)
                     if data:
-                        hex_list = [f"{b:02X}" for b in data]
-                        if len(data) == 6:
-                            calc_checksum = sum(data[:4]) & 0xFF
-                            recv_sop = data[0]
-                            recv_length = data[1]
-                            recv_command = data[2]
-                            recv_data = data[3]
-                            recv_checksum = data[4]
-                            recv_eop = data[5]
-                            if calc_checksum == recv_checksum:
-                                if recv_command == CMD_STATUS:
-                                    if recv_data == PACKET_VALID:
-                                        result = f"✅\r\n"
-                                    else:
-                                        result = f"⚠️ (Packet Invalid)\r\n"
-                                elif recv_command == CMD_VERSION:
-                                    result = f"✅ Version: {recv_data}\r\n"
-                                    pass
-                            else:
-                                result = f"❌ Rx Checksum Error (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
-                            text_str = data.decode(errors="ignore")
-                            self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | {result}")
+                        rx_buffer.extend(data)
+                        last_rx_time = time.time()  # 수신 시각 갱신
+
+                # 2. 1초 동안 새 데이터가 들어오지 않고 버퍼에 잔여 데이터가 남아있다면 버퍼 비우기
+                if len(rx_buffer) > 0 and (time.time() - last_rx_time > 1.0):
+                    self.log_signal.emit(f"⚠️ 수신 타임아웃(1초 초과): 깨진 데이터 {len(rx_buffer)}bytes 삭제(rx_buffer: {[f'{b:02X}' for b in rx_buffer]})")
+                    rx_buffer.clear()
+
+                # 3. 버퍼에 6바이트 이상 존재할 때 패킷 처리
+                while len(rx_buffer) >= 6:
+                    data = rx_buffer[:6]
+                    del rx_buffer[:6]  # 처리한 6바이트 제거
+
+                    hex_list = [f"{b:02X}" for b in data]
+
+                    calc_checksum = sum(data[:4]) & 0xFF
+                    recv_sop = data[0]
+                    recv_length = data[1]
+                    recv_command = data[2]
+                    recv_data = data[3]
+                    recv_checksum = data[4]
+                    recv_eop = data[5]
+
+                    if calc_checksum == recv_checksum:
+                        if recv_command == CMD_STATUS:
+                            result = f"✅\r\n" if recv_data == PACKET_VALID else f"⚠️ (Packet Invalid)\r\n"
+                        elif recv_command == CMD_VERSION:
+                            result = f"✅ Version: {recv_data}\r\n"
+                        elif recv_command == CMD_XC_CHECK:
+                            result = f"✅ XC Check Passed\r\n" if recv_data == PACKET_VALID else f"⚠️ XC Check Failed\r\n"
                         else:
-                            self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | (Length Error)")
-                time.sleep(0.05)  # CPU 점유율 방지
+                            result = f"❓ Unknown CMD (0x{recv_command:02X})\r\n"
+                    else:
+                        result = f"❌ Rx Checksum Error (0x{recv_checksum:02X} / 0x{calc_checksum:02X})\r\n"
+
+                    self.log_signal.emit(f"📥 Rx \t\t\t{hex_list} | {result}")
+
+                time.sleep(0.01)
             except Exception as e:
-                # self.log(f"⚠️ 수신 오류: {e}")
                 self.log_signal.emit(f"⚠️ 수신 오류: {e}")
                 break
 

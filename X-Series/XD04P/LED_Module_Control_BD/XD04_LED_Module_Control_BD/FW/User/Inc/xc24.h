@@ -1701,6 +1701,8 @@ extern void XC24_IF_Write_LD(uint16_t ld_duty);
 extern void XC24_Turn_Off_Sync_Auto(void);
 extern void XC24_Turn_On_Sync_Auto(void);
 
+extern bool XC24_Is_Init_Done(void);
+
 /* END   - INTERFACE FUNCTIONS */
 #ifdef __cplusplus
 }
