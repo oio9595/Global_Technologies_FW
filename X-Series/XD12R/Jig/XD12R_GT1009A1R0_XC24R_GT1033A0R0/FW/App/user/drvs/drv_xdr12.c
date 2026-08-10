@@ -994,11 +994,11 @@ void xdr12_syncgen(void)
     }
     #else
     {
-        _v_id_gen_command_t _r04 = { 0, };
+        _xcr_group1_regs_t* const _r = (_xcr_group1_regs_t*)xcr24_get_xcr24_set_gr1_regs();
 
-        _r04.bit.enable = 1U;
+        _r->reg._r07.bit.enable = 1U;
 
-        xcr24_write_grp1_reg(XCR_ID_GEN_COMMAND, &_r04.ALL, 1U);
+        xcr24_write_grp1_reg(XCR_SYNC_GEN_COMMAND, &_r->ALL[XCR_SYNC_GEN_COMMAND], 1U);
     }
     #endif
     us_delay(CMD_DELAY_SYNCGEN);
