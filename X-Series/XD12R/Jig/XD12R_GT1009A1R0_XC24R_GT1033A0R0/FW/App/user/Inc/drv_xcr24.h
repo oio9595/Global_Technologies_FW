@@ -81,7 +81,6 @@ void xcr24_init_param(void);
 
 void xcr24_init(void);
 void xcr24_trim_init(void);
-void xcr24_test_init(void);
 
 const _xcr_group1_regs_t* xcr24_get_xcr24_set_gr1_regs(void);
 const _xcr_group1_regs_t* xcr24_get_xcr24_get_gr1_regs(void);
@@ -168,6 +167,8 @@ void xcr24_test_start_dac_p2(void);
 void xcr24_test_start_dac_p3(void);
 
 void xcr24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac);
+
+void xcr24_test(void);
 
 #ifdef __cplusplus
 }

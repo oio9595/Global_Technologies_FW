@@ -627,6 +627,7 @@ void xcr24_reset(void)
     _r00.bit.vsync_rst_en2 = 0U;
 
     xcr24_write_grp1_reg(XCR_RESET, &_r00.ALL, 1U);
+    us_delay(100U);
 }
 
 static void xcr24_dump_registers(void)
@@ -810,14 +811,6 @@ void xcr24_trim_init(void)
     XCR_NSS_HI();
     xcr24_reset();
     xcr24_regs_trim_init_table();
-    xcr24_read_all();
-}
-
-void xcr24_test_init(void)
-{
-    XCR_NSS_HI();
-    xcr24_reset();
-    xcr24_regs_test_init_table();
     xcr24_read_all();
 }
 
@@ -2150,4 +2143,10 @@ void xcr24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac)
     {
         FATAL_INVALID_INPUT(curr_tgt_dac);
     }
+}
+
+void xcr24_test(void)
+{
+    xcr24_trim_init();
+    xcr24_test_init_dac_p3();
 }
