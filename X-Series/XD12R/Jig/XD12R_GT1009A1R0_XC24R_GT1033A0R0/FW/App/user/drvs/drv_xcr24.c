@@ -467,40 +467,6 @@ static void xcr24_regs_trim_init_table(void)
     {
         switch(addr)
         {
-            case XCR_RESET:
-            {
-                _r1->reg._r00.bit.rst1 = 0U;
-                _r1->reg._r00.bit.rst2 = 0U;
-                _r1->reg._r00.bit.rst3 = 0U;
-                _r1->reg._r00.bit.vsync_rst_en1 = 1U;
-                _r1->reg._r00.bit.vsync_rst_en2 = 1U;
-                break;
-            }
-            case XCR_LOCAL_RW_POINTER_RESET:
-            {
-                _r1->reg._r10.bit.local_transfer_pointer_rst = 1U;
-                _r1->reg._r10.bit.local_receive_pointer_rst = 1U;
-                break;
-            }
-            case XCR_CLK_CONTROL_1:
-            {
-                _r1->reg._r1B.bit.serializer_skew_en = 0U;
-                _r1->reg._r1B.bit.osc1_spread_en = 0U;
-                _r1->reg._r1B.bit.serializer_clk_sel1 = 0U;
-                _r1->reg._r1B.bit.sprd1_gain = 0U;
-                _r1->reg._r1B.bit.serializer_clk_sel2 = 0U;
-                _r1->reg._r1B.bit.ld_rd_clk_sel = 0U;
-                _r1->reg._r1B.bit.spread1_spd = 0U;
-                break;
-            }
-            case XCR_CLK_CONTROL_2:
-            {
-                _r1->reg._r1C.bit.mclk_mode = 0U;
-                _r1->reg._r1C.bit.osc2_spread_en = 0U;
-                _r1->reg._r1C.bit.sprd2_gain = 0U;
-                _r1->reg._r1C.bit.spread2_spd = 0U;
-                break;
-            }
             case XCR_SERIALIZER_CLOCK_GEN:
             {
                 _r1->reg._r1D.bit.serial_clk_high = XCR_SERIAL_CLK_HIGH;
@@ -551,68 +517,6 @@ static void xcr24_regs_trim_init_table(void)
                 continue;
         }
         xcr24_write_otp_control(addr, &(_rotp->reg._rF0.ALL) + addr, 1U);
-    }
-}
-
-static void xcr24_regs_test_init_table(void)
-{
-    _xcr_group1_regs_t* _r1 = &gt_xcr24_set_gr1_regs;
-
-    for(xcr_addr_grp1_t addr = XCR_RESET; addr < XCR_GRP1_MAX; ++addr)
-    {
-        switch(addr)
-        {
-            case XCR_CLK_CONTROL_1:
-            {
-                _r1->reg._r1B.ALL = 0x0808U;
-                break;
-            }
-            case XCR_SERIALIZER_CLOCK_GEN:
-            {
-                _r1->reg._r1D.ALL = 0x1010U;
-                break;
-            }
-            case XCR_CHANNEL_ENABLE_1:
-            {
-                _r1->reg._r35.ALL = 0x0001U;
-                break;
-            }
-            case XCR_DAISIED_DEVICE_CH_SIZE:
-            {
-                _r1->reg._r20.ALL = 0x001FU;
-                break;
-            }
-            case XCR_BLOCK_SIZE_9:
-            {
-                _r1->reg._r31.ALL = 0x00FFU;
-                break;
-            }
-            case XCR_OSC_FLL_MAN_A1:
-            {
-                _r1->reg._r65.ALL = 0x8012U;
-                break;
-            }
-            case XCR_OSC_FLL_MAN_B1:
-            {
-                _r1->reg._r67.ALL = 0x8012U;
-                break;
-            }
-            case XCR_FLLCNT12:
-            {
-                _r1->reg._r38.ALL = 0x8000U;
-                break;
-            }
-            case XCR_FLLCNT22:
-            {
-                _r1->reg._r3A.ALL = 0x8000U;
-                break;
-            }
-            default:
-            {
-                continue;
-            }
-        }
-        xcr24_write_grp1_reg(addr, &(_r1->reg._r00.ALL) + addr, 1U);
     }
 }
 
