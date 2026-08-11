@@ -1300,7 +1300,8 @@ static void xdr_aging_log_summary(void)
     for (xdr_aging_list_t list = XDR_AGING_LIST_ICC_TEST; list < XDR_AGING_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xdr_test_info[list];
-        uint8_t max_ch = (list < XDR_AGING_LIST_IOUT) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX;
+        //uint8_t max_ch = (list < XDR_AGING_LIST_IOUT) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX; // 1 ~ 12ch
+        uint8_t max_ch = (uint8_t)(XD_CH_01 + 1U); // only 1 ch
         for (uint8_t ch = XD_CH_01; ch < max_ch; ++ch)
         {
             if (list == XDR_AGING_LIST_ICC_TEST)
@@ -1489,7 +1490,8 @@ static bool _xdr_aging_thread(struct thread_data* td)
             if (*list < XDR_AGING_LIST_MAX)
             {
                 td->step = TEST_STEP_INITIAL_BY_LIST;
-                if ((*list < XDR_AGING_LIST_IOUT) || (info->chx >= (XD_CH_MAX - 1U)))
+                //if ((*list < XDR_AGING_LIST_IOUT) || (info->chx >= (XD_CH_MAX - 1U))) // 1 ~ 12ch
+                if ((*list < XDR_AGING_LIST_IOUT) || (info->chx >= (XD_CH_02))) // only 1 ch
                 {
                     ++(*list);
                 }
