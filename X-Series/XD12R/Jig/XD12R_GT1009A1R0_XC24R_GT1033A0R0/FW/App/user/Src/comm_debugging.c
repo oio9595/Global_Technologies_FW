@@ -564,8 +564,7 @@ void comm_debugging_process(void)
         {
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xcr24_test_init();
-            tim_vsync_out_start();
+            xcr24_test();
         }
         else if(!(strcmp(str_in, "xc_r_all")))
         {
