@@ -1276,10 +1276,10 @@ static bool _xdr_sweep_test_thread(struct thread_data* td)
 
 static void xdr_aging_log_summary(void)
 {
+#if (TEST_LOG_TYPE == TEST_LOG_ALL)
     static bool log_first_done = false;
     char log_buf[350] = {0};
     int log_buf_len = 0U;
-#if (TEST_LOG_TYPE == TEST_LOG_ALL)
     if (log_first_done == false)
     {
         comm_UART_Printf(LOG_LV_INFO, "\r\ninput_max_curr_lvl, %u", (gn_xdr_aging_max_curr_lvl + 1U) * 4U);

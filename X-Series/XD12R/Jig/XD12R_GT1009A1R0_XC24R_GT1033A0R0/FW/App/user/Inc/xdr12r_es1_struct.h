@@ -71,7 +71,7 @@ typedef enum _xd12r_addr_
     XD12R_MAX,
 }xd12_addr_t;
 
-#define XD12R_OTP_CTRL_BASE     (0x3A)
+#define XD12R_OTP_CTRL_BASE     (0x3A) /* 58 */
 typedef enum _xd12r_opt_ctrl_addr_
 {
     XD12R_OTP_ACCESS1 = 0U, /* 0x3A */

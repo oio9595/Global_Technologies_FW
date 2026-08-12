@@ -54,21 +54,17 @@ void ldim_block_map_init(void)
 
 void ldim_block_map_print(void)
 {
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\n====== gn_block_map Render Result ======");
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\ngn_block_map = \r\n{");
-
-    for (uint32_t i = 0; i < LDIM_BLK_SIZE; i++)
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n====== gn_block_map Render Result ======\r\ngn_block_map = \r\n{");
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n\t      { xd_daisy, ld_order, xc_ch }");
+    for (uint32_t i = 0U; i < LDIM_BLK_SIZE; i++)
     {
         uint8_t xd_daisy = gn_block_map[i][BLK_TBL_XD_DAISY];
         uint8_t ld_order_max = gn_block_map[i][BLK_TBL_LD_ORDER];
         uint8_t xc_ch = gn_block_map[i][BLK_TBL_XC_CH];
-        uint8_t ld_order_min = (ld_order_max - LED_PER_BLOCK) + 1;
-
-        comm_UART_Printf(LOG_LV_DEBUG, "\r\nLED [%2u] { %2d, %2d, %2d }, /* ld_order %2d ~ %2d */", i, xd_daisy, ld_order_max, xc_ch, ld_order_min, ld_order_max);
+        uint8_t ld_order_min = (ld_order_max - LED_PER_BLOCK) + 1U;
+        comm_UART_Printf(LOG_LV_DEBUG, "\r\n\tLED [%2u] { %2u, %2u, %2u }, /* ld_order %2u ~ %2u */", i, xd_daisy, ld_order_max, xc_ch, ld_order_min, ld_order_max);
     }
-
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\n};");
-    comm_UART_Printf(LOG_LV_DEBUG, "\r\n========================================");
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\n};\r\n========================================");
 }
 
 block_color_t* ldim_get_block_color_buffer(void)
@@ -89,9 +85,9 @@ void ldim_set_block_color_buffer(uint16_t index ,uint16_t red, uint16_t green, u
     }
     else
     {
-        gt_block_color_buffer[index - 1U].r = red;
-        gt_block_color_buffer[index - 1U].g = green;
-        gt_block_color_buffer[index - 1U].b = blue;
+        gt_block_color_buffer[index - 1].r = red;
+        gt_block_color_buffer[index - 1].g = green;
+        gt_block_color_buffer[index - 1].b = blue;
     }
 }
 
