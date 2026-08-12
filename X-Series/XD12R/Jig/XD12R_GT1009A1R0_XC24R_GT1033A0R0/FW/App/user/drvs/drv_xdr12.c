@@ -1380,7 +1380,7 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
             if (addr >= XD12R_MAX)
             {
                 FATAL_INVALID_INPUT(addr);
-                return;
+                return 0U;
             }
         }
         else if (addr < (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX)) // otp control register
@@ -1388,18 +1388,18 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
             if (addr >= (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX))
             {
                 FATAL_INVALID_INPUT(addr);
-                return;
+                return 0U;
             }
         }
         FATAL_INVALID_INPUT(addr_type);
-        return;
+        return 0U;
     }
     else // mirror register
     {
         if (addr >= XD12R_MIRROR_MAX)
         {
             FATAL_INVALID_INPUT(addr);
-            return;
+            return 0U;
         }
     }
 
