@@ -1073,8 +1073,6 @@ void xdr12_write_by_type(uint16_t addr, uint16_t data, xd12r_addr_type_t addr_ty
                 return;
             }
         }
-        FATAL_INVALID_INPUT(addr_type);
-        return;
     }
     else // mirror register
     {
@@ -1130,8 +1128,6 @@ uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
                 return 0U;
             }
         }
-        FATAL_INVALID_INPUT(addr_type);
-        return 0U;
     }
     else // mirror register
     {
