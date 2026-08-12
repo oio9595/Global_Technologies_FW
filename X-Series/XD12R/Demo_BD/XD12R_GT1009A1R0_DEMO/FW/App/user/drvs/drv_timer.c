@@ -228,10 +228,16 @@ void tim_vsync_out_process(void)
     if(true == gb_ldim_blk_xform_flag)
     {
         DEBUG_HI();
-        xdr12_ld_transfer();
-        gb_ldim_blk_xform_flag = false;
-        gn_ldim_blk_xform_idx = 0U;
-        gb_xd_xc_rw_flag = true;
+        block_color_t* p_blk_color_tbl = ldim_get_block_color_buffer();
+        ldim_conversion_block_to_ldim(gn_ldim_blk_xform_idx, p_blk_color_tbl[gn_ldim_blk_xform_idx].r, p_blk_color_tbl[gn_ldim_blk_xform_idx].g, p_blk_color_tbl[gn_ldim_blk_xform_idx].b);
+        ++gn_ldim_blk_xform_idx;
+        if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
+        {
+            xdr12_ld_transfer();
+            gb_ldim_blk_xform_flag = false;
+            gn_ldim_blk_xform_idx = 0U;
+            gb_xd_xc_rw_flag = true;
+        }
         DEBUG_LO();
     }
 
@@ -305,7 +311,6 @@ static void tim_read_write_xd(void)
         gt_xd_rw_info.write_flag = false;
     }
 }
-
 
 void tim_set_xd_read_info(uint16_t addr, uint8_t addr_type)
 {

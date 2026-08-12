@@ -207,7 +207,7 @@ static void comm_print_startup(void)
 void comm_init(void)
 {
     comm_print_startup();
-    comm_set_log_lv(LOG_LV_INFO);
+    comm_set_log_lv(LOG_LV_DEBUG);
 }
 
 void comm_debugging_process(void)
@@ -228,14 +228,62 @@ void comm_debugging_process(void)
             comm_print_help();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
-        /************* thread start **************/
-        else if(!(strcmp(str_in, "launch")))
+        else if(Command_Param_is_("step", "%u %u %u %u", &u32_recv_param[0], &u32_recv_param[1], &u32_recv_param[2], &u32_recv_param[3]))
         {
-            xdr12_init();
-            LL_mDelay(9U);
-
-            tim_vsync_out_start();
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+            else
+            {
+                ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[2], (uint16_t)u32_recv_param[3]);
+                if (u32_recv_param[0] == 0)
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet all LED color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                else
+                {
+                    comm_UART_Printf(LOG_LV_INFO, "\r\n\tSet LED[%2u] color to R:0x%04X, G:0x%04X, B:0x%04X", u32_recv_param[0], u32_recv_param[1], u32_recv_param[2], u32_recv_param[3]);
+                }
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+            }
+        }
+        else if(Command_Param_is_("step", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] > LDIM_BLK_SIZE)
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\nInvalid LED index (%u). Must be 0 ~ %u", u32_recv_param[0], LDIM_BLK_SIZE);
+                comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+                return;
+            }
+            ldim_set_block_color_buffer((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1], (uint16_t)u32_recv_param[1]);
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(!(strcmp(str_in, "step")))
+        {
+            block_color_t* p_block_color_buffer = ldim_get_block_color_buffer();
+            for (uint16_t idx = 0U; idx < LDIM_BLK_SIZE; ++idx)
+            {
+                char log_buf[350] = {0};
+                int log_buf_len = 0U;
+                log_buf_len += snprintf(log_buf + log_buf_len, sizeof(log_buf) - log_buf_len, "\r\n[LED: %2u] R: %5u, G: %5u, B: %5u", \
+                (idx + 1U), p_block_color_buffer[idx].r, p_block_color_buffer[idx].g, p_block_color_buffer[idx].b);
+                comm_UART_Printf(LOG_LV_INFO, "%s", log_buf);
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
+        else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] < XD12R_MAX)
+            {
+                tim_set_xd_write_info((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\tWrite XDR12 Register [0x%02X] = 0x%03X", u32_recv_param[0], u32_recv_param[1]);
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_INFO, "\r\n\tInvalid XDR12 index (%u) is over. Must be 0 ~ %u", u32_recv_param[0], (XD12R_MAX - 1U));
+            }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("log_lv", "%u", &u32_recv_param[0]))

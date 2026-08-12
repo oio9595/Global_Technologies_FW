@@ -34,9 +34,8 @@ void ldim_block_map_print(void);
 
 block_color_t* ldim_get_block_color_buffer(void);
 void ldim_set_block_color_buffer(uint16_t index ,uint16_t red, uint16_t green, uint16_t blue);
+void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green, uint16_t blue);
 
-uint16_t* ldim_get_xcr_ld_transfer_buffer(void);
-uint16_t ldim_get_xcr_ld_transfer_size(void);
 uint16_t* ldim_get_xdr_ld_transfer_buffer(void);
 uint16_t ldim_get_xdr_ld_transfer_size(void);
 

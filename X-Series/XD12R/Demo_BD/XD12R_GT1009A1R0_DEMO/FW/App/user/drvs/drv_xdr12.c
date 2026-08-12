@@ -549,12 +549,12 @@ static void xdr12_regs_init_table(void)
             }
             case XD12R_CHx_LD_TYPE0:
             {
-                _r1->reg._r07.bit.ch7_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
-                _r1->reg._r07.bit.ch8_ld_type = XDR_CH_LD_TYPE_TS_1ST;
-                _r1->reg._r07.bit.ch9_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
-                _r1->reg._r07.bit.ch10_ld_type = XDR_CH_LD_TYPE_TS_1ST;
-                _r1->reg._r07.bit.ch11_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
-                _r1->reg._r07.bit.ch12_ld_type = XDR_CH_LD_TYPE_TS_1ST;
+                _r1->reg._r07.bit.ch7_ld_type = XDR_CH_LD_TYPE_TS_1ST;
+                _r1->reg._r07.bit.ch8_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
+                _r1->reg._r07.bit.ch9_ld_type = XDR_CH_LD_TYPE_TS_1ST;
+                _r1->reg._r07.bit.ch10_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
+                _r1->reg._r07.bit.ch11_ld_type = XDR_CH_LD_TYPE_TS_1ST;
+                _r1->reg._r07.bit.ch12_ld_type = XDR_CH_LD_TYPE_NTS_1ST;
                 break;
             }
             case XD12R_CHx_LD_TYPE1:
@@ -1055,6 +1055,36 @@ static void xdr12_change_addr_type(xd12r_addr_type_t addr_type)
 
 void xdr12_write_by_type(uint16_t addr, uint16_t data, xd12r_addr_type_t addr_type)
 {
+    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+    {
+        if (addr < XD12R_OTP_CTRL_BASE) // general register
+        {
+            if (addr >= XD12R_MAX)
+            {
+                FATAL_INVALID_INPUT(addr);
+                return;
+            }
+        }
+        else if (addr < (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX)) // otp control register
+        {
+            if (addr >= (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX))
+            {
+                FATAL_INVALID_INPUT(addr);
+                return;
+            }
+        }
+        FATAL_INVALID_INPUT(addr_type);
+        return;
+    }
+    else // mirror register
+    {
+        if (addr >= XD12R_MIRROR_MAX)
+        {
+            FATAL_INVALID_INPUT(addr);
+            return;
+        }
+    }
+
     xdr12_change_addr_type(addr_type);
     xdr12_write(addr, data);
 
@@ -1081,6 +1111,37 @@ void xdr12_write_by_type(uint16_t addr, uint16_t data, xd12r_addr_type_t addr_ty
 uint16_t xdr12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type)
 {
     uint16_t xdr_buffer[XDR_DAISY_LENGTH] = { 0U };
+
+    if (addr_type == XD12R_ADDR_TYPE_GENERAL)
+    {
+        if (addr < XD12R_OTP_CTRL_BASE) // general register
+        {
+            if (addr >= XD12R_MAX)
+            {
+                FATAL_INVALID_INPUT(addr);
+                return;
+            }
+        }
+        else if (addr < (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX)) // otp control register
+        {
+            if (addr >= (XD12R_OTP_CTRL_BASE + XD12R_OTP_MAX))
+            {
+                FATAL_INVALID_INPUT(addr);
+                return;
+            }
+        }
+        FATAL_INVALID_INPUT(addr_type);
+        return;
+    }
+    else // mirror register
+    {
+        if (addr >= XD12R_MIRROR_MAX)
+        {
+            FATAL_INVALID_INPUT(addr);
+            return;
+        }
+    }
+
     xdr12_change_addr_type(addr_type);
     xdr12_read(addr, xdr_buffer);
 
