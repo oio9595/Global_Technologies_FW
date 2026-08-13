@@ -209,10 +209,10 @@ void tim_vsync_out_handler(void)
     #if (XDR_SYNC_MODE == XDR_SYNC_MODE_CMD)
         xdr12_syncgen();
     #elif (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
-        tim_svsync_timer_start();
     #else
         #error "XDR_SYNC_MODE is not defined"
     #endif
+        tim_svsync_timer_start();
 #elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
         // no need to do anything for XCR controlled mode
 #else
