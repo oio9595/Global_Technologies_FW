@@ -608,7 +608,7 @@ static bool _xcr_test_thread(struct thread_data* td)
                 }
             }
             // 1. DAC 측정 항목 그룹인 경우 (DAC_P1, DAC_P2, DAC_P3)
-            if (*list >= XCR_TEST_LIST_DAC_P1 && *list < XCR_TEST_LIST_MAX)
+            if ((*list >= XCR_TEST_LIST_DAC_P1) && (*list < XCR_TEST_LIST_MAX))
             {
                 // 현재 DAC 항목에서 채널(chx: 0, 1, 2) 순회 중인 경우
                 if (++(info->chx) < 3U)
@@ -1371,7 +1371,6 @@ static bool _xdr_aging_thread(struct thread_data* td)
                 info->gain = GAIN_HIGH;
                 if ((*list == XDR_AGING_LIST_OSC))
                 {
-                    DEBUG_HI();
                     tim_vsync_out_for_test_start();
                     td->step = TEST_STEP_VSYNC_STOP;
                     td->tout = STEP_DELAY_VSYNC_STOP;
@@ -1399,7 +1398,6 @@ static bool _xdr_aging_thread(struct thread_data* td)
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", test_step_to_string((test_step_t)td->step), xdr_aging_list_to_string(*list), td->tout);
             tim_vsync_out_for_test_stop();
-            DEBUG_LO();
             td->step = TEST_STEP_START_MEASURE;
             td->tout = STEP_DELAY_DEFAULT;
             break;

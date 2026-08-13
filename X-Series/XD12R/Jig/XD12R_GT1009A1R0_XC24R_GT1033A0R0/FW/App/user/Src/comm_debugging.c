@@ -277,6 +277,35 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, "\r\nTimer input capture freq: %.3f MHz   (MCU : %.3f Hz)", (double)((freq) * XDR_CONST_OSC), (double)freq);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
+        else if(Command_Param_is_("jig_xc_dac", "%u", &u32_recv_param[0]))
+        {
+            if (u32_recv_param[0] <= 4095U)
+            {
+                xcr24_trim_init_dac1_ofs();
+                xcr24_test_set_curr_tgt_dac(1000U);
+
+                for (uint8_t ch = 0U; ch < 3U; ++ch)
+                {
+                    float dac[3] = {0.0f};
+                    ADS114S08_Select_Input_CH((ADS114S08_CH_XC_DAC_1 + ch), ADS_AINCOM);
+                    tim_vsync_out_for_test_start();
+                    LL_mDelay(199U);
+                    tim_vsync_out_for_test_stop();
+                    ADS114S08_Set_Start(true);
+                    if (true == ADS114S08_Wait_Done())
+                    {
+                        uint16_t adc = ADS114S08_Get_ADC_Value();
+                        dac[ch] = JigBD_IF_Convert_Adc_To_Voltage(adc);
+                    };
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR DAC CH%d : %.3f", ch + 1U, (double)dac[ch]);
+                }
+            }
+            else
+            {
+                comm_UART_Printf(LOG_LV_ERROR, "\r\n%s, invalid DAC value (%u) (0 ~ 4095)", __func__, u32_recv_param[0]);
+            }
+            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
+        }
         else if(!(strcmp(str_in, "mclk_enable")))
         {
             MCO2_ENABLE();
