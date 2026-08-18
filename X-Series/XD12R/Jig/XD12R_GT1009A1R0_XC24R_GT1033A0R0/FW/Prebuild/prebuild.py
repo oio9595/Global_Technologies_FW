@@ -20,8 +20,15 @@ for parent in [script_dir] + list(script_dir.parents):
 if git_root_dir is None:
     print("Warning: .git directory not found in any parent folders. Using script_dir.")
     git_root_dir = script_dir
-
-version_h = script_dir.parent / "App" / "user" / "Inc" / "version.h"
+version_h = (
+    script_dir.parent
+    / "App"
+    / "User"
+    / "Framework"
+    / "Inc"
+    / "version.h"
+)
+print(version_h)
 
 # 3. Git 최신 리비전 번호 및 수정 사항(-dirty) 감지
 try:
@@ -38,7 +45,14 @@ try:
     # 3-2. version.h를 제외한 다른 파일의 변경 사항 감지
     try:
         rel_version_h = version_h.relative_to(git_root_dir).as_posix()
-        status_cmd = ["git", "status", "--porcelain", "--", f":!{rel_version_h}"]
+        status_cmd = [
+            "git",
+            "status",
+            "--porcelain",
+            "--",
+            ".",
+            f":!{rel_version_h}"
+        ]
     except Exception:
         status_cmd = ["git", "status", "--porcelain"]
 

@@ -29,7 +29,7 @@
 
 #include "comm_debugging.h"
 #include "framework.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

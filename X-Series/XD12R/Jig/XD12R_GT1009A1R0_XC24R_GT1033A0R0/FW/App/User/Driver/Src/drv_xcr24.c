@@ -5,7 +5,7 @@
 #include "drv_spi.h"
 #include "drv_xcr24.h"
 #include "drv_xdr12.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 #include "comm_debugging.h"
 
 #define FLL_BIT_SHIFT_LSB       (0U)

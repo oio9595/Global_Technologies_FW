@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "drv_gpio.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 
 #include "drv_comm.h"
 #include "drv_timer.h"

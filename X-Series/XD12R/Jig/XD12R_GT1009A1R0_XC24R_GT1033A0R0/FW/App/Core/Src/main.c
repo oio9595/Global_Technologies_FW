@@ -30,7 +30,7 @@
 #include "drv_xdr12.h"
 #include "drv_timer.h"
 
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 #include "framework.h"
 #include "comm_debugging.h"
 #include "ldim_conversion.h"

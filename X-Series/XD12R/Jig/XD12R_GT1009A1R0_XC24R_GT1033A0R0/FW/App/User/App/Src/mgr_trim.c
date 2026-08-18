@@ -6,7 +6,7 @@
 #include "comm_debugging.h"
 #include "drv_gpio.h"
 #include "drv_timer.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 
 #define SAVE_INFO_MAX_CNT                   (10)
 #define MAX_TRIM_TRY_CNT                    (30)

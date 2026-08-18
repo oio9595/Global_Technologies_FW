@@ -36,7 +36,7 @@
 
 /* Also include device specific header */
 #include "drv_spi.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 #include "comm_debugging.h"
 
 //#define USE_DISPLAY_DEVICE_REGS

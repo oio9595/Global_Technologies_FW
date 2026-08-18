@@ -6,7 +6,7 @@
 #include "drv_xcr24.h"
 #include "comm_debugging.h"
 #include "drv_gpio.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 #include "ldim_conversion.h"
 
 /* XDR/IC602 serializer protocol */

@@ -5,7 +5,7 @@
 #include "drv_xdr12.h"
 #include "drv_xcr24.h"
 #include "drv_timer.h"
-#include "ads124s08.h"
+#include "drv_ads124s08.h"
 #include "comm_debugging.h"
 
 #define TEST_LOG_PARTIAL        (0U)
