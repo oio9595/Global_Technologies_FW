@@ -1,13 +1,13 @@
 /*
- * File:   XDR12R_ES1_struct.h
+ * File:   ic601_es1_struct.h
  * Author: GT
  *
- * Created on 2026, 06, 01
- * Revision : xd12r_reg_mp1
+ * Created on 2026, 05, 04
+ * Revision : XD12R/XD04R ES0
  */
 
-#ifndef _XDR12R_ES1_STRUCT_H_
-#define	_XDR12R_ES1_STRUCT_H_
+#ifndef _IC601_ES_STRUCT_H_
+#define	_IC601_ES_STRUCT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,8 +16,8 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-#define XD12R_INTERNAL_MCLK (51000000UL)    /* 51.0MHz */
-#define XDR_MODEL_NAME      "XDR12R (MP1)"
+#define XD12R_INTERNAL_MCLK (50000000UL)    /* 50.0MHz */
+#define XD_MODEL_NAME       "IC601 ES0"
 
 /* Register Map */
 typedef enum _xd12r_addr_
@@ -71,36 +71,29 @@ typedef enum _xd12r_addr_
     XD12R_MAX,
 }xd12_addr_t;
 
-#define XD12R_OTP_CTRL_BASE     (0x3A) /* 58 */
+#define XD12R_OTP_CTRL_BASE     (0x3A)
 typedef enum _xd12r_opt_ctrl_addr_
 {
-    XD12R_OTP_ACCESS1 = 0U, /* 0x3A */
-    XD12R_OTP_ACCESS2,      /* 0x3B */
-    XD12R_OTP_WRITE,        /* 0x3C */
-    XD12R_OTP_RD_PROG,      /* 0x3D */
-    XD12R_OTP_PROTECT,      /* 0x3E */
-    XD12R_OP_MODE,          /* 0x3F */
+    XD12R_OTP_ACCESS_B15_B12 = 0U,    /* 0x3A */
+    XD12R_OTP_ACCESS_B11_B0,            /* 0x3B */
+    XD12R_OTP_WRITE,                    /* 0x3C */
+    XD12R_OTP_RD_PROG,                  /* 0x3D */
+    XD12R_OTP_PROTECT,                  /* 0x3E */
+    XD12R_OP_MODE,                      /* 0x3F */
+
     XD12R_OTP_MAX,
 }xd12_otp_ctrl_addr_t;
 
 typedef enum _max_curr_level_
 {
-    CURR_LEVEL_4 = 0U,      /* 0x00 */
-    CURR_LEVEL_8,           /* 0x01 */
-    CURR_LEVEL_12,          /* 0x02 */
-    CURR_LEVEL_16,          /* 0x03 */
-    CURR_LEVEL_20,          /* 0x04 */
-    CURR_LEVEL_24,          /* 0x05 */
-    CURR_LEVEL_28,          /* 0x06 */
-    CURR_LEVEL_32,          /* 0x07 */
-    CURR_LEVEL_36,          /* 0x08 */
-    CURR_LEVEL_40,          /* 0x09 */
-    CURR_LEVEL_44,          /* 0x0A */
-    CURR_LEVEL_48,          /* 0x0B */
-    CURR_LEVEL_52,          /* 0x0C */
-    CURR_LEVEL_56,          /* 0x0D */
-    CURR_LEVEL_60,          /* 0x0E */
-    CURR_LEVEL_64,          /* 0x0F */
+    CURR_LEVEL_4 = 0U,  /* max 4mA for XD12, max 8mA for XD04 */
+    CURR_LEVEL_8,       /* max 8mA for XD12, max 16mA for XD04 */
+    CURR_LEVEL_12,      /* max 12mA for XD12, max 24mA for XD04 */
+    CURR_LEVEL_16,      /* max 16mA for XD12, max 32mA for XD04 */
+    CURR_LEVEL_24,      /* max 24mA for XD12, max 48mA for XD04 */
+    CURR_LEVEL_32,      /* max 32mA for XD12, max 64mA for XD04 */
+    CURR_LEVEL_46,      /* max 46mA for XD12, max 92mA for XD04 */
+    CURR_LEVEL_64,      /* max 64mA for XD12, max 128mA for XD04 */
     CURR_LEVEL_MAX,
 }max_curr_level_t;
 
@@ -133,10 +126,10 @@ typedef enum _fb_level_
 #define FLL_ENABLE          (0U)
 #define FLL_DISABLE         (1U)
 
-#define XD12R_REG_PROTECT_DISABLE    (0xA5AU)
-#define XD12R_REG_PROTECT_ENABLE     (0x5A5U)
+#define XD12R_REG_PROTECT_DISABLE    (0x155U)
+#define XD12R_REG_PROTECT_ENABLE     (0x2AAU)
 
-/* RESET&ID(0x00) : default 0x100 */
+/* RESET&ID(0x00) : default 0x000 */
 typedef union tag_XD12R_RESET_ID
 {
     uint16_t ALL;
@@ -158,13 +151,13 @@ typedef union tag_XD12R_LD_CONTROL
     uint16_t ALL;
     struct
     {
-        uint16_t ld_mode        : 1;    /* '0' normal,  '1' x8 (repeat 8 times the same dimming pattern, SV_NO=8) */
-        uint16_t ld_dir         : 1;    /* '0' Head Lighting, '1' Tail Lighting */
-        uint16_t ld_res         : 1;    /* '0' 12-bit LD, '1' 14-bit LD */
-        uint16_t syncmode       : 1;    /* '0' cmd+svi,  '1' vo+svi */
-        uint16_t delay_mode_en  : 1;    /* 1 로 설정하게 되면, normal에서 x8로 동작시에 svsync_no 개수에 따라 delay_ch 설정값 lsb bit가 무시됨  */
-        uint16_t sv_no          : 6;    /* '8' means total 16 times, (g=8, b=8) */
-        uint16_t                : 5;    /* reserved */
+        uint16_t ld_mode    : 1;    /* '0' normal,  '1' x8 (repeat 8 times the same dimming pattern, SV_NO=8) */
+        uint16_t ld_dir     : 1;    /* '0' Head Lighting, '1' Tail Lighting */
+        uint16_t ld_res     : 1;    /* '0' 12-bit LD, '1' 14-bit LD */
+        uint16_t syncmode   : 1;    /* '0' cmd+svi,  '1' vo+svi */
+        uint16_t delay_ch_en: 1;    /*  */
+        uint16_t sv_no      : 6;    /* '8' means total 16 times, (g=8, b=8) */
+        uint16_t            : 5;    /* reserved */
     }bit;
 }_v_xdr12_ld_control_t;
 
@@ -249,7 +242,7 @@ typedef union tag_XD12R_CHx_LD_TYPE0
     uint16_t ALL;
     struct
     {
-        uint16_t ch7_ld_type        : 2;    /* '0' 1LD1st,  '1' 1LD2nd, '2' 2LD1st (시분할), '3' 2LD2nd (시분할)  (the number of the LD to be transmitted) */
+        uint16_t ch7_ld_type        : 2;
         uint16_t ch8_ld_type        : 2;
         uint16_t ch9_ld_type        : 2;
         uint16_t ch10_ld_type       : 2;
@@ -308,8 +301,8 @@ typedef union tag_XD12R_MAX_CURRENT_VREF
     }bit;
 }_v_xdr12_max_curr_vref_t;
 
-/* DELAY_CH1/2(0x10) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH1_2
+/* DELAY_CH1/2 ~ 11/12(0x10 ~ 0x15) : default 0x000 */
+typedef union tag_XD12R_DELAY_CHx
 {
     uint16_t ALL;
     struct
@@ -318,67 +311,7 @@ typedef union tag_XD12R_DELAY_CH1_2
         uint16_t delay_ch2  :  5;    /* DELAY_CHx [4:0] */
         uint16_t            :  4;    /* reserved */
     }bit;
-}_v_xdr12_delay_ch1_2_t;
-
-/* DELAY_CH3/4(0x11) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH3_4
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t delay_ch3  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t delay_ch4  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t            :  4;    /* reserved */
-    }bit;
-}_v_xdr12_delay_ch3_4_t;
-
-/* DELAY_CH5/6(0x12) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH5_6
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t delay_ch5  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t delay_ch6  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t            :  4;    /* reserved */
-    }bit;
-}_v_xdr12_delay_ch5_6_t;
-
-/* DELAY_CH7/8(0x13) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH7_8
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t delay_ch7  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t delay_ch8  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t            :  4;    /* reserved */
-    }bit;
-}_v_xdr12_delay_ch7_8_t;
-
-/* DELAY_CH9/10(0x14) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH9_10
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t delay_ch9  :  5;    /* DELAY_CHx [4:0] */
-        uint16_t delay_ch10 :  5;    /* DELAY_CHx [4:0] */
-        uint16_t            :  4;    /* reserved */
-    }bit;
-}_v_xdr12_delay_ch9_10_t;
-
-/* DELAY_CH11/12(0x15) : default 0x000 */
-typedef union tag_XD12R_DELAY_CH11_12
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t delay_ch11 :  5;    /* DELAY_CHx [4:0] */
-        uint16_t delay_ch12 :  5;    /* DELAY_CHx [4:0] */
-        uint16_t            :  4;    /* reserved */
-    }bit;
-}_v_xdr12_delay_ch11_12_t;
+}_v_xdr12_delay_chx_t;
 
 /* FB_LEVEL(0x16) : default 0x000 */
 typedef union tag_XD12R_FB_LEVEL
@@ -416,7 +349,7 @@ typedef union tag_XD12R_SHORT_LEVEL
     {
         uint16_t short4_level       : 3;
         uint16_t short5_level       : 3;
-        uint16_t                    :10;    /* reserved */
+        uint16_t                    : 7;    /* reserved */
     }bit;
 }_v_xdr12_short_level_t;
 
@@ -495,7 +428,7 @@ typedef union tag_XD12R_V_MASK
 }_v_xdr12_v_mask_t;
 
 /* SV_MASK(0x1F) : default 0x000 */
-typedef union tag_XD12R_SV_MASK
+typedef union tag_XD12R_sV_MASK
 {
     uint16_t ALL;
     struct
@@ -535,7 +468,7 @@ typedef union tag_XD12R_FLLCNT1
     uint16_t ALL;
     struct
     {
-        uint16_t fllcnt         : 12;    /* FLLCNT [11:0], counted by a mclk/2 */
+        uint16_t fllcnt         : 12;    /* counted by a mclk/2 */
         uint16_t                :  4;    /* reserved */
     }bit;
 }_v_xdr12_fllcnt1_t;
@@ -546,7 +479,7 @@ typedef union tag_XD12R_FLLCNT2
     uint16_t ALL;
     struct
     {
-        uint16_t fllcnt         :  8;   /* FLLCNT [19:12], counted by a mclk/2 */
+        uint16_t fllcnt         :  8;   /* counted by a mclk/2 */
         uint16_t                :  1;
         uint16_t fll_range      :  2;
         uint16_t fll_en         :  1;   /* '0 disable, '1' enable (polarity changed) the value updated at every vsync, not svsync */
@@ -670,26 +603,26 @@ typedef union tag_XD12R_CLOCK_GATE_EN
 }_v_xdr12_clock_gate_en_t;
 
 /* OTP_ACCESS_1 (0x3A) : default 0x000 */
-typedef union tag_XDR12_OTP_ACCESS1
+typedef union tag_XDR12_OTP_ACCESS_1
 {
     uint16_t ALL;
     struct
     {
-        uint16_t otp_pg_acc_cycle   :  4;   /* OTP_PG_ACC_CYCLE [15:12] */
+        uint16_t otp_pg_acc_cycle   :  4;
         uint16_t                    : 12;
     }bit;
-}_v_xdr12_otp_access1_t;
+}_v_xdr12_otp_access_1_t;
 
 /* OTP_ACCESS_2 (0x3B) : default 0x3FF */
-typedef union tag_XDR12_OTP_ACCESS2
+typedef union tag_XDR12_OTP_ACCESS_2
 {
     uint16_t ALL;
     struct
     {
-        uint16_t otp_pg_acc_cycle   : 12;   /* OTP_PG_ACC_CYCLE [11:0] */
+        uint16_t otp_pg_acc_cycle   : 12;
         uint16_t                    :  4;
     }bit;
-}_v_xdr12_otp_access2_t;
+}_v_xdr12_otp_access_2_t;
 
 /* OTP_WRITE (0x3C) : default 0x004 */
 typedef union tag_XDR12_OTP_WRITE
@@ -703,7 +636,7 @@ typedef union tag_XDR12_OTP_WRITE
     }bit;
 }_v_xdr12_otp_write_t;
 
-/* OTP_RD_PROG (0x3D) : default 0x000 */
+/* OTP_RD_PROG (0x3D) : default 0x004 */
 typedef union tag_XDR12_OTP_RD_PROG
 {
     uint16_t ALL;
@@ -711,9 +644,7 @@ typedef union tag_XDR12_OTP_RD_PROG
     {
         uint16_t otp_pg_s   :  1;
         uint16_t otp_rd_s   :  1;
-        uint16_t            :  9;
-        uint16_t OTP_PG_DONE:  1;
-        uint16_t            :  4;
+        uint16_t            : 14;
     }bit;
 }_v_xdr12_otp_rd_prog_t;
 
@@ -738,7 +669,7 @@ typedef union tag_XDR12_OP_MODE
         uint16_t ext_clkin      :  1;
         uint16_t dtest_mux_en   :  1;
         uint16_t mclk64_o       :  1;
-        uint16_t pwmout_full    :  1;
+        uint16_t pwm_out_full   :  1;
         uint16_t sw_sel         :  3;
         uint16_t test_ana_en    :  3;
         uint16_t test_en        :  1;
@@ -777,12 +708,12 @@ typedef union _xdr12_regs
         _v_xdr12_max_curr_vref_t        _r0D;
         _v_xdr12_max_curr_vref_t        _r0E;
         _v_xdr12_dummy_t                _r0F;
-        _v_xdr12_delay_ch1_2_t          _r10;
-        _v_xdr12_delay_ch3_4_t          _r11;
-        _v_xdr12_delay_ch5_6_t          _r12;
-        _v_xdr12_delay_ch7_8_t          _r13;
-        _v_xdr12_delay_ch9_10_t         _r14;
-        _v_xdr12_delay_ch11_12_t        _r15;
+        _v_xdr12_delay_chx_t            _r10;
+        _v_xdr12_delay_chx_t            _r11;
+        _v_xdr12_delay_chx_t            _r12;
+        _v_xdr12_delay_chx_t            _r13;
+        _v_xdr12_delay_chx_t            _r14;
+        _v_xdr12_delay_chx_t            _r15;
         _v_xdr12_fb_level_t             _r16;
         _v_xdr12_fb_short_level_t       _r17;
         _v_xdr12_short_level_t          _r18;
@@ -805,6 +736,26 @@ typedef union _xdr12_regs
         _v_xdr12_osc_fll_man2_t         _r29;
         _v_xdr12_osc_spread_t           _r2A;
         _v_xdr12_clock_gate_en_t        _r2B;
+        _v_xdr12_dummy_t                _r2C;
+        _v_xdr12_dummy_t                _r2D;
+        _v_xdr12_dummy_t                _r2E;
+        _v_xdr12_dummy_t                _r2F;
+        _v_xdr12_dummy_t                _r30;
+        _v_xdr12_dummy_t                _r31;
+        _v_xdr12_dummy_t                _r32;
+        _v_xdr12_dummy_t                _r33;
+        _v_xdr12_dummy_t                _r34;
+        _v_xdr12_dummy_t                _r35;
+        _v_xdr12_dummy_t                _r36;
+        _v_xdr12_dummy_t                _r37;
+        _v_xdr12_dummy_t                _r38;
+        _v_xdr12_dummy_t                _r39;
+        _v_xdr12_otp_access_1_t         _r3A;
+        _v_xdr12_otp_access_2_t         _r3B;
+        _v_xdr12_otp_write_t            _r3C;
+        _v_xdr12_otp_rd_prog_t          _r3D;
+        _v_xdr12_otp_protect_t          _r3E;
+        _v_xdr12_op_mode_t              _r3F;
     }reg;
 }_xdr12_regs_t;
 
@@ -813,8 +764,8 @@ typedef union _xdr12_otp_ctrl_regs
     uint16_t ALL[XD12R_OTP_MAX];
     struct
     {
-        _v_xdr12_otp_access1_t          _r3A;
-        _v_xdr12_otp_access2_t          _r3B;
+        _v_xdr12_otp_access_1_t         _r3A;
+        _v_xdr12_otp_access_2_t         _r3B;
         _v_xdr12_otp_write_t            _r3C;
         _v_xdr12_otp_rd_prog_t          _r3D;
         _v_xdr12_otp_protect_t          _r3E;
@@ -874,8 +825,8 @@ static const char* xdr12_regs_str[XD12R_MAX] =
 
 static const char* xdr12_otp_ctrl_regs_str[XD12R_OTP_MAX] =
 {
-    "OTP_ACCESS1",
-    "OTP_ACCESS2,",
+    "OTP_ACCESS_B15_B12",
+    "OTP_ACCESS_B11_B0,",
     "OTP_WRITE",
     "OTP_RD_PROG",
     "OTP_PROTECT",
@@ -890,19 +841,18 @@ typedef enum _xd12r_mirror_addr_
     XD12R_MIRROR1 = 0,              /* 0x00 */
     XD12R_MIRROR2,                  /* 0x01 */
     XD12R_MIRROR3,                  /* 0x02 */
-    XD12R_MIRROR4,                  /* 0x03 */
-    XD12R_MIRROR_OFS_CH01,          /* 0x04 */
-    XD12R_MIRROR_OFS_CH02,          /* 0x05 */
-    XD12R_MIRROR_OFS_CH03,          /* 0x06 */
-    XD12R_MIRROR_OFS_CH04,          /* 0x07 */
-    XD12R_MIRROR_OFS_CH05,          /* 0x08 */
-    XD12R_MIRROR_OFS_CH06,          /* 0x09 */
-    XD12R_MIRROR_OFS_CH07,          /* 0x0A */
-    XD12R_MIRROR_OFS_CH08,          /* 0x0B */
-    XD12R_MIRROR_OFS_CH09,          /* 0x0C */
-    XD12R_MIRROR_OFS_CH10,          /* 0x0D */
-    XD12R_MIRROR_OFS_CH11,          /* 0x0E */
-    XD12R_MIRROR_OFS_CH12,          /* 0x0F */
+    XD12R_MIRROR_OFS_CH01,          /* 0x03 */
+    XD12R_MIRROR_OFS_CH02,          /* 0x04 */
+    XD12R_MIRROR_OFS_CH03,          /* 0x05 */
+    XD12R_MIRROR_OFS_CH04,          /* 0x06 */
+    XD12R_MIRROR_OFS_CH05,          /* 0x07 */
+    XD12R_MIRROR_OFS_CH06,          /* 0x08 */
+    XD12R_MIRROR_OFS_CH07,          /* 0x09 */
+    XD12R_MIRROR_OFS_CH08,          /* 0x0A */
+    XD12R_MIRROR_OFS_CH09,          /* 0x0B */
+    XD12R_MIRROR_OFS_CH10,          /* 0x0C */
+    XD12R_MIRROR_OFS_CH11,          /* 0x0D */
+    XD12R_MIRROR_OFS_CH12,          /* 0x0E */
 
     XD12R_MIRROR_GAIN_CH01 = 0x10,  /* 0x10 */
     XD12R_MIRROR_GAIN_CH02,         /* 0x11 */
@@ -957,19 +907,7 @@ typedef union tag_XDR12_MIRROR3
     }bit;
 }_v_xdr12_mirror3_t;
 
-/* MIRROR4 (0x03) : default 0x080 */
-typedef union tag_XDR12_MIRROR4
-{
-    uint16_t ALL;
-    struct
-    {
-        uint16_t ldo_ctl        :  4;
-        uint16_t ldo_osc_ctl    :  4;
-        uint16_t                :  8;
-    }bit;
-}_v_xdr12_mirror4_t;
-
-/* OFS_CHx (0x04 ~ 0x0F) : default 0x080 */
+/* OFS_CHx (0x03 ~ 0x0F) : default 0x080 */
 typedef union tag_XDR12_OFS_CHx
 {
     uint16_t ALL;
@@ -1021,7 +959,7 @@ typedef union _xdr12_mirror_regs
         _v_xdr12_mirror1_t      _r00;
         _v_xdr12_mirror2_t      _r01;
         _v_xdr12_mirror3_t      _r02;
-        _v_xdr12_mirror4_t      _r03;
+        _v_xdr12_ofs_chx_t      _r03;
         _v_xdr12_ofs_chx_t      _r04;
         _v_xdr12_ofs_chx_t      _r05;
         _v_xdr12_ofs_chx_t      _r06;
@@ -1056,4 +994,4 @@ typedef union _xdr12_mirror_regs
 }
 #endif
 
-#endif	/* _XDR12R_ES1_STRUCT_H_ */
+#endif	/* _IC601_ES_STRUCT_H_ */

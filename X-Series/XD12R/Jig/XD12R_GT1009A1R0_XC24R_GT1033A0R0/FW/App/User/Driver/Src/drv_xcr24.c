@@ -94,21 +94,16 @@ static void xcr24_spi_log_dump(const uint16_t* out, uint16_t len)
     {
         return;
     }
-
-    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-    LL_USART_TransmitData8(USART2, '\r');
-    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-    LL_USART_TransmitData8(USART2, '\n');
+    UART_PutChar('\r');
+    UART_PutChar('\n');
 
     for (uint16_t i = 0; i < len; ++i)
     {
         uint16_t val = out[i];
 
         // "0x" 전송
-        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-        LL_USART_TransmitData8(USART2, '0');
-        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-        LL_USART_TransmitData8(USART2, 'x');
+        UART_PutChar('0');
+        UART_PutChar('x');
 
         // 16진수 4자리 변환 및 전송 (상위 니블부터 하위 니블까지)
         for (int8_t shift = 12; shift >= 0; shift -= 4)
@@ -116,13 +111,11 @@ static void xcr24_spi_log_dump(const uint16_t* out, uint16_t len)
             uint8_t nibble = (val >> shift) & 0x0F;
             char hex_char = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
 
-            while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-            LL_USART_TransmitData8(USART2, hex_char);
+            UART_PutChar(hex_char);
         }
 
         // 구분자 ',' 전송
-        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-        LL_USART_TransmitData8(USART2, ',');
+        UART_PutChar(',');
     }
 }
 #endif
@@ -2102,86 +2095,7 @@ void xcr24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac)
     }
 }
 
-static void uart_send_string(const char *str)
-{
-    while (*str != '\0')
-    {
-        while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
-        LL_USART_TransmitData8(USART2, (uint8_t)*str);
-        ++str;
-    }
-}
-
-static void uart_send_xcr24_result(uint16_t cnt, const float value[3])
-{
-    char buffer[128];
-    (void)snprintf(buffer, sizeof(buffer), "\r\nXCR DAC (cnt: %u) (1: %.3f) (2: %.3f) (3: %.3f)", cnt, (double)value[0], (double)value[1], (double)value[2]);
-    uart_send_string(buffer);
-}
-
 void xcr24_test(void)
 {
-    static uint16_t cnt = 0U;
-    while (1)
-    {
-        gpio_set_xc_vdd_5v(VCC_ON_3V3);
-        LL_mDelay(99U);
 
-        xcr24_trim_init();
-#if 0
-        xcr24_test_init_ldo();
-        LL_mDelay(9U);
-        xcr24_test_init_ldo_fll_a();
-        LL_mDelay(9U);
-        xcr24_test_init_ldo_fll_b();
-        LL_mDelay(9U);
-    #if 0
-        xcr24_test_init_fll_a_30m();
-        LL_mDelay(9U);
-        xcr24_test_init_fll_a_35m();
-        LL_mDelay(9U);
-        xcr24_test_init_fll_a_40m();
-        LL_mDelay(9U);
-        xcr24_test_init_fll_b_30m();
-        LL_mDelay(9U);
-        xcr24_test_init_fll_b_35m();
-        LL_mDelay(9U);
-        xcr24_test_init_fll_b_40m();
-        LL_mDelay(9U);
-    #endif
-#endif
-        xcr24_test_init_dac_p1();
-
-        tim_vsync_out_for_test_start();
-        LL_mDelay(199U);
-        tim_vsync_out_for_test_stop();
-
-        uint16_t adc_value = 0U;
-        float value[3] = {3.0f};
-
-        for (uint8_t i = 0; i < 3; ++i)
-        {
-            ADS114S08_Select_Input_CH((ADS114S08_CH_XC_DAC_1 + i), ADS_AINCOM);
-            LL_mDelay(9U);
-            ADS114S08_Set_Start(true);
-            if (true == ADS114S08_Wait_Done())
-            {
-                adc_value = ADS114S08_Get_ADC_Value();
-                value[i] = JigBD_IF_Convert_Adc_To_Voltage(adc_value);
-            }
-        }
-        uart_send_xcr24_result(cnt, value);
-        gt_xcr24_set_gr1_regs.reg._r00.ALL = 0U;
-        xcr24_write_grp1_reg(0x00, &gt_xcr24_set_gr1_regs.reg._r00.ALL, 1U);
-        gpio_set_xc_vdd_5v(VCC_OFF);
-        XCR_NSS_LO();
-        LL_mDelay(999U);
-
-        ++cnt;
-        if (value[0] > 1.0f || value[1] > 1.0f || value[2] > 1.0f)
-        {
-            uart_send_string("\r\n\tError Occur!\r\n");
-            break;
-        }
-    }
 }

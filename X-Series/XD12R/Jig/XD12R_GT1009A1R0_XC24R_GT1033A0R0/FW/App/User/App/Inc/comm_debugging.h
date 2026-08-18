@@ -38,6 +38,14 @@ typedef enum __LOG_LEVEL__
 
 extern bool gb_usart_tx_start_flag;
 
+__STATIC_INLINE void UART_PutChar(uint8_t data)
+{
+    /* Loop until the end of transmission */
+    while (RESET == LL_USART_IsActiveFlag_TXE(USART2));
+    /* Echo received character on TX */
+    LL_USART_TransmitData8(USART2, data);
+}
+
 void comm_init(void);
 void comm_debugging_process(void);
 void comm_UART_Printf(LOG_LV_t lv, const char *fmt, ...);

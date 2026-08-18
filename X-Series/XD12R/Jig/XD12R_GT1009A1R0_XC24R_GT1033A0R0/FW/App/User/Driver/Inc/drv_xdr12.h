@@ -15,7 +15,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "drv_gpio.h"
-#include "xdr12_struct.h"
+#include "xd12_struct.h"
 
 #define XDR_EFUSE_SKIP      (0U)
 #define XDR_EFUSE_BURN      (1U)

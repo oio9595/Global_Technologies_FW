@@ -1,13 +1,13 @@
 /*
- * File:   IC603_struct.h
+ * File:   ic603_es_struct.h
  * Author: GT
  *
  * Created on 2026, 05 15
  * Revision : IC603 0515
  */
 
-#ifndef _IC603_STRUCT_H_
-#define	_IC603_STRUCT_H_
+#ifndef _IC603_ES_STRUCT_H_
+#define	_IC603_ES_STRUCT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +17,7 @@ extern "C" {
 #include <stdbool.h>
 
 #define XCR_INTERNAL_MCLK   (50000000UL)    /* 50.0MHz */
-#define XCR_MODEL_NAME      "IC603 ES0"
+#define XC_MODEL_NAME       "IC603 ES"
 
 #define BAUD_HIGH_DURATION_MIN  (6U)            /* mclk */
 #define BAUD_HIGH_DURATION_MAX  (63U)           /* mclk */
@@ -2570,5 +2570,5 @@ static const char* xcr_grp2_regs_str[XCR_GRP2_MAX] =
 }
 #endif
 
-#endif	/* _IC603_STRUCT_H_ */
+#endif	/* _IC603_ES_STRUCT_H_ */
 

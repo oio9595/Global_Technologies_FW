@@ -238,10 +238,6 @@
                     <state>USE_FULL_LL_DRIVER</state>
                     <state>USE_HAL_DRIVER</state>
                     <state>STM32F446xx</state>
-                    <state>XC_MODEL_TYPE=0</state>
-                    <state>XC_REVISION=0</state>
-                    <state>XD_MODEL_TYPE=0</state>
-                    <state>XD_REVISION=1</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -4692,28 +4688,28 @@
                 <group>
                     <name>XCR</name>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\ic603_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\ic603_es_struct.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\xcr24_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\xc24_struct.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\xcr_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\xc24r_es_struct.h</name>
                     </file>
                 </group>
                 <group>
                     <name>XDR</name>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\ic601_es0_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\ic601_es_struct.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xdr12_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xd12_struct.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xdr12d_es1_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xd12d_es_struct.h</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xdr12r_es1_struct.h</name>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\xd12r_cs_struct.h</name>
                     </file>
                 </group>
                 <file>
@@ -4721,9 +4717,6 @@
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\User\Driver\Inc\drv_ads124s08.h</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Driver\Inc\drv_comm.h</name>
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\User\Driver\Inc\drv_gpio.h</name>

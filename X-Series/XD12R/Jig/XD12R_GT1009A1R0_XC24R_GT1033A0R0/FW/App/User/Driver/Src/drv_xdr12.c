@@ -38,10 +38,13 @@
 #define XDR_ADDR_BIT            (6U)
 #define XDR_ID_BIT              (5U)
 #define XDR_DATA_BIT            (12U)
+#define XDR_FAULT_BIT           (4U)
 #define XDR_LD_TRANSFER         (XDR_HDR_BIT + (XDR_LD_DATA_BIT * XDR_LD_SIZE))
 #define XDR_CMD_WRITE           (XDR_HDR_BIT + XDR_ADDR_BIT + XDR_DATA_BIT)
 #define XDR_CMD_READ            (XDR_HDR_BIT + XDR_ADDR_BIT)
 #define XDR_CMD_READOUT         (XDR_HDR_BIT + XDR_ID_BIT + XDR_DATA_BIT)
+#define XDR_CMD_FAULT           (XDR_HDR_BIT)
+#define XDR_CMD_FAULT_READOUT   (XDR_HDR_BIT + XDR_FAULT_BIT)
 
 #define CMD_DELAY_DUMMY         (10U) /* 10us */
 #define CMD_DELAY_REG_WR        ((XDR_DAISY_LENGTH * XDR_CMD_WRITE) + CMD_DELAY_DUMMY)           /* CMD_DELAY_DUMMY * 1 */
@@ -1458,9 +1461,34 @@ void xdr12_ld_transfer(void)
 
 void xdr12_fault_readout(void)
 {
-    static uint8_t prev_fault_data = 0x0FU;
-    uint8_t fault_data = 0x0FU;
+    static uint16_t prev_fault_data = 0x0FU;
+    uint16_t fault_data = 0x0FU;
 #if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
+    uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;
+    uint16_t len = 0U;
+    const uint16_t pwm_in_length = XDR_DAISY_LENGTH * (XDR_HDR_BIT);
+
+    for(uint16_t daisy = 0U; daisy < XDR_DAISY_LENGTH; ++daisy)
+    {
+        len += xdr12_make_pwm_out_stream(gt_xd_fault_read_command[daisy].ALL, &p_pwm_out[len], XDR_CMD_FAULT);
+    }
+    comm_UART_Printf(LOG_LV_DEBUG, "\r\nXDR Fault Packet\r\n\tIN_LENGTH [%u] CMD[0x%01X]", pwm_in_length, gt_xd_fault_read_command[0].bit.cmd_code);
+    p_pwm_out[len++] = 0U;
+
+    memset(gn_pwm_in_xd_response_freq, 0U, sizeof(gn_pwm_in_xd_response_freq));
+    memset(gn_pwm_in_xd_response_duty, 0U, sizeof(gn_pwm_in_xd_response_duty));
+
+    xdr12_pwm_out((uint32_t)p_pwm_out, (len + PWM_OUT_HEADER_SIZE));
+    xdr12_pwm_out_done();
+
+    if(false == xdr12_pwm_in(pwm_in_length, 150U))
+    {
+        uint8_t max_id = xdr12_decode_pwm_input_stream(gn_pwm_in_xd_response_freq, gn_pwm_in_xd_response_duty, &fault_data, pwm_in_length);
+    }
+    else
+    {
+        comm_UART_Printf(LOG_LV_ERROR, "\r\nFunction[%s] timeout!!", __func__);
+    }
 #elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
     fault_data = (uint8_t)(xcr24_read_grp1_reg(XCR_GLOBAL_FAULT_READ_DATA1, 1U) & 0x000FU);
 #else

@@ -1,13 +1,13 @@
 /*
- * File:   XCR_struct.h
+ * File:   xc24r_es_struct.h
  * Author: GT
  *
  * Created on 2026, 05,29
  * Revision : XC24R Rev. 00 - R_xc_xd_es0_design_specification_v0.82_260528 / xcr24_reg_mp1
  */
 
-#ifndef _XCR_STRUCT_H_
-#define	_XCR_STRUCT_H_
+#ifndef _XC24R_ES_STRUCT_H_
+#define	_XC24R_ES_STRUCT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,9 +26,8 @@ extern "C" {
 #define     __IO    volatile             /*!< Defines 'read / write' permissions              */
 #endif
 
-
 #define XCR_INTERNAL_MCLK   (35000000UL)    /* 35.0MHz */
-#define XCR_MODEL_NAME      "XCR24 ES0"
+#define XC_MODEL_NAME       "XC24R ES"
 
 #define BAUD_HIGH_DURATION_MIN  (6U)        /* mclk */
 #define BAUD_HIGH_DURATION_MAX  (63U)       /* mclk */
@@ -2599,4 +2598,4 @@ static const char* xcr_grp2_regs_str[XCR_GRP2_MAX] =
 }
 #endif
 
-#endif	/* _XCR_STRUCT_H_ */
+#endif	/* _XC24R_ES_STRUCT_H_ */

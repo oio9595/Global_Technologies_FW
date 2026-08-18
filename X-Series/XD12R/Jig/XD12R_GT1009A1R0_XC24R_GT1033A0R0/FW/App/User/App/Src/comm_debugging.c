@@ -14,7 +14,6 @@
 #include "drv_gpio.h"
 #include "drv_ads124s08.h"
 
-#include "drv_comm.h"
 #include "drv_timer.h"
 
 #include "version.h"
@@ -103,6 +102,11 @@ static const char* const gp_msg_what = "\n\rWhat?";
 
 static tx_packet_t* p_tx = NULL;
 static uint16_t gn_tx_irq_send_pos;
+
+__STATIC_INLINE void UART_Tx_DMA_Start(uint32_t mem_addr, uint16_t dataNumber)
+{
+    LL_USART_EnableIT_TXE(USART2);
+}
 
 __STATIC_INLINE uint8_t comm_get_rx_packet(rx_packet_t** pData)
 {
@@ -225,7 +229,7 @@ static void comm_print_startup(void)
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Build   : %s", __DATE__);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - Model   : %s, %s", XCR_MODEL_NAME, XDR_MODEL_NAME);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - Model   : %s, %s", XC_MODEL_NAME, XD_MODEL_NAME);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_CTL);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_EFUSE);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XCR_EFUSE);

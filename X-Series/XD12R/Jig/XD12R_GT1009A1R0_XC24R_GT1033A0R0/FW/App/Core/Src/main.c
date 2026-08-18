@@ -24,7 +24,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "drv_comm.h"
 #include "drv_gpio.h"
 #include "drv_xcr24.h"
 #include "drv_xdr12.h"
