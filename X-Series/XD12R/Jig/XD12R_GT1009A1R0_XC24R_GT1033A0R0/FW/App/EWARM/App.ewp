@@ -4653,11 +4653,14 @@
             <file>
                 <name>$PROJ_DIR$\..\user\app\mgr_app.c</name>
             </file>
-        </group>
-        <group>
-            <name>det</name>
             <file>
-                <name>$PROJ_DIR$\..\user\det\mgr_det.c</name>
+                <name>$PROJ_DIR$\..\user\app\mgr_det.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\user\app\mgr_test.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\user\app\mgr_trim.c</name>
             </file>
         </group>
         <group>
@@ -4769,18 +4772,6 @@
             <name>Src</name>
             <file>
                 <name>$PROJ_DIR$\..\user\Src\comm_debugging.c</name>
-            </file>
-        </group>
-        <group>
-            <name>test</name>
-            <file>
-                <name>$PROJ_DIR$\..\user\test\mgr_test.c</name>
-            </file>
-        </group>
-        <group>
-            <name>trim</name>
-            <file>
-                <name>$PROJ_DIR$\..\user\trim\mgr_trim.c</name>
             </file>
         </group>
     </group>
