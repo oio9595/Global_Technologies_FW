@@ -1165,7 +1165,7 @@ void xd12_init_param(void)
 void xd12_init(void)
 {
 #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     gpio_set_xc_vdd_5v(VCC_ON_3V3);
     LL_mDelay(99U);
     xc24_init();
@@ -1184,7 +1184,7 @@ void xd12_init(void)
 void xd12_trim_init(void)
 {
 #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     gpio_set_xc_vdd_5v(VCC_ON_3V3);
     LL_mDelay(99U);
     xc24_init();
@@ -1449,7 +1449,7 @@ void xd12_ld_transfer(void)
     p_pwm_out[len++] = 0U;
 
     xd12_pwm_out((uint32_t)p_pwm_out, (uint32_t)len);
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     uint16_t* p = ldim_get_xc_ld_transfer_buffer();
     uint16_t len = ldim_get_xc_ld_transfer_size();
     xc24_set_ld_transfer(p, len);
@@ -1489,7 +1489,7 @@ void xd12_fault_readout(void)
     {
         comm_UART_Printf(LOG_LV_ERROR, "\r\nFunction[%s] timeout!!", __func__);
     }
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     fault_data = (uint8_t)(xc24_read_grp1_reg(XC_GLOBAL_FAULT_READ_DATA1, 1U) & 0x000FU);
 #else
     #error "XD_CONTROL_TYPE is not defined"

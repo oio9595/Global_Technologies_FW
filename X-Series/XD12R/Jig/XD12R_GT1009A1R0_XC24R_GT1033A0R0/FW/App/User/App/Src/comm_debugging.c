@@ -45,7 +45,7 @@
 
 #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
     #define MSG_XD_CTL "XD Controlled By MCU"
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     #define MSG_XD_CTL "XD Controlled By XC"
 #else
     #error "XD_CONTROL_TYPE is not defined"

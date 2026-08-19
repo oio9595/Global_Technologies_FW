@@ -213,7 +213,7 @@ void tim_vsync_out_handler(void)
         #error "XD_SYNC_MODE is not defined"
     #endif
         tim_svsync_timer_start();
-#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
         // no need to do anything for XC controlled mode
 #else
         #error "XD_CONTROL_TYPE is not defined"

@@ -22,8 +22,8 @@ extern "C" {
 #define XD_EFUSE                (XD_EFUSE_SKIP)
 
 #define XD_CONTROLLED_MCU       (0U)
-#define XD_CONTROLLED_XC        (1U)
-#define XD_CONTROL_TYPE         (XD_CONTROLLED_MCU)
+#define XD_CONTROLLED_XC24      (1U)
+#define XD_CONTROL_TYPE         (XD_CONTROLLED_XC24)
 
 #define XD_CH_SIZE              (12U)
 #define XD_DAISY_LENGTH         (1U)
