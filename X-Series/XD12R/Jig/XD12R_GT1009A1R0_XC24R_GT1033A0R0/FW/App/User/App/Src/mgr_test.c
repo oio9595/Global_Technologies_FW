@@ -458,6 +458,8 @@ static void xc_test_log_summary(void)
 #else
         #error "TEST_LOG_TYPE is not defined"
 #endif
+    // test
+    comm_UART_Printf(LOG_LV_INFO, "\r\n0x1B : %04X", xc24_read_grp1_reg(0x1B, 1));
 }
 
 static bool _xc_test_thread(struct thread_data* td)
@@ -492,6 +494,10 @@ static bool _xc_test_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", test_step_to_string((test_step_t)td->step), xc_test_list_to_string(*list), td->tout);
             if (*list < XC_TEST_LIST_MAX)
             {
+                if (*list == XC_TEST_LIST_FLL_A_30M)
+                {
+                    *list = XC_TEST_LIST_DAC_P1; // FLL_A_30M 이후 DAC 측정 항목으로 넘어가도록 설정
+                }
                 if (gp_xc24_test_init_func[*list] != NULL)
                 {
                     gp_xc24_test_init_func[*list]();
