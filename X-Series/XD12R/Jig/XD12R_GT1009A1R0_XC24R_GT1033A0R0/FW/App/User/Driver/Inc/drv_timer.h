@@ -1,7 +1,7 @@
 /*
  * File:   drv_timer.h
  * Author: GT
- * for XCR24 & XDR12 ES2
+ * for XC24 & XD12 ES2
  * Created on 2026. 05. 15.
  */
 

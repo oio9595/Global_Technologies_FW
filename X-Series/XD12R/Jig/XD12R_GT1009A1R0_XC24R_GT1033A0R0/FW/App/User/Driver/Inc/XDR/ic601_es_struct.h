@@ -143,7 +143,7 @@ typedef union tag_XD12R_RESET_ID
         uint16_t rst    :  1;   /* all logics reset, auto-cleared, but the otp value is not downloaded */
         uint16_t        :  4;   /* reserved */
     }bit;
-}_v_xdr12_reset_id_t;
+}_v_xd12_reset_id_t;
 
 /* LD_CONTROL(0x01) : default 0x000 */
 typedef union tag_XD12R_LD_CONTROL
@@ -159,7 +159,7 @@ typedef union tag_XD12R_LD_CONTROL
         uint16_t sv_no      : 6;    /* '8' means total 16 times, (g=8, b=8) */
         uint16_t            : 5;    /* reserved */
     }bit;
-}_v_xdr12_ld_control_t;
+}_v_xd12_ld_control_t;
 
 /* LD_SIZE(0x02) : default 0x000 */
 typedef union tag_XD12R_LD_SIZE
@@ -170,7 +170,7 @@ typedef union tag_XD12R_LD_SIZE
         uint16_t ld_size    :  5;   /* the number of LD data to be transmitted */
         uint16_t            : 11;   /* reserved */
     }bit;
-}_v_xdr12_ld_size_t;
+}_v_xd12_ld_size_t;
 
 /* PWMCLK_DIV1/2(0x03) : default 0x000 */
 typedef union tag_XD12R_PWMCLK_DIV1
@@ -182,7 +182,7 @@ typedef union tag_XD12R_PWMCLK_DIV1
         uint16_t  pwmclk_div2   : 4;    /* [3:0] */
         uint16_t                : 4;    /* reserved */
     }bit;
-}_v_xdr12_pwmclk_div12_t;
+}_v_xd12_pwmclk_div12_t;
 
 /* PWMCLK_DIV2/3(0x04) : default 0x000 */
 typedef union tag_XD12R_PWMCLK_DIV2
@@ -194,7 +194,7 @@ typedef union tag_XD12R_PWMCLK_DIV2
         uint16_t  pwmclk_div3   : 8;
         uint16_t                : 4;    /* reserved */
     }bit;
-}_v_xdr12_pwmclk_div23_t;
+}_v_xd12_pwmclk_div23_t;
 
 /* CHANNEL ENABLE(0x05) : default 0x000 */
 typedef union tag_XD12R_CHANNEL_ENABLE
@@ -216,7 +216,7 @@ typedef union tag_XD12R_CHANNEL_ENABLE
         uint16_t  ch12_en       : 1;
         uint16_t                : 4;    /* reserved */
     }bit;
-}_v_xdr12_channel_enable_t;
+}_v_xd12_channel_enable_t;
 
 /* FAULT_CONTROL(0x06) : default 0x000 */
 typedef union tag_XD12R_FAULT_CONTROL
@@ -234,7 +234,7 @@ typedef union tag_XD12R_FAULT_CONTROL
         uint16_t auto_fault_fb_no   : 2;    /* MS_VS_DIMM :  */
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_fault_control_t;
+}_v_xd12_fault_control_t;
 
 /* CHx_LD_TYPE0(0x07) : default 0x000 */
 typedef union tag_XD12R_CHx_LD_TYPE0
@@ -250,7 +250,7 @@ typedef union tag_XD12R_CHx_LD_TYPE0
         uint16_t ch12_ld_type       : 2;
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_ch_ld_type0_t;
+}_v_xd12_ch_ld_type0_t;
 
 /* CHx_LD_TYPE1(0x08) : default 0x000 */
 typedef union tag_XD12R_CHx_LD_TYPE1
@@ -266,7 +266,7 @@ typedef union tag_XD12R_CHx_LD_TYPE1
         uint16_t ch6_ld_type        : 2;
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_ch_ld_type1_t;
+}_v_xd12_ch_ld_type1_t;
 
 /* FAULT_STATUS0(0x09) : read-only, auto-cleared just after a readout */
 typedef union tag_XD12R_FAULT_STATUS0
@@ -288,7 +288,7 @@ typedef union tag_XD12R_FAULT_STATUS0
         uint16_t bit_timeout_err:  1;
         uint16_t                :  4;    /* reserved */
     }bit;
-}_v_xdr12_fault_status0_t;
+}_v_xd12_fault_status0_t;
 
 /* MAX_CURRENT_VREF1~5(0x0A~0x0E) : default 0x000, the value updated at every vsync */
 typedef union tag_XD12R_MAX_CURRENT_VREF
@@ -299,7 +299,7 @@ typedef union tag_XD12R_MAX_CURRENT_VREF
         uint16_t max_curr_vref  : 12;   /* The MAX_CURR_VREF determines the maximum current value of a frame to be dimmed. If the max current level is set to 8mA, then the MAX_CURR_VREF value is proportional to the max current level, and so this value decides the max current reference of all blocks being dimmed for a frame. The setting value will come into effect at the next vsync assertion even if the value is set during current dimming frame earlier than the next vsync. */
         uint16_t                :  4;   /* reserved */
     }bit;
-}_v_xdr12_max_curr_vref_t;
+}_v_xd12_max_curr_vref_t;
 
 /* DELAY_CH1/2 ~ 11/12(0x10 ~ 0x15) : default 0x000 */
 typedef union tag_XD12R_DELAY_CHx
@@ -311,7 +311,7 @@ typedef union tag_XD12R_DELAY_CHx
         uint16_t delay_ch2  :  5;    /* DELAY_CHx [4:0] */
         uint16_t            :  4;    /* reserved */
     }bit;
-}_v_xdr12_delay_chx_t;
+}_v_xd12_delay_chx_t;
 
 /* FB_LEVEL(0x16) : default 0x000 */
 typedef union tag_XD12R_FB_LEVEL
@@ -325,7 +325,7 @@ typedef union tag_XD12R_FB_LEVEL
         uint16_t fb4_level          : 3;
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_fb_level_t;
+}_v_xd12_fb_level_t;
 
 /* SHORT_LEVEL(0x17) : default 0x000 */
 typedef union tag_XD12R_FB_SHORT_LEVEL
@@ -339,7 +339,7 @@ typedef union tag_XD12R_FB_SHORT_LEVEL
         uint16_t short3_level       : 3;
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_fb_short_level_t;
+}_v_xd12_fb_short_level_t;
 
 /* SHORT_LEVEL(0x18) : default 0x000 */
 typedef union tag_XD12R_SHORT_LEVEL
@@ -351,7 +351,7 @@ typedef union tag_XD12R_SHORT_LEVEL
         uint16_t short5_level       : 3;
         uint16_t                    : 7;    /* reserved */
     }bit;
-}_v_xdr12_short_level_t;
+}_v_xd12_short_level_t;
 
 /* MAX CURRENT LEVEL0(0x19) : default 0x000 */
 typedef union tag_XD12R_MAX_CURRENT_LEVEL1
@@ -365,7 +365,7 @@ typedef union tag_XD12R_MAX_CURRENT_LEVEL1
         uint16_t max_curr3_level    : 4;
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_max_current_level1_t;
+}_v_xd12_max_current_level1_t;
 
 /* MAX CURRENT LEVEL1(0x1A) : default 0x000 */
 typedef union tag_XD12R_MAX_CURRENT_LEVEL2
@@ -378,7 +378,7 @@ typedef union tag_XD12R_MAX_CURRENT_LEVEL2
         uint16_t max_curr5_level    : 4;
         uint16_t                    : 8;    /* reserved */
     }bit;
-}_v_xdr12_max_current_level2_t;
+}_v_xd12_max_current_level2_t;
 
 /* PARITY & RD_EN(0x1B) : default 0x000 */
 typedef union tag_XD12R_PARITY_RD_EN
@@ -391,7 +391,7 @@ typedef union tag_XD12R_PARITY_RD_EN
         uint16_t parity_e   :  1;
         uint16_t            :  4;    /* reserved */
     }bit;
-}_v_xdr12_parity_rd_en_t;
+}_v_xd12_parity_rd_en_t;
 
 /* SERIAL CLK GEN(0x1C) : default 0x318 */
 typedef union tag_XD12R_SERIAL_CLK_GEN
@@ -403,7 +403,7 @@ typedef union tag_XD12R_SERIAL_CLK_GEN
         uint16_t serial_clk_low     : 6;    /* These bits determine the number of MCLK of VDD level in logic low value ‘0’ or the number of MCLK of 0 level in logic high value ‘1’ when the XD12 is driving the DIO pin on read-back. For more details, refer to Table. 4, Logic low time. */
         uint16_t                    : 4;    /* reserved */
     }bit;
-}_v_xdr12_serial_clk_gen_t;
+}_v_xd12_serial_clk_gen_t;
 
 /* SERIAL_LATENCY(0x1D) : default 0x080, counted by a mclk/2 */
 typedef union tag_XD12R_SERIAL_LATENCY
@@ -414,7 +414,7 @@ typedef union tag_XD12R_SERIAL_LATENCY
         uint16_t serial_latency :  9;
         uint16_t                :  7;    /* reserved */
     }bit;
-}_v_xdr12_serial_latency_t;
+}_v_xd12_serial_latency_t;
 
 /* V_MASK(0x1E) : default 0x000 */
 typedef union tag_XD12R_V_MASK
@@ -425,7 +425,7 @@ typedef union tag_XD12R_V_MASK
         uint16_t v_mask         : 10;    /* counted by a mclk/2, setting value must consider a frame frequency transition */
         uint16_t                :  6;    /* reserved */
     }bit;
-}_v_xdr12_v_mask_t;
+}_v_xd12_v_mask_t;
 
 /* SV_MASK(0x1F) : default 0x000 */
 typedef union tag_XD12R_sV_MASK
@@ -438,7 +438,7 @@ typedef union tag_XD12R_sV_MASK
         uint16_t sv_mask_en     :  1;
         uint16_t                :  4;    /* reserved */
     }bit;
-}_v_xdr12_sv_mask_t;
+}_v_xd12_sv_mask_t;
 
 /* RSTCNT(0x20) : default 0x000 */
 typedef union tag_XD12R_RSTCNT
@@ -449,7 +449,7 @@ typedef union tag_XD12R_RSTCNT
         uint16_t rstcnt         : 10;    /* counted by a mclk/64 from a last svsync, reset at every vsync */
         uint16_t                :  6;    /* reserved */
     }bit;
-}_v_xdr12_rstcnt_t;
+}_v_xd12_rstcnt_t;
 
 /* TIMEOUT(0x21) : default 0x3FF */
 typedef union tag_XD12R_TIMEOUT
@@ -460,7 +460,7 @@ typedef union tag_XD12R_TIMEOUT
         uint16_t timeout        : 11;    /* counted by a mclk/64 */
         uint16_t                :  5;    /* reserved */
     }bit;
-}_v_xdr12_timeout_t;
+}_v_xd12_timeout_t;
 
 /* FLLCNT1(0x22) : default 0x000 */
 typedef union tag_XD12R_FLLCNT1
@@ -471,7 +471,7 @@ typedef union tag_XD12R_FLLCNT1
         uint16_t fllcnt         : 12;    /* counted by a mclk/2 */
         uint16_t                :  4;    /* reserved */
     }bit;
-}_v_xdr12_fllcnt1_t;
+}_v_xd12_fllcnt1_t;
 
 /* FLLCNT2(0x23) : default 0xC32 */
 typedef union tag_XD12R_FLLCNT2
@@ -485,7 +485,7 @@ typedef union tag_XD12R_FLLCNT2
         uint16_t fll_en         :  1;   /* '0 disable, '1' enable (polarity changed) the value updated at every vsync, not svsync */
         uint16_t                :  4;   /* reserved */
     }bit;
-}_v_xdr12_fllcnt2_t;
+}_v_xd12_fllcnt2_t;
 
 /* WR PROTECT(0x24) : default 0x555 */
 typedef union tag_XD12R_WR_PROTECT
@@ -513,7 +513,7 @@ typedef union tag_XD12R_NF_CONTROL
         uint16_t BBKN_TH        :  6;
         uint16_t                :  4;    /* reserved */
     }bit;
-}_v_xdr12_nf_control_t;
+}_v_xd12_nf_control_t;
 
 /* CHOP_EN(0x26) : default 0x000 */
 typedef union tag_XD12R_CHOP_EN
@@ -529,7 +529,7 @@ typedef union tag_XD12R_CHOP_EN
         uint16_t CHOP_EN        :  1;
         uint16_t                : 10;   /* reserved */
     }bit;
-}_v_xdr12_chop_en_t;
+}_v_xd12_chop_en_t;
 
 /* TEMP(0x27) : default 0x829 */
 typedef union tag_XD12R_TEMP
@@ -545,7 +545,7 @@ typedef union tag_XD12R_TEMP
         uint16_t ofs_temp       :  4;   /* This determines the temperature level at which the thermal event occurs. The thermal threshold temperature may vary slightly from the set value. The thermal event threshold temperature according to the OFS_TEMP value is mapped as follows. 96/ 102/ 107/ 112/ 117/ 122/ 127/ 132/ 137(default) / 142/ 147/ 151/ 157/ 161/ 166/ 171℃ */
         uint16_t                :  4;   /* reserved */
     }bit;
-}_v_xdr12_temp_t;
+}_v_xd12_temp_t;
 
 /* OSC_FLL_MAN1(0x28) : default 0x000 */
 typedef union tag_XD12R_OSC_FLL_MAN1
@@ -556,7 +556,7 @@ typedef union tag_XD12R_OSC_FLL_MAN1
         uint16_t osc_fll_man    : 12;    /* OSC_FLL_MAN[11:0] : This determines the FLL target frequency value in manual mode. */
         uint16_t                :  4;    /* reserved */
     }bit;
-}_v_xdr12_osc_fll_man1_t;
+}_v_xd12_osc_fll_man1_t;
 
 /* OSC_FLL_MAN2(0x29) : default 0x808 */
 typedef union tag_XD12R_OSC_FLL_MAN2
@@ -570,7 +570,7 @@ typedef union tag_XD12R_OSC_FLL_MAN2
         uint16_t osc_man_en         :  1;    /* Enable the manual mode of the FLL module. It is careful that this bit must be cleared during the initialization after POR. */
         uint16_t                    :  4;    /* reserved */
     }bit;
-}_v_xdr12_osc_fll_man2_t;
+}_v_xd12_osc_fll_man2_t;
 
 /* OSC SPREAD(0x2A) : default 0x000 */
 typedef union tag_XD12R_OSC_SPREAD
@@ -585,7 +585,7 @@ typedef union tag_XD12R_OSC_SPREAD
         uint16_t SPRD_EN      :  1;
         uint16_t              :  4;    /* reserved */
     }bit;
-}_v_xdr12_osc_spread_t;
+}_v_xd12_osc_spread_t;
 
 /* CLOCK GATE EN(0x2B) : default 0x017, for test only */
 typedef union tag_XD12R_CLOCK_GATE_EN
@@ -600,10 +600,10 @@ typedef union tag_XD12R_CLOCK_GATE_EN
         uint16_t OTP_MCLK_EN  :  1;
         uint16_t              : 11;    /* reserved */
     }bit;
-}_v_xdr12_clock_gate_en_t;
+}_v_xd12_clock_gate_en_t;
 
 /* OTP_ACCESS_1 (0x3A) : default 0x000 */
-typedef union tag_XDR12_OTP_ACCESS_1
+typedef union tag_XD12_OTP_ACCESS_1
 {
     uint16_t ALL;
     struct
@@ -611,10 +611,10 @@ typedef union tag_XDR12_OTP_ACCESS_1
         uint16_t otp_pg_acc_cycle   :  4;
         uint16_t                    : 12;
     }bit;
-}_v_xdr12_otp_access_1_t;
+}_v_xd12_otp_access_1_t;
 
 /* OTP_ACCESS_2 (0x3B) : default 0x3FF */
-typedef union tag_XDR12_OTP_ACCESS_2
+typedef union tag_XD12_OTP_ACCESS_2
 {
     uint16_t ALL;
     struct
@@ -622,10 +622,10 @@ typedef union tag_XDR12_OTP_ACCESS_2
         uint16_t otp_pg_acc_cycle   : 12;
         uint16_t                    :  4;
     }bit;
-}_v_xdr12_otp_access_2_t;
+}_v_xd12_otp_access_2_t;
 
 /* OTP_WRITE (0x3C) : default 0x004 */
-typedef union tag_XDR12_OTP_WRITE
+typedef union tag_XD12_OTP_WRITE
 {
     uint16_t ALL;
     struct
@@ -634,10 +634,10 @@ typedef union tag_XDR12_OTP_WRITE
         uint16_t otp_rd     :  2;
         uint16_t            : 10;
     }bit;
-}_v_xdr12_otp_write_t;
+}_v_xd12_otp_write_t;
 
 /* OTP_RD_PROG (0x3D) : default 0x004 */
-typedef union tag_XDR12_OTP_RD_PROG
+typedef union tag_XD12_OTP_RD_PROG
 {
     uint16_t ALL;
     struct
@@ -646,10 +646,10 @@ typedef union tag_XDR12_OTP_RD_PROG
         uint16_t otp_rd_s   :  1;
         uint16_t            : 14;
     }bit;
-}_v_xdr12_otp_rd_prog_t;
+}_v_xd12_otp_rd_prog_t;
 
 /* OTP_PROTECT (0x3E) : default 0x5A5 */
-typedef union tag_XDR12_OTP_PROTECT
+typedef union tag_XD12_OTP_PROTECT
 {
     uint16_t ALL;
     struct
@@ -657,10 +657,10 @@ typedef union tag_XDR12_OTP_PROTECT
         uint16_t protect_en : 12;
         uint16_t            :  4;
     }bit;
-}_v_xdr12_otp_protect_t;
+}_v_xd12_otp_protect_t;
 
 /* OP_MODE (0x3F) : default 0x000 */
-typedef union tag_XDR12_OP_MODE
+typedef union tag_XD12_OP_MODE
 {
     uint16_t ALL;
     struct
@@ -675,7 +675,7 @@ typedef union tag_XDR12_OP_MODE
         uint16_t test_en        :  1;
         uint16_t                :  4;
     }bit;
-}_v_xdr12_op_mode_t;
+}_v_xd12_op_mode_t;
 
 /* DUMMY */
 typedef union tag_XD12R_DUMMY
@@ -685,95 +685,95 @@ typedef union tag_XD12R_DUMMY
     {
         uint16_t dummy      : 16;
     }bit;
-}_v_xdr12_dummy_t;
+}_v_xd12_dummy_t;
 
-typedef union _xdr12_regs
+typedef union _xd12_regs
 {
     uint16_t ALL[XD12R_MAX];
     struct
     {
-        _v_xdr12_reset_id_t             _r00;
-        _v_xdr12_ld_control_t           _r01;
-        _v_xdr12_ld_size_t              _r02;
-        _v_xdr12_pwmclk_div12_t         _r03;
-        _v_xdr12_pwmclk_div23_t         _r04;
-        _v_xdr12_channel_enable_t       _r05;
-        _v_xdr12_fault_control_t        _r06;
-        _v_xdr12_ch_ld_type0_t          _r07;
-        _v_xdr12_ch_ld_type1_t          _r08;
-        _v_xdr12_fault_status0_t        _r09;
-        _v_xdr12_max_curr_vref_t        _r0A;
-        _v_xdr12_max_curr_vref_t        _r0B;
-        _v_xdr12_max_curr_vref_t        _r0C;
-        _v_xdr12_max_curr_vref_t        _r0D;
-        _v_xdr12_max_curr_vref_t        _r0E;
-        _v_xdr12_dummy_t                _r0F;
-        _v_xdr12_delay_chx_t            _r10;
-        _v_xdr12_delay_chx_t            _r11;
-        _v_xdr12_delay_chx_t            _r12;
-        _v_xdr12_delay_chx_t            _r13;
-        _v_xdr12_delay_chx_t            _r14;
-        _v_xdr12_delay_chx_t            _r15;
-        _v_xdr12_fb_level_t             _r16;
-        _v_xdr12_fb_short_level_t       _r17;
-        _v_xdr12_short_level_t          _r18;
-        _v_xdr12_max_current_level1_t   _r19;
-        _v_xdr12_max_current_level2_t   _r1A;
-        _v_xdr12_parity_rd_en_t         _r1B;
-        _v_xdr12_serial_clk_gen_t       _r1C;
-        _v_xdr12_serial_latency_t       _r1D;
-        _v_xdr12_v_mask_t               _r1E;
-        _v_xdr12_sv_mask_t              _r1F;
-        _v_xdr12_rstcnt_t               _r20;
-        _v_xdr12_timeout_t              _r21;
-        _v_xdr12_fllcnt1_t              _r22;
-        _v_xdr12_fllcnt2_t              _r23;
+        _v_xd12_reset_id_t             _r00;
+        _v_xd12_ld_control_t           _r01;
+        _v_xd12_ld_size_t              _r02;
+        _v_xd12_pwmclk_div12_t         _r03;
+        _v_xd12_pwmclk_div23_t         _r04;
+        _v_xd12_channel_enable_t       _r05;
+        _v_xd12_fault_control_t        _r06;
+        _v_xd12_ch_ld_type0_t          _r07;
+        _v_xd12_ch_ld_type1_t          _r08;
+        _v_xd12_fault_status0_t        _r09;
+        _v_xd12_max_curr_vref_t        _r0A;
+        _v_xd12_max_curr_vref_t        _r0B;
+        _v_xd12_max_curr_vref_t        _r0C;
+        _v_xd12_max_curr_vref_t        _r0D;
+        _v_xd12_max_curr_vref_t        _r0E;
+        _v_xd12_dummy_t                _r0F;
+        _v_xd12_delay_chx_t            _r10;
+        _v_xd12_delay_chx_t            _r11;
+        _v_xd12_delay_chx_t            _r12;
+        _v_xd12_delay_chx_t            _r13;
+        _v_xd12_delay_chx_t            _r14;
+        _v_xd12_delay_chx_t            _r15;
+        _v_xd12_fb_level_t             _r16;
+        _v_xd12_fb_short_level_t       _r17;
+        _v_xd12_short_level_t          _r18;
+        _v_xd12_max_current_level1_t   _r19;
+        _v_xd12_max_current_level2_t   _r1A;
+        _v_xd12_parity_rd_en_t         _r1B;
+        _v_xd12_serial_clk_gen_t       _r1C;
+        _v_xd12_serial_latency_t       _r1D;
+        _v_xd12_v_mask_t               _r1E;
+        _v_xd12_sv_mask_t              _r1F;
+        _v_xd12_rstcnt_t               _r20;
+        _v_xd12_timeout_t              _r21;
+        _v_xd12_fllcnt1_t              _r22;
+        _v_xd12_fllcnt2_t              _r23;
         _v_xd12_wr_protect_t            _r24;
-        _v_xdr12_nf_control_t           _r25;
-        _v_xdr12_chop_en_t              _r26;
-        _v_xdr12_temp_t                 _r27;
-        _v_xdr12_osc_fll_man1_t         _r28;
-        _v_xdr12_osc_fll_man2_t         _r29;
-        _v_xdr12_osc_spread_t           _r2A;
-        _v_xdr12_clock_gate_en_t        _r2B;
-        _v_xdr12_dummy_t                _r2C;
-        _v_xdr12_dummy_t                _r2D;
-        _v_xdr12_dummy_t                _r2E;
-        _v_xdr12_dummy_t                _r2F;
-        _v_xdr12_dummy_t                _r30;
-        _v_xdr12_dummy_t                _r31;
-        _v_xdr12_dummy_t                _r32;
-        _v_xdr12_dummy_t                _r33;
-        _v_xdr12_dummy_t                _r34;
-        _v_xdr12_dummy_t                _r35;
-        _v_xdr12_dummy_t                _r36;
-        _v_xdr12_dummy_t                _r37;
-        _v_xdr12_dummy_t                _r38;
-        _v_xdr12_dummy_t                _r39;
-        _v_xdr12_otp_access_1_t         _r3A;
-        _v_xdr12_otp_access_2_t         _r3B;
-        _v_xdr12_otp_write_t            _r3C;
-        _v_xdr12_otp_rd_prog_t          _r3D;
-        _v_xdr12_otp_protect_t          _r3E;
-        _v_xdr12_op_mode_t              _r3F;
+        _v_xd12_nf_control_t           _r25;
+        _v_xd12_chop_en_t              _r26;
+        _v_xd12_temp_t                 _r27;
+        _v_xd12_osc_fll_man1_t         _r28;
+        _v_xd12_osc_fll_man2_t         _r29;
+        _v_xd12_osc_spread_t           _r2A;
+        _v_xd12_clock_gate_en_t        _r2B;
+        _v_xd12_dummy_t                _r2C;
+        _v_xd12_dummy_t                _r2D;
+        _v_xd12_dummy_t                _r2E;
+        _v_xd12_dummy_t                _r2F;
+        _v_xd12_dummy_t                _r30;
+        _v_xd12_dummy_t                _r31;
+        _v_xd12_dummy_t                _r32;
+        _v_xd12_dummy_t                _r33;
+        _v_xd12_dummy_t                _r34;
+        _v_xd12_dummy_t                _r35;
+        _v_xd12_dummy_t                _r36;
+        _v_xd12_dummy_t                _r37;
+        _v_xd12_dummy_t                _r38;
+        _v_xd12_dummy_t                _r39;
+        _v_xd12_otp_access_1_t         _r3A;
+        _v_xd12_otp_access_2_t         _r3B;
+        _v_xd12_otp_write_t            _r3C;
+        _v_xd12_otp_rd_prog_t          _r3D;
+        _v_xd12_otp_protect_t          _r3E;
+        _v_xd12_op_mode_t              _r3F;
     }reg;
-}_xdr12_regs_t;
+}_xd12_regs_t;
 
-typedef union _xdr12_otp_ctrl_regs
+typedef union _xd12_otp_ctrl_regs
 {
     uint16_t ALL[XD12R_OTP_MAX];
     struct
     {
-        _v_xdr12_otp_access_1_t         _r3A;
-        _v_xdr12_otp_access_2_t         _r3B;
-        _v_xdr12_otp_write_t            _r3C;
-        _v_xdr12_otp_rd_prog_t          _r3D;
-        _v_xdr12_otp_protect_t          _r3E;
-        _v_xdr12_op_mode_t              _r3F;
+        _v_xd12_otp_access_1_t         _r3A;
+        _v_xd12_otp_access_2_t         _r3B;
+        _v_xd12_otp_write_t            _r3C;
+        _v_xd12_otp_rd_prog_t          _r3D;
+        _v_xd12_otp_protect_t          _r3E;
+        _v_xd12_op_mode_t              _r3F;
     }reg;
-}_xdr12_otp_ctrl_regs_t;
+}_xd12_otp_ctrl_regs_t;
 
-static const char* xdr12_regs_str[XD12R_MAX] =
+static const char* xd12_regs_str[XD12R_MAX] =
 {
     "RST & ID",
     "LD CONTROL",
@@ -823,7 +823,7 @@ static const char* xdr12_regs_str[XD12R_MAX] =
     "CLOCK GATE EN",
 };
 
-static const char* xdr12_otp_ctrl_regs_str[XD12R_OTP_MAX] =
+static const char* xd12_otp_ctrl_regs_str[XD12R_OTP_MAX] =
 {
     "OTP_ACCESS_B15_B12",
     "OTP_ACCESS_B11_B0,",
@@ -872,7 +872,7 @@ typedef enum _xd12r_mirror_addr_
     XD12R_MIRROR_MAX,
 }xd12_mirror_addr_t;
 /* MIRROR1 (0x00) : default 0x000 */
-typedef union tag_XDR12_MIRROR1
+typedef union tag_XD12_MIRROR1
 {
     uint16_t ALL;
     struct
@@ -880,10 +880,10 @@ typedef union tag_XDR12_MIRROR1
         uint16_t otp_crc_checksum   :  8;
         uint16_t                    :  8;
     }bit;
-}_v_xdr12_mirror1_t;
+}_v_xd12_mirror1_t;
 
 /* MIRROR2 (0x01) : default 0x210 */
-typedef union tag_XDR12_MIRROR2
+typedef union tag_XD12_MIRROR2
 {
     uint16_t ALL;
     struct
@@ -892,10 +892,10 @@ typedef union tag_XDR12_MIRROR2
         uint16_t iref_ctl   :  5;
         uint16_t            :  6;
     }bit;
-}_v_xdr12_mirror2_t;
+}_v_xd12_mirror2_t;
 
 /* MIRROR3 (0x02) : default 0x810 */
-typedef union tag_XDR12_MIRROR3
+typedef union tag_XD12_MIRROR3
 {
     uint16_t ALL;
     struct
@@ -905,10 +905,10 @@ typedef union tag_XDR12_MIRROR3
         uint16_t ldo_dac_ctl    :  5;
         uint16_t                :  4;
     }bit;
-}_v_xdr12_mirror3_t;
+}_v_xd12_mirror3_t;
 
 /* OFS_CHx (0x03 ~ 0x0F) : default 0x080 */
-typedef union tag_XDR12_OFS_CHx
+typedef union tag_XD12_OFS_CHx
 {
     uint16_t ALL;
     struct
@@ -916,10 +916,10 @@ typedef union tag_XDR12_OFS_CHx
         uint16_t ofs_chx    :  9;
         uint16_t            :  7;
     }bit;
-}_v_xdr12_ofs_chx_t;
+}_v_xd12_ofs_chx_t;
 
 /* GAIN_CHx (0x10 ~ 0x1B) : default 0x0$0 */
-typedef union tag_XDR12_GAIN_CHx
+typedef union tag_XD12_GAIN_CHx
 {
     uint16_t ALL;
     struct
@@ -927,10 +927,10 @@ typedef union tag_XDR12_GAIN_CHx
         uint16_t gain_chx   :  7;
         uint16_t            :  9;
     }bit;
-}_v_xdr12_gain_chx_t;
+}_v_xd12_gain_chx_t;
 
 /* VERSION0 (0x1C) : default 0x000 */
-typedef union tag_XDR12_VERSION0
+typedef union tag_XD12_VERSION0
 {
     uint16_t ALL;
     struct
@@ -938,10 +938,10 @@ typedef union tag_XDR12_VERSION0
         uint16_t version0   : 12;
         uint16_t            :  4;
     }bit;
-}_v_xdr12_version0_t;
+}_v_xd12_version0_t;
 
 /* VERSION1 (0x1D) : default 0x000 */
-typedef union tag_XDR12_VERSION1
+typedef union tag_XD12_VERSION1
 {
     uint16_t ALL;
     struct
@@ -949,46 +949,46 @@ typedef union tag_XDR12_VERSION1
         uint16_t version1   : 12;
         uint16_t            :  4;
     }bit;
-}_v_xdr12_version1_t;
+}_v_xd12_version1_t;
 
-typedef union _xdr12_mirror_regs
+typedef union _xd12_mirror_regs
 {
     uint16_t ALL[XD12R_MIRROR_MAX];
     struct
     {
-        _v_xdr12_mirror1_t      _r00;
-        _v_xdr12_mirror2_t      _r01;
-        _v_xdr12_mirror3_t      _r02;
-        _v_xdr12_ofs_chx_t      _r03;
-        _v_xdr12_ofs_chx_t      _r04;
-        _v_xdr12_ofs_chx_t      _r05;
-        _v_xdr12_ofs_chx_t      _r06;
-        _v_xdr12_ofs_chx_t      _r07;
-        _v_xdr12_ofs_chx_t      _r08;
-        _v_xdr12_ofs_chx_t      _r09;
-        _v_xdr12_ofs_chx_t      _r0A;
-        _v_xdr12_ofs_chx_t      _r0B;
-        _v_xdr12_ofs_chx_t      _r0C;
-        _v_xdr12_ofs_chx_t      _r0D;
-        _v_xdr12_ofs_chx_t      _r0E;
-        _v_xdr12_ofs_chx_t      _r0F;
+        _v_xd12_mirror1_t      _r00;
+        _v_xd12_mirror2_t      _r01;
+        _v_xd12_mirror3_t      _r02;
+        _v_xd12_ofs_chx_t      _r03;
+        _v_xd12_ofs_chx_t      _r04;
+        _v_xd12_ofs_chx_t      _r05;
+        _v_xd12_ofs_chx_t      _r06;
+        _v_xd12_ofs_chx_t      _r07;
+        _v_xd12_ofs_chx_t      _r08;
+        _v_xd12_ofs_chx_t      _r09;
+        _v_xd12_ofs_chx_t      _r0A;
+        _v_xd12_ofs_chx_t      _r0B;
+        _v_xd12_ofs_chx_t      _r0C;
+        _v_xd12_ofs_chx_t      _r0D;
+        _v_xd12_ofs_chx_t      _r0E;
+        _v_xd12_ofs_chx_t      _r0F;
 
-        _v_xdr12_gain_chx_t     _r10;
-        _v_xdr12_gain_chx_t     _r11;
-        _v_xdr12_gain_chx_t     _r12;
-        _v_xdr12_gain_chx_t     _r13;
-        _v_xdr12_gain_chx_t     _r14;
-        _v_xdr12_gain_chx_t     _r15;
-        _v_xdr12_gain_chx_t     _r16;
-        _v_xdr12_gain_chx_t     _r17;
-        _v_xdr12_gain_chx_t     _r18;
-        _v_xdr12_gain_chx_t     _r19;
-        _v_xdr12_gain_chx_t     _r1A;
-        _v_xdr12_gain_chx_t     _r1B;
-        _v_xdr12_version0_t     _r1C;
-        _v_xdr12_version1_t     _r1D;
+        _v_xd12_gain_chx_t     _r10;
+        _v_xd12_gain_chx_t     _r11;
+        _v_xd12_gain_chx_t     _r12;
+        _v_xd12_gain_chx_t     _r13;
+        _v_xd12_gain_chx_t     _r14;
+        _v_xd12_gain_chx_t     _r15;
+        _v_xd12_gain_chx_t     _r16;
+        _v_xd12_gain_chx_t     _r17;
+        _v_xd12_gain_chx_t     _r18;
+        _v_xd12_gain_chx_t     _r19;
+        _v_xd12_gain_chx_t     _r1A;
+        _v_xd12_gain_chx_t     _r1B;
+        _v_xd12_version0_t     _r1C;
+        _v_xd12_version1_t     _r1D;
     }reg;
-}_xdr12_mirror_regs_t;
+}_xd12_mirror_regs_t;
 
 #ifdef __cplusplus
 }

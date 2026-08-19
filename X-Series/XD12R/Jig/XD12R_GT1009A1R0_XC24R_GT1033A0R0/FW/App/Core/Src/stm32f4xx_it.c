@@ -24,8 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include "drv_gpio.h"
 #include "drv_timer.h"
-#include "drv_xdr12.h"
-#include "drv_xcr24.h"
+#include "drv_xd12.h"
+#include "drv_xc24.h"
 
 #include "comm_debugging.h"
 #include "framework.h"
@@ -337,14 +337,14 @@ void EXTI15_10_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_10);
     /* USER CODE BEGIN LL_EXTI_LINE_10 */
-    xcr24_nINT_FT_handler();
+    xc24_nINT_FT_handler();
     /* USER CODE END LL_EXTI_LINE_10 */
   }
   if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_13) != RESET)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
     /* USER CODE BEGIN LL_EXTI_LINE_13 */
-    xcr24_nINT_LD_handler();
+    xc24_nINT_LD_handler();
     /* USER CODE END LL_EXTI_LINE_13 */
   }
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
@@ -428,9 +428,9 @@ void DMA2_Stream3_IRQHandler(void)
 
       while(LL_SPI_IsActiveFlag_BSY(SPI1) == SET) { };
       user_delay(2U);
-      XCR_NSS_HI();
+      XC_NSS_HI();
 
-      gb_xcr_ld_transfer_spi_dma_flag = false;
+      gb_xc_ld_transfer_spi_dma_flag = false;
   }
   else if(LL_DMA_IsActiveFlag_TE3(DMA2) == 1)
   {

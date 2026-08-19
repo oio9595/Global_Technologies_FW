@@ -9,8 +9,8 @@ struct manager *__managers[NUMBER_OF_MGRS]=
 {
     &__app_mgr,     /* APP */
     &__det_mgr,     /* DETECTORS (BTN, External IO, ...) */
-    &__trim_mgr,    /* TRIM for XCR/XDR */
-    &__test_mgr,    /* TEST for XCR/XDR */
+    &__trim_mgr,    /* TRIM for XC/XD */
+    &__test_mgr,    /* TEST for XC/XD */
 };
 
 void fw_run(void)

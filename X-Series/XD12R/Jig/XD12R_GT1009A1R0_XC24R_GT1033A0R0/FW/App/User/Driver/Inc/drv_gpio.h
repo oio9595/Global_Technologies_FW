@@ -62,8 +62,8 @@ typedef enum tag_CURRENT_GAIN_T
     GAIN_MAX,
 } current_gain_t;
 
-#define XCR_NSS_LO()            (XCR_NSS_GPIO_Port->BSRR = (XCR_NSS_Pin << 16U))
-#define XCR_NSS_HI()            (XCR_NSS_GPIO_Port->BSRR = (XCR_NSS_Pin <<  0U))
+#define XC_NSS_LO()             (XCR_NSS_GPIO_Port->BSRR = (XCR_NSS_Pin << 16U))
+#define XC_NSS_HI()             (XCR_NSS_GPIO_Port->BSRR = (XCR_NSS_Pin <<  0U))
 
 #define ADS_CS_LO()             (ADC_NSS_GPIO_Port->BSRR = (ADC_NSS_Pin << 16U))
 #define ADS_CS_HI()             (ADC_NSS_GPIO_Port->BSRR = (ADC_NSS_Pin <<  0U))

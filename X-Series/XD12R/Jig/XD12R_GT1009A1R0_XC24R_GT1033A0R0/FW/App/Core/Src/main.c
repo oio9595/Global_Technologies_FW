@@ -25,8 +25,8 @@
 #include <string.h>
 
 #include "drv_gpio.h"
-#include "drv_xcr24.h"
-#include "drv_xdr12.h"
+#include "drv_xc24.h"
+#include "drv_xd12.h"
 #include "drv_timer.h"
 
 #include "drv_ads124s08.h"
@@ -107,28 +107,28 @@ void sys_init(void)
     /* Set the Autoreload value */
     LL_TIM_SetAutoReload(TIM1, (uint32_t)TIM1_PERIOD);
 
-    XCR_NSS_LO();
+    XC_NSS_LO();
     MCO2_DISABLE();
 
     gpio_set_demux_channel_selection(XD_CH_MAX);
 
-    xcr24_init_param();
-    xdr12_init_param();
+    xc24_init_param();
+    xd12_init_param();
 
-#if (XDR_EFUSE == XDR_EFUSE_SKIP)
-    xdr12_trim_set_efuse_enable(false);
-#elif (XDR_EFUSE == XDR_EFUSE_BURN)
-    xdr12_trim_set_efuse_enable(true);
+#if (XD_EFUSE == XD_EFUSE_SKIP)
+    xd12_trim_set_efuse_enable(false);
+#elif (XD_EFUSE == XD_EFUSE_BURN)
+    xd12_trim_set_efuse_enable(true);
 #else
-    #error "XDR_EFUSE is not defined"
+    #error "XD_EFUSE is not defined"
 #endif
 
-#if (XCR_EFUSE == XCR_EFUSE_SKIP)
-    xcr24_trim_set_efuse_enable(false);
-#elif (XCR_EFUSE == XCR_EFUSE_BURN)
-    xcr24_trim_set_efuse_enable(true);
+#if (XC_EFUSE == XC_EFUSE_SKIP)
+    xc24_trim_set_efuse_enable(false);
+#elif (XC_EFUSE == XC_EFUSE_BURN)
+    xc24_trim_set_efuse_enable(true);
 #else
-    #error "XCR_EFUSE is not defined"
+    #error "XC_EFUSE is not defined"
 #endif
     LL_TIM_DisableARRPreload(TIM3);
     LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);

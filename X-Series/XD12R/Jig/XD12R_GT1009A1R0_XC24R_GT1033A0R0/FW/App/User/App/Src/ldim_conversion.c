@@ -1,10 +1,10 @@
 #include "crc.h"
-#include "drv_xcr24.h"
+#include "drv_xc24.h"
 #include "ldim_conversion.h"
 #include "comm_debugging.h"
 
-#define XDR_LDIM_BURST_SIZE     (XDR_DAISY_LENGTH * XDR_LD_SIZE * XCR_CH_SIZE)
-#define XCR_LDIM_BURST_SIZE     (1U + XDR_LDIM_BURST_SIZE + 1U)  /* HDR + Payload + crc16 */
+#define XD_LDIM_BURST_SIZE     (XD_DAISY_LENGTH * XD_LD_SIZE * XC_CH_SIZE)
+#define XC_LDIM_BURST_SIZE     (1U + XD_LDIM_BURST_SIZE + 1U)  /* HDR + Payload + crc16 */
 
 typedef enum tag_BLOCK_TBL
 {
@@ -16,35 +16,35 @@ typedef enum tag_BLOCK_TBL
 
 typedef union tag_LD_BUFFER
 {
-    uint16_t buffer[(XDR_DAISY_LENGTH * XDR_LD_SIZE * XCR_CH_SIZE)];
+    uint16_t buffer[(XD_DAISY_LENGTH * XD_LD_SIZE * XC_CH_SIZE)];
     struct
     {
-        uint16_t data16[XDR_DAISY_LENGTH][XDR_LD_SIZE][XCR_CH_SIZE];
+        uint16_t data16[XD_DAISY_LENGTH][XD_LD_SIZE][XC_CH_SIZE];
     };
 } ld_buffer_t;
 
-typedef union tag_XCR_LD_TRANSFER
+typedef union tag_XC_LD_TRANSFER
 {
-    uint16_t buffer[XCR_LDIM_BURST_SIZE];
+    uint16_t buffer[XC_LDIM_BURST_SIZE];
     struct
     {
         _cmd_t      cmd;
         ld_buffer_t ld_buffer;
         uint16_t    crc16;
     };
-} xcr_ld_transfer_t;
+} xc_ld_transfer_t;
 
 static uint8_t gn_block_map[LDIM_BLK_SIZE][BLK_TBL_MAX]; /* { xd_daisy, ld_order_max, xc_ch } */
 
-static xcr_ld_transfer_t gt_xcr_ld_transfer_table;
+static xc_ld_transfer_t gt_xc_ld_transfer_table;
 static block_color_t gt_block_color_buffer[LDIM_BLK_SIZE];
 
 void ldim_block_map_init(void)
 {
     for (uint16_t blk = 0U; blk < LDIM_BLK_SIZE; ++blk)
     {
-        const uint8_t blk_size_per_xc_ch = (XDR_DAISY_LENGTH * (BLOCK_PER_XDR));
-        const uint8_t blk_size_per_xd = BLOCK_PER_XDR;
+        const uint8_t blk_size_per_xc_ch = (XD_DAISY_LENGTH * (BLOCK_PER_XD));
+        const uint8_t blk_size_per_xd = BLOCK_PER_XD;
 
         gn_block_map[blk][BLK_TBL_XD_DAISY] = (blk % blk_size_per_xc_ch) / blk_size_per_xd; /* xd_daisy */
         gn_block_map[blk][BLK_TBL_LD_ORDER] = ((blk % blk_size_per_xd) + 1U) * COLOR_ORDER_MAX; /* ld_order_max */
@@ -104,7 +104,7 @@ void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green,
         [COLOR_BLUE]  = blue
     };
 
-    uint16_t (*p_ld_buffer)[XCR_CH_SIZE] = gt_xcr_ld_transfer_table.ld_buffer.data16[xd_daisy];
+    uint16_t (*p_ld_buffer)[XC_CH_SIZE] = gt_xc_ld_transfer_table.ld_buffer.data16[xd_daisy];
     for (uint8_t ld_order = (ld_order_max - LED_PER_BLOCK); ld_order < ld_order_max; ++ld_order)
     {
         uint8_t color_index = ld_order % COLOR_ORDER_MAX;
@@ -113,30 +113,30 @@ void ldim_conversion_block_to_ldim(uint16_t block, uint16_t red, uint16_t green,
 
     if((LDIM_BLK_SIZE - 1U) == block)
     {
-        gt_xcr_ld_transfer_table.cmd.bit.code = CMD_CODE3;
-        gt_xcr_ld_transfer_table.cmd.bit.addr = 0U;
-        gt_xcr_ld_transfer_table.cmd.bit.size = XDR_LDIM_BURST_SIZE;
-        gt_xcr_ld_transfer_table.crc16 = Calculate_CRC16_CCITT_False(gt_xcr_ld_transfer_table.buffer, (XCR_LDIM_BURST_SIZE - 1U));
+        gt_xc_ld_transfer_table.cmd.bit.code = CMD_CODE3;
+        gt_xc_ld_transfer_table.cmd.bit.addr = 0U;
+        gt_xc_ld_transfer_table.cmd.bit.size = XD_LDIM_BURST_SIZE;
+        gt_xc_ld_transfer_table.crc16 = Calculate_CRC16_CCITT_False(gt_xc_ld_transfer_table.buffer, (XC_LDIM_BURST_SIZE - 1U));
     }
 }
 
-uint16_t* ldim_get_xcr_ld_transfer_buffer(void)
+uint16_t* ldim_get_xc_ld_transfer_buffer(void)
 {
-    return gt_xcr_ld_transfer_table.buffer;
+    return gt_xc_ld_transfer_table.buffer;
 }
 
-uint16_t ldim_get_xcr_ld_transfer_size(void)
+uint16_t ldim_get_xc_ld_transfer_size(void)
 {
-    //return XCR_LDIM_BURST_SIZE;
-    return (XCR_LDIM_BURST_SIZE - 1U); // except CRC
+    //return XC_LDIM_BURST_SIZE;
+    return (XC_LDIM_BURST_SIZE - 1U); // except CRC
 }
 
-uint16_t* ldim_get_xdr_ld_transfer_buffer(void)
+uint16_t* ldim_get_xd_ld_transfer_buffer(void)
 {
-    return gt_xcr_ld_transfer_table.ld_buffer.buffer;
+    return gt_xc_ld_transfer_table.ld_buffer.buffer;
 }
 
-uint16_t ldim_get_xdr_ld_transfer_size(void)
+uint16_t ldim_get_xd_ld_transfer_size(void)
 {
-    return XDR_LDIM_BURST_SIZE;
+    return XD_LDIM_BURST_SIZE;
 }

@@ -7,7 +7,7 @@
 #define XC_MODEL_TYPE       (XC_TYPE_XC24R)
 #define XC_REVISION         (XC_REVISION_ES)  /* ES: Engineering Sample, CS: Customer Sample */
 
-#if (XC_MODEL_TYPE == XC_TYPE_XC24R)    /* XCR24 for VD */
+#if (XC_MODEL_TYPE == XC_TYPE_XC24R)    /* XC24 for VD */
     #if (XC_REVISION == XC_REVISION_ES)
         #include "xc24r_es_struct.h"
     #elif (XC_REVISION == XC_REVISION_CS)

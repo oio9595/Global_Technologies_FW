@@ -43,28 +43,28 @@
 #define Command_Param_is_(a, b, ...) (sscanf(str_in, a b, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
 #define Command_is_(x) (strncmp(str_in, x, strlen(x)) == 0)
 
-#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-    #define MSG_XDR_CTL "XDR Controlled By MCU"
-#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-    #define MSG_XDR_CTL "XDR Controlled By XCR"
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
+    #define MSG_XD_CTL "XD Controlled By MCU"
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+    #define MSG_XD_CTL "XD Controlled By XC"
 #else
-    #error "XDR_CONTROL_TYPE is not defined"
+    #error "XD_CONTROL_TYPE is not defined"
 #endif
 
-#if (XDR_EFUSE == XDR_EFUSE_SKIP)
-    #define MSG_XDR_EFUSE "XDR EFUSE SKIP"
-#elif (XDR_EFUSE == XDR_EFUSE_BURN)
-    #define MSG_XDR_EFUSE "XDR EFUSE BURN"
+#if (XD_EFUSE == XD_EFUSE_SKIP)
+    #define MSG_XD_EFUSE "XD EFUSE SKIP"
+#elif (XD_EFUSE == XD_EFUSE_BURN)
+    #define MSG_XD_EFUSE "XD EFUSE BURN"
 #else
-    #error "XDR_EFUSE is not defined"
+    #error "XD_EFUSE is not defined"
 #endif
 
-#if (XCR_EFUSE == XCR_EFUSE_SKIP)
-    #define MSG_XCR_EFUSE "XCR EFUSE SKIP"
-#elif (XCR_EFUSE == XCR_EFUSE_BURN)
-    #define MSG_XCR_EFUSE "XCR EFUSE BURN"
+#if (XC_EFUSE == XC_EFUSE_SKIP)
+    #define MSG_XC_EFUSE "XC EFUSE SKIP"
+#elif (XC_EFUSE == XC_EFUSE_BURN)
+    #define MSG_XC_EFUSE "XC EFUSE BURN"
 #else
-    #error "XCR_EFUSE is not defined"
+    #error "XC_EFUSE is not defined"
 #endif
 
 typedef struct
@@ -161,39 +161,39 @@ __STATIC_INLINE void comm_print_help(void)
     comm_UART_Printf(LOG_LV_INFO, "\r\n  vsync_start / stop      : Start/Stop VSYNC output");
     comm_UART_Printf(LOG_LV_INFO, "\r\n  vsync_freq [u]          : Set VSYNC output frequency");
 
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_trim_start          : Run XCR Trim Manager");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_trim_start / 1      : Run XDR Trim Manager");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_test_start          : Run XCR Test Manager");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_test_start          : Run XDR Test Manager");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xcr_sweep_start         : Run XCR Sweep Test");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_sweep_start         : Run XDR Sweep Test");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  launch                  : Launch system (VDD ON + XDR Init + LDIM + VSYNC)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_trim_start          : Run XC Trim Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_trim_start / 1      : Run XD Trim Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_test_start          : Run XC Test Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_test_start          : Run XD Test Manager");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_sweep_start         : Run XC Sweep Test");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_sweep_start         : Run XD Sweep Test");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  launch                  : Launch system (VDD ON + XD Init + LDIM + VSYNC)");
 
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_icc                  : Read XCR Standby ICC via ADS114S08");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_debug                : Power ON & Init XCR24");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_trim_debug           : Power ON & Init XCR24 Trim");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_w [hex_addr] [val]: Write XCR24 Group 1 Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_r [hex_addr]      : Read XCR24 Group 1 Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_w [hex_addr] [val]: Write XCR24 Group 2 Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_r [hex_addr]      : Read XCR24 Group 2 Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_wt [hex_addr] [val]  : Write XCR24 OTP Control Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_rt [hex_addr]        : Read XCR24 OTP Control Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_test                 : Init XCR24 Test Mode & Start VSYNC");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_r_all                : Read all XCR24 registers");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_fll [idx] [cnt]      : Set XCR24 FLL count (idx < 3)");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_icc                  : Read XC Standby ICC via ADS114S08");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_debug                : Power ON & Init XC24");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_trim_debug           : Power ON & Init XC24 Trim");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_w [hex_addr] [val]: Write XC24 Group 1 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g1_r [hex_addr]      : Read XC24 Group 1 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_w [hex_addr] [val]: Write XC24 Group 2 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_g2_r [hex_addr]      : Read XC24 Group 2 Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_wt [hex_addr] [val]  : Write XC24 OTP Control Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_rt [hex_addr]        : Read XC24 OTP Control Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_test                 : Init XC24 Test Mode & Start VSYNC");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_r_all                : Read all XC24 registers");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xc_fll [idx] [cnt]      : Set XC24 FLL count (idx < 3)");
 
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_icc                  : Read XDR Standby ICC via ADS114S08");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_reset                : Reset XDR12");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_idgen                : Send IDGEN command to XDR12");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_syncgen              : Send SYNCGEN command to XDR12");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_debug                : Power ON & Init XDR12");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_trim_debug           : Power ON & Init XDR12 Trim");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_w [hex_addr] [val]   : Write XDR12 General Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r [hex_addr]         : Read XDR12 General Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_wt [hex_addr] [val]  : Write XDR12 Mirror Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_rt [hex_addr]        : Read XDR12 Mirror Register");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r_all                : Read all XDR12 registers");
-    comm_UART_Printf(LOG_LV_INFO, "\r\n  xdr_ldim                : Run XDR12 Local Dimming Transfer");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_icc                  : Read XD Standby ICC via ADS114S08");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_reset                : Reset XD12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_idgen                : Send IDGEN command to XD12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_syncgen              : Send SYNCGEN command to XD12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_debug                : Power ON & Init XD12");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_trim_debug           : Power ON & Init XD12 Trim");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_w [hex_addr] [val]   : Write XD12 General Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r [hex_addr]         : Read XD12 General Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_wt [hex_addr] [val]  : Write XD12 Mirror Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_rt [hex_addr]        : Read XD12 Mirror Register");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_r_all                : Read all XD12 registers");
+    comm_UART_Printf(LOG_LV_INFO, "\r\n  xd_ldim                : Run XD12 Local Dimming Transfer");
 
     comm_UART_Printf(LOG_LV_INFO, "\r\n  step [idx] [r] [g] [b]  : Set specific/all LED color (idx 0=All)");
     comm_UART_Printf(LOG_LV_INFO, "\r\n  step [idx] [val]        : Set specific/all LED grayscale");
@@ -224,15 +224,15 @@ static void comm_set_log_lv(LOG_LV_t log_lv)
 static void comm_print_startup(void)
 {
     comm_UART_Printf(LOG_LV_INFO, "\n\r--------------------------------------");
-    comm_UART_Printf(LOG_LV_INFO, "\n\r    [JIG for GT-XCR&XDR]");
+    comm_UART_Printf(LOG_LV_INFO, "\n\r    [JIG for GT-XC&XD]");
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Author  : xxx@glbltech.com");
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Build   : %s", __DATE__);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Version : %u.%u.%u", FW_MAJOR, FW_MINOR, FW_BUILD);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - GIT Rev : %s", FW_GIT_REV);
     comm_UART_Printf(LOG_LV_INFO, "\n\r - Model   : %s, %s", XC_MODEL_NAME, XD_MODEL_NAME);
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_CTL);
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XDR_EFUSE);
-    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XCR_EFUSE);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XD_CTL);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XD_EFUSE);
+    comm_UART_Printf(LOG_LV_INFO, "\n\r - %s", MSG_XC_EFUSE);
     comm_UART_Printf(LOG_LV_INFO, "\n\r--------------------------------------\r\n");
     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
 }
@@ -278,15 +278,15 @@ void comm_debugging_process(void)
         else if (Command_is_("jig_ic_stop"))
         {
             float freq = mcu_peripheral_tim_conversion_freq();
-            comm_UART_Printf(LOG_LV_INFO, "\r\nTimer input capture freq: %.3f MHz   (MCU : %.3f Hz)", (double)((freq) * XDR_CONST_OSC), (double)freq);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nTimer input capture freq: %.3f MHz   (MCU : %.3f Hz)", (double)((freq) * XD_CONST_OSC), (double)freq);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("jig_xc_dac", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] <= 4095U)
             {
-                xcr24_trim_init_dac1_ofs();
-                xcr24_test_set_curr_tgt_dac(1000U);
+                xc24_trim_init_dac1_ofs();
+                xc24_test_set_curr_tgt_dac(1000U);
 
                 for (uint8_t ch = 0U; ch < 3U; ++ch)
                 {
@@ -301,7 +301,7 @@ void comm_debugging_process(void)
                         uint16_t adc = ADS114S08_Get_ADC_Value();
                         dac[ch] = JigBD_IF_Convert_Adc_To_Voltage(adc);
                     };
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR DAC CH%d : %.3f", ch + 1U, (double)dac[ch]);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC DAC CH%d : %.3f", ch + 1U, (double)dac[ch]);
                 }
             }
             else
@@ -347,56 +347,56 @@ void comm_debugging_process(void)
         }
 
         /************* thread start **************/
-        else if(!(strcmp(str_in, "xcr_trim_start")))
+        else if(!(strcmp(str_in, "xc_trim_start")))
         {
-            MGR_TRIM()->cmd(TRIM_CMD_XCR_START, NULL);
+            MGR_TRIM()->cmd(TRIM_CMD_XC_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_trim_start")))
+        else if(!(strcmp(str_in, "xd_trim_start")))
         {
-            MGR_TRIM()->cmd(TRIM_CMD_XDR_START, NULL);
+            MGR_TRIM()->cmd(TRIM_CMD_XD_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xcr_test_start")))
+        else if(!(strcmp(str_in, "xc_test_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XCR_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XC_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_test_start")))
+        else if(!(strcmp(str_in, "xd_test_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XDR_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XD_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xcr_sweep_start")))
+        else if(!(strcmp(str_in, "xc_sweep_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XCR_SWEEP_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XC_SWEEP_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(!(strcmp(str_in, "xdr_sweep_start")))
+        else if(!(strcmp(str_in, "xd_sweep_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XDR_SWEEP_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XD_SWEEP_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 #if 0
-        else if(!(strcmp(str_in, "xcr_aging_start")))
+        else if(!(strcmp(str_in, "xc_aging_start")))
         {
-            MGR_TEST()->cmd(TEST_CMD_XCR_AGING_START, NULL);
+            MGR_TEST()->cmd(TEST_CMD_XC_AGING_START, NULL);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 #endif
-        else if(Command_Param_is_("xdr_aging_start", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        else if(Command_Param_is_("xd_aging_start", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
         {
             if (((u32_recv_param[0] % 4U) == 0) && ((u32_recv_param[0] / 4U) <= 16U) && (u32_recv_param[1] <= 4095U)) // 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64
             {
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDR Aging Start, Max Current Level : %u, Max Current Vref : %u, Ideal Iout : %.3f", u32_recv_param[0], u32_recv_param[1], (((double)(u32_recv_param[0] * u32_recv_param[1])) / 4095.0f));
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXD Aging Start, Max Current Level : %u, Max Current Vref : %u, Ideal Iout : %.3f", u32_recv_param[0], u32_recv_param[1], (((double)(u32_recv_param[0] * u32_recv_param[1])) / 4095.0f));
 
-                uint16_t xdr_max_curr_lvl = ((((uint16_t)u32_recv_param[0]) / 4U) - 1U);
-                uint16_t xdr_max_curr_vref = (uint16_t)u32_recv_param[1];
+                uint16_t xd_max_curr_lvl = ((((uint16_t)u32_recv_param[0]) / 4U) - 1U);
+                uint16_t xd_max_curr_vref = (uint16_t)u32_recv_param[1];
 
-                MGR_TEST()->cmd(TEST_CMD_XDR_AGING_START, NULL);
+                MGR_TEST()->cmd(TEST_CMD_XD_AGING_START, NULL);
 
-                MGR_TEST()->write(0U, &xdr_max_curr_lvl, sizeof(uint16_t));
-                MGR_TEST()->write(1U, &xdr_max_curr_vref, sizeof(uint16_t));
+                MGR_TEST()->write(0U, &xd_max_curr_lvl, sizeof(uint16_t));
+                MGR_TEST()->write(1U, &xd_max_curr_vref, sizeof(uint16_t));
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
             else
@@ -412,7 +412,7 @@ void comm_debugging_process(void)
         {
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xdr12_init();
+            xd12_init();
             LL_mDelay(9U);
 
             ldim_set_block_color_buffer(LDIM_BLK_INDEX_ALL, 100U, 100U, 100U);
@@ -420,36 +420,36 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        /*************** XCR24 *******************/
+        /*************** XC24 *******************/
         else if(!(strcmp(str_in, "xc_icc")))
         {
-            xcr24_test_init_icc_stby();
+            xc24_test_init_icc_stby();
             ADS114S08_Set_Start(true);
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC_XC(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxcr icc : %.3fmA", (double)(icc));
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxc icc : %.3fmA", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_reset")))
         {
-            xcr24_reset();
+            xc24_reset();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_debug")))
         {
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xcr24_init();
+            xc24_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_trim_debug")))
         {
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xcr24_trim_init();
+            xc24_trim_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xc_g1_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
@@ -457,15 +457,15 @@ void comm_debugging_process(void)
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
 
-            if (addr < XCR_GRP1_MAX)
+            if (addr < XC_GRP1_MAX)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_write_info(addr, param, XCR_RW_GRP1);
+                    tim_set_xc_write_info(addr, param, XC_RW_GRP1);
                 }
                 else
                 {
-                    xcr24_write_grp1_reg(addr, &param, 1U);
+                    xc24_write_grp1_reg(addr, &param, 1U);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
@@ -478,16 +478,16 @@ void comm_debugging_process(void)
         else if(Command_Param_is_("xc_g1_r", "%x", &u32_recv_param[0]))
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
-            if (addr < XCR_GRP1_MAX)
+            if (addr < XC_GRP1_MAX)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP1);
+                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XC_RW_GRP1);
                 }
                 else
                 {
-                    uint16_t xcr = xcr24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
+                    uint16_t xc = xc24_read_grp1_reg((uint16_t)u32_recv_param[0], 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xc);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
             }
@@ -500,15 +500,15 @@ void comm_debugging_process(void)
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-            if (addr < XCR_GRP2_MAX)
+            if (addr < XC_GRP2_MAX)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_write_info(addr, param, XCR_RW_GRP2);
+                    tim_set_xc_write_info(addr, param, XC_RW_GRP2);
                 }
                 else
                 {
-                    xcr24_write_grp2_reg(addr, &param, 1U);
+                    xc24_write_grp2_reg(addr, &param, 1U);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
@@ -521,16 +521,16 @@ void comm_debugging_process(void)
         else if(Command_Param_is_("xc_g2_r", "%x", &u32_recv_param[0]))
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
-            if (addr < XCR_GRP2_MAX)
+            if (addr < XC_GRP2_MAX)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP2);
+                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XC_RW_GRP2);
                 }
                 else
                 {
-                    uint16_t xcr = xcr24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
+                    uint16_t xc = xc24_read_grp2_reg((uint16_t)u32_recv_param[0], 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xc);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
             }
@@ -543,116 +543,116 @@ void comm_debugging_process(void)
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
             uint16_t param = (uint16_t)u32_recv_param[1];
-            if (addr >= XCR_OTP_BASE_ADDR)
+            if (addr >= XC_OTP_BASE_ADDR)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_write_info(addr, param, XCR_RW_GRP1);
+                    tim_set_xc_write_info(addr, param, XC_RW_GRP1);
                 }
                 else
                 {
-                    xcr24_write_otp_control(addr - XCR_OTP_BASE_ADDR, &param, 1U);
+                    xc24_write_otp_control(addr - XC_OTP_BASE_ADDR, &param, 1U);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
             }
             else
             {
-                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR Write --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXC Write --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
         else if(Command_Param_is_("xc_rt", "%x", &u32_recv_param[0]))
         {
             uint16_t addr = (uint16_t)u32_recv_param[0];
-            if (addr >= XCR_OTP_BASE_ADDR)
+            if (addr >= XC_OTP_BASE_ADDR)
             {
                 if (true == tim_get_vsync_out_running_flag())
                 {
-                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XCR_RW_GRP1);
+                    tim_set_xc_read_info((uint16_t)u32_recv_param[0], XC_RW_GRP1);
                 }
                 else
                 {
-                    uint16_t xcr = xcr24_read_otp_control(addr - XCR_OTP_BASE_ADDR, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR OTP Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xcr);
+                    uint16_t xc = xc24_read_otp_control(addr - XC_OTP_BASE_ADDR, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Read --> [ 0x%02X - 0x%04X ]", u32_recv_param[0], xc);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
             }
             else
             {
-                comm_UART_Printf(LOG_LV_ERROR, "\r\nXCR OTP Read --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
+                comm_UART_Printf(LOG_LV_ERROR, "\r\nXC OTP Read --> [ 0x%02X ] is not OTP address", u32_recv_param[0]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
         else if(!(strcmp(str_in, "xc_svo")))
         {
-            uint16_t svo_on = xcr24_read_grp1_reg(XCR_SVO_ON, 1U);
-            uint16_t svo1_off = xcr24_read_grp1_reg(XCR_SVO1_OFF, 1U);
-            uint16_t svo2_off = xcr24_read_grp1_reg(XCR_SVO2_OFF, 1U);
-            uint16_t svo3_off = xcr24_read_grp1_reg(XCR_SVO3_OFF, 1U);
-            comm_UART_Printf(LOG_LV_INFO, "\r\nXCR SVO Read --> [ on:%u, off1:%u, off2:%u, off3:%u ]", svo_on, svo1_off, svo2_off, svo3_off);
+            uint16_t svo_on = xc24_read_grp1_reg(XC_SVO_ON, 1U);
+            uint16_t svo1_off = xc24_read_grp1_reg(XC_SVO1_OFF, 1U);
+            uint16_t svo2_off = xc24_read_grp1_reg(XC_SVO2_OFF, 1U);
+            uint16_t svo3_off = xc24_read_grp1_reg(XC_SVO3_OFF, 1U);
+            comm_UART_Printf(LOG_LV_INFO, "\r\nXC SVO Read --> [ on:%u, off1:%u, off2:%u, off3:%u ]", svo_on, svo1_off, svo2_off, svo3_off);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xc_test")))
         {
             gpio_set_xc_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xcr24_test();
+            xc24_test();
         }
         else if(!(strcmp(str_in, "xc_r_all")))
         {
-            xcr24_read_all();
+            xc24_read_all();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xc_fll", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
         {
             if (u32_recv_param[0] < 3)
             {
-                xcr24_set_fll_cnt((uint8_t)u32_recv_param[0], (uint32_t)u32_recv_param[1]);
+                xc24_set_fll_cnt((uint8_t)u32_recv_param[0], (uint32_t)u32_recv_param[1]);
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
-        /*************** XDR12 *******************/
+        /*************** XD12 *******************/
         else if(!(strcmp(str_in, "xd_icc")))
         {
-            xdr12_test_init_icc_stby();
+            xd12_test_init_icc_stby();
             ADS114S08_Set_Start(true);
             if (true == ADS114S08_Wait_Done())
             {
                 uint16_t adc = ADS114S08_Get_ADC_Value();
                 float icc = JigBD_IF_Convert_Adc_To_ICC_XD(adc);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nxdr icc : %.3fmA", (double)(icc));
+                comm_UART_Printf(LOG_LV_INFO, "\r\nxd icc : %.3fmA", (double)(icc));
             }
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_reset")))
         {
-            xdr12_reset();
+            xd12_reset();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_idgen")))
         {
-            xdr12_idgen();
+            xd12_idgen();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_syncgen")))
         {
-            xdr12_syncgen();
+            xd12_syncgen();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_debug")))
         {
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xdr12_init();
+            xd12_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(!(strcmp(str_in, "xd_trim_debug")))
         {
             gpio_set_xd_vdd_5v(VCC_ON_3V3);
             LL_mDelay(99U);
-            xdr12_trim_init();
+            xd12_trim_init();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xd_w", "%x %x", &u32_recv_param[0], &u32_recv_param[1]))
@@ -663,7 +663,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
+                xd12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_GENERAL);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
@@ -676,8 +676,8 @@ void comm_debugging_process(void)
             }
             else
             {
-                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xdr);
+                uint16_t xd = xd12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_GENERAL);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xd);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -689,7 +689,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
+                xd12_write_by_type((uint16_t)u32_recv_param[0], (uint16_t)u32_recv_param[1], XD12R_ADDR_TYPE_MIRROR);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -701,14 +701,14 @@ void comm_debugging_process(void)
             }
             else
             {
-                uint16_t xdr = xdr12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xdr);
+                uint16_t xd = xd12_read_by_type((uint16_t)u32_recv_param[0], XD12R_ADDR_TYPE_MIRROR);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Read --> [ 0x%02X - 0x%03X ]", u32_recv_param[0], xd);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
         else if(!(strcmp(str_in, "xd_r_all")))
         {
-            xdr12_read_all();
+            xd12_read_all();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
         else if(Command_Param_is_("xd_vref", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
@@ -720,7 +720,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_set_max_curr_vref((xd12r_setting_grp_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+                xd12_set_max_curr_vref((xd12r_setting_grp_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -733,7 +733,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_set_max_curr_lvl((xd12r_setting_grp_t)u32_recv_param[0], (max_curr_level_t)u32_recv_param[1]);
+                xd12_set_max_curr_lvl((xd12r_setting_grp_t)u32_recv_param[0], (max_curr_level_t)u32_recv_param[1]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -746,7 +746,7 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_set_fb_lvl((xd12r_setting_grp_t)u32_recv_param[0], (fb_level_t)u32_recv_param[1]);
+                xd12_set_fb_lvl((xd12r_setting_grp_t)u32_recv_param[0], (fb_level_t)u32_recv_param[1]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
@@ -759,13 +759,13 @@ void comm_debugging_process(void)
             }
             else
             {
-                xdr12_set_short_lvl((xd12r_setting_grp_t)u32_recv_param[0], (short_level_t)u32_recv_param[1]);
+                xd12_set_short_lvl((xd12r_setting_grp_t)u32_recv_param[0], (short_level_t)u32_recv_param[1]);
                 comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
             }
         }
         else if(!(strcmp(str_in, "xd_test")))
         {
-            xdr12_test();
+            xd12_test();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 

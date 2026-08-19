@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "drv_xdr12.h"
-#include "drv_xcr24.h"
+#include "drv_xd12.h"
+#include "drv_xc24.h"
 #include "comm_debugging.h"
 #include "ldim_conversion.h"
 
@@ -14,7 +14,7 @@
 #define SVSYNC_VSYNC_MASK_L_US  (4U)
 #define SVSYNC_GATING_TIME_US   (10U)
 #define SVSYNC_CYCLE            (2U)
-#define SVSYNC_SIZE             (XDR_SV_NO)
+#define SVSYNC_SIZE             (XD_SV_NO)
 #define SVSYNC_TOTAL_CYCLE      (SVSYNC_CYCLE * SVSYNC_SIZE)
 
 #define SVSYNC_RED_FREQ         (11520U)
@@ -60,7 +60,7 @@ static inline void tim_update_vsync_out_freq(void)
     uint32_t AutoReload = LL_TIM_GetAutoReload(TIM8);
     uint32_t Prescaler = LL_TIM_GetPrescaler(TIM8);
     gf_vsync_out_freq = (float)(APB2_TIM_CLK) / ((float)(AutoReload + 1U) * (float)(Prescaler + 1U));
-    xcr24_set_fll_cnt(0U, XCR_CONV_FREQ_TO_XCR_MCLK(gf_vsync_out_freq));
+    xc24_set_fll_cnt(0U, XC_CONV_FREQ_TO_XC_MCLK(gf_vsync_out_freq));
 }
 
 static inline void tim_update_svsync_out_freq(void)
@@ -195,28 +195,28 @@ void tim_vsync_out_handler(void)
 {
     if (gb_vsync_out_for_test == true)
     {
-#if (XDR_SYNC_MODE == XDR_SYNC_MODE_CMD)
-        xdr12_syncgen();
-#elif (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
+#if (XD_SYNC_MODE == XD_SYNC_MODE_CMD)
+        xd12_syncgen();
+#elif (XD_SYNC_MODE == XD_SYNC_MODE_SVI)
         tim_svsync_timer_start();
 #else
-        #error "XDR_SYNC_MODE is not defined"
+        #error "XD_SYNC_MODE is not defined"
 #endif
     }
     else
     {
-#if (XDR_CONTROL_TYPE == XDR_CONTROLLED_MCU)
-    #if (XDR_SYNC_MODE == XDR_SYNC_MODE_CMD)
-        xdr12_syncgen();
-    #elif (XDR_SYNC_MODE == XDR_SYNC_MODE_SVI)
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
+    #if (XD_SYNC_MODE == XD_SYNC_MODE_CMD)
+        xd12_syncgen();
+    #elif (XD_SYNC_MODE == XD_SYNC_MODE_SVI)
     #else
-        #error "XDR_SYNC_MODE is not defined"
+        #error "XD_SYNC_MODE is not defined"
     #endif
         tim_svsync_timer_start();
-#elif (XDR_CONTROL_TYPE == XDR_CONTROLLED_XCR)
-        // no need to do anything for XCR controlled mode
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC)
+        // no need to do anything for XC controlled mode
 #else
-        #error "XDR_CONTROL_TYPE is not defined"
+        #error "XD_CONTROL_TYPE is not defined"
 #endif
         gb_vsync_out_flag = true;
     }
@@ -247,7 +247,7 @@ void tim_vsync_out_process(void)
         ++gn_ldim_blk_xform_idx;
         if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
         {
-            xdr12_ld_transfer();
+            xd12_ld_transfer();
             gb_ldim_blk_xform_flag = false;
             gn_ldim_blk_xform_idx = 0U;
             gb_xd_xc_rw_flag = true;
@@ -265,7 +265,7 @@ void tim_vsync_out_process(void)
 
     if (true == gb_fault_read_flag)
     {
-        xdr12_fault_readout();
+        xd12_fault_readout();
         gb_fault_read_flag = false;
     }
 }
@@ -288,13 +288,13 @@ static void tim_read_write_xd(void)
         {
             case XD12R_ADDR_TYPE_GENERAL:
             {
-                gt_xd_rw_info.rw_data = xdr12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_GENERAL);
+                gt_xd_rw_info.rw_data = xd12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_GENERAL);
                 comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC General Read --> [ 0x%02X - 0x%03X ]\r\n\n\rJIG> \0", gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data);
                 break;
             }
             case XD12R_ADDR_TYPE_MIRROR:
             {
-                gt_xd_rw_info.rw_data = xdr12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_MIRROR);
+                gt_xd_rw_info.rw_data = xd12_read_by_type(gt_xd_rw_info.rw_addr, XD12R_ADDR_TYPE_MIRROR);
                 comm_UART_Printf(LOG_LV_INFO, "\r\nXDIC Mirror Read --> [ 0x%02X - 0x%03X ]\r\n\n\rJIG> \0", gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data);
                 break;
             }
@@ -313,13 +313,13 @@ static void tim_read_write_xd(void)
         {
             case XD12R_ADDR_TYPE_GENERAL:
             {
-                xdr12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_GENERAL);
+                xd12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_GENERAL);
                 comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
                 break;
             }
             case XD12R_ADDR_TYPE_MIRROR:
             {
-                xdr12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_MIRROR);
+                xd12_write_by_type(gt_xd_rw_info.rw_addr, gt_xd_rw_info.rw_data, XD12R_ADDR_TYPE_MIRROR);
                 comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
                 break;
             }
@@ -339,24 +339,24 @@ static void tim_read_write_xc(void)
     {
         switch (gt_xc_rw_info.addr_type)
         {
-            case XCR_RW_GRP1:
+            case XC_RW_GRP1:
             {
-                if (gt_xc_rw_info.rw_addr < XCR_OTP_BASE_ADDR)
+                if (gt_xc_rw_info.rw_addr < XC_OTP_BASE_ADDR)
                 {
-                    gt_xc_rw_info.rw_data = xcr24_read_grp1_reg(gt_xc_rw_info.rw_addr, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP1 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                    gt_xc_rw_info.rw_data = xc24_read_grp1_reg(gt_xc_rw_info.rw_addr, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
                 else
                 {
-                    gt_xc_rw_info.rw_data = xcr24_read_otp_control(gt_xc_rw_info.rw_addr - XCR_OTP_BASE_ADDR, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXCR OTP Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                    gt_xc_rw_info.rw_data = xc24_read_otp_control(gt_xc_rw_info.rw_addr - XC_OTP_BASE_ADDR, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
                 break;
             }
-            case XCR_RW_GRP2:
+            case XC_RW_GRP2:
             {
-                gt_xc_rw_info.rw_data = xcr24_read_grp2_reg(gt_xc_rw_info.rw_addr, 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXCR GRP2 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                gt_xc_rw_info.rw_data = xc24_read_grp2_reg(gt_xc_rw_info.rw_addr, 1U);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 break;
             }
             default:
@@ -372,22 +372,22 @@ static void tim_read_write_xc(void)
     {
         switch (gt_xc_rw_info.addr_type)
         {
-            case XCR_RW_GRP1:
+            case XC_RW_GRP1:
             {
-                if (gt_xc_rw_info.rw_addr < XCR_OTP_BASE_ADDR)
+                if (gt_xc_rw_info.rw_addr < XC_OTP_BASE_ADDR)
                 {
-                    xcr24_write_grp1_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
+                    xc24_write_grp1_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
                 }
                 else
                 {
-                    xcr24_write_otp_control(gt_xc_rw_info.rw_addr - XCR_OTP_BASE_ADDR, &gt_xc_rw_info.rw_data, 1U);
+                    xc24_write_otp_control(gt_xc_rw_info.rw_addr - XC_OTP_BASE_ADDR, &gt_xc_rw_info.rw_data, 1U);
                 }
                 comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
                 break;
             }
-            case XCR_RW_GRP2:
+            case XC_RW_GRP2:
             {
-                xcr24_write_grp2_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
+                xc24_write_grp2_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
                 comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
                 break;
             }

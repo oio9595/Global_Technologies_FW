@@ -3,7 +3,7 @@
  * Author: GT
  *
  * Created on 2026, 05,29
- * Revision : XC24R Rev. 00 - R_xc_xd_es0_design_specification_v0.82_260528 / xcr24_reg_mp1
+ * Revision : XC24R Rev. 00 - R_xc_xd_es0_design_specification_v0.82_260528 / xc24_reg_mp1
  */
 
 #ifndef _XC24R_ES_STRUCT_H_
@@ -26,7 +26,7 @@ extern "C" {
 #define     __IO    volatile             /*!< Defines 'read / write' permissions              */
 #endif
 
-#define XCR_INTERNAL_MCLK   (35000000UL)    /* 35.0MHz */
+#define XC_INTERNAL_MCLK   (35000000UL)    /* 35.0MHz */
 #define XC_MODEL_NAME       "XC24R ES"
 
 #define BAUD_HIGH_DURATION_MIN  (6U)        /* mclk */
@@ -49,302 +49,302 @@ extern "C" {
 #define LD_WIDTH3   (3U)    /* 0b11, LD width - 16bit */
 
 /* Command define */
-typedef enum _xcr_addr_grp1_
+typedef enum _xc_addr_grp1_
 {
-    XCR_RESET = 0U,                     /*0x00*/
-    XCR_GLOBAL_WRITE_COMMAND,           /*0x01*/
-    XCR_LOCAL_WRITE_COMMAND,            /*0x02*/
-    XCR_LOCAL_READ_COMMAND,             /*0x03*/
-    XCR_ID_GEN_COMMAND,                 /*0x04*/
-    XCR_FAULT_READ_COMMAND,             /*0x05*/
-    XCR_LD_TRANSFER_COMMAND,            /*0x06*/
-    XCR_SYNC_GEN_COMMAND,               /*0x07*/
-    XCR_COMMAND_AUTO_ENABLE,            /*0x08*/
-    XCR_LD_WRITE_POINTER,               /*0x09*/
-    XCR_LD_READ_POINTER,                /*0x0A*/
-    XCR_LD_DIFFERENCE_POINTER,          /*0x0B*/
-    XCR_LD_START_POINTER_TH,            /*0x0C*/
-    XCR_LOCAL_WRITE_TRANSFER_POINTER,   /*0x0D*/
-    XCR_LOCAL_READ_RECEIVE_POINTER,     /*0x0E*/
-    XCR_LOCAL_RW_DIFFERENCE_POINTER,    /*0x0F*/
-    XCR_LOCAL_RW_POINTER_RESET,         /*0x10*/
-    XCR_FAULT_AUTO_READ_INTERVAL,       /*0x11*/
-    XCR_FAULT_AUTO_READ_EVENT,          /*0x12*/
-    XCR_INTERRUPT_ENABLE,               /*0x13*/
-    XCR_COMMAND_STATUS_1,               /*0x14*/
-    XCR_COMMAND_STATUS_2,               /*0x15*/
-    XCR_RECEIVE_STATUS,                 /*0x16*/
-    XCR_INTERRUPT_STATUS,               /*0x17*/
-    XCR_CMD_PARITY_ERR_STATUS1,         /*0x18*/
-    XCR_CMD_PARITY_ERR_STATUS2,         /*0x19*/
-    XCR_SPI_FAULT_STATUS_CONTROL,       /*0x1A*/
-    XCR_CLK_CONTROL_1,                  /*0x1B*/
-    XCR_CLK_CONTROL_2,                  /*0x1C*/
-    XCR_SERIALIZER_CLOCK_GEN,           /*0x1D*/
-    XCR_LATENCY,                        /*0x1E*/
-    XCR_TIMEOUT,                        /*0x1F*/
-    XCR_DAISIED_DEVICE_CH_SIZE,         /*0x20*/
-    XCR_DAISY_SIZE_1,                   /*0x21*/
-    XCR_DAISY_SIZE_2,                   /*0x22*/
-    XCR_DAISY_SIZE_3,                   /*0x23*/
-    XCR_DAISY_SIZE_4,                   /*0x24*/
-    XCR_DAISY_SIZE_5,                   /*0x25*/
-    XCR_DAISY_SIZE_6,                   /*0x26*/
-    XCR_DAISY_SIZE_7,                   /*0x27*/
-    XCR_DAISY_SIZE_8,                   /*0x28*/
-    XCR_BLOCK_SIZE_1,                   /*0x29*/
-    XCR_BLOCK_SIZE_2,                   /*0x2A*/
-    XCR_BLOCK_SIZE_3,                   /*0x2B*/
-    XCR_BLOCK_SIZE_4,                   /*0x2C*/
-    XCR_BLOCK_SIZE_5,                   /*0x2D*/
-    XCR_BLOCK_SIZE_6,                   /*0x2E*/
-    XCR_BLOCK_SIZE_7,                   /*0x2F*/
-    XCR_BLOCK_SIZE_8,                   /*0x30*/
-    XCR_BLOCK_SIZE_9,                   /*0x31*/
-    XCR_BLOCK_SIZE_10,                  /*0x32*/
-    XCR_BLOCK_SIZE_11,                  /*0x33*/
-    XCR_BLOCK_SIZE_12,                  /*0x34*/
-    XCR_CHANNEL_ENABLE_1,               /*0x35*/
-    XCR_CHANNEL_ENABLE_2,               /*0x36*/
-    XCR_FLLCNT11,                       /*0x37*/
-    XCR_FLLCNT12,                       /*0x38*/
-    XCR_FLLCNT21,                       /*0x39*/
-    XCR_FLLCNT22,                       /*0x3A*/
-    XCR_VO_DELAY,                       /*0x3B*/
-    XCR_VO_OFF_ON,                      /*0x3C*/
-    XCR_SVO_ON,                         /*0x3D*/
-    XCR_SVO1_OFF,                       /*0x3E*/
-    XCR_SVO2_OFF,                       /*0x3F*/
-    XCR_SVO3_OFF,                       /*0x40*/
-    XCR_SVO_NUMBER,                     /*0x41*/
-    XCR_DAC_NF_CONTROL,                 /*0x42*/
-    XCR_DAC_CONTROL,                    /*0x43*/
-    XCR_CURRENT_TARGET_DAC1,            /*0x44*/
-    XCR_CURRENT_TARGET_DAC2,            /*0x45*/
-    XCR_CURRENT_TARGET_DAC3,            /*0x46*/
-    XCR_PREVIOUS_TARGET_DAC1,           /*0x47*/
-    XCR_PREVIOUS_TARGET_DAC2,           /*0x48*/
-    XCR_PREVIOUS_TARGET_DAC3,           /*0x49*/
-    XCR_DAC1_OUT,                       /*0x4A*/
-    XCR_DAC2_OUT,                       /*0x4B*/
-    XCR_DAC3_OUT,                       /*0x4C*/
-    XCR_DAC1_STATE,                     /*0x4D*/
-    XCR_DAC2_STATE,                     /*0x4E*/
-    XCR_DAC3_STATE,                     /*0x4F*/
-    XCR_DAC1_INCREMENT_1,               /*0x50*/
-    XCR_DAC1_INCREMENT_2_HOLD_LIMIT,    /*0x51*/
-    XCR_DAC1_DECREMENT_INC_WAIT,        /*0x52*/
-    XCR_DAC1_INCREMENT_HOLD_THRESHOLD,  /*0x53*/
-    XCR_DAC1_FB_VALID_TIMER,            /*0x54*/
-    XCR_DAC1_MIN_LIMIT,                 /*0x55*/
-    XCR_DAC1_MAX_LIMIT,                 /*0x56*/
-    XCR_DAC2_INCREMENT_1,               /*0x57*/
-    XCR_DAC2_INCREMENT_2_HOLD_LIMIT,    /*0x58*/
-    XCR_DAC2_DECREMENT_INC_WAIT,        /*0x59*/
-    XCR_DAC2_INCREMENT_HOLD_THRESHOLD,  /*0x5A*/
-    XCR_DAC2_FB_VALID_TIMER,            /*0x5B*/
-    XCR_DAC2_MIN_LIMIT,                 /*0x5C*/
-    XCR_DAC2_MAX_LIMIT,                 /*0x5D*/
-    XCR_DAC3_INCREMENT_1,               /*0x5E*/
-    XCR_DAC3_INCREMENT_2_HOLD_LIMIT,    /*0x5F*/
-    XCR_DAC3_DECREMENT_INC_WAIT,        /*0x60*/
-    XCR_DAC3_INCREMENT_HOLD_THRESHOLD,  /*0x61*/
-    XCR_DAC3_FB_VALID_TIMER,            /*0x62*/
-    XCR_DAC3_MIN_LIMIT,                 /*0x63*/
-    XCR_DAC3_MAX_LIMIT,                 /*0x64*/
-    XCR_OSC_FLL_MAN_A1,                 /*0x65*/
-    XCR_OSC_FLL_MAN_A2,                 /*0x66*/
-    XCR_OSC_FLL_MAN_B1,                 /*0x67*/
-    XCR_OSC_FLL_MAN_B2,                 /*0x68*/
-    XCR_GLOBAL_WRITE_DATA,              /*0x69*/
-    XCR_GLOBAL_FAULT_READ_DATA1,        /*0x6A*/
-    XCR_GLOBAL_FAULT_READ_DATA2,        /*0x6B*/
-    XCR_GLOBAL_FAULT_READ_DATA3,        /*0x6C*/
-    XCR_GLOBAL_FAULT_READ_DATA4,        /*0x6D*/
-    XCR_GLOBAL_FAULT_READ_DATA5,        /*0x6E*/
-    XCR_GLOBAL_FAULT_READ_DATA6,        /*0x6F*/
-    XCR_GRP1_MAX,
-}xcr_addr_grp1_t;
+    XC_RESET = 0U,                     /*0x00*/
+    XC_GLOBAL_WRITE_COMMAND,           /*0x01*/
+    XC_LOCAL_WRITE_COMMAND,            /*0x02*/
+    XC_LOCAL_READ_COMMAND,             /*0x03*/
+    XC_ID_GEN_COMMAND,                 /*0x04*/
+    XC_FAULT_READ_COMMAND,             /*0x05*/
+    XC_LD_TRANSFER_COMMAND,            /*0x06*/
+    XC_SYNC_GEN_COMMAND,               /*0x07*/
+    XC_COMMAND_AUTO_ENABLE,            /*0x08*/
+    XC_LD_WRITE_POINTER,               /*0x09*/
+    XC_LD_READ_POINTER,                /*0x0A*/
+    XC_LD_DIFFERENCE_POINTER,          /*0x0B*/
+    XC_LD_START_POINTER_TH,            /*0x0C*/
+    XC_LOCAL_WRITE_TRANSFER_POINTER,   /*0x0D*/
+    XC_LOCAL_READ_RECEIVE_POINTER,     /*0x0E*/
+    XC_LOCAL_RW_DIFFERENCE_POINTER,    /*0x0F*/
+    XC_LOCAL_RW_POINTER_RESET,         /*0x10*/
+    XC_FAULT_AUTO_READ_INTERVAL,       /*0x11*/
+    XC_FAULT_AUTO_READ_EVENT,          /*0x12*/
+    XC_INTERRUPT_ENABLE,               /*0x13*/
+    XC_COMMAND_STATUS_1,               /*0x14*/
+    XC_COMMAND_STATUS_2,               /*0x15*/
+    XC_RECEIVE_STATUS,                 /*0x16*/
+    XC_INTERRUPT_STATUS,               /*0x17*/
+    XC_CMD_PARITY_ERR_STATUS1,         /*0x18*/
+    XC_CMD_PARITY_ERR_STATUS2,         /*0x19*/
+    XC_SPI_FAULT_STATUS_CONTROL,       /*0x1A*/
+    XC_CLK_CONTROL_1,                  /*0x1B*/
+    XC_CLK_CONTROL_2,                  /*0x1C*/
+    XC_SERIALIZER_CLOCK_GEN,           /*0x1D*/
+    XC_LATENCY,                        /*0x1E*/
+    XC_TIMEOUT,                        /*0x1F*/
+    XC_DAISIED_DEVICE_CH_SIZE,         /*0x20*/
+    XC_DAISY_SIZE_1,                   /*0x21*/
+    XC_DAISY_SIZE_2,                   /*0x22*/
+    XC_DAISY_SIZE_3,                   /*0x23*/
+    XC_DAISY_SIZE_4,                   /*0x24*/
+    XC_DAISY_SIZE_5,                   /*0x25*/
+    XC_DAISY_SIZE_6,                   /*0x26*/
+    XC_DAISY_SIZE_7,                   /*0x27*/
+    XC_DAISY_SIZE_8,                   /*0x28*/
+    XC_BLOCK_SIZE_1,                   /*0x29*/
+    XC_BLOCK_SIZE_2,                   /*0x2A*/
+    XC_BLOCK_SIZE_3,                   /*0x2B*/
+    XC_BLOCK_SIZE_4,                   /*0x2C*/
+    XC_BLOCK_SIZE_5,                   /*0x2D*/
+    XC_BLOCK_SIZE_6,                   /*0x2E*/
+    XC_BLOCK_SIZE_7,                   /*0x2F*/
+    XC_BLOCK_SIZE_8,                   /*0x30*/
+    XC_BLOCK_SIZE_9,                   /*0x31*/
+    XC_BLOCK_SIZE_10,                  /*0x32*/
+    XC_BLOCK_SIZE_11,                  /*0x33*/
+    XC_BLOCK_SIZE_12,                  /*0x34*/
+    XC_CHANNEL_ENABLE_1,               /*0x35*/
+    XC_CHANNEL_ENABLE_2,               /*0x36*/
+    XC_FLLCNT11,                       /*0x37*/
+    XC_FLLCNT12,                       /*0x38*/
+    XC_FLLCNT21,                       /*0x39*/
+    XC_FLLCNT22,                       /*0x3A*/
+    XC_VO_DELAY,                       /*0x3B*/
+    XC_VO_OFF_ON,                      /*0x3C*/
+    XC_SVO_ON,                         /*0x3D*/
+    XC_SVO1_OFF,                       /*0x3E*/
+    XC_SVO2_OFF,                       /*0x3F*/
+    XC_SVO3_OFF,                       /*0x40*/
+    XC_SVO_NUMBER,                     /*0x41*/
+    XC_DAC_NF_CONTROL,                 /*0x42*/
+    XC_DAC_CONTROL,                    /*0x43*/
+    XC_CURRENT_TARGET_DAC1,            /*0x44*/
+    XC_CURRENT_TARGET_DAC2,            /*0x45*/
+    XC_CURRENT_TARGET_DAC3,            /*0x46*/
+    XC_PREVIOUS_TARGET_DAC1,           /*0x47*/
+    XC_PREVIOUS_TARGET_DAC2,           /*0x48*/
+    XC_PREVIOUS_TARGET_DAC3,           /*0x49*/
+    XC_DAC1_OUT,                       /*0x4A*/
+    XC_DAC2_OUT,                       /*0x4B*/
+    XC_DAC3_OUT,                       /*0x4C*/
+    XC_DAC1_STATE,                     /*0x4D*/
+    XC_DAC2_STATE,                     /*0x4E*/
+    XC_DAC3_STATE,                     /*0x4F*/
+    XC_DAC1_INCREMENT_1,               /*0x50*/
+    XC_DAC1_INCREMENT_2_HOLD_LIMIT,    /*0x51*/
+    XC_DAC1_DECREMENT_INC_WAIT,        /*0x52*/
+    XC_DAC1_INCREMENT_HOLD_THRESHOLD,  /*0x53*/
+    XC_DAC1_FB_VALID_TIMER,            /*0x54*/
+    XC_DAC1_MIN_LIMIT,                 /*0x55*/
+    XC_DAC1_MAX_LIMIT,                 /*0x56*/
+    XC_DAC2_INCREMENT_1,               /*0x57*/
+    XC_DAC2_INCREMENT_2_HOLD_LIMIT,    /*0x58*/
+    XC_DAC2_DECREMENT_INC_WAIT,        /*0x59*/
+    XC_DAC2_INCREMENT_HOLD_THRESHOLD,  /*0x5A*/
+    XC_DAC2_FB_VALID_TIMER,            /*0x5B*/
+    XC_DAC2_MIN_LIMIT,                 /*0x5C*/
+    XC_DAC2_MAX_LIMIT,                 /*0x5D*/
+    XC_DAC3_INCREMENT_1,               /*0x5E*/
+    XC_DAC3_INCREMENT_2_HOLD_LIMIT,    /*0x5F*/
+    XC_DAC3_DECREMENT_INC_WAIT,        /*0x60*/
+    XC_DAC3_INCREMENT_HOLD_THRESHOLD,  /*0x61*/
+    XC_DAC3_FB_VALID_TIMER,            /*0x62*/
+    XC_DAC3_MIN_LIMIT,                 /*0x63*/
+    XC_DAC3_MAX_LIMIT,                 /*0x64*/
+    XC_OSC_FLL_MAN_A1,                 /*0x65*/
+    XC_OSC_FLL_MAN_A2,                 /*0x66*/
+    XC_OSC_FLL_MAN_B1,                 /*0x67*/
+    XC_OSC_FLL_MAN_B2,                 /*0x68*/
+    XC_GLOBAL_WRITE_DATA,              /*0x69*/
+    XC_GLOBAL_FAULT_READ_DATA1,        /*0x6A*/
+    XC_GLOBAL_FAULT_READ_DATA2,        /*0x6B*/
+    XC_GLOBAL_FAULT_READ_DATA3,        /*0x6C*/
+    XC_GLOBAL_FAULT_READ_DATA4,        /*0x6D*/
+    XC_GLOBAL_FAULT_READ_DATA5,        /*0x6E*/
+    XC_GLOBAL_FAULT_READ_DATA6,        /*0x6F*/
+    XC_GRP1_MAX,
+}xc_addr_grp1_t;
 
-typedef enum _xcr_local_rw_data_addr_
+typedef enum _xc_local_rw_data_addr_
 {
-    XCR_PORT1_LOCAL_RW_DATA1 = 0x70U,   /*0x70*/
-    XCR_PORT2_LOCAL_RW_DATA1,           /*0x71*/
-    XCR_PORT3_LOCAL_RW_DATA1,           /*0x72*/
-    XCR_PORT4_LOCAL_RW_DATA1,           /*0x73*/
-    XCR_PORT5_LOCAL_RW_DATA1,           /*0x74*/
-    XCR_PORT6_LOCAL_RW_DATA1,           /*0x75*/
-    XCR_PORT7_LOCAL_RW_DATA1,           /*0x76*/
-    XCR_PORT8_LOCAL_RW_DATA1,           /*0x77*/
-    XCR_PORT1_LOCAL_RW_DATA2,           /*0x78*/
-    XCR_PORT2_LOCAL_RW_DATA2,           /*0x79*/
-    XCR_PORT3_LOCAL_RW_DATA2,           /*0x7A*/
-    XCR_PORT4_LOCAL_RW_DATA2,           /*0x7B*/
-    XCR_PORT5_LOCAL_RW_DATA2,           /*0x7C*/
-    XCR_PORT6_LOCAL_RW_DATA2,           /*0x7D*/
-    XCR_PORT7_LOCAL_RW_DATA2,           /*0x7E*/
-    XCR_PORT8_LOCAL_RW_DATA2,           /*0x7F*/
-    XCR_PORT1_LOCAL_RW_DATA3,           /*0x80*/
-    XCR_PORT2_LOCAL_RW_DATA3,           /*0x81*/
-    XCR_PORT3_LOCAL_RW_DATA3,           /*0x82*/
-    XCR_PORT4_LOCAL_RW_DATA3,           /*0x83*/
-    XCR_PORT5_LOCAL_RW_DATA3,           /*0x84*/
-    XCR_PORT6_LOCAL_RW_DATA3,           /*0x85*/
-    XCR_PORT7_LOCAL_RW_DATA3,           /*0x86*/
-    XCR_PORT8_LOCAL_RW_DATA3,           /*0x87*/
-    XCR_PORT1_LOCAL_RW_DATA4,           /*0x88*/
-    XCR_PORT2_LOCAL_RW_DATA4,           /*0x89*/
-    XCR_PORT3_LOCAL_RW_DATA4,           /*0x8A*/
-    XCR_PORT4_LOCAL_RW_DATA4,           /*0x8B*/
-    XCR_PORT5_LOCAL_RW_DATA4,           /*0x8C*/
-    XCR_PORT6_LOCAL_RW_DATA4,           /*0x8D*/
-    XCR_PORT7_LOCAL_RW_DATA4,           /*0x8E*/
-    XCR_PORT8_LOCAL_RW_DATA4,           /*0x8F*/
-    XCR_PORT1_LOCAL_RW_DATA5,           /*0x90*/
-    XCR_PORT2_LOCAL_RW_DATA5,           /*0x91*/
-    XCR_PORT3_LOCAL_RW_DATA5,           /*0x92*/
-    XCR_PORT4_LOCAL_RW_DATA5,           /*0x93*/
-    XCR_PORT5_LOCAL_RW_DATA5,           /*0x94*/
-    XCR_PORT6_LOCAL_RW_DATA5,           /*0x95*/
-    XCR_PORT7_LOCAL_RW_DATA5,           /*0x96*/
-    XCR_PORT8_LOCAL_RW_DATA5,           /*0x97*/
-    XCR_PORT1_LOCAL_RW_DATA6,           /*0x98*/
-    XCR_PORT2_LOCAL_RW_DATA6,           /*0x99*/
-    XCR_PORT3_LOCAL_RW_DATA6,           /*0x9A*/
-    XCR_PORT4_LOCAL_RW_DATA6,           /*0x9B*/
-    XCR_PORT5_LOCAL_RW_DATA6,           /*0x9C*/
-    XCR_PORT6_LOCAL_RW_DATA6,           /*0x9D*/
-    XCR_PORT7_LOCAL_RW_DATA6,           /*0x9E*/
-    XCR_PORT8_LOCAL_RW_DATA6,           /*0x9F*/
-    XCR_PORT1_LOCAL_RW_DATA7,           /*0xA0*/
-    XCR_PORT2_LOCAL_RW_DATA7,           /*0xA1*/
-    XCR_PORT3_LOCAL_RW_DATA7,           /*0xA2*/
-    XCR_PORT4_LOCAL_RW_DATA7,           /*0xA3*/
-    XCR_PORT5_LOCAL_RW_DATA7,           /*0xA4*/
-    XCR_PORT6_LOCAL_RW_DATA7,           /*0xA5*/
-    XCR_PORT7_LOCAL_RW_DATA7,           /*0xA6*/
-    XCR_PORT8_LOCAL_RW_DATA7,           /*0xA7*/
-    XCR_PORT1_LOCAL_RW_DATA8,           /*0xA8*/
-    XCR_PORT2_LOCAL_RW_DATA8,           /*0xA9*/
-    XCR_PORT3_LOCAL_RW_DATA8,           /*0xAA*/
-    XCR_PORT4_LOCAL_RW_DATA8,           /*0xAB*/
-    XCR_PORT5_LOCAL_RW_DATA8,           /*0xAC*/
-    XCR_PORT6_LOCAL_RW_DATA8,           /*0xAD*/
-    XCR_PORT7_LOCAL_RW_DATA8,           /*0xAE*/
-    XCR_PORT8_LOCAL_RW_DATA8,           /*0xAF*/
-    XCR_PORT1_LOCAL_RW_DATA9,           /*0xB0*/
-    XCR_PORT2_LOCAL_RW_DATA9,           /*0xB1*/
-    XCR_PORT3_LOCAL_RW_DATA9,           /*0xB2*/
-    XCR_PORT4_LOCAL_RW_DATA9,           /*0xB3*/
-    XCR_PORT5_LOCAL_RW_DATA9,           /*0xB4*/
-    XCR_PORT6_LOCAL_RW_DATA9,           /*0xB5*/
-    XCR_PORT7_LOCAL_RW_DATA9,           /*0xB6*/
-    XCR_PORT8_LOCAL_RW_DATA9,           /*0xB7*/
-    XCR_PORT1_LOCAL_RW_DATA10,          /*0xB8*/
-    XCR_PORT2_LOCAL_RW_DATA10,          /*0xB9*/
-    XCR_PORT3_LOCAL_RW_DATA10,          /*0xBA*/
-    XCR_PORT4_LOCAL_RW_DATA10,          /*0xBB*/
-    XCR_PORT5_LOCAL_RW_DATA10,          /*0xBC*/
-    XCR_PORT6_LOCAL_RW_DATA10,          /*0xBD*/
-    XCR_PORT7_LOCAL_RW_DATA10,          /*0xBE*/
-    XCR_PORT8_LOCAL_RW_DATA10,          /*0xBF*/
-    XCR_PORT1_LOCAL_RW_DATA11,          /*0xC0*/
-    XCR_PORT2_LOCAL_RW_DATA11,          /*0xC1*/
-    XCR_PORT3_LOCAL_RW_DATA11,          /*0xC2*/
-    XCR_PORT4_LOCAL_RW_DATA11,          /*0xC3*/
-    XCR_PORT5_LOCAL_RW_DATA11,          /*0xC4*/
-    XCR_PORT6_LOCAL_RW_DATA11,          /*0xC5*/
-    XCR_PORT7_LOCAL_RW_DATA11,          /*0xC6*/
-    XCR_PORT8_LOCAL_RW_DATA11,          /*0xC7*/
-    XCR_PORT1_LOCAL_RW_DATA12,          /*0xC8*/
-    XCR_PORT2_LOCAL_RW_DATA12,          /*0xC9*/
-    XCR_PORT3_LOCAL_RW_DATA12,          /*0xCA*/
-    XCR_PORT4_LOCAL_RW_DATA12,          /*0xCB*/
-    XCR_PORT5_LOCAL_RW_DATA12,          /*0xCC*/
-    XCR_PORT6_LOCAL_RW_DATA12,          /*0xCD*/
-    XCR_PORT7_LOCAL_RW_DATA12,          /*0xCE*/
-    XCR_PORT8_LOCAL_RW_DATA12,          /*0xCF*/
-    XCR_PORT1_LOCAL_RW_DATA13,          /*0xD0*/
-    XCR_PORT2_LOCAL_RW_DATA13,          /*0xD1*/
-    XCR_PORT3_LOCAL_RW_DATA13,          /*0xD2*/
-    XCR_PORT4_LOCAL_RW_DATA13,          /*0xD3*/
-    XCR_PORT5_LOCAL_RW_DATA13,          /*0xD4*/
-    XCR_PORT6_LOCAL_RW_DATA13,          /*0xD5*/
-    XCR_PORT7_LOCAL_RW_DATA13,          /*0xD6*/
-    XCR_PORT8_LOCAL_RW_DATA13,          /*0xD7*/
-    XCR_PORT1_LOCAL_RW_DATA14,          /*0xD8*/
-    XCR_PORT2_LOCAL_RW_DATA14,          /*0xD9*/
-    XCR_PORT3_LOCAL_RW_DATA14,          /*0xDA*/
-    XCR_PORT4_LOCAL_RW_DATA14,          /*0xDB*/
-    XCR_PORT5_LOCAL_RW_DATA14,          /*0xDC*/
-    XCR_PORT6_LOCAL_RW_DATA14,          /*0xDD*/
-    XCR_PORT7_LOCAL_RW_DATA14,          /*0xDE*/
-    XCR_PORT8_LOCAL_RW_DATA14,          /*0xDF*/
-    XCR_PORT1_LOCAL_RW_DATA15,          /*0xE0*/
-    XCR_PORT2_LOCAL_RW_DATA15,          /*0xE1*/
-    XCR_PORT3_LOCAL_RW_DATA15,          /*0xE2*/
-    XCR_PORT4_LOCAL_RW_DATA15,          /*0xE3*/
-    XCR_PORT5_LOCAL_RW_DATA15,          /*0xE4*/
-    XCR_PORT6_LOCAL_RW_DATA15,          /*0xE5*/
-    XCR_PORT7_LOCAL_RW_DATA15,          /*0xE6*/
-    XCR_PORT8_LOCAL_RW_DATA15,          /*0xE7*/
-    XCR_PORT1_LOCAL_RW_DATA16,          /*0xE8*/
-    XCR_PORT2_LOCAL_RW_DATA16,          /*0xE9*/
-    XCR_PORT3_LOCAL_RW_DATA16,          /*0xEA*/
-    XCR_PORT4_LOCAL_RW_DATA16,          /*0xEB*/
-    XCR_PORT5_LOCAL_RW_DATA16,          /*0xEC*/
-    XCR_PORT6_LOCAL_RW_DATA16,          /*0xED*/
-    XCR_PORT7_LOCAL_RW_DATA16,          /*0xEE*/
-    XCR_PORT8_LOCAL_RW_DATA16,          /*0xEF*/
-}xcr_local_rw_data_addr_t;
+    XC_PORT1_LOCAL_RW_DATA1 = 0x70U,   /*0x70*/
+    XC_PORT2_LOCAL_RW_DATA1,           /*0x71*/
+    XC_PORT3_LOCAL_RW_DATA1,           /*0x72*/
+    XC_PORT4_LOCAL_RW_DATA1,           /*0x73*/
+    XC_PORT5_LOCAL_RW_DATA1,           /*0x74*/
+    XC_PORT6_LOCAL_RW_DATA1,           /*0x75*/
+    XC_PORT7_LOCAL_RW_DATA1,           /*0x76*/
+    XC_PORT8_LOCAL_RW_DATA1,           /*0x77*/
+    XC_PORT1_LOCAL_RW_DATA2,           /*0x78*/
+    XC_PORT2_LOCAL_RW_DATA2,           /*0x79*/
+    XC_PORT3_LOCAL_RW_DATA2,           /*0x7A*/
+    XC_PORT4_LOCAL_RW_DATA2,           /*0x7B*/
+    XC_PORT5_LOCAL_RW_DATA2,           /*0x7C*/
+    XC_PORT6_LOCAL_RW_DATA2,           /*0x7D*/
+    XC_PORT7_LOCAL_RW_DATA2,           /*0x7E*/
+    XC_PORT8_LOCAL_RW_DATA2,           /*0x7F*/
+    XC_PORT1_LOCAL_RW_DATA3,           /*0x80*/
+    XC_PORT2_LOCAL_RW_DATA3,           /*0x81*/
+    XC_PORT3_LOCAL_RW_DATA3,           /*0x82*/
+    XC_PORT4_LOCAL_RW_DATA3,           /*0x83*/
+    XC_PORT5_LOCAL_RW_DATA3,           /*0x84*/
+    XC_PORT6_LOCAL_RW_DATA3,           /*0x85*/
+    XC_PORT7_LOCAL_RW_DATA3,           /*0x86*/
+    XC_PORT8_LOCAL_RW_DATA3,           /*0x87*/
+    XC_PORT1_LOCAL_RW_DATA4,           /*0x88*/
+    XC_PORT2_LOCAL_RW_DATA4,           /*0x89*/
+    XC_PORT3_LOCAL_RW_DATA4,           /*0x8A*/
+    XC_PORT4_LOCAL_RW_DATA4,           /*0x8B*/
+    XC_PORT5_LOCAL_RW_DATA4,           /*0x8C*/
+    XC_PORT6_LOCAL_RW_DATA4,           /*0x8D*/
+    XC_PORT7_LOCAL_RW_DATA4,           /*0x8E*/
+    XC_PORT8_LOCAL_RW_DATA4,           /*0x8F*/
+    XC_PORT1_LOCAL_RW_DATA5,           /*0x90*/
+    XC_PORT2_LOCAL_RW_DATA5,           /*0x91*/
+    XC_PORT3_LOCAL_RW_DATA5,           /*0x92*/
+    XC_PORT4_LOCAL_RW_DATA5,           /*0x93*/
+    XC_PORT5_LOCAL_RW_DATA5,           /*0x94*/
+    XC_PORT6_LOCAL_RW_DATA5,           /*0x95*/
+    XC_PORT7_LOCAL_RW_DATA5,           /*0x96*/
+    XC_PORT8_LOCAL_RW_DATA5,           /*0x97*/
+    XC_PORT1_LOCAL_RW_DATA6,           /*0x98*/
+    XC_PORT2_LOCAL_RW_DATA6,           /*0x99*/
+    XC_PORT3_LOCAL_RW_DATA6,           /*0x9A*/
+    XC_PORT4_LOCAL_RW_DATA6,           /*0x9B*/
+    XC_PORT5_LOCAL_RW_DATA6,           /*0x9C*/
+    XC_PORT6_LOCAL_RW_DATA6,           /*0x9D*/
+    XC_PORT7_LOCAL_RW_DATA6,           /*0x9E*/
+    XC_PORT8_LOCAL_RW_DATA6,           /*0x9F*/
+    XC_PORT1_LOCAL_RW_DATA7,           /*0xA0*/
+    XC_PORT2_LOCAL_RW_DATA7,           /*0xA1*/
+    XC_PORT3_LOCAL_RW_DATA7,           /*0xA2*/
+    XC_PORT4_LOCAL_RW_DATA7,           /*0xA3*/
+    XC_PORT5_LOCAL_RW_DATA7,           /*0xA4*/
+    XC_PORT6_LOCAL_RW_DATA7,           /*0xA5*/
+    XC_PORT7_LOCAL_RW_DATA7,           /*0xA6*/
+    XC_PORT8_LOCAL_RW_DATA7,           /*0xA7*/
+    XC_PORT1_LOCAL_RW_DATA8,           /*0xA8*/
+    XC_PORT2_LOCAL_RW_DATA8,           /*0xA9*/
+    XC_PORT3_LOCAL_RW_DATA8,           /*0xAA*/
+    XC_PORT4_LOCAL_RW_DATA8,           /*0xAB*/
+    XC_PORT5_LOCAL_RW_DATA8,           /*0xAC*/
+    XC_PORT6_LOCAL_RW_DATA8,           /*0xAD*/
+    XC_PORT7_LOCAL_RW_DATA8,           /*0xAE*/
+    XC_PORT8_LOCAL_RW_DATA8,           /*0xAF*/
+    XC_PORT1_LOCAL_RW_DATA9,           /*0xB0*/
+    XC_PORT2_LOCAL_RW_DATA9,           /*0xB1*/
+    XC_PORT3_LOCAL_RW_DATA9,           /*0xB2*/
+    XC_PORT4_LOCAL_RW_DATA9,           /*0xB3*/
+    XC_PORT5_LOCAL_RW_DATA9,           /*0xB4*/
+    XC_PORT6_LOCAL_RW_DATA9,           /*0xB5*/
+    XC_PORT7_LOCAL_RW_DATA9,           /*0xB6*/
+    XC_PORT8_LOCAL_RW_DATA9,           /*0xB7*/
+    XC_PORT1_LOCAL_RW_DATA10,          /*0xB8*/
+    XC_PORT2_LOCAL_RW_DATA10,          /*0xB9*/
+    XC_PORT3_LOCAL_RW_DATA10,          /*0xBA*/
+    XC_PORT4_LOCAL_RW_DATA10,          /*0xBB*/
+    XC_PORT5_LOCAL_RW_DATA10,          /*0xBC*/
+    XC_PORT6_LOCAL_RW_DATA10,          /*0xBD*/
+    XC_PORT7_LOCAL_RW_DATA10,          /*0xBE*/
+    XC_PORT8_LOCAL_RW_DATA10,          /*0xBF*/
+    XC_PORT1_LOCAL_RW_DATA11,          /*0xC0*/
+    XC_PORT2_LOCAL_RW_DATA11,          /*0xC1*/
+    XC_PORT3_LOCAL_RW_DATA11,          /*0xC2*/
+    XC_PORT4_LOCAL_RW_DATA11,          /*0xC3*/
+    XC_PORT5_LOCAL_RW_DATA11,          /*0xC4*/
+    XC_PORT6_LOCAL_RW_DATA11,          /*0xC5*/
+    XC_PORT7_LOCAL_RW_DATA11,          /*0xC6*/
+    XC_PORT8_LOCAL_RW_DATA11,          /*0xC7*/
+    XC_PORT1_LOCAL_RW_DATA12,          /*0xC8*/
+    XC_PORT2_LOCAL_RW_DATA12,          /*0xC9*/
+    XC_PORT3_LOCAL_RW_DATA12,          /*0xCA*/
+    XC_PORT4_LOCAL_RW_DATA12,          /*0xCB*/
+    XC_PORT5_LOCAL_RW_DATA12,          /*0xCC*/
+    XC_PORT6_LOCAL_RW_DATA12,          /*0xCD*/
+    XC_PORT7_LOCAL_RW_DATA12,          /*0xCE*/
+    XC_PORT8_LOCAL_RW_DATA12,          /*0xCF*/
+    XC_PORT1_LOCAL_RW_DATA13,          /*0xD0*/
+    XC_PORT2_LOCAL_RW_DATA13,          /*0xD1*/
+    XC_PORT3_LOCAL_RW_DATA13,          /*0xD2*/
+    XC_PORT4_LOCAL_RW_DATA13,          /*0xD3*/
+    XC_PORT5_LOCAL_RW_DATA13,          /*0xD4*/
+    XC_PORT6_LOCAL_RW_DATA13,          /*0xD5*/
+    XC_PORT7_LOCAL_RW_DATA13,          /*0xD6*/
+    XC_PORT8_LOCAL_RW_DATA13,          /*0xD7*/
+    XC_PORT1_LOCAL_RW_DATA14,          /*0xD8*/
+    XC_PORT2_LOCAL_RW_DATA14,          /*0xD9*/
+    XC_PORT3_LOCAL_RW_DATA14,          /*0xDA*/
+    XC_PORT4_LOCAL_RW_DATA14,          /*0xDB*/
+    XC_PORT5_LOCAL_RW_DATA14,          /*0xDC*/
+    XC_PORT6_LOCAL_RW_DATA14,          /*0xDD*/
+    XC_PORT7_LOCAL_RW_DATA14,          /*0xDE*/
+    XC_PORT8_LOCAL_RW_DATA14,          /*0xDF*/
+    XC_PORT1_LOCAL_RW_DATA15,          /*0xE0*/
+    XC_PORT2_LOCAL_RW_DATA15,          /*0xE1*/
+    XC_PORT3_LOCAL_RW_DATA15,          /*0xE2*/
+    XC_PORT4_LOCAL_RW_DATA15,          /*0xE3*/
+    XC_PORT5_LOCAL_RW_DATA15,          /*0xE4*/
+    XC_PORT6_LOCAL_RW_DATA15,          /*0xE5*/
+    XC_PORT7_LOCAL_RW_DATA15,          /*0xE6*/
+    XC_PORT8_LOCAL_RW_DATA15,          /*0xE7*/
+    XC_PORT1_LOCAL_RW_DATA16,          /*0xE8*/
+    XC_PORT2_LOCAL_RW_DATA16,          /*0xE9*/
+    XC_PORT3_LOCAL_RW_DATA16,          /*0xEA*/
+    XC_PORT4_LOCAL_RW_DATA16,          /*0xEB*/
+    XC_PORT5_LOCAL_RW_DATA16,          /*0xEC*/
+    XC_PORT6_LOCAL_RW_DATA16,          /*0xED*/
+    XC_PORT7_LOCAL_RW_DATA16,          /*0xEE*/
+    XC_PORT8_LOCAL_RW_DATA16,          /*0xEF*/
+}xc_local_rw_data_addr_t;
 
-#define XCR_OTP_BASE_ADDR       (0xF0U)
-typedef enum _xcr_addr_otp_
+#define XC_OTP_BASE_ADDR       (0xF0U)
+typedef enum _xc_addr_otp_
 {
-    XCR_TEST_CONTROL = 0U,              /*0xF0*/
-    XCR_OTP_PG_ACCESS,                  /*0xF1*/
-    XCR_OTP_WRITE,                      /*0xF2*/
-    XCR_OTP_RD_PROG,                    /*0xF3*/
-    XCR_OTP_PROTECT,                    /*0xF4*/
-    XCR_MIRROR1,                        /*0xF5*/
-    XCR_MIRROR2,                        /*0xF6*/
-    XCR_MIRROR3,                        /*0xF7*/
-    XCR_MIRROR4,                        /*0xF8*/
-    XCR_MIRROR5,                        /*0xF9*/
+    XC_TEST_CONTROL = 0U,              /*0xF0*/
+    XC_OTP_PG_ACCESS,                  /*0xF1*/
+    XC_OTP_WRITE,                      /*0xF2*/
+    XC_OTP_RD_PROG,                    /*0xF3*/
+    XC_OTP_PROTECT,                    /*0xF4*/
+    XC_MIRROR1,                        /*0xF5*/
+    XC_MIRROR2,                        /*0xF6*/
+    XC_MIRROR3,                        /*0xF7*/
+    XC_MIRROR4,                        /*0xF8*/
+    XC_MIRROR5,                        /*0xF9*/
 
-    XCR_GATE_CONTROL,                   /*0xFA*/
-    XCR_GATE1_OFFSET,                   /*0xFB*/
-    XCR_GATE2_OFFSET,                   /*0xFC*/
-    XCR_GATE3_OFFSET,                   /*0xFD*/
-    XCR_SV_VAR_CONTROL1,                /*0xFE*/
-    XCR_SV_VAR_CONTROL2,                /*0xFF*/
+    XC_GATE_CONTROL,                   /*0xFA*/
+    XC_GATE1_OFFSET,                   /*0xFB*/
+    XC_GATE2_OFFSET,                   /*0xFC*/
+    XC_GATE3_OFFSET,                   /*0xFD*/
+    XC_SV_VAR_CONTROL1,                /*0xFE*/
+    XC_SV_VAR_CONTROL2,                /*0xFF*/
 
-    XCR_OTP_MAX
-}xcr_addr_otp_t;
+    XC_OTP_MAX
+}xc_addr_otp_t;
 
-typedef enum _xcr_addr_grp2_
+typedef enum _xc_addr_grp2_
 {
-    XCR_GRP2_DAC1_FB_VALID_CNT = 0U,    /*0x00*/
-    XCR_GRP2_DAC1_INC_HOLD_WAIT_CNT,    /*0x01*/
-    XCR_GRP2_1R2,                       /*0x02*/
-    XCR_GRP2_SOA1_N1_N11,               /*0x03*/
-    XCR_GRP2_SOA1_P2_P1,                /*0x04*/
-    XCR_GRP2_SOA1_P3_P2,                /*0x05*/
-    XCR_GRP2_DAC2_FB_VALID_CNT,         /*0x06*/
-    XCR_GRP2_DAC2_INC_HOLD_WAIT_CNT,    /*0x07*/
-    XCR_GRP2_2R2,                       /*0x08*/
-    XCR_GRP2_SOA2_N1_N11,               /*0x09*/
-    XCR_GRP2_SOA2_P2_P1,                /*0x0A*/
-    XCR_GRP2_SOA2_P3_P2,                /*0x0B*/
-    XCR_GRP2_DAC3_FB_VALID_CNT,         /*0x0C*/
-    XCR_GRP2_DAC3_INC_HOLD_WAIT_CNT,    /*0x0D*/
-    XCR_GRP2_3R2,                       /*0x0E*/
-    XCR_GRP2_SOA3_N1_N11,               /*0x0F*/
-    XCR_GRP2_SOA3_P2_P1,                /*0x10*/
-    XCR_GRP2_SOA3_P3_P2,                /*0x11*/
-    XCR_GRP2_ANA_TEST,                  /*0x12*/
-    XCR_GRP2_MAX,                       /*0x13*/
-}xcr_addr_grp2_t;
+    XC_GRP2_DAC1_FB_VALID_CNT = 0U,    /*0x00*/
+    XC_GRP2_DAC1_INC_HOLD_WAIT_CNT,    /*0x01*/
+    XC_GRP2_1R2,                       /*0x02*/
+    XC_GRP2_SOA1_N1_N11,               /*0x03*/
+    XC_GRP2_SOA1_P2_P1,                /*0x04*/
+    XC_GRP2_SOA1_P3_P2,                /*0x05*/
+    XC_GRP2_DAC2_FB_VALID_CNT,         /*0x06*/
+    XC_GRP2_DAC2_INC_HOLD_WAIT_CNT,    /*0x07*/
+    XC_GRP2_2R2,                       /*0x08*/
+    XC_GRP2_SOA2_N1_N11,               /*0x09*/
+    XC_GRP2_SOA2_P2_P1,                /*0x0A*/
+    XC_GRP2_SOA2_P3_P2,                /*0x0B*/
+    XC_GRP2_DAC3_FB_VALID_CNT,         /*0x0C*/
+    XC_GRP2_DAC3_INC_HOLD_WAIT_CNT,    /*0x0D*/
+    XC_GRP2_3R2,                       /*0x0E*/
+    XC_GRP2_SOA3_N1_N11,               /*0x0F*/
+    XC_GRP2_SOA3_P2_P1,                /*0x10*/
+    XC_GRP2_SOA3_P3_P2,                /*0x11*/
+    XC_GRP2_ANA_TEST,                  /*0x12*/
+    XC_GRP2_MAX,                       /*0x13*/
+}xc_addr_grp2_t;
 
 /* Command packet format */
 typedef union tag_CMD
@@ -2263,9 +2263,9 @@ typedef union tag_ANA_TEST
     }bit;
 }_v_ana_test_t;
 
-typedef union tag_XCR_GROUP1_REGS
+typedef union tag_XC_GROUP1_REGS
 {
-    uint16_t ALL[XCR_GRP1_MAX];
+    uint16_t ALL[XC_GRP1_MAX];
     struct
     {
         _v_reset_t                          _r00;
@@ -2381,9 +2381,9 @@ typedef union tag_XCR_GROUP1_REGS
         _v_global_fault_read_data5_t        _r6E;   /* Read-only */
         _v_global_fault_read_data6_t        _r6F;   /* Read-only */
     }reg;
-}_xcr_group1_regs_t;
+}_xc_group1_regs_t;
 
-static const char* xcr_grp1_regs_str[XCR_GRP1_MAX] =
+static const char* xc_grp1_regs_str[XC_GRP1_MAX] =
 {
     "RESET",
     "GLOBAL WRITE COMMAND",
@@ -2499,9 +2499,9 @@ static const char* xcr_grp1_regs_str[XCR_GRP1_MAX] =
     "GLOBAL FAULT READ DATA6",
 };
 
-typedef union tag_XCR_OTP_CONTROL_REGS
+typedef union tag_XC_OTP_CONTROL_REGS
 {
-    uint16_t ALL[XCR_OTP_MAX];
+    uint16_t ALL[XC_OTP_MAX];
     struct
     {
         _v_test_control_t       _rF0;
@@ -2521,9 +2521,9 @@ typedef union tag_XCR_OTP_CONTROL_REGS
         _v_sv_var_control1_t    _rFE;
         _v_sv_var_control2_t    _rFF;
     }reg;
-}_xcr_otp_control_regs_t;
+}_xc_otp_control_regs_t;
 
-static const char* xcr_otp_control_regs_str[XCR_OTP_MAX] =
+static const char* xc_otp_control_regs_str[XC_OTP_MAX] =
 {
     "TEST_CONTROL",
     "OTP_PG_ACCESS",
@@ -2543,9 +2543,9 @@ static const char* xcr_otp_control_regs_str[XCR_OTP_MAX] =
     "SV_VAR_CONTROL2",
 };
 
-typedef union tag_XCR_GROUP2_REGS
+typedef union tag_XC_GROUP2_REGS
 {
-    uint16_t ALL[XCR_GRP2_MAX];
+    uint16_t ALL[XC_GRP2_MAX];
     struct
     {
         _v_dac1_fb_valid_cnt_t      _r00;   /* Read-only */
@@ -2569,9 +2569,9 @@ typedef union tag_XCR_GROUP2_REGS
         _v_soa3_p3_p2_t             _r11;
         _v_ana_test_t               _r12;
     }reg;
-}_xcr_group2_regs_t;
+}_xc_group2_regs_t;
 
-static const char* xcr_grp2_regs_str[XCR_GRP2_MAX] =
+static const char* xc_grp2_regs_str[XC_GRP2_MAX] =
 {
     "DAC1 FB VALID CNT",
     "DAC1 INC HOLD/WAIT CNT",

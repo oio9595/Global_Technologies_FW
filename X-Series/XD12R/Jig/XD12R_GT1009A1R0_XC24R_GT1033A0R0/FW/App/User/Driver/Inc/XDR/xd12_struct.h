@@ -8,7 +8,7 @@
 #define XD_MODEL_TYPE       (XD_TYPE_XD12R)
 #define XD_REVISION         (XD_REVISION_CS)  /* ES: Engineering Sample, CS: Customer Sample */
 
-#if (XD_MODEL_TYPE == XD_TYPE_XD12R)    /* XDR12R for VD */
+#if (XD_MODEL_TYPE == XD_TYPE_XD12R)    /* XD12R for VD */
     #if (XD_REVISION == XD_REVISION_ES)
         #include "xd12r_es_struct.h"
     #elif (XD_REVISION == XD_REVISION_CS)
@@ -17,7 +17,7 @@
         #error "Invalid XD12R_REVISION"
     #endif
 
-#elif (XD_MODEL_TYPE == XD_TYPE_XD12D)  /* XDR12D for VD */
+#elif (XD_MODEL_TYPE == XD_TYPE_XD12D)  /* XD12D for VD */
     #if (XD_REVISION == XD_REVISION_ES)
         #include "xd12d_es_struct.h"
     #elif (XD_REVISION == XD_REVISION_CS)

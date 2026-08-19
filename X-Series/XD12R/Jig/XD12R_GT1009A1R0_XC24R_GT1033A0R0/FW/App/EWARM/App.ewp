@@ -4688,6 +4688,9 @@
                 <group>
                     <name>XCR</name>
                     <file>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\drv_xc24.h</name>
+                    </file>
+                    <file>
                         <name>$PROJ_DIR$\..\User\Driver\Inc\XCR\ic603_es_struct.h</name>
                     </file>
                     <file>
@@ -4699,6 +4702,9 @@
                 </group>
                 <group>
                     <name>XDR</name>
+                    <file>
+                        <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\drv_xd12.h</name>
+                    </file>
                     <file>
                         <name>$PROJ_DIR$\..\User\Driver\Inc\XDR\ic601_es_struct.h</name>
                     </file>
@@ -4727,12 +4733,6 @@
                 <file>
                     <name>$PROJ_DIR$\..\User\Driver\Inc\drv_timer.h</name>
                 </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Driver\Inc\drv_xcr24.h</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Driver\Inc\drv_xdr12.h</name>
-                </file>
             </group>
             <group>
                 <name>Src</name>
@@ -4752,10 +4752,10 @@
                     <name>$PROJ_DIR$\..\User\Driver\Src\drv_timer.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\User\Driver\Src\drv_xcr24.c</name>
+                    <name>$PROJ_DIR$\..\User\Driver\Src\drv_xc24.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\User\Driver\Src\drv_xdr12.c</name>
+                    <name>$PROJ_DIR$\..\User\Driver\Src\drv_xd12.c</name>
                 </file>
             </group>
         </group>
