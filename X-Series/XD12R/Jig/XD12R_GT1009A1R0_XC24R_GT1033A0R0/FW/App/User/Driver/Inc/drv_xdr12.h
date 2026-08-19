@@ -17,36 +17,36 @@ extern "C" {
 #include "drv_gpio.h"
 #include "xd12_struct.h"
 
-#define XDR_EFUSE_SKIP      (0U)
-#define XDR_EFUSE_BURN      (1U)
-#define XDR_EFUSE           (XDR_EFUSE_SKIP)
+#define XDR_EFUSE_SKIP          (0U)
+#define XDR_EFUSE_BURN          (1U)
+#define XDR_EFUSE               (XDR_EFUSE_SKIP)
 
-#define XDR_CONTROLLED_MCU  (0U)
-#define XDR_CONTROLLED_XCR  (1U)
-#define XDR_CONTROL_TYPE    (XDR_CONTROLLED_MCU)
+#define XDR_CONTROLLED_MCU      (0U)
+#define XDR_CONTROLLED_XCR      (1U)
+#define XDR_CONTROL_TYPE        (XDR_CONTROLLED_MCU)
 
-#define XDR_CH_SIZE         (12U)
-#define XDR_DAISY_LENGTH    (1U)
+#define XDR_CH_SIZE             (12U)
+#define XDR_DAISY_LENGTH        (1U)
 
-//#define XDR_LD_DATA_12BIT (12U)
-#define XDR_LD_DATA_14BIT   (14U)
-#define XDR_LD_DATA_BIT     (XDR_LD_DATA_14BIT)
+//#define XDR_LD_DATA_12BIT     (12U)
+#define XDR_LD_DATA_14BIT       (14U)
+#define XDR_LD_DATA_BIT         (XDR_LD_DATA_14BIT)
 
-#define XDR_SV_NO           (32U)
+#define XDR_SV_NO               (32U)
 
-#define XDR_SERIAL_CLK_HIGH (24U)
-#define XDR_SERIAL_CLK_LOW  (12U)
-#define XDR_SERIAL_CLK      ((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
+#define XDR_SERIAL_CLK_HIGH     (24U)
+#define XDR_SERIAL_CLK_LOW      (12U)
+#define XDR_SERIAL_CLK          ((float)(XD12R_INTERNAL_MCLK / 2) / (XDR_SERIAL_CLK_HIGH + XDR_SERIAL_CLK_LOW))
 
-#define XDR_SYNC_MODE_CMD   (0U) /* cmd + svi */
-#define XDR_SYNC_MODE_SVI   (1U) /*  vo + svi */
-#define XDR_SYNC_MODE       (XDR_SYNC_MODE_CMD)
+#define XDR_SYNC_MODE_CMD       (0U) /* cmd + svi */
+#define XDR_SYNC_MODE_SVI       (1U) /*  vo + svi */
+#define XDR_SYNC_MODE           (XDR_SYNC_MODE_CMD)
 
-#define XDR_TYPE_A          (0U) /* NTS + TS */
-#define XDR_TYPE_B          (1U) /* NTS + NTS + TS */
-#define XDR_TYPE_C          (2U) /* NTS + TS + TS */
-#define XDR_TYPE_D          (3U) /* TS + TS */
-#define XDR_TYPE            (XDR_TYPE_A)
+#define XDR_TYPE_A              (0U) /* NTS + TS */
+#define XDR_TYPE_B              (1U) /* NTS + NTS + TS */
+#define XDR_TYPE_C              (2U) /* NTS + TS + TS */
+#define XDR_TYPE_D              (3U) /* TS + TS */
+#define XDR_TYPE                (XDR_TYPE_A)
 
 #if (XDR_TYPE == XDR_TYPE_A)
     #define LED_PER_BLOCK       (3U) /* NTS + TS */

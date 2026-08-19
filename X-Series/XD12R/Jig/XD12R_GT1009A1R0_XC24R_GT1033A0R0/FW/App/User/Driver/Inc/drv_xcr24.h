@@ -16,25 +16,24 @@ extern "C" {
 #include <stdbool.h>
 #include "xc24_struct.h"
 
-#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)   (uint32_t)(((float)XCR_INTERNAL_MCLK) / (Hz) + 0.5f)
-#define XCR_CONV_US_TO_XCR_MCLK(us)     (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
+#define XCR_EFUSE_SKIP                      (0U)
+#define XCR_EFUSE_BURN                      (1U)
+#define XCR_EFUSE                           (XCR_EFUSE_SKIP)
 
-#define XCR_CONV_DAC_V_TO_INPUT(voltage)     (uint16_t)((((voltage) * 4095.0f) / 3.0f) + 0.5f)
+#define XCR_CONV_FREQ_TO_XCR_MCLK(Hz)       (uint32_t)(((float)XCR_INTERNAL_MCLK) / (Hz) + 0.5f)
+#define XCR_CONV_US_TO_XCR_MCLK(us)         (uint16_t)(((float)XCR_INTERNAL_MCLK) / (1000000.0f / (us)) + 0.5f)
+#define XCR_CONV_DAC_V_TO_INPUT(voltage)    (uint16_t)((((voltage) * 4095.0f) / 3.0f) + 0.5f)
 
-#define XCR_EFUSE_SKIP          (0U)
-#define XCR_EFUSE_BURN          (1U)
-#define XCR_EFUSE               (XCR_EFUSE_SKIP)
+#define XCR_CH_SIZE                         (1U)
+#define XCR_SEG_CH_SIZE       	            (8U)
 
-#define XCR_CH_SIZE             (1U)
-#define XCR_SEG_CH_SIZE       	(8U)
+#define MODEL_XCR24_SEG                     ((uint16_t)((XCR_CH_SIZE + XCR_SEG_CH_SIZE - 1)  / XCR_SEG_CH_SIZE))     /* make ceiled value */
 
-#define MODEL_XCR24_SEG         ((uint16_t)((XCR_CH_SIZE + XCR_SEG_CH_SIZE - 1)  / XCR_SEG_CH_SIZE))     /* make ceiled value */
+#define XCR_SERIAL_CLK_HIGH                 (24U)
+#define XCR_SERIAL_CLK_LOW                  (11U)
+#define XCR_SERIAL_CLK                      ((float)XCR_INTERNAL_MCLK / (XCR_SERIAL_CLK_HIGH + XCR_SERIAL_CLK_LOW))
 
-#define XCR_SERIAL_CLK_HIGH     (24U)
-#define XCR_SERIAL_CLK_LOW      (11U)
-#define XCR_SERIAL_CLK          ((float)XCR_INTERNAL_MCLK / (XCR_SERIAL_CLK_HIGH + XCR_SERIAL_CLK_LOW))
-
-#define XCR_SPI_RW_LEN    	    (48U)
+#define XCR_SPI_RW_LEN    	                (48U)
 
 typedef enum tag_XCR_CH
 {

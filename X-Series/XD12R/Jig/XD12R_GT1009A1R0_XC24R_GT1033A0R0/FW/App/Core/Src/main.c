@@ -110,6 +110,8 @@ void sys_init(void)
     XCR_NSS_LO();
     MCO2_DISABLE();
 
+    gpio_set_demux_channel_selection(XD_CH_MAX);
+
     xcr24_init_param();
     xdr12_init_param();
 
