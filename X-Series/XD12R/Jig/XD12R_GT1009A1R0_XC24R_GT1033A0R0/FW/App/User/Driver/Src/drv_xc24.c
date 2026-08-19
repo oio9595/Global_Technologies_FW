@@ -134,11 +134,23 @@ static void xc24_regs_init_table(void)
             _r1->reg._r06.bit.ld_type = LED_PER_BLOCK;
             break;
         case XC_SYNC_GEN_COMMAND:
-            _r1->reg._r07.bit.syncmode = XC_SYNCMODE_VO_SVO;
+            #if (XD_SYNC_MODE == XD_SYNC_MODE_CMD)
+                _r1->reg._r07.bit.syncmode = XC_SYNCMODE_CMD_SVO;
+            #elif(XD_SYNC_MODE == XD_SYNC_MODE_SVI)
+                _r1->reg._r07.bit.syncmode = XC_SYNCMODE_VO_SVO;
+            #else
+                #error "Unsupported XD_SYNC_MODE value"
+            #endif
             _r1->reg._r07.bit.enable = XC_FUNCTION_DIS;
             break;
         case XC_COMMAND_AUTO_ENABLE:
-            _r1->reg._r08.bit.sync_auto_en = XC_FUNCTION_DIS;
+            #if (XD_SYNC_MODE == XD_SYNC_MODE_CMD)
+                _r1->reg._r08.bit.sync_auto_en = XC_FUNCTION_EN;
+            #elif(XD_SYNC_MODE == XD_SYNC_MODE_SVI)
+                _r1->reg._r08.bit.sync_auto_en = XC_FUNCTION_DIS;
+            #else
+                #error "Unsupported XD_SYNC_MODE value"
+            #endif
             _r1->reg._r08.bit.fault_auto_en = XC_FUNCTION_EN;
             _r1->reg._r08.bit.timeout_en = XC_FUNCTION_EN;
             break;
