@@ -4667,18 +4667,6 @@
                 <file>
                     <name>$PROJ_DIR$\..\User\App\Src\ldim_conversion.c</name>
                 </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\App\Src\mgr_app.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\App\Src\mgr_det.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\App\Src\mgr_test.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\App\Src\mgr_trim.c</name>
-                </file>
             </group>
         </group>
         <group>
@@ -4783,6 +4771,18 @@
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\User\Framework\Src\fw_thread.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_app.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_det.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_test.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_trim.c</name>
                 </file>
             </group>
         </group>
