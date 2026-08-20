@@ -507,12 +507,19 @@ void ADS114S08_Init(void)
         comm_UART_Printf(LOG_LV_DEBUG, "\r\nreg[0x%02X] = 0x%02X", reg, gt_ads114s08_regs.ALL[reg]);
     }
 
-    gt_ads114s08_regs.regs.status.u.fl_por = 0U; /* clear POR flag */
-    gt_ads114s08_regs.regs.status.u.rdy = 0U; /* clear device ready flag */
+    gt_ads114s08_regs.regs.status.u.fl_por = 0U; /* Clear POR flag */
+    gt_ads114s08_regs.regs.status.u.rdy = 0U; /* Clear Device Ready Flag */
     ADS114S08_Write_Register(REG_ADDR_STATUS, gt_ads114s08_regs.regs.status.value);
 
     gt_ads114s08_regs.regs.datarate.u.dr = ADS_SPS_2000; /* 2000 SPS */
     ADS114S08_Write_Register(REG_ADDR_DATARATE, gt_ads114s08_regs.regs.datarate.value);
+
+    gt_ads114s08_regs.regs.ref.u.refsel = 0U; /* Reference Input Select REFP0, REFN0 */
+    gt_ads114s08_regs.regs.ref.u.refcon = 0U; /* Internal Reference Off */
+    ADS114S08_Write_Register(REG_ADDR_REF, gt_ads114s08_regs.regs.ref.value);
+
+    gt_ads114s08_regs.regs.gpiocon.u.con = 0U; /* GPIO[x] Configured As Analog Input */
+    ADS114S08_Write_Register(REG_ADDR_GPIOCON, gt_ads114s08_regs.regs.gpiocon.value);
 
     ADS114S08_Get_ADC_Offset();
 
