@@ -236,8 +236,10 @@ static _xd12_mirror_regs_t gt_xd12_mirror_get_regs[XD_DAISY_LENGTH];
 
 static _xd12_mirror_regs_t gt_xd12_trim_debug_regs;
 
-static uint16_t gn_pwm_out_xd_write[(XD_DAISY_LENGTH * XD_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
-static uint16_t gn_pwm_out_xd_ld_transfer[(XD_DAISY_LENGTH * XD_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
+    static uint16_t gn_pwm_out_xd_write[(XD_DAISY_LENGTH * XD_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
+    static uint16_t gn_pwm_out_xd_ld_transfer[(XD_DAISY_LENGTH * XD_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
+#endif
 
 static uint16_t gn_pwm_in_xd_response_freq[(XD_DAISY_LENGTH * XD_CMD_READOUT) + 2U];
 static uint16_t gn_pwm_in_xd_response_duty[(XD_DAISY_LENGTH * XD_CMD_READOUT) + 2U];
@@ -246,14 +248,13 @@ volatile bool gb_xd_pwm_out_flag;
 volatile bool gb_xd_pwm_in_flag;
 volatile bool gb_xd_pwm_in_timeout;
 
-static _v_serdes_write_command_t gt_xd_write_command[XD_DAISY_LENGTH];
-static _v_serdes_read_command_t gt_xd_read_command[XD_DAISY_LENGTH];
-static _v_serdes_readout_command_t gt_xd_readout_command[XD_DAISY_LENGTH];
-static _v_serdes_ld_transfer_command_t gt_xd_ld_transfer_command[XD_DAISY_LENGTH];
-static _v_serdes_fault_read_command_t gt_xd_fault_read_command[XD_DAISY_LENGTH];
-static _v_serdes_fault_readout_command_t gt_xd_fault_readout_command;
-static _v_serdes_sync_gen_command_t gt_xd_syncgen_command[XD_DAISY_LENGTH];
-static _v_serdes_id_gen_command_t gt_xd_idgen_command[XD_DAISY_LENGTH];
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
+    static _v_serdes_write_command_t gt_xd_write_command[XD_DAISY_LENGTH];
+    static _v_serdes_read_command_t gt_xd_read_command[XD_DAISY_LENGTH];
+    static _v_serdes_fault_read_command_t gt_xd_fault_read_command[XD_DAISY_LENGTH];
+    static _v_serdes_sync_gen_command_t gt_xd_syncgen_command[XD_DAISY_LENGTH];
+    static _v_serdes_id_gen_command_t gt_xd_idgen_command[XD_DAISY_LENGTH];
+#endif
 
 static bool gb_xd_do_efuse;
 
@@ -279,6 +280,7 @@ static void stop_timeout_timer(void)
     LL_TIM_SetAutoReload(TIM12, TIM12_PERIOD);
 }
 
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static bool xd12_pwm_in(uint16_t length, uint16_t timeout_us)
 {
     gb_xd_pwm_in_flag = true;
@@ -415,12 +417,6 @@ static uint16_t xd12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, u
         n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << 1U);
         n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << 0U);
 
-        gt_xd_fault_readout_command.bit.cmd_code = n_header;
-        gt_xd_fault_readout_command.bit.bit_thermal = ((n_data >> 3U) & 0x01U);
-        gt_xd_fault_readout_command.bit.bit_short = ((n_data >> 2U) & 0x01U);
-        gt_xd_fault_readout_command.bit.bit_open = ((n_data >> 1U) & 0x01U);
-        gt_xd_fault_readout_command.bit.bit_fb = ((n_data >> 0U) & 0x01U);
-
         pdata[id++] = n_data;
         comm_UART_Printf(LOG_LV_DEBUG, "\r\nXD Fault Recv Packet\r\n\tCMD - 0x%01X, FAULT - 0x%01X", n_header, n_data);
     }
@@ -459,10 +455,6 @@ static uint16_t xd12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, u
                 n_data |= (DECODE_BIT(*p_src++, logic_1_min, logic_1_max) << (uint16_t)bit);
             }
 
-            gt_xd_readout_command[id].bit.cmd_code = n_header;
-            gt_xd_readout_command[id].bit.id = n_id;
-            gt_xd_readout_command[id].bit.data = n_data;
-
             pdata[id++] = n_data;
             duty_idx += XD_CMD_READOUT;
             comm_UART_Printf(LOG_LV_DEBUG, "\r\nXD Read Recv Packet\r\n\tCMD - 0x%01X, ID - 0x%02X, DATA - 0x%03X", n_header, n_id, n_data);
@@ -471,6 +463,7 @@ static uint16_t xd12_decode_pwm_input_stream(uint16_t* pfreq, uint16_t* pduty, u
 
     return id;
 }
+#endif
 
 void xd12_make_readable(void)
 {
@@ -1145,18 +1138,18 @@ void xd12_read_all(void)
 
 void xd12_init_param(void)
 {
-    for(uint16_t num = 0U; num < XD_DAISY_LENGTH; ++num)
+    #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
     {
-        gt_xd_write_command[num].bit.cmd_code = CMD_CODE_WRITE;
-        gt_xd_read_command[num].bit.cmd_code = CMD_CODE_READ;
-        gt_xd_readout_command[num].bit.cmd_code = CMD_CODE_READ;
-        gt_xd_ld_transfer_command[num].bit.cmd_code = CMD_CODE_LDIM;
-        gt_xd_fault_read_command[num].bit.cmd_code = CMD_CODE_RD_FAULT;
-        gt_xd_syncgen_command[num].bit.cmd_code = CMD_CODE_SYNCGEN;
-        gt_xd_idgen_command[num].bit.cmd_code = CMD_CODE_IDGEN;
+        for(uint16_t num = 0U; num < XD_DAISY_LENGTH; ++num)
+        {
+            gt_xd_write_command[num].bit.cmd_code = CMD_CODE_WRITE;
+            gt_xd_read_command[num].bit.cmd_code = CMD_CODE_READ;
+            gt_xd_fault_read_command[num].bit.cmd_code = CMD_CODE_RD_FAULT;
+            gt_xd_syncgen_command[num].bit.cmd_code = CMD_CODE_SYNCGEN;
+            gt_xd_idgen_command[num].bit.cmd_code = CMD_CODE_IDGEN;
+        }
     }
-
-    gt_xd_fault_readout_command.bit.cmd_code = CMD_CODE_RD_FAULT;
+    #endif
 
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_5, (uint32_t)gn_pwm_in_xd_response_duty);
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_6, (uint32_t)gn_pwm_in_xd_response_freq);
