@@ -39,6 +39,22 @@ void tim_set_xd_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
 void tim_set_xc_read_info(uint16_t addr, uint8_t addr_type);
 void tim_set_xc_write_info(uint16_t addr, uint16_t data, uint8_t addr_type);
 
+__STATIC_INLINE void us_delay(uint32_t n_delay)
+{
+    if(n_delay > 65535U)
+    {
+        n_delay = 65535U;
+    }
+
+    TIM12->CNT = 0U;
+    LL_TIM_EnableCounter(TIM12);
+    while(TIM12->CNT < n_delay)
+    {
+    }
+    LL_TIM_DisableCounter(TIM12);
+    TIM12->CNT = 0U;
+}
+
 #ifdef __cplusplus
 }
 #endif

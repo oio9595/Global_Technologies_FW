@@ -4,6 +4,7 @@
 
 #include "drv_xd12.h"
 #include "drv_xc24.h"
+#include "drv_timer.h"
 #include "comm_debugging.h"
 #include "ldim_conversion.h"
 
@@ -214,7 +215,7 @@ void tim_vsync_out_handler(void)
     #endif
         tim_svsync_timer_start();
 #elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
-        // no need to do anything for XC controlled mode
+        // nothing to do
 #else
         #error "XD_CONTROL_TYPE is not defined"
 #endif

@@ -72,6 +72,7 @@ typedef enum tag_XC_RW_GRP
 } xc_rw_grp_t;
 
 extern volatile bool gb_xc_ld_transfer_spi_dma_flag;
+extern volatile bool gb_xc_ld_transfer_nss_pending_flag;
 
 void xc24_reset(void);
 
@@ -97,6 +98,7 @@ void xc24_write_grp1_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 void xc24_write_grp2_reg(uint16_t addr, const uint16_t* q, uint16_t length);
 
 void xc24_set_ld_transfer(uint16_t* table, uint16_t length);
+void xc24_ld_transfer_nss_release(void);
 
 bool xc24_read_local(uint16_t ch_seg, uint16_t addr);
 void xc24_write_local(uint16_t ch_seg, uint16_t addr, uint16_t* data, uint16_t len);

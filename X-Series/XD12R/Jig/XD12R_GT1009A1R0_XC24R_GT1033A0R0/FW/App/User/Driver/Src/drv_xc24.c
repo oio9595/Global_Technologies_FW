@@ -5,6 +5,7 @@
 #include "drv_spi.h"
 #include "drv_xc24.h"
 #include "drv_xd12.h"
+#include "drv_timer.h"
 #include "drv_ads124s08.h"
 #include "comm_debugging.h"
 
@@ -69,6 +70,7 @@
 #define XC_SVO_ACTIVE_123       (3U)
 
 volatile bool gb_xc_ld_transfer_spi_dma_flag;
+volatile bool gb_xc_ld_transfer_nss_pending_flag;
 
 static uint8_t gn_xc_daisied_dev_blk_size;
 static uint8_t gn_xc_channel_enable[XC_CH_SIZE_MAX];
@@ -1142,6 +1144,16 @@ void xc24_set_ld_transfer(uint16_t* buffer, uint16_t length)
 
     LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_3, length);
     LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_3);
+}
+
+void xc24_ld_transfer_nss_release(void)
+{
+    if (gb_xc_ld_transfer_nss_pending_flag == true)
+    {
+        us_delay(2U);
+        XC_NSS_HI();
+        gb_xc_ld_transfer_nss_pending_flag = false;
+    }
 }
 
 bool xc24_read_local(uint16_t ch_seg, uint16_t addr)

@@ -218,28 +218,6 @@ float mcu_peripheral_tim_conversion_freq(void);
 #define XC_CONST_OSC        (HW_OSC_PRESCALE / CONST_HZ_TO_MHZ)
 #define XD_CONST_OSC        (HW_OSC_PRESCALE * XD_PRESCALE / CONST_HZ_TO_MHZ)
 
-__STATIC_INLINE void us_delay(uint32_t n_delay)
-{
-    if(n_delay > 65535U)
-    {
-        n_delay = 65535U;
-    }
-
-    LL_TIM_EnableCounter(TIM12);
-    while(TIM12->CNT < n_delay)   {  }
-    LL_TIM_DisableCounter(TIM12);
-    TIM12->CNT = 0;
-}
-
-__STATIC_INLINE void user_delay(volatile uint32_t delay)
-{
-    while(delay > 0U)
-    {
-        __NOP();
-        --delay;
-    }
-}
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

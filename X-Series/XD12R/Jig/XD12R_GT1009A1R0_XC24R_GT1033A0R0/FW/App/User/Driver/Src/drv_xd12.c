@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "drv_timer.h"
 #include "drv_xd12.h"
 #include "drv_xc24.h"
 #include "comm_debugging.h"
@@ -258,6 +259,7 @@ volatile bool gb_xd_pwm_in_timeout;
 
 static bool gb_xd_do_efuse;
 
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static void start_timeout_timer(uint16_t timeout_us)
 {
     /* Set the Autoreload Register value */
@@ -280,7 +282,6 @@ static void stop_timeout_timer(void)
     LL_TIM_SetAutoReload(TIM12, TIM12_PERIOD);
 }
 
-#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static bool xd12_pwm_in(uint16_t length, uint16_t timeout_us)
 {
     gb_xd_pwm_in_flag = true;
@@ -1442,6 +1443,7 @@ void xd12_ld_transfer(void)
     p_pwm_out[len++] = 0U;
 
     xd12_pwm_out((uint32_t)p_pwm_out, (uint32_t)len);
+    us_delay(CMD_DELAY_LD);
 #elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
     uint16_t* p = ldim_get_xc_ld_transfer_buffer();
     uint16_t len = ldim_get_xc_ld_transfer_size();
@@ -1449,7 +1451,6 @@ void xd12_ld_transfer(void)
 #else
     #error "XD_CONTROL_TYPE is not defined"
 #endif
-    us_delay(CMD_DELAY_LD);
 }
 
 void xd12_fault_readout(void)

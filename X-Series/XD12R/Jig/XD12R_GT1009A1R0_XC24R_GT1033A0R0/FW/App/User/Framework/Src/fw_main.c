@@ -28,6 +28,7 @@ void fw_run(void)
         {
             _fw_threadmgr_do();
             _system_idle();
+            xc24_ld_transfer_nss_release();
         }
     }
 }

@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include "drv_spi.h"
+#include "drv_timer.h"
 
 __STATIC_INLINE bool spi_timeout(uint32_t tick, const uint32_t timeout)
 {
@@ -35,8 +36,7 @@ uint8_t spi_write(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t len, const ui
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
-    //us_delay(1U);
-    user_delay(2U);
+    us_delay(2U);
 
     return 0U;
 }
@@ -69,8 +69,7 @@ uint8_t spi_read(SPI_TypeDef *SPIx, const uint16_t* out, uint16_t* in, uint16_t 
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
-    //us_delay(1U);
-    user_delay(2U);
+    us_delay(2U);
 
     return 0U;
 }
@@ -92,8 +91,7 @@ uint8_t spi_write8(SPI_TypeDef *SPIx, const uint8_t* out, uint16_t len, const ui
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
-    //us_delay(1U);
-    user_delay(2U);
+    us_delay(2U);
 
     return 0U;
 }
@@ -126,8 +124,7 @@ uint8_t spi_read8(SPI_TypeDef *SPIx, const uint8_t* out, uint8_t* in, uint16_t l
     }
 
     while(LL_SPI_IsActiveFlag_BSY(SPIx) == SET) { if(false == spi_timeout(n_tick, timeout)) { return SPI_TIMEOUT; } };
-    //us_delay(1U);
-    user_delay(2U);
+    us_delay(2U);
 
     return 0U;
 }
