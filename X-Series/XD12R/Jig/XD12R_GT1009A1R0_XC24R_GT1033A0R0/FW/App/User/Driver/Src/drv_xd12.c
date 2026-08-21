@@ -12,7 +12,7 @@
 
 #define SERIALIZE_LOG_DUMP_DISABLE    (0U)
 #define SERIALIZE_LOG_DUMP_ENABLE     (1U)
-#define SERIALIZE_LOG_DUMP            (SERIALIZE_LOG_DUMP_ENABLE)
+#define SERIALIZE_LOG_DUMP            (SERIALIZE_LOG_DUMP_DISABLE)
 
 /* XD/IC602 serializer protocol */
 #define CMD_CODE_WRITE          (0x0DU)  /* 0b1101 */
