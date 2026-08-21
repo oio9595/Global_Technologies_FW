@@ -1,12 +1,10 @@
-
-#include <stdlib.h>
-
 #include "framework.h"
+#include "app_manager.h"
 
 typedef bool (*thread_func)(struct thread_data* tdata);
 
 static struct{
-    MGRSTATUS	status;
+    mgr_status_t	status;
 
     THREAD_ID power_on_thr;
 }__priv_app;
@@ -62,7 +60,7 @@ static void _enable(bool en)
 
 }
 
-static MGRSTATUS _status(void)
+static mgr_status_t _status(void)
 {
     return __priv_app.status;
 }
@@ -105,7 +103,7 @@ static uint32_t _noti(uint32_t type, void* val)
     return MGRET_OK;
 }
 
-struct manager __app_mgr=
+struct manager __mgr_app=
 {
     _power,
     _enable,
@@ -115,4 +113,3 @@ struct manager __app_mgr=
     _read,
     _noti,
 };
-

@@ -10,6 +10,10 @@
 #include "drv_ads124s08.h"
 #include "ldim_conversion.h"
 
+#define SERIALIZE_LOG_DUMP_DISABLE    (0U)
+#define SERIALIZE_LOG_DUMP_ENABLE     (1U)
+#define SERIALIZE_LOG_DUMP            (SERIALIZE_LOG_DUMP_ENABLE)
+
 /* XD/IC602 serializer protocol */
 #define CMD_CODE_WRITE          (0x0DU)  /* 0b1101 */
 #define CMD_CODE_READ           (0x0EU)  /* 0b1110 */
@@ -258,6 +262,42 @@ volatile bool gb_xd_pwm_in_timeout;
 #endif
 
 static bool gb_xd_do_efuse;
+
+#if (SERIALIZE_LOG_DUMP == SERIALIZE_LOG_DUMP_ENABLE)
+static void xd12_serialize_log_dump(uint16_t addr, uint16_t data)
+{
+    UART_PutChar('\r');
+    UART_PutChar('\n');
+
+    // "0x" 전송
+    UART_PutChar('0');
+    UART_PutChar('x');
+
+    // 16진수 4자리 변환 및 전송 (상위 니블부터 하위 니블까지)
+    for (int8_t shift = 12; shift >= 0; shift -= 4)
+    {
+        uint8_t nibble = (addr >> shift) & 0x0F;
+        char hex_char = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
+
+        UART_PutChar(hex_char);
+    }
+
+    UART_PutChar(',');
+
+    // "0x" 전송
+    UART_PutChar('0');
+    UART_PutChar('x');
+
+    // 16진수 4자리 변환 및 전송 (상위 니블부터 하위 니블까지)
+    for (int8_t shift = 12; shift >= 0; shift -= 4)
+    {
+        uint8_t nibble = (data >> shift) & 0x0F;
+        char hex_char = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
+
+        UART_PutChar(hex_char);
+    }
+}
+#endif
 
 #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static void start_timeout_timer(uint16_t timeout_us)
@@ -935,12 +975,30 @@ static void xd12_regs_trim_init_table(void)
 
 void xd12_reset(void)
 {
-    _v_xd12_reset_id_t _r00 = { 0U };
-    _r00.bit.lkg_e = 0U;
-    _r00.bit.e_rst = 0U;
-    _r00.bit.vs_rst = 0U;
-    _r00.bit.rst = 1U;
-    xd12_write_by_type(XD12R_RESET_ID, _r00.ALL, XD12R_ADDR_TYPE_GENERAL);
+    _xd12_regs_t* _r1 = &gt_xd12_set_regs;
+    _xd12_otp_ctrl_regs_t* _r3 = &gt_xd12_otp_ctrl_set_regs;
+
+    _r1->reg._r00.bit.lkg_e = 0U;
+    _r1->reg._r00.bit.e_rst = 0U;
+    _r1->reg._r00.bit.vs_rst = 0U;
+    _r1->reg._r00.bit.rst = 1U;
+    xd12_write_by_type(XD12R_RESET_ID, _r1->ALL[XD12R_RESET_ID], XD12R_ADDR_TYPE_GENERAL);
+
+    us_delay(10U);
+#if 0
+    {
+        _r1->reg._r2B.ALL = 0x000U;
+        xd12_write_by_type(XD12R_CLOCK_GATE_EN, _r1->ALL[XD12R_CLOCK_GATE_EN], XD12R_ADDR_TYPE_GENERAL);
+
+        _r1->reg._r2B.ALL = 0x017U;
+        xd12_write_by_type(XD12R_CLOCK_GATE_EN, _r1->ALL[XD12R_CLOCK_GATE_EN], XD12R_ADDR_TYPE_GENERAL);
+    }
+#endif
+    _r3->reg._r3F.ALL = 0x800U;
+    xd12_write_by_type(XD12R_OP_MODE + XD12R_OTP_CTRL_BASE, _r3->ALL[XD12R_OP_MODE], XD12R_ADDR_TYPE_GENERAL);
+
+    _r3->reg._r3F.ALL = 0x000U;
+    xd12_write_by_type(XD12R_OP_MODE + XD12R_OTP_CTRL_BASE, _r3->ALL[XD12R_OP_MODE], XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xd12_idgen(void)
@@ -1172,7 +1230,7 @@ void xd12_init(void)
     xd12_idgen();
     xd12_make_readable();
     xd12_regs_init_table();
-    xd12_read_all();
+    //xd12_read_all();
 }
 
 void xd12_trim_init(void)
@@ -1196,6 +1254,9 @@ void xd12_trim_init(void)
 
 static void xd12_write(uint16_t addr, uint16_t data)
 {
+#if (SERIALIZE_LOG_DUMP == SERIALIZE_LOG_DUMP_ENABLE)
+    xd12_serialize_log_dump(addr, data);
+#endif
     #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
     {
         uint16_t* const p_pwm_out = gn_pwm_out_xd_write + PWM_OUT_HEADER_SIZE;

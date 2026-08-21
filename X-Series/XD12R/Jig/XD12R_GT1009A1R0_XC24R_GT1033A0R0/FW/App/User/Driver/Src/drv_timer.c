@@ -64,6 +64,7 @@ static inline void tim_update_vsync_out_freq(void)
     xc24_set_fll_cnt(0U, XC_CONV_FREQ_TO_XC_MCLK(gf_vsync_out_freq));
 }
 
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static inline void tim_update_svsync_out_freq(void)
 {
     gf_svsync_sub_green_freq = SVSYNC_GREEN_FREQ;
@@ -87,6 +88,7 @@ static void tim_svsync_timer_start(void)
 
     gn_svsync_count = 0U;
 }
+#endif
 
 static void tim_svsync_timer_stop(void)
 {
@@ -266,7 +268,7 @@ void tim_vsync_out_process(void)
 
     if (true == gb_fault_read_flag)
     {
-        xd12_fault_readout();
+        //xd12_fault_readout();
         gb_fault_read_flag = false;
     }
 }

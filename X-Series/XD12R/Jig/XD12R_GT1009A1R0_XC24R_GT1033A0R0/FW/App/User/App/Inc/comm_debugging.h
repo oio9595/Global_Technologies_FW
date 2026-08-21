@@ -1,4 +1,3 @@
-
 /**
  * @file comm_debugging.h
  * @author GT
@@ -9,12 +8,14 @@
 #ifndef __COMM_DEBUGGING_H__
 #define __COMM_DEBUGGING_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SPI_LOG_DUMP_DISABLE    (0U)
-#define SPI_LOG_DUMP_ENABLE     (1U)
-#define SPI_LOG_DUMP            (SPI_LOG_DUMP_DISABLE)
+#include "main.h"
 
 typedef enum __LOG_LEVEL__
 {
@@ -36,7 +37,12 @@ typedef enum __LOG_LEVEL__
 
 #define FATAL_INVALID_INPUT(val)    comm_UART_Printf(LOG_LV_FATAL, "\r\nFunction[%s] invalid input (%u)", __func__, (val))
 
-extern bool gb_usart_tx_start_flag;
+void comm_init(void);
+void comm_debugging_process(void);
+
+void comm_UART_Printf(LOG_LV_t lv, const char *fmt, ...);
+void comm_rx_handler(uint8_t rx_data);
+void comm_tx_handler(void);
 
 __STATIC_INLINE void UART_PutChar(uint8_t data)
 {
@@ -46,11 +52,8 @@ __STATIC_INLINE void UART_PutChar(uint8_t data)
     LL_USART_TransmitData8(USART2, data);
 }
 
-void comm_init(void);
-void comm_debugging_process(void);
-void comm_UART_Printf(LOG_LV_t lv, const char *fmt, ...);
-void comm_rx_handler(uint8_t rx_data);
-void comm_tx_handler(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __COMM_DEBUGGING_H__ */
-

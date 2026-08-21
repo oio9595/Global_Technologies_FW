@@ -1,6 +1,6 @@
-
 #include "main.h"
 #include "framework.h"
+#include "app_manager.h"
 
 #define LONG_PRESS_TIME (1000U) /* 1초 이상 누르면 Long Press */
 #define DEBOUNCE_TIME   (25U)   /* 25ms 디바운스 */
@@ -30,7 +30,7 @@ typedef struct
 }EventQueue_t;
 
 static struct{
-    MGRSTATUS	status;
+    mgr_status_t	status;
 
     Button_t btns[BTN_MAX];
 
@@ -187,7 +187,7 @@ static void _enable(bool en)
 
 }
 
-static MGRSTATUS _status(void)
+static mgr_status_t _status(void)
 {
     return __priv_det.status;
 }
@@ -212,7 +212,7 @@ static uint32_t _noti(uint32_t type, void* val)
     return MGRET_OK;
 }
 
-struct manager __det_mgr=
+struct manager __mgr_det=
 {
     _power,
     _enable,

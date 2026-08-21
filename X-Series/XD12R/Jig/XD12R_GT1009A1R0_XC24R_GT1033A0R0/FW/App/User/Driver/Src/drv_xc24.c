@@ -9,6 +9,10 @@
 #include "drv_ads124s08.h"
 #include "comm_debugging.h"
 
+#define SPI_LOG_DUMP_DISABLE    (0U)
+#define SPI_LOG_DUMP_ENABLE     (1U)
+#define SPI_LOG_DUMP            (SPI_LOG_DUMP_DISABLE)
+
 #define FLL_BIT_SHIFT_LSB       (0U)
 #define FLL_BIT_SHIFT_MSB       (16U)
 
@@ -33,7 +37,7 @@
 #define XC_SPI_BURST_MAX_SIZE   (64U)
 #define XC_SPI_BUFF_MAX_SIZE    (XC_SPI_HEADER_SIZE + XC_SPI_BURST_MAX_SIZE)
 
-#define XC_TRIM_DAC_INPUT       (0xC8U)
+#define XC_TRIM_DAC_INPUT       (0x0C8U)
 
 #define XC_TEST_DAC_INPUT_P1    (0x0C8U)
 #define XC_TEST_DAC_INPUT_P2    (0x3E8U)

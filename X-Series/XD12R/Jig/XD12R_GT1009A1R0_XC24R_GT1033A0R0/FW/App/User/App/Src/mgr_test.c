@@ -1,7 +1,9 @@
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "framework.h"
+#include "app_manager.h"
+
 #include "drv_xd12.h"
 #include "drv_xc24.h"
 #include "drv_timer.h"
@@ -157,7 +159,7 @@ static struct{
     test_info_t         t_xd_test_info[XD_TEST_LIST_MAX];
     sweep_info_t        t_xd_sweep_test_info;
     dac_sweep_info_t    t_xc_dac_sweep_test_info;
-    MGRSTATUS           status;
+    mgr_status_t           status;
     xc_test_list_t     t_xc_test_list;
     xd_test_list_t     t_xd_test_list;
 
@@ -1570,7 +1572,7 @@ static void _enable(bool en)
 
 }
 
-static MGRSTATUS _status(void)
+static mgr_status_t _status(void)
 {
     return __priv_test.status;
 }
@@ -1665,7 +1667,7 @@ static uint32_t _noti(uint32_t type, void* val)
     return MGRET_OK;
 }
 
-struct manager __test_mgr=
+struct manager __mgr_test=
 {
     _power,
     _enable,

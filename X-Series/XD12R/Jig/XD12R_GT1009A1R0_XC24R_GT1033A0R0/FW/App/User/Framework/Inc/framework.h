@@ -9,74 +9,8 @@ extern "C" {
 #include <stdbool.h>
 
 /****** THREAD MANAGER *****/
-typedef uint32_t                THREAD_ID;
-#define INVALID_THREAD_ID       (0U)
-
-typedef enum __MGRSTATUS__
-{
-	STATUS_UNPOWER = 0,
-	STATUS_INIT,
-	STATUS_BUSY,
-	STATUS_NORMAL,
-	STATUS_STANDBY,
-	STATUS_ERROR,
-	STATUS_END
-}MGRSTATUS;
-
-/* thread manager */
-struct thread_data
-{
-    THREAD_ID id;
-
-    uint32_t step;
-    uint32_t tout;
-    uint32_t last_t;
-    bool (*func)(struct thread_data*);
-};
-
-extern void fw_systick_handler(void);
-extern uint32_t get_system_tick(void);
-
-/* fw_begin_thread: */
-//extern THREAD_ID fw_begin_thread_trig_ex(bool (*const f)(struct thread_data*), uint32_t tout);
-extern THREAD_ID fw_begin_thread_ex(bool (*const f)(struct thread_data*), uint32_t tout);
-extern THREAD_ID fw_begin_thread(bool (*const f)(struct thread_data*));
-extern void fw_thread_stop(THREAD_ID tid);
-
-/* thread를 함수 형태로 사용하기
-BOOL thread1(struct thread_data *tdata)
-{
-	...
-	switch(tdata->step)
-	{
-	case 0:
-		fw_begin_thread_trig_ex(tdata, thread2, 0);
-		tdata->step ++;
-		break;
-	case 1:
-		// thread2가 종료되면 여기로 들어옴.
-		break;
-	}
-	...
-}
-*/
-
-/****** MEMORY MANAGER *****/
-extern void fw_memset(void* ptr, uint8_t val, uint32_t size);
-
-
-/**************************** NEW VERSION *************************************/
-typedef enum
-{
-    MGR_APP_INDEX = 0U,
-    MGR_DET_INDEX,
-    MGR_TRIM_INDEX,
-    MGR_TEST_INDEX,
-    NUMBER_OF_MGRS,
-}mgr_type_t;
-
-#define MGRET_ERR       (0U)
-#define MGRET_OK        (1U)
+typedef uint32_t            THREAD_ID;
+#define INVALID_THREAD_ID   (0U)
 
 typedef enum
 {
@@ -93,44 +27,25 @@ typedef enum
     BTN_EVT_LONG_PRESS,
 }BtnEvent_t;
 
-typedef enum
+struct thread_data
 {
-    TRIM_CMD_XC_START = 0U,
-    TRIM_CMD_XD_START,
-}TrimCommand_t;
+    THREAD_ID id;
 
-typedef enum
-{
-    TEST_CMD_XC_START = 0U,
-    TEST_CMD_XD_START,
-    TEST_CMD_XC_SWEEP_START,
-    TEST_CMD_XD_SWEEP_START,
-    TEST_CMD_XC_AGING_START,
-    TEST_CMD_XD_AGING_START,
-}TestCommand_t;
-
-struct manager
-{
-    void (*power)(bool on);
-    void (*enable)(bool en);
-    MGRSTATUS (*status)(void);
-    uint32_t (*cmd)(uint32_t, void*);
-    uint32_t (*write)(uint32_t, void*, uint32_t);
-    uint32_t (*read)(uint32_t, void*, uint32_t);
-    uint32_t (*noti)(uint32_t, void*);
+    uint32_t step;
+    uint32_t tout;
+    uint32_t last_t;
+    bool (*func)(struct thread_data*);
 };
 
-extern struct manager __app_mgr;
-extern struct manager __det_mgr;
-extern struct manager __trim_mgr;
-extern struct manager __test_mgr;
-extern struct manager *__managers[NUMBER_OF_MGRS];
+void fw_thread_init(void);
+void fw_threadmgr_do(void);
 
-#define MGR_APP()   __managers[MGR_APP_INDEX]
-#define MGR_DET()   __managers[MGR_DET_INDEX]
+extern void fw_systick_handler(void);
+extern uint32_t get_system_tick(void);
 
-#define MGR_TRIM()  __managers[MGR_TRIM_INDEX]
-#define MGR_TEST()  __managers[MGR_TEST_INDEX]
+extern THREAD_ID fw_begin_thread_ex(bool (*const f)(struct thread_data*), uint32_t tout);
+extern THREAD_ID fw_begin_thread(bool (*const f)(struct thread_data*));
+extern void fw_thread_stop(THREAD_ID tid);
 
 #ifdef __cplusplus
 }

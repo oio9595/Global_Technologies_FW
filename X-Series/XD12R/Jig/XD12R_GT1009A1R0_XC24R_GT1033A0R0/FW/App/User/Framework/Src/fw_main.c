@@ -1,16 +1,17 @@
-
-#include "fw_internal.h"
+#include "framework.h"
+#include "app_manager.h"
+#include "drv_xc24.h"
 
 extern void sys_init(void);
 extern void sys_normal_mode(void);
 extern void _system_idle(void);
 
-struct manager *__managers[NUMBER_OF_MGRS]=
+struct manager *__managers[MGR_INDEX_MAX]=
 {
-    &__app_mgr,     /* APP */
-    &__det_mgr,     /* DETECTORS (BTN, External IO, ...) */
-    &__trim_mgr,    /* TRIM for XC/XD */
-    &__test_mgr,    /* TEST for XC/XD */
+    &__mgr_app,     /* APP */
+    &__mgr_det,     /* DETECTORS (BTN, External IO, ...) */
+    &__mgr_trim,    /* TRIM for XC/XD */
+    &__mgr_test,    /* TEST for XC/XD */
 };
 
 void fw_run(void)
@@ -19,14 +20,14 @@ void fw_run(void)
 
     while(1)
     {
-        _fw_thread_init();
+        fw_thread_init();
         sys_normal_mode();
 
         MGR_APP()->power(true);
 
         while(MGR_APP()->status() != STATUS_UNPOWER)
         {
-            _fw_threadmgr_do();
+            fw_threadmgr_do();
             _system_idle();
             xc24_ld_transfer_nss_release();
         }

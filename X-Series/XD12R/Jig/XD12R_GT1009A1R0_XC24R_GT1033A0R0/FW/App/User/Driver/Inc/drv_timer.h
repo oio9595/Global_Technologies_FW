@@ -11,6 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -60,5 +61,3 @@ __STATIC_INLINE void us_delay(uint32_t n_delay)
 #endif
 
 #endif	/* DRV_TIMER_H */
-
-

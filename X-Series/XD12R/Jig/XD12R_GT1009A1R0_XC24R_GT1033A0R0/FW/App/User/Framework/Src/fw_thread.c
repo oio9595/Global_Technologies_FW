@@ -1,4 +1,4 @@
-#include "fw_internal.h"
+#include "framework.h"
 #include "main.h"
 
 #define NUM_OF_THREAD	(16U)
@@ -93,7 +93,7 @@ THREAD_ID fw_begin_thread(bool (*const f)(struct thread_data*))
     return fw_begin_thread_trig_ex(f, 0U);
 }
 
-static void _thread_stop(struct thread_data* const td)
+static void thread_stop(struct thread_data* const td)
 {
     td->id = INVALID_THREAD_ID;
 }
@@ -103,15 +103,15 @@ void fw_thread_stop(THREAD_ID tid)
     struct thread_data *td = _search_tdata(tid);
     if(td!=NULL)
     {
-        _thread_stop(td);
+        thread_stop(td);
     }
 }
 
-static void _fw_run_thread(struct thread_data* const thr, uint32_t sys_clock)
+static void fw_run_thread(struct thread_data* const thr, uint32_t sys_clock)
 {
     if(thr->func(thr) == false)
     {
-        _thread_stop(thr);
+        thread_stop(thr);
     }
     else
     {
@@ -119,12 +119,16 @@ static void _fw_run_thread(struct thread_data* const thr, uint32_t sys_clock)
     }
 }
 
-void _fw_thread_init(void)
+void fw_thread_init(void)
 {
-    fw_memset(__tdata, 0x00, sizeof(__tdata));
+    uint8_t *p = (uint8_t*)__tdata;
+    for(uint32_t i = 0U; i < sizeof(__tdata); ++i)
+    {
+        p[i] = 0x00U;
+    }
 }
 
-void _fw_threadmgr_do(void)
+void fw_threadmgr_do(void)
 {
     __freeze_sys_clock = __system_clock;
 
@@ -134,7 +138,7 @@ void _fw_threadmgr_do(void)
         {
             if((__freeze_sys_clock - __tdata[i].last_t) >= __tdata[i].tout)
             {
-                _fw_run_thread(__tdata + i, __freeze_sys_clock);
+                fw_run_thread(__tdata + i, __freeze_sys_clock);
             }
         }
     }

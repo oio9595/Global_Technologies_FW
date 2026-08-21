@@ -1,7 +1,6 @@
 #include "crc.h"
-#include "drv_xc24.h"
-#include "ldim_conversion.h"
 #include "comm_debugging.h"
+#include "ldim_conversion.h"
 
 #define XD_LDIM_BURST_SIZE     (XD_DAISY_LENGTH * XD_LD_SIZE * XC_CH_SIZE)
 #define XC_LDIM_BURST_SIZE     (1U + XD_LDIM_BURST_SIZE + 1U)  /* HDR + Payload + crc16 */

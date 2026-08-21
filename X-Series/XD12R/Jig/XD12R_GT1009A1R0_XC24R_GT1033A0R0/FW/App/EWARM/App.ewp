@@ -4653,6 +4653,9 @@
             <group>
                 <name>Inc</name>
                 <file>
+                    <name>$PROJ_DIR$\..\User\App\Inc\app_manager.h</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\User\App\Inc\comm_debugging.h</name>
                 </file>
                 <file>
@@ -4666,6 +4669,18 @@
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\User\App\Src\ldim_conversion.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\App\Src\mgr_app.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\App\Src\mgr_det.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\App\Src\mgr_test.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\User\App\Src\mgr_trim.c</name>
                 </file>
             </group>
         </group>
@@ -4755,9 +4770,6 @@
                     <name>$PROJ_DIR$\..\User\Framework\Inc\framework.h</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Inc\fw_internal.h</name>
-                </file>
-                <file>
                     <name>$PROJ_DIR$\..\User\Framework\Inc\version.h</name>
                 </file>
             </group>
@@ -4767,22 +4779,7 @@
                     <name>$PROJ_DIR$\..\User\Framework\Src\fw_main.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Src\fw_memory.c</name>
-                </file>
-                <file>
                     <name>$PROJ_DIR$\..\User\Framework\Src\fw_thread.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_app.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_det.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_test.c</name>
-                </file>
-                <file>
-                    <name>$PROJ_DIR$\..\User\Framework\Src\mgr_trim.c</name>
                 </file>
             </group>
         </group>

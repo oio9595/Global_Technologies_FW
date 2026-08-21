@@ -1,12 +1,14 @@
 #include <math.h>
 
 #include "framework.h"
+#include "app_manager.h"
+
 #include "drv_xd12.h"
 #include "drv_xc24.h"
-#include "comm_debugging.h"
 #include "drv_gpio.h"
 #include "drv_timer.h"
 #include "drv_ads124s08.h"
+#include "comm_debugging.h"
 
 #define SAVE_INFO_MAX_CNT                   (10)
 #define MAX_TRIM_TRY_CNT                    (30)
@@ -184,7 +186,7 @@ typedef enum tag_XD_TRIM_LIST
 static struct{
     trim_info_t     t_xd_trim_info[XD_TRIM_LIST_MAX];
     trim_info_t     t_xc_trim_info[XC_TRIM_LIST_MAX];
-    MGRSTATUS       status;
+    mgr_status_t       status;
     xd_trim_list_t t_xd_trim_list;
     xc_trim_list_t t_xc_trim_list;
     THREAD_ID       trim_thr;
@@ -1573,7 +1575,7 @@ static void _enable(bool en)
 
 }
 
-static MGRSTATUS _status(void)
+static mgr_status_t _status(void)
 {
     return __priv_trim.status;
 }
@@ -1622,7 +1624,7 @@ static uint32_t _noti(uint32_t type, void* val)
     return MGRET_OK;
 }
 
-struct manager __trim_mgr=
+struct manager __mgr_trim=
 {
     _power,
     _enable,

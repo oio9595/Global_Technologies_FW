@@ -5,32 +5,32 @@
  *
  * @copyright Copyright (c) 2022, Global Technologies Inc. All rights reserved.
  */
-#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
-#include "drv_gpio.h"
-#include "drv_ads124s08.h"
-
-#include "drv_timer.h"
-
 #include "version.h"
-#include "framework.h"
+#include "app_manager.h"
+
 #include "comm_debugging.h"
 #include "ldim_conversion.h"
 
-#define CLI_KEY_BACK        0x08
-#define CLI_KEY_DEL         0x7F
-#define CLI_KEY_ENTER       0x0D
-#define CLI_KEY_ESC         0x1B
-#define CLI_KEY_LEFT        0x44
-#define CLI_KEY_RIGHT       0x43
-#define CLI_KEY_UP          0x41
-#define CLI_KEY_DOWN        0x42
-#define CLI_KEY_HOME        0x31
-#define CLI_KEY_END         0x34
+#include "drv_gpio.h"
+#include "drv_timer.h"
+#include "drv_ads124s08.h"
+
+#define CLI_KEY_BACK        (0x08U)
+#define CLI_KEY_DEL         (0x7FU)
+#define CLI_KEY_ENTER       (0x0DU)
+#define CLI_KEY_ESC         (0x1BU)
+#define CLI_KEY_LEFT        (0x44U)
+#define CLI_KEY_RIGHT       (0x43U)
+#define CLI_KEY_UP          (0x41U)
+#define CLI_KEY_DOWN        (0x42U)
+#define CLI_KEY_HOME        (0x31U)
+#define CLI_KEY_END         (0x34U)
 
 #define RX_BUFF_SIZE        (4U)
 #define TX_BUFF_SIZE        (127U)
@@ -38,8 +38,37 @@
 #define RX_PACKET_SIZE      (32U)
 #define TX_PACKET_SIZE      (256U)
 
+typedef struct tag_RX_PACKET
+{
+    uint8_t length;
+    char buffer[RX_PACKET_SIZE];
+}
+rx_packet_t;
+
+typedef struct tag_TX_PACKET
+{
+    uint16_t length;
+    char buffer[TX_PACKET_SIZE];
+}
+tx_packet_t;
+
+typedef struct
+{
+    uint8_t RxInCnt;
+    uint8_t RxOutCnt;
+    uint8_t TxInCnt;
+    uint8_t TxOutCnt;
+    rx_packet_t Rxbuff[RX_BUFF_SIZE];
+    tx_packet_t Txbuff[TX_BUFF_SIZE];
+}UART_t;
+
+static UART_t gt_uart;
+static rx_packet_t gt_last_uart_rx;
+
+bool gb_usart_tx_start_flag;
+static LOG_LV_t gt_log_level;
+
 #define VA_GENERIC(_1, _2, _3, _4, _5, _6,x, ...) x
-// #define Command_Param_is_(x, ...) (sscanf(str_in, x, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
 #define Command_Param_is_(a, b, ...) (sscanf(str_in, a b, ##__VA_ARGS__)==VA_GENERIC(__VA_ARGS__, 6, 5, 4, 3, 2, 1))
 #define Command_is_(x) (strncmp(str_in, x, strlen(x)) == 0)
 
@@ -67,34 +96,6 @@
     #error "XC_EFUSE is not defined"
 #endif
 
-typedef struct
-{
-    uint8_t length;
-    char buffer[RX_PACKET_SIZE];
-}
-rx_packet_t;
-
-typedef struct
-{
-    uint16_t length;
-    char buffer[TX_PACKET_SIZE];
-}
-tx_packet_t;
-
-typedef struct
-{
-    uint8_t RxInCnt;
-    uint8_t RxOutCnt;
-    uint8_t TxInCnt;
-    uint8_t TxOutCnt;
-    rx_packet_t Rxbuff[RX_BUFF_SIZE];
-    tx_packet_t Txbuff[TX_BUFF_SIZE];
-}UART_t;
-
-volatile static LOG_LV_t gt_log_level;
-static UART_t gt_uart;
-static rx_packet_t gt_last_uart_rx;
-bool gb_usart_tx_start_flag;
 
 static const char* const gp_msg_prompt = "\n\rJIG> \0";
 static const char* const gp_msg_okay = "\n\rOK";
@@ -147,6 +148,7 @@ __STATIC_INLINE uint8_t comm_get_tx_packet(tx_packet_t** pData)
 
     return ret;
 }
+
 
 __STATIC_INLINE void comm_print_help(void)
 {
@@ -842,7 +844,6 @@ void comm_debugging_process(void)
             comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-
         else if(!(strcmp(str_in, "reset")))
         {
             NVIC_SystemReset();
@@ -866,6 +867,7 @@ void comm_debugging_process(void)
         }
     }
 }
+
 
 void comm_UART_Printf(LOG_LV_t lv, const char *fmt, ...)
 {
