@@ -468,6 +468,7 @@ void comm_debugging_process(void)
                 else
                 {
                     xc24_write_grp1_reg(addr, &param, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Write --> [ 0x%02X - 0x%04X ]", addr, param);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
@@ -511,6 +512,7 @@ void comm_debugging_process(void)
                 else
                 {
                     xc24_write_grp2_reg(addr, &param, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Write --> [ 0x%02X - 0x%04X ]", addr, param);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }
@@ -554,6 +556,7 @@ void comm_debugging_process(void)
                 else
                 {
                     xc24_write_otp_control(addr - XC_OTP_BASE_ADDR, &param, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Write --> [ 0x%02X - 0x%04X ]", addr, param);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_okay);
                     comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
                 }

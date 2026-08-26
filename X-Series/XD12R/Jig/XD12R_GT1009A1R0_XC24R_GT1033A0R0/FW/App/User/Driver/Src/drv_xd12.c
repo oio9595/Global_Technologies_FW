@@ -239,8 +239,6 @@ static _xd12_otp_ctrl_regs_t gt_xd12_otp_ctrl_get_regs[XD_DAISY_LENGTH];
 static _xd12_mirror_regs_t gt_xd12_mirror_set_regs;
 static _xd12_mirror_regs_t gt_xd12_mirror_get_regs[XD_DAISY_LENGTH];
 
-static _xd12_mirror_regs_t gt_xd12_trim_debug_regs;
-
 #if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
     static uint16_t gn_pwm_out_xd_write[(XD_DAISY_LENGTH * XD_CMD_WRITE) + PWM_OUT_DUMMY_SIZE];
     static uint16_t gn_pwm_out_xd_ld_transfer[(XD_DAISY_LENGTH * XD_LD_TRANSFER) + PWM_OUT_DUMMY_SIZE];
@@ -1230,7 +1228,7 @@ void xd12_init(void)
     xd12_idgen();
     xd12_make_readable();
     xd12_regs_init_table();
-    //xd12_read_all();
+    xd12_read_all();
 }
 
 void xd12_trim_init(void)
@@ -1250,6 +1248,23 @@ void xd12_trim_init(void)
     xd12_make_readable();
     xd12_regs_trim_init_table();
     xd12_read_all();
+}
+
+void xd12_init_for_read(void)
+{
+#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
+#elif (XD_CONTROL_TYPE == XD_CONTROLLED_XC24)
+    gpio_set_xc_vdd_5v(VCC_ON_3V3);
+    LL_mDelay(99U);
+    xc24_init();
+    gpio_set_vled_dcdc(VLED_ON);
+#else
+    #error "XD_CONTROL_TYPE is not defined"
+#endif
+
+    xd12_reset();
+    xd12_idgen();
+    xd12_make_readable();
 }
 
 static void xd12_write(uint16_t addr, uint16_t data)
@@ -1509,6 +1524,10 @@ void xd12_ld_transfer(void)
     uint16_t* p = ldim_get_xc_ld_transfer_buffer();
     uint16_t len = ldim_get_xc_ld_transfer_size();
     xc24_set_ld_transfer(p, len);
+    while (true == gb_xc_ld_transfer_spi_dma_flag)
+    {
+
+    }
 #else
     #error "XD_CONTROL_TYPE is not defined"
 #endif
@@ -2077,13 +2096,8 @@ void xd12_trim_save_mirror_register(void)
 {
     for (xd12_mirror_addr_t mirror_addr = XD12R_MIRROR1; mirror_addr < XD12R_MIRROR_MAX; ++mirror_addr)
     {
-        gt_xd12_trim_debug_regs.ALL[mirror_addr] = xd12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
+        xd12_read_by_type(mirror_addr, XD12R_ADDR_TYPE_MIRROR);
     }
-}
-
-uint16_t* xd12_get_trim_debug_reg(void)
-{
-    return gt_xd12_trim_debug_regs.ALL;
 }
 
 uint32_t xd12_trim_verify_mirror_dump(void)
@@ -2359,18 +2373,6 @@ void xd12_test_start_max_sweep(void)
     ADS114S08_Set_Start(true);
 }
 
-void xd12_test(void)
-{
-    xd12_trim_init_ch_gain();
-
-    _v_xd12_channel_enable_t* _r05 = &gt_xd12_set_regs.reg._r05;
-    _r05->ALL = 0xFFFFU;
-    xd12_write_by_type(XD12R_CHANNEL_ENABLE, _r05->ALL, XD12R_ADDR_TYPE_GENERAL);
-
-    xd12_trim_set_max_curr_vref(4095U);
-    xd12_trim_set_max_curr_lvl(CURR_LEVEL_24);
-}
-
 void xd12_aging_init_icc_test(void)
 {
     /* change adc ch_p, ch_n */
@@ -2494,4 +2496,8 @@ void xd12_aging_start_osc(void)
 void xd12_aging_start_iout(void)
 {
     ADS114S08_Set_Start(true);
+}
+
+void xd12_test(void)
+{
 }

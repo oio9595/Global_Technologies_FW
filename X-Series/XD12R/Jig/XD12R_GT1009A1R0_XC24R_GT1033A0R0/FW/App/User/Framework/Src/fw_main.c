@@ -1,6 +1,5 @@
 #include "framework.h"
 #include "app_manager.h"
-#include "drv_xc24.h"
 
 extern void sys_init(void);
 extern void sys_normal_mode(void);
@@ -29,7 +28,6 @@ void fw_run(void)
         {
             fw_threadmgr_do();
             _system_idle();
-            xc24_ld_transfer_nss_release();
         }
     }
 }

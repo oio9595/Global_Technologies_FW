@@ -498,7 +498,7 @@ static bool _xc_test_thread(struct thread_data* td)
             {
                 if (*list == XC_TEST_LIST_FLL_A_30M)
                 {
-                    *list = XC_TEST_LIST_DAC_P1; // FLL_A_30M 이후 DAC 측정 항목으로 넘어가도록 설정
+                    *list = XC_TEST_LIST_DAC_P1;
                 }
                 if (gp_xc24_test_init_func[*list] != NULL)
                 {

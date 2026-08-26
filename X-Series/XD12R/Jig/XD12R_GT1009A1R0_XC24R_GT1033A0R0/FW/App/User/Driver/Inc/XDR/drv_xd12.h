@@ -40,7 +40,7 @@ extern "C" {
 
 #define XD_SYNC_MODE_CMD        (0U) /* cmd + svi */
 #define XD_SYNC_MODE_SVI        (1U) /*  vo + svi */
-#define XD_SYNC_MODE            (XD_SYNC_MODE_CMD)
+#define XD_SYNC_MODE            (XD_SYNC_MODE_SVI)
 
 #define XD_TYPE_A               (0U) /* NTS + TS */
 #define XD_TYPE_B               (1U) /* NTS + NTS + TS */
@@ -130,8 +130,10 @@ void xd12_make_readable(void);
 void xd12_reset(void);
 void xd12_idgen(void);
 void xd12_syncgen(void);
+
 void xd12_init(void);
 void xd12_trim_init(void);
+void xd12_init_for_read(void);
 
 void xd12_write_by_type(uint16_t addr, uint16_t param, xd12r_addr_type_t addr_type);
 uint16_t xd12_read_by_type(uint16_t addr, xd12r_addr_type_t addr_type);
@@ -171,7 +173,6 @@ void xd12_trim_init_efuse(void);
 void xd12_trim_start_efuse(void);
 
 void xd12_trim_save_mirror_register(void);
-uint16_t* xd12_get_trim_debug_reg(void);
 uint32_t xd12_trim_verify_mirror_dump(void);
 
 void xd12_test_init_icc_stby(void);

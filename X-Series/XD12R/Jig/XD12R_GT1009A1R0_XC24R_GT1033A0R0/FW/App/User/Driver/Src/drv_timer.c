@@ -64,7 +64,6 @@ static inline void tim_update_vsync_out_freq(void)
     xc24_set_fll_cnt(0U, XC_CONV_FREQ_TO_XC_MCLK(gf_vsync_out_freq));
 }
 
-#if (XD_CONTROL_TYPE == XD_CONTROLLED_MCU)
 static inline void tim_update_svsync_out_freq(void)
 {
     gf_svsync_sub_green_freq = SVSYNC_GREEN_FREQ;
@@ -88,7 +87,6 @@ static void tim_svsync_timer_start(void)
 
     gn_svsync_count = 0U;
 }
-#endif
 
 static void tim_svsync_timer_stop(void)
 {
@@ -236,19 +234,19 @@ void tim_set_vsync_out_freq(float f)
 
 void tim_vsync_out_process(void)
 {
-    if(true == gb_vsync_out_flag)
+    if (true == gb_vsync_out_flag)
     {
         gn_ldim_blk_xform_idx = 0U;
         gb_ldim_blk_xform_flag = true;
         gb_vsync_out_flag = false;
     }
 
-    if(true == gb_ldim_blk_xform_flag)
+    if (true == gb_ldim_blk_xform_flag)
     {
         block_color_t* p_blk_color_tbl = ldim_get_block_color_buffer();
         ldim_conversion_block_to_ldim(gn_ldim_blk_xform_idx, p_blk_color_tbl[gn_ldim_blk_xform_idx].r, p_blk_color_tbl[gn_ldim_blk_xform_idx].g, p_blk_color_tbl[gn_ldim_blk_xform_idx].b);
         ++gn_ldim_blk_xform_idx;
-        if(LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
+        if (LDIM_BLK_SIZE == gn_ldim_blk_xform_idx)
         {
             xd12_ld_transfer();
             gb_ldim_blk_xform_flag = false;
@@ -268,7 +266,7 @@ void tim_vsync_out_process(void)
 
     if (true == gb_fault_read_flag)
     {
-        //xd12_fault_readout();
+        xd12_fault_readout();
         gb_fault_read_flag = false;
     }
 }
@@ -347,19 +345,19 @@ static void tim_read_write_xc(void)
                 if (gt_xc_rw_info.rw_addr < XC_OTP_BASE_ADDR)
                 {
                     gt_xc_rw_info.rw_data = xc24_read_grp1_reg(gt_xc_rw_info.rw_addr, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Read in Vsync--> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
                 else
                 {
                     gt_xc_rw_info.rw_data = xc24_read_otp_control(gt_xc_rw_info.rw_addr - XC_OTP_BASE_ADDR, 1U);
-                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Read in Vsync --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
                 break;
             }
             case XC_RW_GRP2:
             {
                 gt_xc_rw_info.rw_data = xc24_read_grp2_reg(gt_xc_rw_info.rw_addr, 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Read --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
+                comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Read in Vsync --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 break;
             }
             default:
@@ -380,18 +378,19 @@ static void tim_read_write_xc(void)
                 if (gt_xc_rw_info.rw_addr < XC_OTP_BASE_ADDR)
                 {
                     xc24_write_grp1_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP1 Write in Vsync --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
                 else
                 {
                     xc24_write_otp_control(gt_xc_rw_info.rw_addr - XC_OTP_BASE_ADDR, &gt_xc_rw_info.rw_data, 1U);
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC OTP Write in Vsync --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 }
-                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
                 break;
             }
             case XC_RW_GRP2:
             {
                 xc24_write_grp2_reg(gt_xc_rw_info.rw_addr, &gt_xc_rw_info.rw_data, 1U);
-                comm_UART_Printf(LOG_LV_INFO, "\n\rOK\n\rJIG> \0");
+                    comm_UART_Printf(LOG_LV_INFO, "\r\nXC GRP2 Write in Vsync --> [ 0x%02X - 0x%04X ]\r\n\n\rJIG> \0", gt_xc_rw_info.rw_addr, gt_xc_rw_info.rw_data);
                 break;
             }
             default:

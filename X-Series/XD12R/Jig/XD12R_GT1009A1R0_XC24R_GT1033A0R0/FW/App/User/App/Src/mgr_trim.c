@@ -13,86 +13,86 @@
 #define SAVE_INFO_MAX_CNT                   (10)
 #define MAX_TRIM_TRY_CNT                    (30)
 
-#define XC_DELAY_DEFAULT                   (1U)
-#define XC_DELAY_SETTLING                  (5U)
-#define XC_DELAY_VSYNC_STOP                (100U)
-#define XC_DELAY_MEASURE                   (10U)
-#define XC_DELAY_PWR_ON                    (100U)
-#define XC_DELAY_PWR_OFF                   (100U)
-#define XC_DELAY_EFUSE_DONE                (500U)
+#define XC_DELAY_DEFAULT                    (1U)
+#define XC_DELAY_SETTLING                   (5U)
+#define XC_DELAY_VSYNC_STOP                 (100U)
+#define XC_DELAY_MEASURE                    (10U)
+#define XC_DELAY_PWR_ON                     (100U)
+#define XC_DELAY_PWR_OFF                    (100U)
+#define XC_DELAY_EFUSE                      (500U)
 
-#define XC_DEFAULT_SUB_VAL_1V5_LDO_DIG     (1U << 4U)
-#define XC_DEFAULT_SUB_VAL_DAC_3V0         (1U << 5U)
-#define XC_DEFAULT_SUB_VAL_DAC1_OFS        (1U << 7U)
-#define XC_DEFAULT_SUB_VAL_DAC2_OFS        (1U << 7U)
-#define XC_DEFAULT_SUB_VAL_DAC3_OFS        (1U << 7U)
-#define XC_DEFAULT_SUB_VAL_1V5_LDO_OSC     (1U << 4U)
-#define XC_DEFAULT_SUB_VAL_OSC_A           (1U << 4U)
-#define XC_DEFAULT_SUB_VAL_OSC_B           (1U << 4U)
+#define XC_DEFAULT_SUB_VAL_1V5_LDO_DIG      (1U << 4U)
+#define XC_DEFAULT_SUB_VAL_DAC_3V0          (1U << 5U)
+#define XC_DEFAULT_SUB_VAL_DAC1_OFS         (1U << 7U)
+#define XC_DEFAULT_SUB_VAL_DAC2_OFS         (1U << 7U)
+#define XC_DEFAULT_SUB_VAL_DAC3_OFS         (1U << 7U)
+#define XC_DEFAULT_SUB_VAL_1V5_LDO_OSC      (1U << 4U)
+#define XC_DEFAULT_SUB_VAL_OSC_A            (1U << 4U)
+#define XC_DEFAULT_SUB_VAL_OSC_B            (1U << 4U)
 
-#define XC_TRIM_ERROR_RANGE                (0.005f)    /* 0.5% */
-#define XC_TRIM_OSC_ERROR_RANGE            (0.0285f)   /* 2.85% */
+#define XC_TRIM_ERROR_RANGE                 (0.005f)    /* 0.5% */
+#define XC_TRIM_OSC_ERROR_RANGE             (0.0285f)   /* 2.85% */
 
-#define XC_TRIM_TGT_1V5_LDO_DIG            (1.5f)      /* 1.5V */
-#define XC_TRIM_TGT_DAC_3V0                (3.0f)      /* 3.0V */
-#define XC_TRIM_TGT_DAC1_OFS               (0.1465f)   /* 146.5mV */
-#define XC_TRIM_TGT_DAC2_OFS               (0.1465f)   /* 146.5mV */
-#define XC_TRIM_TGT_DAC3_OFS               (0.1465f)   /* 146.5mV */
-#define XC_TRIM_TGT_1V5_LDO_OSC            (1.5f)      /* 1.5V */
-#define XC_TRIM_TGT_OSC_A                  (35.0f)     /* 35MHz */
-#define XC_TRIM_TGT_OSC_B                  (35.0f)     /* 35MHz */
+#define XC_TRIM_TGT_1V5_LDO_DIG             (1.5f)      /* 1.5V */
+#define XC_TRIM_TGT_DAC_3V0                 (3.0f)      /* 3.0V */
+#define XC_TRIM_TGT_DAC1_OFS                (0.1465f)   /* 146.5mV */
+#define XC_TRIM_TGT_DAC2_OFS                (0.1465f)   /* 146.5mV */
+#define XC_TRIM_TGT_DAC3_OFS                (0.1465f)   /* 146.5mV */
+#define XC_TRIM_TGT_1V5_LDO_OSC             (1.5f)      /* 1.5V */
+#define XC_TRIM_TGT_OSC_A                   (35.0f)     /* 35MHz */
+#define XC_TRIM_TGT_OSC_B                   (35.0f)     /* 35MHz */
 
-#define XC_TRIM_INIT_ADJ_1V5_LDO_DIG       (2U)
-#define XC_TRIM_INIT_ADJ_DAC_3V0           (2U)
-#define XC_TRIM_INIT_ADJ_DAC1_OFS          (10U)
-#define XC_TRIM_INIT_ADJ_DAC2_OFS          (10U)
-#define XC_TRIM_INIT_ADJ_DAC3_OFS          (10U)
-#define XC_TRIM_INIT_ADJ_1V5_LDO_OSC       (1U)
-#define XC_TRIM_INIT_ADJ_OSC_A             (1U)
-#define XC_TRIM_INIT_ADJ_OSC_B             (1U)
+#define XC_TRIM_INIT_ADJ_1V5_LDO_DIG        (2U)
+#define XC_TRIM_INIT_ADJ_DAC_3V0            (2U)
+#define XC_TRIM_INIT_ADJ_DAC1_OFS           (10U)
+#define XC_TRIM_INIT_ADJ_DAC2_OFS           (10U)
+#define XC_TRIM_INIT_ADJ_DAC3_OFS           (10U)
+#define XC_TRIM_INIT_ADJ_1V5_LDO_OSC        (1U)
+#define XC_TRIM_INIT_ADJ_OSC_A              (1U)
+#define XC_TRIM_INIT_ADJ_OSC_B              (1U)
 
 /*******************************************************************************/
 
-#define XD_DELAY_DEFAULT                   (1U)
-#define XD_DELAY_SETTLING                  (5U)
-#define XD_DELAY_MEASURE                   (10U)
-#define XD_DELAY_PWR_ON                    (100U)
-#define XD_DELAY_PWR_OFF                   (100U)
-#define XD_DELAY_EFUSE_DONE                (500U)
+#define XD_DELAY_DEFAULT                    (1U)
+#define XD_DELAY_SETTLING                   (5U)
+#define XD_DELAY_MEASURE                    (10U)
+#define XD_DELAY_PWR_ON                     (100U)
+#define XD_DELAY_PWR_OFF                    (100U)
+#define XD_DELAY_EFUSE                      (500U)
 
-#define XD_DEFAULT_SUB_VAL_CURRENT_REF     ((uint16_t)1U << 4U)
-#define XD_DEFAULT_SUB_VAL_LDO_DIG         ((uint16_t)1U << 3U)
-#define XD_DEFAULT_SUB_VAL_LDO_DAC         ((uint16_t)1U << 4U)
-#define XD_DEFAULT_SUB_VAL_LDO_FLL         ((uint16_t)1U << 3U)
-#define XD_DEFAULT_SUB_VAL_OSC             ((uint16_t)1U << 4U)
-#define XD_DEFAULT_SUB_VAL_CH_GAIN         ((uint16_t)1U << 6U)
-#define XD_DEFAULT_SUB_VAL_CH_OFS          ((uint16_t)1U << 8U)
+#define XD_DEFAULT_SUB_VAL_CURRENT_REF      ((uint16_t)1U << 4U)
+#define XD_DEFAULT_SUB_VAL_LDO_DIG          ((uint16_t)1U << 3U)
+#define XD_DEFAULT_SUB_VAL_LDO_DAC          ((uint16_t)1U << 4U)
+#define XD_DEFAULT_SUB_VAL_LDO_FLL          ((uint16_t)1U << 3U)
+#define XD_DEFAULT_SUB_VAL_OSC              ((uint16_t)1U << 4U)
+#define XD_DEFAULT_SUB_VAL_CH_GAIN          ((uint16_t)1U << 6U)
+#define XD_DEFAULT_SUB_VAL_CH_OFS           ((uint16_t)1U << 8U)
 
-#define XD_TRIM_GAIN_INPUT_1               (300U)
-#define XD_TRIM_GAIN_INPUT_2               (1300U)
+#define XD_TRIM_GAIN_INPUT_1                (300U)
+#define XD_TRIM_GAIN_INPUT_2                (1300U)
 
-#define XD_TRIM_OFS_INPUT_1                (200U)
-#define XD_TRIM_OFS_INPUT_2                (300U)
+#define XD_TRIM_OFS_INPUT_1                 (200U)
+#define XD_TRIM_OFS_INPUT_2                 (300U)
 
-#define XD_TRIM_ERROR_RANGE                (0.02f)     /* 2% */
-#define XD_TRIM_OSC_ERROR_RANGE            (0.05f)     /* 5% */
-#define XD_TRIM_IOUT_ERROR_RANGE           (0.005f)    /* 0.5% */
+#define XD_TRIM_ERROR_RANGE                 (0.02f)     /* 2% */
+#define XD_TRIM_OSC_ERROR_RANGE             (0.05f)     /* 5% */
+#define XD_TRIM_IOUT_ERROR_RANGE            (0.005f)    /* 0.5% */
 
-#define XD_TRIM_TGT_CURRENT_REF            (1.4f)      /* 1.4 V */
-#define XD_TRIM_TGT_LDO_DIG                (1.5f)      /* 1.5 V */
-#define XD_TRIM_TGT_LDO_DAC                (1.5f)      /* 1.5 V */
-#define XD_TRIM_TGT_LDO_FLL                (1.5f)      /* 1.5 V */
-#define XD_TRIM_TGT_OSC                    (51.0f)     /* 51.0 MHz */
-#define XD_TRIM_TGT_CH_GAIN                (24.0f * (XD_TRIM_GAIN_INPUT_2 - XD_TRIM_GAIN_INPUT_1) / 4095.0f)
-#define XD_TRIM_TGT_CH_OFS                 (24.0f * ((XD_TRIM_OFS_INPUT_2 + XD_TRIM_OFS_INPUT_1) / 2.0f) / 4095.0f)
+#define XD_TRIM_TGT_CURRENT_REF             (1.4f)      /* 1.4 V */
+#define XD_TRIM_TGT_LDO_DIG                 (1.5f)      /* 1.5 V */
+#define XD_TRIM_TGT_LDO_DAC                 (1.5f)      /* 1.5 V */
+#define XD_TRIM_TGT_LDO_FLL                 (1.5f)      /* 1.5 V */
+#define XD_TRIM_TGT_OSC                     (51.0f)     /* 51.0 MHz */
+#define XD_TRIM_TGT_CH_GAIN                 (24.0f * (XD_TRIM_GAIN_INPUT_2 - XD_TRIM_GAIN_INPUT_1) / 4095.0f)
+#define XD_TRIM_TGT_CH_OFS                  (24.0f * ((XD_TRIM_OFS_INPUT_2 + XD_TRIM_OFS_INPUT_1) / 2.0f) / 4095.0f)
 
-#define XD_TRIM_INIT_ADJ_CURRENT_REF       (3U)
-#define XD_TRIM_INIT_ADJ_LDO_DIG           (3U)
-#define XD_TRIM_INIT_ADJ_LDO_DAC           (3U)
-#define XD_TRIM_INIT_ADJ_LDO_FLL           (3U)
-#define XD_TRIM_INIT_ADJ_OSC               (10U)
-#define XD_TRIM_INIT_ADJ_CH_GAIN           (10U)
-#define XD_TRIM_INIT_ADJ_CH_OFS            (10U)
+#define XD_TRIM_INIT_ADJ_CURRENT_REF        (3U)
+#define XD_TRIM_INIT_ADJ_LDO_DIG            (3U)
+#define XD_TRIM_INIT_ADJ_LDO_DAC            (3U)
+#define XD_TRIM_INIT_ADJ_LDO_FLL            (3U)
+#define XD_TRIM_INIT_ADJ_OSC                (10U)
+#define XD_TRIM_INIT_ADJ_CH_GAIN            (10U)
+#define XD_TRIM_INIT_ADJ_CH_OFS             (10U)
 
 typedef struct tag_SAVED_INFO
 {
@@ -833,7 +833,7 @@ static bool _xc_trim_thread(struct thread_data* td)
                 //power control
                 gpio_set_xc_vdd_5v(VCC_ON_5V5);
                 td->step = TRIM_STEP_START_EFUSE;
-                td->tout = XC_DELAY_DEFAULT;
+                td->tout = XC_DELAY_EFUSE;
             }
             else
             {
@@ -849,7 +849,7 @@ static bool _xc_trim_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xc_trim_list_to_string(*list), td->tout);
             xc24_trim_start_efuse();
             td->step = TRIM_STEP_END_EFUSE;
-            td->tout = XC_DELAY_EFUSE_DONE;
+            td->tout = XC_DELAY_EFUSE;
             break;
         }
 
@@ -874,7 +874,7 @@ static bool _xc_trim_thread(struct thread_data* td)
         case TRIM_STEP_VERIFY_OTP_DUMP:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xc_trim_list_to_string(*list), td->tout);
-            xc24_trim_init();
+            xc24_init_for_read();
             if (0U == xc24_trim_verify_mirror_dump())
             {
                 // verify OK
@@ -1450,7 +1450,7 @@ static bool _xd_trim_thread(struct thread_data* td)
                 //power control
                 gpio_set_xd_vdd_5v(VCC_ON_5V5);
                 td->step = TRIM_STEP_START_EFUSE;
-                td->tout = XD_DELAY_DEFAULT;
+                td->tout = XD_DELAY_EFUSE;
             }
             else
             {
@@ -1466,7 +1466,7 @@ static bool _xd_trim_thread(struct thread_data* td)
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xd_trim_list_to_string(*list), td->tout);
             xd12_trim_start_efuse();
             td->step = TRIM_STEP_END_EFUSE;
-            td->tout = XD_DELAY_EFUSE_DONE;
+            td->tout = XD_DELAY_EFUSE;
             break;
         }
 
@@ -1491,7 +1491,7 @@ static bool _xd_trim_thread(struct thread_data* td)
         case TRIM_STEP_VERIFY_OTP_DUMP:
         {
             comm_UART_Printf(LOG_LV_DEBUG, "\n\r\tstep : %s, list : %s, timeout : %u", trim_step_to_string((trim_step_t)td->step), xd_trim_list_to_string(*list), td->tout);
-            xd12_trim_init();
+            xd12_init_for_read();
             if (0U == xd12_trim_verify_mirror_dump())
             {
                 // verify OK

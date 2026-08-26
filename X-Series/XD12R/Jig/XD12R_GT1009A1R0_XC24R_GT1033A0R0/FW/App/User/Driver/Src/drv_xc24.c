@@ -74,7 +74,6 @@
 #define XC_SVO_ACTIVE_123       (3U)
 
 volatile bool gb_xc_ld_transfer_spi_dma_flag;
-volatile bool gb_xc_ld_transfer_nss_pending_flag;
 
 static uint8_t gn_xc_daisied_dev_blk_size;
 static uint8_t gn_xc_channel_enable[XC_CH_SIZE_MAX];
@@ -412,11 +411,11 @@ static void xc24_regs_init_table(void)
             _r1->reg._r64.bit.dac3_max_limit = XC_CONV_DAC_V_TO_INPUT(2.5f);
             break;
         case XC_OSC_FLL_MAN_A1:
-            _r1->reg._r65.bit.OSC_MAN_EN_A = XC_FUNCTION_DIS;
+            _r1->reg._r65.bit.OSC_MAN_EN_A = XC_FUNCTION_EN;
             _r1->reg._r65.bit.FLT_GAIN_A = 2U;
             break;
         case XC_OSC_FLL_MAN_B1:
-            _r1->reg._r67.bit.OSC_MAN_EN_B = XC_FUNCTION_DIS;
+            _r1->reg._r67.bit.OSC_MAN_EN_B = XC_FUNCTION_EN;
             _r1->reg._r67.bit.FLT_GAIN_B = 2U;
             break;
         default:
@@ -714,8 +713,8 @@ void xc24_init_param(void)
 #endif
     }
 
-    gn_xc_fll_cnt[0] = XC_CONV_FREQ_TO_XC_MCLK(TIM4_CLK);
-    gn_xc_fll_cnt[1] = XC_CONV_FREQ_TO_XC_MCLK(TIM4_CLK);
+    gn_xc_fll_cnt[0] = XC_CONV_FREQ_TO_XC_MCLK(120U);
+    gn_xc_fll_cnt[1] = XC_CONV_FREQ_TO_XC_MCLK(120U);
 }
 
 void xc24_init(void)
@@ -732,6 +731,12 @@ void xc24_trim_init(void)
     xc24_reset();
     xc24_regs_trim_init_table();
     xc24_read_all();
+}
+
+void xc24_init_for_read(void)
+{
+    XC_NSS_HI();
+    xc24_reset();
 }
 
 const _xc_group1_regs_t* xc24_get_xc24_set_gr1_regs(void)
@@ -1148,16 +1153,6 @@ void xc24_set_ld_transfer(uint16_t* buffer, uint16_t length)
 
     LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_3, length);
     LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_3);
-}
-
-void xc24_ld_transfer_nss_release(void)
-{
-    if (gb_xc_ld_transfer_nss_pending_flag == true)
-    {
-        us_delay(2U);
-        XC_NSS_HI();
-        gb_xc_ld_transfer_nss_pending_flag = false;
-    }
 }
 
 bool xc24_read_local(uint16_t ch_seg, uint16_t addr)
@@ -1764,8 +1759,6 @@ void xc24_test_init_ldo(void)
 
 void xc24_test_init_ldo_fll_a(void)
 {
-    // turn on proper power if needed like VLE
-
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
     // set proper xc24 register
@@ -1780,8 +1773,6 @@ void xc24_test_init_ldo_fll_a(void)
 
 void xc24_test_init_ldo_fll_b(void)
 {
-    // turn on proper power if needed like VLE
-
     // change adc ch_p, ch_n
     ADS114S08_Select_Input_CH(ADS114S08_CH_XC_1V5, ADS_AINCOM);
     // set proper xc24 register
@@ -1808,7 +1799,7 @@ void xc24_test_init_fll_a_30m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xc24_set_gr1_regs.reg._r65;
-    _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.OSC_MAN_EN_A = 1U;
     _r65->bit.FLT_CTL_A = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
@@ -1817,13 +1808,13 @@ void xc24_test_init_fll_a_30m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt11_t* _r37 = &gt_xc24_set_gr1_regs.reg._r37;
-    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r37->bit.fll1cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT11, &_r37->ALL, 1U);
 
     _v_fllcnt12_t* _r38 = &gt_xc24_set_gr1_regs.reg._r38;
-    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r38->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r38->bit.fll1_en = 1U;
+    _r38->bit.fll1cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r38->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r38->bit.fll1_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT12, &_r38->ALL, 1U);
 }
 
@@ -1841,7 +1832,7 @@ void xc24_test_init_fll_a_35m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xc24_set_gr1_regs.reg._r65;
-    _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.OSC_MAN_EN_A = 1U;
     _r65->bit.FLT_CTL_A = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
@@ -1850,13 +1841,13 @@ void xc24_test_init_fll_a_35m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt11_t* _r37 = &gt_xc24_set_gr1_regs.reg._r37;
-    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r37->bit.fll1cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT11, &_r37->ALL, 1U);
 
     _v_fllcnt12_t* _r38 = &gt_xc24_set_gr1_regs.reg._r38;
-    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r38->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r38->bit.fll1_en = 1U;
+    _r38->bit.fll1cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r38->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r38->bit.fll1_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT12, &_r38->ALL, 1U);
 }
 
@@ -1874,7 +1865,7 @@ void xc24_test_init_fll_a_40m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_a1_t* _r65 = &gt_xc24_set_gr1_regs.reg._r65;
-    _r65->bit.OSC_MAN_EN_A = 0U;
+    _r65->bit.OSC_MAN_EN_A = 1U;
     _r65->bit.FLT_CTL_A = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_A1, &_r65->ALL, 1U);
 
@@ -1883,13 +1874,13 @@ void xc24_test_init_fll_a_40m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt11_t* _r37 = &gt_xc24_set_gr1_regs.reg._r37;
-    _r37->bit.fll1cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r37->bit.fll1cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT11, &_r37->ALL, 1U);
 
     _v_fllcnt12_t* _r38 = &gt_xc24_set_gr1_regs.reg._r38;
-    _r38->bit.fll1cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r38->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r38->bit.fll1_en = 1U;
+    _r38->bit.fll1cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r38->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r38->bit.fll1_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT12, &_r38->ALL, 1U);
 }
 
@@ -1907,7 +1898,7 @@ void xc24_test_init_fll_b_30m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xc24_set_gr1_regs.reg._r67;
-    _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.OSC_MAN_EN_B = 1U;
     _r67->bit.FLT_CTL_B = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
@@ -1916,13 +1907,13 @@ void xc24_test_init_fll_b_30m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt21_t* _r39 = &gt_xc24_set_gr1_regs.reg._r39;
-    _r39->bit.fll2cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r39->bit.fll2cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT21, &_r39->ALL, 1U);
 
     _v_fllcnt22_t* _r3A = &gt_xc24_set_gr1_regs.reg._r3A;
-    _r3A->bit.fll2cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r3A->bit.fll2_en = 1U;
+    _r3A->bit.fll2cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r3A->bit.fll2_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT22, &_r3A->ALL, 1U);
 }
 
@@ -1940,7 +1931,7 @@ void xc24_test_init_fll_b_35m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xc24_set_gr1_regs.reg._r67;
-    _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.OSC_MAN_EN_B = 1U;
     _r67->bit.FLT_CTL_B = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
@@ -1949,13 +1940,13 @@ void xc24_test_init_fll_b_35m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt21_t* _r39 = &gt_xc24_set_gr1_regs.reg._r39;
-    _r39->bit.fll2cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r39->bit.fll2cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT21, &_r39->ALL, 1U);
 
     _v_fllcnt22_t* _r3A = &gt_xc24_set_gr1_regs.reg._r3A;
-    _r3A->bit.fll2cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r3A->bit.fll2_en = 1U;
+    _r3A->bit.fll2cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r3A->bit.fll2_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT22, &_r3A->ALL, 1U);
 }
 
@@ -1973,7 +1964,7 @@ void xc24_test_init_fll_b_40m(void)
     xc24_write_otp_control(XC_TEST_CONTROL, &_rF0->ALL, 1U);
 
     _v_osc_fll_man_b1_t* _r67 = &gt_xc24_set_gr1_regs.reg._r67;
-    _r67->bit.OSC_MAN_EN_B = 0U;
+    _r67->bit.OSC_MAN_EN_B = 1U;
     _r67->bit.FLT_CTL_B = 1U;
     xc24_write_grp1_reg(XC_OSC_FLL_MAN_B1, &_r67->ALL, 1U);
 
@@ -1982,13 +1973,13 @@ void xc24_test_init_fll_b_40m(void)
     const uint32_t fll_out = (uint32_t)(xc_mclk / vsync + 0.5f); /* round up */
 
     _v_fllcnt21_t* _r39 = &gt_xc24_set_gr1_regs.reg._r39;
-    _r39->bit.fll2cnt = ((fll_out & 0x00FFFF) >>  0U);
+    _r39->bit.fll2cnt = ((fll_out & FLL_BIT_B15_B0) >> FLL_BIT_SHIFT_LSB);
     xc24_write_grp1_reg(XC_FLLCNT21, &_r39->ALL, 1U);
 
     _v_fllcnt22_t* _r3A = &gt_xc24_set_gr1_regs.reg._r3A;
-    _r3A->bit.fll2cnt = ((fll_out & 0x1F0000) >> 16U);
-    //_r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
-    //_r3A->bit.fll2_en = 1U;
+    _r3A->bit.fll2cnt = ((fll_out & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
+    _r3A->bit.fllsync = XC_FLL_PAD_VSYNC;
+    _r3A->bit.fll2_en = 1U;
     xc24_write_grp1_reg(XC_FLLCNT22, &_r3A->ALL, 1U);
 }
 
@@ -2125,5 +2116,4 @@ void xc24_test_set_curr_tgt_dac(uint16_t curr_tgt_dac)
 
 void xc24_test(void)
 {
-
 }

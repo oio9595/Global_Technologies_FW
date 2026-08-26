@@ -427,8 +427,9 @@ void DMA2_Stream3_IRQHandler(void)
       LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_3);
 
       while(LL_SPI_IsActiveFlag_BSY(SPI1) == SET) { };
-      gb_xc_ld_transfer_nss_pending_flag = true;
       gb_xc_ld_transfer_spi_dma_flag = false;
+      us_delay(2U);
+      XC_NSS_HI();
   }
   else if(LL_DMA_IsActiveFlag_TE3(DMA2) == 1)
   {
