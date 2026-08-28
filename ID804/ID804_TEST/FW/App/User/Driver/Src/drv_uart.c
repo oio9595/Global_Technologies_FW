@@ -25,7 +25,10 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+/**
+ * @brief  Structure representing the UART TX ring buffer.
+ * @note   This structure is used internally by the UART driver to manage the buffer in a circular manner.
+ */
 typedef struct tag_RING_BUFFER
 {
     msg_buffer_t buffer[UART_TX_RING_BUFFER_SIZE];
@@ -67,6 +70,9 @@ bool gb_uart_tx_dma_progress = false;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/**
+ * @brief  Initialize the UART driver, including TX and RX ring buffers, DMA, and interrupts.
+ */
 void drv_uart_init(void)
 {
     gt_uart_tx.head = 0U;
@@ -83,16 +89,28 @@ void drv_uart_init(void)
     LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
 }
 
+/**
+ * @brief  Set the UART TX busy status.
+ * @param  is_busy  Boolean indicating whether the UART TX is busy.
+ */
 void drv_uart_set_tx_busy(bool is_busy)
 {
     gb_uart_tx_dma_progress = is_busy;
 }
 
+/**
+ * @brief  Check if the UART TX is busy.
+ * @retval true if the UART TX is busy, false otherwise.
+ */
 bool drv_uart_is_tx_busy(void)
 {
     return gb_uart_tx_dma_progress;
 }
 
+/**
+ * @brief  Check if there is pending data in the UART TX ring buffer.
+ * @retval true if there is pending data, false otherwise.
+ */
 bool drv_uart_tx_data_pending(void)
 {
     if (gt_uart_tx.head != gt_uart_tx.tail)
@@ -105,6 +123,11 @@ bool drv_uart_tx_data_pending(void)
     }
 }
 
+/**
+ * @brief  Push a string into the UART TX ring buffer.
+ * @param  str  Pointer to the null-terminated string to be pushed into the buffer.
+ * @note   This function is used internally by the UART driver to manage outgoing data.
+ */
 static void drv_uart_tx_ring_buffer_push(const char* str)
 {
     msg_buffer_t* current_msg = &gt_uart_tx.buffer[gt_uart_tx.head];
@@ -118,6 +141,10 @@ static void drv_uart_tx_ring_buffer_push(const char* str)
     gt_uart_tx.head = ((gt_uart_tx.head + 1U) % UART_TX_RING_BUFFER_SIZE);
 }
 
+/**
+ * @brief  Pop a message from the UART TX ring buffer.
+ * @retval Pointer to the message buffer structure containing the next message to be transmitted.
+ */
 msg_buffer_t* drv_uart_tx_ring_buffer_pop(void)
 {
     msg_buffer_t* p_msg = NULL;
@@ -126,6 +153,11 @@ msg_buffer_t* drv_uart_tx_ring_buffer_pop(void)
     return p_msg;
 }
 
+/**
+ * @brief  Start the UART TX DMA transfer for the given message.
+ * @param  p_msg  Pointer to the message buffer structure containing the data to be transmitted.
+ * @note   This function will block until the UART TX is not busy.
+ */
 void drv_uart_tx_dma_start(msg_buffer_t* p_msg)
 {
     if (p_msg == NULL)
@@ -146,6 +178,12 @@ void drv_uart_tx_dma_start(msg_buffer_t* p_msg)
     LL_DMA_EnableStream(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
 }
 
+/**
+ * @brief  Directly transmit a block of data over UART without using the TX ring buffer.
+ * @param  p_data  Pointer to the data to be transmitted.
+ * @param  size    Size of the data block to be transmitted.
+ * @note   This function bypasses the TX ring buffer and sends data directly over UART.
+ */
 void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
 {
     if (p_data == NULL || size == 0U)
@@ -160,6 +198,11 @@ void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
     }
 }
 
+/**
+ * @brief  Formatted print over UART using the TX ring buffer.
+ * @param  format  Format string (similar to printf).
+ * @note   This function formats the string and pushes it into the UART TX ring buffer.
+ */
 void drv_uart_printf(const char* format, ...)
 {
     char buffer[MSG_BUFFER_SIZE];
@@ -174,6 +217,10 @@ void drv_uart_printf(const char* format, ...)
     }
 }
 
+/**
+ * @brief  Check if there is any pending data in the UART RX ring buffer.
+ * @retval true if there is pending data, false otherwise.
+ */
 bool drv_uart_rx_data_pending(void)
 {
     if (gt_uart_rx.head != gt_uart_rx.tail)
@@ -186,6 +233,11 @@ bool drv_uart_rx_data_pending(void)
     }
 }
 
+/**
+ * @brief  Push received data into the UART RX ring buffer.
+ * @param  received_data  The byte of data received from UART.
+ * @note   This function is used internally by the UART driver to manage incoming data.
+ */
 static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
 {
     msg_buffer_t* current_msg = &gt_uart_rx.buffer[gt_uart_rx.head];
@@ -221,6 +273,10 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
     }
 }
 
+/**
+ * @brief  Pop a message from the UART RX ring buffer.
+ * @retval Pointer to the message buffer structure containing the next received message.
+ */
 msg_buffer_t* drv_uart_rx_ring_buffer_pop(void)
 {
     msg_buffer_t* p_msg = &gt_uart_rx.buffer[gt_uart_rx.tail];
@@ -228,6 +284,10 @@ msg_buffer_t* drv_uart_rx_ring_buffer_pop(void)
     return p_msg;
 }
 
+/**
+ * @brief  UART RX interrupt handler.
+ * @note   This function should be called from the actual UART RX interrupt service routine.
+ */
 void drv_uart_rx_irq_handler(void)
 {
     if (LL_USART_IsActiveFlag_RXNE(USART2))

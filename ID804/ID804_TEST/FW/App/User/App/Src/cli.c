@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 /* 3. Project internal / System-related headers */
+#include "main.h"
+#include "version.h"
 #include "drv_uart.h"
 /* USER CODE END Includes */
 
@@ -29,17 +31,18 @@
 /* USER CODE BEGIN PTD */
 typedef enum TAG_CLI_CMD_LIST
 {
-    CLI_CMD_NONE = 0,
-    CLI_CMD_UNKNOWN,
-    CLI_CMD_HELP,
-    CLI_CMD_EXAMPLE,
-    CLI_CMD_MAX
+    CLI_CMD_NONE    = 0,    // 0x00U
+    CLI_CMD_UNKNOWN,        // 0x01U
+    CLI_CMD_HELP,           // 0x02U
+    CLI_CMD_RESET,          // 0x03U
+    CLI_CMD_EXAMPLE,        // 0x04U
+    CLI_CMD_MAX             // 0x05U
 } cli_cmd_list_t;
 
 typedef struct tag_CLI_CMD_ENTRY
 {
     const char      *name;
-    cli_cmd_list_t   command;
+    cli_cmd_list_t  command;
     const char      *description;
 } cli_cmd_entry_t;
 
@@ -75,6 +78,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "example", CLI_CMD_EXAMPLE, "Example command" },
     { "help", CLI_CMD_HELP, "Display help information" },
     { "?", CLI_CMD_HELP, "Display help information" },
+    { "reset", CLI_CMD_RESET, "Reset the system" },
 };
 
 static cli_request_t gt_cli_request;
@@ -87,6 +91,11 @@ static cli_request_t gt_cli_request;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/**
+ * @brief  Print the CLI banner with firmware information.
+ *         This includes build date, firmware version, and Git revision.
+ *         Also displays the CLI prompt.
+ */
 static void cli_print_banner(void)
 {
     // ANSI Escape Code를 이용해 화면을 정리하고 커서를 상단으로 옮김 (옵션)
@@ -96,8 +105,9 @@ static void cli_print_banner(void)
     drv_uart_printf("==================================================\r\n");
     drv_uart_printf("  %s\r\n", "ID804 Test Board");
     drv_uart_printf("==================================================\r\n");
-    //drv_uart_printf("  * FW Version  : v%d.%d.%d\r\n", FW_VERSION_MAJOR, FW_VERSION_MINOR, FW_VERSION_PATCH);
     drv_uart_printf("  * Build Date  : %s, %s\r\n", __DATE__, __TIME__);
+    drv_uart_printf("  * FW Version  : v%2d.%2d.%2d\r\n", FW_MAJOR, FW_MINOR, FW_BUILD);
+    drv_uart_printf("  * FW Git Rev  : %s\r\n", FW_GIT_REV);
 
     drv_uart_printf("==================================================\r\n");
     drv_uart_printf("  Type 'help' or '?' to view available CLI commands.\r\n");
@@ -105,6 +115,10 @@ static void cli_print_banner(void)
     drv_uart_printf(CLI_PROMPT);
 }
 
+/**
+ * @brief  Display the help information for all available CLI commands.
+ * @note   This function iterates through the command list and prints each command's name and description.
+ */
 static void cli_help(void)
 {
     for (uint16_t idx = 0U; idx < sizeof(gt_cli_command) / sizeof(gt_cli_command[0]); ++idx)
@@ -113,14 +127,26 @@ static void cli_help(void)
     }
 }
 
+/**
+ * @brief  Initialize the CLI system, including UART and displaying the banner.
+ * @note   This function should be called at the start of the application to set up the CLI environment.
+ */
 void cli_init(void)
 {
+    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0, 0, 0, 0 };
     drv_uart_init();
     cli_print_banner();
 }
 
+/**
+ * @brief  Parse and process a CLI command from the received message buffer.
+ * @param  p_msg  Pointer to the message buffer containing the received command.
+ * @note   This function tokenizes the input message and updates the CLI request structure accordingly.
+ */
 static void cli_command_parse(msg_buffer_t* p_msg)
 {
+    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0, 0, 0, 0 };
+
     char* p_str = strtok(p_msg->msg, " ");
     char* p_token[CLI_MAX_TOKENS] = { 0 };
     /* Tokenize the input message to extract the command */
@@ -156,6 +182,10 @@ static void cli_command_parse(msg_buffer_t* p_msg)
     if (token_cnt > 4U) gt_cli_request.val_4 = (uint16_t)strtoul(p_token[4], NULL, 0);
 }
 
+/**
+ * @brief  Execute the parsed CLI command based on the current CLI request structure.
+ * @note   This function should be called after parsing a command to perform the corresponding action.
+ */
 static void cli_command_execute(void)
 {
     switch (gt_cli_request.last_command)
@@ -168,6 +198,10 @@ static void cli_command_execute(void)
         case CLI_CMD_HELP:
             cli_help();
             break;
+        case CLI_CMD_RESET:
+            drv_uart_printf("\r\nSystem resetting...");
+            NVIC_SystemReset();
+            break;
         default:
             // Handle unknown command
             drv_uart_printf("\r\nUnknown CMD.");
@@ -176,6 +210,10 @@ static void cli_command_execute(void)
     drv_uart_printf(CLI_PROMPT);
 }
 
+/**
+ * @brief  Process the CLI by handling UART TX and RX data.
+ * @note   This function should be called periodically to manage CLI input and output.
+ */
 void cli_process(void)
 {
     if (true == drv_uart_tx_data_pending())
