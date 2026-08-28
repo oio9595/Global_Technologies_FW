@@ -203,7 +203,6 @@ void SysTick_Handler(void)
     {
         --gn_ads114s08_read_timeout;
     }
-
   /* USER CODE END SysTick_IRQn 1 */
 }
 
