@@ -1,16 +1,16 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : cli.c
-  * @brief          : cli implementation
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 Global Technologies.
-  * All rights reserved.
-  *
-  ******************************************************************************
-  */
+     ******************************************************************************
+    * @file           : cli.c
+    * @brief          : cli implementation
+    ******************************************************************************
+    * @attention
+    *
+    * Copyright (c) 2026 Global Technologies.
+    * All rights reserved.
+    *
+    ******************************************************************************
+    */
 /* USER CODE END Header */
 
 /* Private includes ----------------------------------------------------------*/
@@ -123,7 +123,7 @@ static void cli_help(void)
 {
     for (uint16_t idx = 0U; idx < sizeof(gt_cli_command) / sizeof(gt_cli_command[0]); ++idx)
     {
-        drv_uart_printf("\r\n\"%s\" - %s", gt_cli_command[idx].name, gt_cli_command[idx].description);
+        drv_uart_printf("\r\n\"%8s\" - %s", gt_cli_command[idx].name, gt_cli_command[idx].description);
     }
 }
 
@@ -134,7 +134,6 @@ static void cli_help(void)
 void cli_init(void)
 {
     gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0, 0, 0, 0 };
-    drv_uart_init();
     cli_print_banner();
 }
 

@@ -1,15 +1,15 @@
 /* USER CODE BEGIN Header */
 /*
- * File:   cli.h
- * Author: GT
- *
- * Created on 2026. 08. 27.
- */
+    * File:   drv_i2c.h
+    * Author: GT
+    *
+    * Created on 2026. 08. 28.
+    */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CLI_H__
-#define __CLI_H__
+#ifndef __DRV_I2C_H__
+#define __DRV_I2C_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,12 +46,11 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern void cli_init(void);
-extern void cli_process(void);
+extern void drv_i2c_init(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CLI_H__ */
+#endif /* __DRV_I2C_H__ */

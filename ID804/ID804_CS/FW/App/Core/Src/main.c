@@ -722,6 +722,7 @@ void StartDebugTask(void *argument)
 void StartCLITask(void *argument)
 {
   /* USER CODE BEGIN StartCLITask */
+    drv_uart_init();
     cli_init();
   /* Infinite loop */
   for(;;)
