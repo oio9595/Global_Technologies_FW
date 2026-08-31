@@ -65,17 +65,17 @@ def create_source_files(file_name: str) -> None:
 
     c_content = f"""/* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : {base_name}.c
-  * @brief          : {description}
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) {year} Global Technologies.
-  * All rights reserved.
-  *
-  ******************************************************************************
-  */
+    ******************************************************************************
+    * @file           : {base_name}.c
+    * @brief          : {description}
+    ******************************************************************************
+    * @attention
+    *
+    * Copyright (c) {year} Global Technologies.
+    * All rights reserved.
+    *
+    ******************************************************************************
+    */
 /* USER CODE END Header */
 
 /* Private includes ----------------------------------------------------------*/
@@ -125,11 +125,11 @@ def create_source_files(file_name: str) -> None:
 
     h_content = f"""/* USER CODE BEGIN Header */
 /*
- * File:   {base_name}.h
- * Author: GT
- *
- * Created on {date}
- */
+    * File:   {base_name}.h
+    * Author: GT
+    *
+    * Created on {date}
+    */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
