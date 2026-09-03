@@ -25,17 +25,18 @@
 #include "main.h"
 #include "version.h"
 #include "drv_uart.h"
+#include "drv_spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum TAG_CLI_CMD_LIST
+typedef enum tag_CLI_CMD_LIST
 {
     CLI_CMD_NONE    = 0,    // 0x00U
     CLI_CMD_UNKNOWN,        // 0x01U
     CLI_CMD_HELP,           // 0x02U
     CLI_CMD_RESET,          // 0x03U
-    CLI_CMD_EXAMPLE,        // 0x04U
+    CLI_CMD_DEBUG_SPI,      // 0x04U
     CLI_CMD_MAX             // 0x05U
 } cli_cmd_list_t;
 
@@ -58,12 +59,13 @@ typedef struct tag_CLI_REQUEST
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CLI_PROMPT      "\r\nID804> "
+#define CLI_CLEAR_SCREEN    "\033[2J\033[H"
+#define CLI_PROMPT          "\r\nID804> "
 
-#define CLI_MAX_TOKENS  (5)
+#define CLI_MAX_TOKENS      (5)
 
-#define STR_MATCH       (0)
-#define STR_MISMATCH    (1)
+#define STR_MATCH           (0)
+#define STR_MISMATCH        (1)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -75,10 +77,10 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PV */
 static const cli_cmd_entry_t gt_cli_command[] =
 {
-    { "example", CLI_CMD_EXAMPLE, "Example command" },
     { "help", CLI_CMD_HELP, "Display help information" },
     { "?", CLI_CMD_HELP, "Display help information" },
     { "reset", CLI_CMD_RESET, "Reset the system" },
+    { "debug_spi", CLI_CMD_DEBUG_SPI, "Debug SPI interface" },
 };
 
 static cli_request_t gt_cli_request;
@@ -99,19 +101,18 @@ static cli_request_t gt_cli_request;
 static void cli_print_banner(void)
 {
     // ANSI Escape Code를 이용해 화면을 정리하고 커서를 상단으로 옮김 (옵션)
-    drv_uart_printf("\033[2J\033[H");
+    drv_uart_printf(CLI_CLEAR_SCREEN);
 
-    drv_uart_printf("\r\n");
-    drv_uart_printf("==================================================\r\n");
-    drv_uart_printf("  %s\r\n", "ID804 Test Board");
-    drv_uart_printf("==================================================\r\n");
-    drv_uart_printf("  * Build Date  : %s, %s\r\n", __DATE__, __TIME__);
-    drv_uart_printf("  * FW Version  : v%2d.%2d.%2d\r\n", FW_MAJOR, FW_MINOR, FW_BUILD);
-    drv_uart_printf("  * FW Git Rev  : %s\r\n", FW_GIT_REV);
+    drv_uart_printf("\r\n====================================================");
+    drv_uart_printf("\r\n  %s", "ID804 Test Board");
+    drv_uart_printf("\r\n====================================================");
+    drv_uart_printf("\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
+    drv_uart_printf("\r\n  * FW Version  : v%d.%d.%d", FW_MAJOR, FW_MINOR, FW_BUILD);
+    drv_uart_printf("\r\n  * FW Git Rev  : %s", FW_GIT_REV);
 
-    drv_uart_printf("==================================================\r\n");
-    drv_uart_printf("  Type 'help' or '?' to view available CLI commands.\r\n");
-    drv_uart_printf("==================================================\r\n\r\n");
+    drv_uart_printf("\r\n====================================================");
+    drv_uart_printf("\r\n  Type 'help' or '?' to view available CLI commands.");
+    drv_uart_printf("\r\n====================================================");
     drv_uart_printf(CLI_PROMPT);
 }
 
@@ -121,10 +122,23 @@ static void cli_print_banner(void)
  */
 static void cli_help(void)
 {
-    for (uint16_t idx = 0U; idx < sizeof(gt_cli_command) / sizeof(gt_cli_command[0]); ++idx)
+    uint16_t max_name_len = 0U;
+    uint16_t total_cmds = sizeof(gt_cli_command) / sizeof(gt_cli_command[0]);
+
+    for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
-        drv_uart_printf("\r\n\"%8s\" - %s", gt_cli_command[idx].name, gt_cli_command[idx].description);
+        uint16_t len = (uint16_t)strlen(gt_cli_command[idx].name);
+        if (len > max_name_len)
+        {
+            max_name_len = len;
+        }
     }
+    drv_uart_printf("\r\n====================================================");
+    for (uint16_t idx = 0U; idx < total_cmds; ++idx)
+    {
+        drv_uart_printf("\r\n\"%-*s\" - %s", max_name_len, gt_cli_command[idx].name, gt_cli_command[idx].description);
+    }
+    drv_uart_printf("\r\n====================================================");
 }
 
 /**
@@ -133,7 +147,7 @@ static void cli_help(void)
  */
 void cli_init(void)
 {
-    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0, 0, 0, 0 };
+    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0U, 0U, 0U, 0U };
     cli_print_banner();
 }
 
@@ -144,7 +158,7 @@ void cli_init(void)
  */
 static void cli_command_parse(msg_buffer_t* p_msg)
 {
-    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0, 0, 0, 0 };
+    gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0U, 0U, 0U, 0U };
 
     char* p_str = strtok(p_msg->msg, " ");
     char* p_token[CLI_MAX_TOKENS] = { 0 };
@@ -190,21 +204,33 @@ static void cli_command_execute(void)
     switch (gt_cli_request.last_command)
     {
         case CLI_CMD_NONE:
+        {
             break;
-        case CLI_CMD_EXAMPLE:
-            drv_uart_printf("\r\nExample command executed. 0x%x(%u) 0x%x(%u)", gt_cli_request.val_1, gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_2);
+        }
+        case CLI_CMD_DEBUG_SPI:
+        {
+            uint16_t spi_data[4] = { gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4 };
+            drv_uart_printf("\r\nDebug SPI executed. (%u) (%u) (%u) (%u)", gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4);
+            drv_spi_transmit_direct(spi_data, 4);
             break;
+        }
         case CLI_CMD_HELP:
+        {
             cli_help();
             break;
+        }
         case CLI_CMD_RESET:
+        {
             drv_uart_printf("\r\nSystem resetting...");
             NVIC_SystemReset();
             break;
+        }
         default:
+        {
             // Handle unknown command
             drv_uart_printf("\r\nUnknown CMD.");
             break;
+        }
     }
     drv_uart_printf(CLI_PROMPT);
 }

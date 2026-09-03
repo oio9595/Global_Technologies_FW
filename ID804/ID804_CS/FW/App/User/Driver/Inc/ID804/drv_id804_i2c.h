@@ -1,15 +1,15 @@
 /* USER CODE BEGIN Header */
 /*
-    * File:   drv_i2c.h
+    * File:   drv_id804_i2c.h
     * Author: GT
     *
-    * Created on 2026. 08. 28.
+    * Created on 2026. 08. 31.
     */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __DRV_I2C_H__
-#define __DRV_I2C_H__
+#ifndef __DRV_ID804_I2C_H__
+#define __DRV_ID804_I2C_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +26,6 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -47,14 +46,12 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern void drv_i2c_init(void);
-
-extern bool drv_i2c_write(uint8_t* p_data, uint16_t size);
-extern bool drv_i2c_read(uint8_t* p_data, uint16_t size);
+extern void id804_write_data_via_i2c(uint8_t reg_addr, uint16_t data);
+extern uint16_t id804_read_data_via_i2c(uint8_t reg_addr);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __DRV_I2C_H__ */
+#endif /* __DRV_ID804_I2C_H__ */

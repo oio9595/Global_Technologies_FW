@@ -584,8 +584,7 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|ID804_VLED_EN_Pin|SIO2_MCU_Pin
-                          |I2C_SIO1P_UP_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|SIO2_MCU_Pin|I2C_SIO1P_UP_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOA, CAN_ID804_Pin|MCU_TM0_Pin|SIO1_MCU_Pin|ID804_VCC_5V5_Pin
@@ -594,6 +593,9 @@ static void MX_GPIO_Init(void)
   /**/
   LL_GPIO_ResetOutputPin(GPIOB, SIO1_LVDS_Pin|PN_CROSS_Pin|SIO1_CAN_Pin|SIO2_CAN_Pin
                           |I2C_SIO1N_UP_Pin|I2C_SIO1N_DOWN_Pin);
+
+  /**/
+  LL_GPIO_SetOutputPin(ID804_VLED_EN_GPIO_Port, ID804_VLED_EN_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOB, CNT_MR_Pin|ID804_VCC_EN_Pin);

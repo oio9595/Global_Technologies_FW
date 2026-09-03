@@ -1,15 +1,15 @@
 /* USER CODE BEGIN Header */
 /*
-    * File:   drv_i2c.h
+    * File:   drv_id804_manchester.h
     * Author: GT
     *
-    * Created on 2026. 08. 28.
+    * Created on 2026. 09. 01.
     */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __DRV_I2C_H__
-#define __DRV_I2C_H__
+#ifndef __DRV_ID804_MANCHESTER_H__
+#define __DRV_ID804_MANCHESTER_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,10 +18,9 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
-#include <stdbool.h>
 #include <stdint.h>
 /* 2. Project internal / System-related headers */
-
+#include "id804_metadata.h"
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/
@@ -47,14 +46,12 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern void drv_i2c_init(void);
-
-extern bool drv_i2c_write(uint8_t* p_data, uint16_t size);
-extern bool drv_i2c_read(uint8_t* p_data, uint16_t size);
+extern void id804_transmit_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data);
+extern uint32_t id804_receive_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __DRV_I2C_H__ */
+#endif /* __DRV_ID804_MANCHESTER_H__ */
