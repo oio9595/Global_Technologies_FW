@@ -59,7 +59,6 @@ void I2C1_ER_IRQHandler(void);
 void USART2_IRQHandler(void);
 void TIM8_UP_TIM13_IRQHandler(void);
 void TIM8_TRG_COM_TIM14_IRQHandler(void);
-void DMA2_Stream3_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

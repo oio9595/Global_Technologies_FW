@@ -19,6 +19,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
 #include <stdint.h>
+#include <stdbool.h>
 /* 2. Project internal / System-related headers */
 #include "id804_metadata.h"
 /* USER CODE END Includes */
@@ -46,8 +47,8 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern void id804_transmit_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data);
-extern uint32_t id804_receive_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data);
+extern id804_comm_result_t id804_write_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t data);
+extern id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* p_data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

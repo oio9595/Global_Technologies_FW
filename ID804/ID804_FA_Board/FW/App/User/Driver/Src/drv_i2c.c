@@ -31,6 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define I2C_TIMEOUT_MS      (10U)
 
 #define ID804_I2C_ADDRESS   (0x58U << 1U)
 #define I2C_TX              (0x00U)
@@ -60,6 +61,36 @@ void drv_i2c_init(void)
 }
 
 /**
+ * @brief  Print I2C error message based on the error code.
+ * @param  err_code: I2C error code.
+ * @retval None.
+ */
+static void drv_i2c_print_error(uint32_t err_code)
+{
+    switch (err_code)
+    {
+        case HAL_I2C_ERROR_BERR:
+            drv_uart_printf(" (I2C Bus Error)");
+            break;
+        case HAL_I2C_ERROR_ARLO:
+            drv_uart_printf(" (I2C Arbitration Lost)");
+            break;
+        case HAL_I2C_ERROR_AF:
+            drv_uart_printf(" (I2C Acknowledge Failure)");
+            break;
+        case HAL_I2C_ERROR_OVR:
+            drv_uart_printf(" (I2C Overrun/Underrun)");
+            break;
+        case HAL_I2C_ERROR_TIMEOUT:
+            drv_uart_printf(" (I2C Timeout)");
+            break;
+        default:
+            drv_uart_printf(" (I2C Unknown Error 0x%X)", err_code);
+            break;
+    }
+}
+
+/**
   * @brief  Write data to the I2C bus.
   * @param  p_data: Pointer to the data buffer to be transmitted.
   * @param  size: Number of bytes to transmit.
@@ -67,21 +98,20 @@ void drv_i2c_init(void)
   */
 bool drv_i2c_write(uint8_t* p_data, uint16_t size)
 {
-    bool ret = false;
-    if (p_data != NULL && size > 0)
+if (p_data == NULL || size == 0U)
     {
-        if (HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, size, HAL_MAX_DELAY)) // order: DEV_ID + Register Address + Data MSB + Data LSB
-        {
-            drv_uart_printf("\r\nI2C write successful");
-            ret = true;
-        }
-        else
-        {
-            drv_uart_printf("\r\nI2C write failed");
-            ret = false;
-        }
+        return false;
     }
-    return ret;
+
+    if (HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, size, I2C_TIMEOUT_MS))
+    {
+        drv_uart_printf("\r\n    I2C write successful");
+        return true;
+    }
+
+    drv_uart_printf("\r\n    I2C write failed");
+    drv_i2c_print_error(hi2c1.ErrorCode);
+    return false;
 }
 
 /**
@@ -92,28 +122,28 @@ bool drv_i2c_write(uint8_t* p_data, uint16_t size)
   */
 bool drv_i2c_read(uint8_t* p_data, uint16_t size)
 {
-    bool ret = false;
-    if (p_data != NULL && size > 0)
+    if (p_data == NULL || size == 0)
     {
-        if (HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, 2, HAL_MAX_DELAY)) // order: DEV_ID + Register Address
-        {
-            if (HAL_OK == HAL_I2C_Master_Receive(&hi2c1, (ID804_I2C_ADDRESS | I2C_RX), (p_data + 1U), size, HAL_MAX_DELAY)) // order: DEV_ID + Data MSB + Data LSB
-            {
-                drv_uart_printf("\r\nI2C read successful");
-                ret = true;
-            }
-            else
-            {
-                drv_uart_printf("\r\nI2C read failed");
-                ret = false;
-            }
-        }
-        else
-        {
-            drv_uart_printf("\r\nI2C write failed");
-            ret = false;
-        }
+        return false;
     }
-    return ret;
+
+    // 1. 레지스터 주소 전송 (Write)
+    if (HAL_OK != HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, 1U, I2C_TIMEOUT_MS))
+    {
+        drv_uart_printf("\r\n    I2C write failed");
+        drv_i2c_print_error(hi2c1.ErrorCode);
+        return false;
+    }
+
+    // 2. 데이터 수신 (Read)
+    if (HAL_OK != HAL_I2C_Master_Receive(&hi2c1, (ID804_I2C_ADDRESS | I2C_RX), p_data + 1U, size, I2C_TIMEOUT_MS))
+    {
+        drv_uart_printf("\r\n    I2C read failed");
+        drv_i2c_print_error(hi2c1.ErrorCode);
+        return false;
+    }
+
+    drv_uart_printf("\r\n    I2C read successful");
+    return true;
 }
 /* USER CODE END 0 */

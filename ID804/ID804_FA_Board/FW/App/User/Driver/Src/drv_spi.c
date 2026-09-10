@@ -54,7 +54,7 @@ void drv_spi_init(void)
     /* Implement the SPI initialization functionality here */
 }
 
-bool drv_spi_transmit_direct(const uint16_t *p_data, uint16_t length)
+bool drv_spi_transmit_direct(const uint8_t *p_data, uint16_t length)
 {
     /* Configure SPI1 as master, full duplex, CPOL low */
     LL_SPI_Disable(SPI1);
@@ -74,7 +74,7 @@ bool drv_spi_transmit_direct(const uint16_t *p_data, uint16_t length)
                 return false;
             }
         }
-        LL_SPI_TransmitData16(SPI1, p_data[i]);
+        LL_SPI_TransmitData8(SPI1, p_data[i]);
     }
 
     uint32_t start_time = HAL_GetTick();
@@ -90,7 +90,7 @@ bool drv_spi_transmit_direct(const uint16_t *p_data, uint16_t length)
     return true;
 }
 
-bool drv_spi_receive_direct(uint16_t *p_data, uint16_t length)
+bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length)
 {
     /* Configure SPI1 as slave, simplex RX, CPOL high */
     LL_SPI_Disable(SPI1);
@@ -101,7 +101,7 @@ bool drv_spi_receive_direct(uint16_t *p_data, uint16_t length)
 
     if (LL_SPI_IsActiveFlag_RXNE(SPI1))
     {
-        (void)LL_SPI_ReceiveData16(SPI1);
+        (void)LL_SPI_ReceiveData8(SPI1);
     }
 
     for (uint16_t i = 0U; i < length; ++i)
@@ -114,7 +114,7 @@ bool drv_spi_receive_direct(uint16_t *p_data, uint16_t length)
                 return false;
             }
         }
-        p_data[i] = LL_SPI_ReceiveData16(SPI1);
+        p_data[i] = LL_SPI_ReceiveData8(SPI1);
     }
 
     LL_SPI_Disable(SPI1);

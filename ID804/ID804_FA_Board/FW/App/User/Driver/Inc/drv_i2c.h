@@ -21,7 +21,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 /* 2. Project internal / System-related headers */
-
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/

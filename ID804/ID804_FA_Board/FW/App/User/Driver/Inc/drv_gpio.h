@@ -18,6 +18,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
+#include <stdbool.h>
 
 /* 2. Project internal / System-related headers */
 
@@ -25,7 +26,7 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-
+#define DELAY_POWER_UP_MS   (10)  // Delay in milliseconds for VDD ramp-up
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -66,7 +67,31 @@ typedef enum tag_ID804_IO_STATE
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
+extern void drv_gpio_init(void);
 
+extern void drv_gpio_id804_boot_i2c(void);
+extern void drv_gpio_id804_boot_mcu(void);
+
+extern bool drv_gpio_id804_vcc(id804_vcc_state_t state);
+extern bool drv_gpio_id804_vled(id804_vled_state_t state);
+
+extern bool drv_gpio_id804_io_clear(void);
+
+extern bool drv_gpio_id804_tm0_to_GND(void);
+extern bool drv_gpio_id804_tm0_to_VDD(void);
+
+extern bool drv_gpio_id804_tm1_to_GND(void);
+extern bool drv_gpio_id804_tm1_to_VDD(void);
+
+extern bool drv_gpio_id804_sio1_i2c(id804_io_state_t state);
+extern bool drv_gpio_id804_sio1_mcu(id804_io_state_t state);
+extern bool drv_gpio_id804_sio1_can(id804_io_state_t state);
+extern bool drv_gpio_id804_sio1_lvds(id804_io_state_t state);
+
+extern bool drv_gpio_id804_sio2_mcu(id804_io_state_t state);
+extern bool drv_gpio_id804_sio2_can(id804_io_state_t state);
+extern bool drv_gpio_id804_sio2_lvds(id804_io_state_t state);
+extern bool drv_gpio_id804_sio2_eol(id804_io_state_t state);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

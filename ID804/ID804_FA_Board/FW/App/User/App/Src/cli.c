@@ -26,18 +26,30 @@
 #include "version.h"
 #include "drv_uart.h"
 #include "drv_spi.h"
+#include "drv_i2c.h"
+#include "drv_gpio.h"
+#include "drv_id804.h"
+#include "id804_metadata.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef enum tag_CLI_CMD_LIST
 {
-    CLI_CMD_NONE    = 0,    // 0x00U
-    CLI_CMD_UNKNOWN,        // 0x01U
-    CLI_CMD_HELP,           // 0x02U
-    CLI_CMD_RESET,          // 0x03U
-    CLI_CMD_DEBUG_SPI,      // 0x04U
-    CLI_CMD_MAX             // 0x05U
+    CLI_CMD_NONE    = 0,
+    CLI_CMD_UNKNOWN,
+    CLI_CMD_HELP,
+    CLI_CMD_RESET,
+    CLI_CMD_DEBUG_SPI,
+    CLI_CMD_ID804_VDD,
+    CLI_CMD_ID804_VLED,
+    CLI_CMD_ID804_TM0,
+    CLI_CMD_ID804_SIO1,
+    CLI_CMD_ID804_SIO2,
+    CLI_CMD_ID804_BOOT,
+    CLI_CMD_ID804_ME,
+    CLI_CMD_ID804_I2C,
+    CLI_CMD_MAX
 } cli_cmd_list_t;
 
 typedef struct tag_CLI_CMD_ENTRY
@@ -50,22 +62,27 @@ typedef struct tag_CLI_CMD_ENTRY
 typedef struct tag_CLI_REQUEST
 {
     cli_cmd_list_t  last_command;
-    uint16_t        val_1;
-    uint16_t        val_2;
-    uint16_t        val_3;
-    uint16_t        val_4;
+    uint32_t        val_1;
+    uint32_t        val_2;
+    uint32_t        val_3;
+    uint32_t        val_4;
 } cli_request_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define CLI_CLEAR_SCREEN    "\033[2J\033[H"
-#define CLI_PROMPT          "\r\nID804> "
+
+//#define CLI_PROMPT          "\r\nID804> "
+#define CLI_PROMPT          "\r\n\r\nID804> "
 
 #define CLI_MAX_TOKENS      (5)
 
 #define STR_MATCH           (0)
 #define STR_MISMATCH        (1)
+
+#define SET                 (0)
+#define GET                 (1)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -81,6 +98,18 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "?", CLI_CMD_HELP, "Display help information" },
     { "reset", CLI_CMD_RESET, "Reset the system" },
     { "debug_spi", CLI_CMD_DEBUG_SPI, "Debug SPI interface" },
+
+    { "id804_vdd", CLI_CMD_ID804_VDD, "Control ID804 VDD <0: OFF, 1: 5V, 2: 5.5V>" },
+    { "id804_vled", CLI_CMD_ID804_VLED, "Control ID804 VLED <0: OFF, 1: ON>" },
+    { "id804_tm0", CLI_CMD_ID804_TM0, "Control ID804 TM0 <0: GND, 1: VDD>" },
+
+    { "id804_sio1", CLI_CMD_ID804_SIO1, "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>" },
+    { "id804_sio2", CLI_CMD_ID804_SIO2, "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>" },
+
+    { "id804_boot", CLI_CMD_ID804_BOOT, "Control ID804 boot process <0: MCU, 1: I2C>" },
+
+    { "id804_me", CLI_CMD_ID804_ME,   "Control ID804 ME interface  <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>" },
+    { "id804_i2c", CLI_CMD_ID804_I2C, "Control ID804 I2C interface <0: WRITE, 1: READ> <Address>  <Data: only for WRITE>" },
 };
 
 static cli_request_t gt_cli_request;
@@ -209,9 +238,234 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_DEBUG_SPI:
         {
-            uint16_t spi_data[4] = { gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4 };
-            drv_uart_printf("\r\nDebug SPI executed. (%u) (%u) (%u) (%u)", gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4);
+            uint8_t spi_data[4] = { gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4 };
+            drv_uart_printf("\r\n    Debug SPI executed. (%u) (%u) (%u) (%u)", gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4);
             drv_spi_transmit_direct(spi_data, 4);
+            break;
+        }
+        case CLI_CMD_ID804_VDD:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_vcc(ID804_VCC_OFF);
+                drv_uart_printf("\r\n    ID804 VDD turned OFF.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_vcc(ID804_VCC_5V0);
+                drv_uart_printf("\r\n    ID804 VDD set to 5V.");
+            }
+            else if (2U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_vcc(ID804_VCC_5V5);
+                drv_uart_printf("\r\n    ID804 VDD set to 5.5V.");
+            }
+            else
+            {
+                drv_gpio_id804_vcc(ID804_VCC_OFF);
+                drv_uart_printf("\r\n    Invalid VDD value. Use 0 for OFF, 1 for 5V, 2 for 5.5V.");
+            }
+            break;
+        }
+        case CLI_CMD_ID804_VLED:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_vled(ID804_VLED_OFF);
+                drv_uart_printf("\r\n    ID804 VLED turned OFF.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_vled(ID804_VLED_ON);
+                drv_uart_printf("\r\n    ID804 VLED turned ON.");
+            }
+            else
+            {
+                drv_gpio_id804_vled(ID804_VLED_OFF);
+                drv_uart_printf("\r\n    Invalid VLED value. Use 0 for OFF, 1 for ON.");
+            }
+            break;
+        }
+        case CLI_CMD_ID804_TM0:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_tm0_to_GND();
+                drv_uart_printf("\r\n    ID804 TM0 set to GND.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                drv_gpio_id804_tm0_to_VDD();
+                drv_uart_printf("\r\n    ID804 TM0 set to VDD.");
+            }
+            else
+            {
+                drv_uart_printf("\r\n    Invalid TM0 value. Use 0 for GND (MCU), 1 for VDD (I2C).");
+            }
+            break;
+        }
+        case CLI_CMD_ID804_SIO1:
+        {
+            if (gt_cli_request.val_2 != 0U && gt_cli_request.val_2 != 1U)
+            {
+                drv_uart_printf("\r\n    Invalid enable/disable value. Use 1 for ENABLE, 0 for DISABLE.");
+                break;
+            }
+            drv_gpio_id804_sio1_mcu(ID804_IO_DIS);
+            drv_gpio_id804_sio1_can(ID804_IO_DIS);
+            drv_gpio_id804_sio1_lvds(ID804_IO_DIS);
+            drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
+            switch (gt_cli_request.val_1)
+            {
+                case 1U:
+                    // Handle SIO1 MCU
+                    drv_gpio_id804_sio1_mcu(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO1 MCU set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 2U:
+                    // Handle SIO1 CAN
+                    drv_gpio_id804_sio1_can(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO1 CAN set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 3U:
+                    // Handle SIO1 LVDS
+                    drv_gpio_id804_sio1_lvds(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO1 LVDS set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 4U:
+                    // Handle SIO1 I2C
+                    drv_gpio_id804_sio1_i2c(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO1 I2C set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                default:
+                    drv_uart_printf("\r\n    Unknown SIO1 sub-command.");
+                    break;
+            }
+            break;
+        }
+        case CLI_CMD_ID804_SIO2:
+        {
+            if (gt_cli_request.val_2 != 0U && gt_cli_request.val_2 != 1U)
+            {
+                drv_uart_printf("\r\n    Invalid enable/disable value. Use 1 for ENABLE, 0 for DISABLE.");
+                break;
+            }
+            drv_gpio_id804_sio2_mcu(ID804_IO_DIS);
+            drv_gpio_id804_sio2_can(ID804_IO_DIS);
+            drv_gpio_id804_sio2_lvds(ID804_IO_DIS);
+            drv_gpio_id804_sio2_eol(ID804_IO_DIS);
+            switch (gt_cli_request.val_1)
+            {
+                case 1U:
+                    // Handle SIO2 MCU
+                    drv_gpio_id804_sio2_mcu(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO2 MCU set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 2U:
+                    // Handle SIO2 CAN
+                    drv_gpio_id804_sio2_can(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO2 CAN set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 3U:
+                    // Handle SIO2 LVDS
+                    drv_gpio_id804_sio2_lvds(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO2 LVDS set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                case 4U:
+                    // Handle SIO2 EOL
+                    drv_gpio_id804_sio2_eol(gt_cli_request.val_2 ? ID804_IO_CON : ID804_IO_DIS);
+                    drv_uart_printf("\r\n    ID804 SIO2 EOL set to %s.", gt_cli_request.val_2 ? "ENABLE" : "DISABLE");
+                    break;
+                default:
+                    drv_uart_printf("\r\n    Unknown SIO2 sub-command.");
+                    break;
+            }
+            break;
+        }
+        case CLI_CMD_ID804_BOOT:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                id804_boot_me();
+                drv_uart_printf("\r\n    ID804 boot mcu executed.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                id804_boot_i2c();
+                drv_uart_printf("\r\n    ID804 boot i2c executed.");
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ID804 boot command not recognized.");
+            }
+            break;
+        }
+        case CLI_CMD_ID804_ME:
+        {
+            uint16_t dev_addr = (uint16_t)gt_cli_request.val_2;
+            uint16_t target = (uint16_t)gt_cli_request.val_3;
+            uint32_t data = gt_cli_request.val_4;
+
+            if (GET == gt_cli_request.val_1)
+            {
+                if (true == id804_read(dev_addr, target, &data))
+                {
+                    drv_uart_printf("\r\n    ID804 ME read successful. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+                else
+                {
+                    drv_uart_printf("\r\n    ID804 ME read failed. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+            }
+            else if (SET == gt_cli_request.val_1)
+            {
+                if (true == id804_write(dev_addr, target, data))
+                {
+                    drv_uart_printf("\r\n    ID804 ME write successful. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+                else
+                {
+                    drv_uart_printf("\r\n    ID804 ME write failed. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ID804 ME communication not recognized.");
+            }
+            break;
+        }
+        case CLI_CMD_ID804_I2C:
+        {
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = (uint16_t)gt_cli_request.val_2;
+            uint32_t data = gt_cli_request.val_3;
+
+            if (GET == gt_cli_request.val_1)
+            {
+                if (true == id804_read(dev_addr, target, &data))
+                {
+                    drv_uart_printf("\r\n    ID804 I2C read successful. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+                else
+                {
+                    drv_uart_printf("\r\n    ID804 I2C read failed. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+            }
+            else if (SET == gt_cli_request.val_1)
+            {
+                if (true == id804_write(dev_addr, target, data))
+                {
+                    drv_uart_printf("\r\n    ID804 I2C write successful. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+                else
+                {
+                    drv_uart_printf("\r\n    ID804 I2C write failed. Addr: 0x%02X, Data: 0x%03X", target, data);
+                }
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ID804 I2C communication not recognized.");
+            }
             break;
         }
         case CLI_CMD_HELP:
@@ -221,14 +475,14 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_RESET:
         {
-            drv_uart_printf("\r\nSystem resetting...");
+            drv_uart_printf("\r\n    System resetting...");
             NVIC_SystemReset();
             break;
         }
         default:
         {
             // Handle unknown command
-            drv_uart_printf("\r\nUnknown CMD.");
+            drv_uart_printf("\r\n    Unknown CMD.");
             break;
         }
     }

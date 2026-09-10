@@ -19,10 +19,9 @@
 #include "drv_id804_manchester.h"
 /* 2. C standard library headers (Alphabetical order) */
 #include <stdio.h>
-#include <stdbool.h>
 /* 3. Project internal / System-related headers */
 /* USER CODE END Includes */
-
+#include "drv_spi.h"
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef struct tag_ID804_CMD_INFO
@@ -365,8 +364,7 @@ uint16_t id804_manchester_encode_buffer(const uint8_t *p_src, uint16_t src_len, 
  * @param cmd The command to send.
  * @param data The data associated with the command.
  */
-// not yet!!!!!
-void id804_transmit_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data)
+id804_comm_result_t id804_write_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t data)
 {
     uint8_t raw_packet[ID804_RAW_BUF_SIZE];
     uint8_t spi_tx_buffer[ID804_SPI_TX_BUF_SIZE];
@@ -374,22 +372,20 @@ void id804_transmit_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t
     uint16_t raw_len;
     uint16_t spi_tx_len;
 
-    raw_len = id804_build_packet_by_cmd(dev_addr, cmd, data, raw_packet, NULL/*my_crc8_calculator*/);
+    raw_len = id804_build_packet_by_cmd(dev_addr, (id804_cmd_list_t)cmd, data, raw_packet, NULL/*my_crc8_calculator*/);
 
     if (raw_len == 0U)
     {
-        return;
+        return false;
     }
 
     spi_tx_len = id804_manchester_encode_buffer(raw_packet, raw_len, spi_tx_buffer);
 
-    /* 3단계: SPI 통신 전송 (MCU 내장 SPI 전송 API 호출) */
-    // 예시: HAL_SPI_Transmit(&hspi1, spi_tx_buffer, (uint16_t)spi_tx_len, 100);
-    // 예시: SPI_Master_Write(spi_tx_buffer, spi_tx_len);
+    drv_spi_transmit_direct(spi_tx_buffer, spi_tx_len);
+    return true;
 }
 
-// not yet!!!!!
-uint32_t id804_receive_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t data)
+id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* p_data)
 {
     uint8_t raw_packet[ID804_RAW_BUF_SIZE];
     uint8_t spi_tx_buffer[ID804_SPI_TX_BUF_SIZE];
@@ -397,11 +393,11 @@ uint32_t id804_receive_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint3
     uint16_t raw_len;
     uint16_t spi_tx_len;
 
-    raw_len = id804_build_packet_by_cmd(dev_addr, cmd, data, raw_packet, NULL/*my_crc8_calculator*/);
+    raw_len = id804_build_packet_by_cmd(dev_addr, (id804_cmd_list_t)cmd, *p_data, raw_packet, NULL/*my_crc8_calculator*/);
 
     if (raw_len == 0U)
     {
-        return 0U;
+        return false;
     }
 
     spi_tx_len = id804_manchester_encode_buffer(raw_packet, raw_len, spi_tx_buffer);
@@ -409,6 +405,6 @@ uint32_t id804_receive_cmd_via_spi(uint8_t dev_addr, id804_cmd_list_t cmd, uint3
     /* 3단계: SPI 통신 전송 (MCU 내장 SPI 전송 API 호출) */
     // 예시: HAL_SPI_Transmit(&hspi1, spi_tx_buffer, (uint16_t)spi_tx_len, 100);
     // 예시: SPI_Master_Write(spi_tx_buffer, spi_tx_len);
-    return 0U;
+    return true;
 }
 /* USER CODE END 0 */

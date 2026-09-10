@@ -48,8 +48,8 @@ extern "C" {
 
 /* USER CODE BEGIN EFP */
 extern void drv_spi_init(void);
-extern bool drv_spi_transmit_direct(const uint16_t *p_data, uint16_t length);
-extern bool drv_spi_receive_direct(uint16_t *p_data, uint16_t length);
+extern bool drv_spi_transmit_direct(const uint8_t *p_data, uint16_t length);
+extern bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
