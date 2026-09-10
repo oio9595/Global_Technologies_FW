@@ -80,6 +80,9 @@ thumbs.db
 # IAR .cache
 **/App/.cache
 
+# IAR .cache
+**/Bootloader/.cache
+
 # 측정 데이터
 **/측정자료/
 
