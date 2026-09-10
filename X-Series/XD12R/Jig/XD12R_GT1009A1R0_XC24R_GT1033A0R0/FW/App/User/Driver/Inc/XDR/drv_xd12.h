@@ -23,7 +23,7 @@ extern "C" {
 
 #define XD_CONTROLLED_MCU       (0U)
 #define XD_CONTROLLED_XC24      (1U)
-#define XD_CONTROL_TYPE         (XD_CONTROLLED_XC24)
+#define XD_CONTROL_TYPE         (XD_CONTROLLED_MCU)
 
 #define XD_CH_SIZE              (12U)
 #define XD_DAISY_LENGTH         (1U)
@@ -40,7 +40,7 @@ extern "C" {
 
 #define XD_SYNC_MODE_CMD        (0U) /* cmd + svi */
 #define XD_SYNC_MODE_SVI        (1U) /*  vo + svi */
-#define XD_SYNC_MODE            (XD_SYNC_MODE_SVI)
+#define XD_SYNC_MODE            (XD_SYNC_MODE_CMD)
 
 #define XD_TYPE_A               (0U) /* NTS + TS */
 #define XD_TYPE_B               (1U) /* NTS + NTS + TS */

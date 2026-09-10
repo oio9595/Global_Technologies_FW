@@ -837,6 +837,11 @@ static void xd12_regs_trim_init_table(void)
                 _r1->reg._r00.bit.rst = XD_FUNCTION_DIS;
                 break;
             }
+            case XD12R_LD_CONTROL:
+            {
+                _r1->reg._r01.bit.syncmode = XD_SYNC_MODE;
+                break;
+            }
             case XD12R_FAULT_CONTROL:
             {
                 _r1->reg._r06.bit.o_off_e = XD_FUNCTION_DIS;
