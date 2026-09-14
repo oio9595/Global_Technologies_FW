@@ -114,6 +114,10 @@ void Error_Handler(void);
 #define TCK_GPIO_Port GPIOA
 #define SPI2_SIO2P_Pin LL_GPIO_PIN_15
 #define SPI2_SIO2P_GPIO_Port GPIOA
+#define DEBUG_Pin LL_GPIO_PIN_10
+#define DEBUG_GPIO_Port GPIOC
+#define DEBUG2_Pin LL_GPIO_PIN_12
+#define DEBUG2_GPIO_Port GPIOC
 #define ID804_VCC_EN_Pin LL_GPIO_PIN_4
 #define ID804_VCC_EN_GPIO_Port GPIOB
 #define I2C_SIO1N_UP_Pin LL_GPIO_PIN_8

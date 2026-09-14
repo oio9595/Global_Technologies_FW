@@ -27,8 +27,6 @@ extern "C" {
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
 
-/* USER CODE END Private defines */
-
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 

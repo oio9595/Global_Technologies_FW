@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "drv_uart.h"
+#include "drv_spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -180,13 +181,13 @@ void DMA1_Stream5_IRQHandler(void)
 void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
-    if (LL_DMA_IsActiveFlag_TC6(DMA1))
+    if (true == LL_DMA_IsActiveFlag_TC6(DMA1))
     {
         LL_DMA_ClearFlag_TC6(DMA1);
         drv_uart_set_tx_busy(false);
         // uart_tx_dma_complete_callback();
     }
-    else if (LL_DMA_IsActiveFlag_TE6(DMA1))
+    else if (true == LL_DMA_IsActiveFlag_TE6(DMA1))
     {
         LL_DMA_ClearFlag_TE6(DMA1);
         uint8_t* error_msg = "UART TX DMA Error\r\n";
@@ -267,6 +268,28 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
   /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 1 */
 }
 
+/**
+  * @brief This function handles DMA2 stream0 global interrupt.
+  */
+void DMA2_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
+    drv_spi_rx_dma_irq_handler();
+  /* USER CODE END DMA2_Stream0_IRQn 0 */
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
+void DMA2_Stream3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 0 */
+    drv_spi_tx_dma_irq_handler();
+  /* USER CODE END DMA2_Stream3_IRQn 0 */
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream3_IRQn 1 */
+}
 
 /* USER CODE END 1 */

@@ -103,15 +103,13 @@ if (p_data == NULL || size == 0U)
         return false;
     }
 
-    if (HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, size, I2C_TIMEOUT_MS))
+    if (HAL_OK != HAL_I2C_Master_Transmit(&hi2c1, (ID804_I2C_ADDRESS | I2C_TX), p_data, size, I2C_TIMEOUT_MS))
     {
-        drv_uart_printf("\r\n    I2C write successful");
-        return true;
+        drv_uart_printf("\r\n    I2C write failed");
+        drv_i2c_print_error(hi2c1.ErrorCode);
+        return false;
     }
-
-    drv_uart_printf("\r\n    I2C write failed");
-    drv_i2c_print_error(hi2c1.ErrorCode);
-    return false;
+    return true;
 }
 
 /**
@@ -142,8 +140,6 @@ bool drv_i2c_read(uint8_t* p_data, uint16_t size)
         drv_i2c_print_error(hi2c1.ErrorCode);
         return false;
     }
-
-    drv_uart_printf("\r\n    I2C read successful");
     return true;
 }
 /* USER CODE END 0 */

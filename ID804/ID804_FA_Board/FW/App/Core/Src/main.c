@@ -51,7 +51,7 @@ I2C_HandleTypeDef hi2c1;
 osThreadId_t ID804TaskHandle;
 const osThreadAttr_t ID804Task_attributes = {
   .name = "ID804Task",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Debug */
@@ -65,7 +65,7 @@ const osThreadAttr_t Debug_attributes = {
 osThreadId_t CLITaskHandle;
 const osThreadAttr_t CLITask_attributes = {
   .name = "CLITask",
-  .stack_size = 128 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* USER CODE BEGIN PV */
@@ -300,6 +300,27 @@ static void MX_SPI1_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* SPI1 DMA Init */
+
+  /* SPI1_RX Init */
+  LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_0, LL_DMA_CHANNEL_3);
+
+  LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_0, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+
+  LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_0, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
+
+  LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_0);
+
   /* USER CODE BEGIN SPI1_Init 1 */
 
   /* USER CODE END SPI1_Init 1 */
@@ -533,6 +554,7 @@ static void MX_DMA_Init(void)
   /* Init with LL driver */
   /* DMA controller clock enable */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
 
   /* DMA interrupt init */
   /* DMA1_Stream5_IRQn interrupt configuration */
@@ -541,6 +563,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream6_IRQn interrupt configuration */
   NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  NVIC_SetPriority(DMA2_Stream0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -565,7 +590,8 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|SIO2_MCU_Pin|I2C_SIO1P_UP_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|SIO2_MCU_Pin|I2C_SIO1P_UP_Pin
+                          |DEBUG_Pin|DEBUG2_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOA, CAN_ID804_Pin|MCU_TM0_Pin|SIO1_MCU_Pin|ID804_VCC_5V5_Pin
@@ -599,7 +625,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = SIO2_LVDS_Pin|MCU_TM1_Pin|ID804_VLED_EN_Pin|SIO2_MCU_Pin
-                          |I2C_SIO1P_UP_Pin;
+                          |I2C_SIO1P_UP_Pin|DEBUG_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -608,7 +634,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_1|LL_GPIO_PIN_4|LL_GPIO_PIN_6|LL_GPIO_PIN_7
-                          |LL_GPIO_PIN_8|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12;
+                          |LL_GPIO_PIN_8|LL_GPIO_PIN_11;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -645,6 +671,14 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
+  GPIO_InitStruct.Pin = DEBUG2_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(DEBUG2_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_2;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
@@ -672,7 +706,7 @@ void StartID804Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(1U);
   }
   /* USER CODE END 5 */
 }
@@ -690,7 +724,7 @@ void StartDebugTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1000);
+    osDelay(1000U);
   }
   /* USER CODE END StartDebugTask */
 }
@@ -710,7 +744,7 @@ void StartCLITask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10);
+    osDelay(10U);
     cli_process();
   }
   /* USER CODE END StartCLITask */

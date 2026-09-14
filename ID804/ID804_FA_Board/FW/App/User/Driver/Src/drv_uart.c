@@ -19,6 +19,7 @@
 #include "drv_uart.h"
 /* 2. C standard library headers (Alphabetical order) */
 #include <stdio.h>
+#include <string.h>
 /* 3. Project internal / System-related headers */
 #include "main.h"
 /* USER CODE END Includes */
@@ -48,6 +49,11 @@ typedef struct tag_RING_BUFFER_RX
 /* USER CODE BEGIN PD */
 #define UART2_TX_DMA_BASE       DMA1
 #define UART2_TX_DMA_STREAM     LL_DMA_STREAM_6
+
+#define CLI_KEY_UP              (0x41)
+#define CLI_KEY_DOWN            (0x42)
+#define CLI_KEY_RIGHT           (0x43)
+#define CLI_KEY_LEFT            (0x44)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -240,7 +246,63 @@ bool drv_uart_rx_data_pending(void)
  */
 static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
 {
+    static uint8_t vt100_state = 0U;
     msg_buffer_t* current_msg = &gt_uart_rx.buffer[gt_uart_rx.head];
+
+    if (vt100_state == 1U)
+    {
+        if (received_data == '[')
+        {
+            vt100_state = 2U;
+            return;
+        }
+        vt100_state = 0U;
+    }
+    else if (vt100_state == 2U)
+    {
+        vt100_state = 0U;
+        switch (received_data)
+        {
+            case CLI_KEY_UP:
+            {
+                uint8_t prev_head = (gt_uart_rx.head + UART_RX_RING_BUFFER_SIZE - 1U) % UART_RX_RING_BUFFER_SIZE;
+                msg_buffer_t* prev_msg = &gt_uart_rx.buffer[prev_head];
+
+                if (prev_msg->size > 0U)
+                {
+                    memcpy(current_msg->msg, prev_msg->msg, sizeof(prev_msg->msg));
+                    current_msg->size = prev_msg->size;
+
+                    for (uint8_t i = 0U; i < current_msg->size; i++)
+                    {
+                        drv_uart_printf_direct((uint8_t*)&current_msg->msg[i], 1U);
+                    }
+                }
+                break;
+            }
+            case CLI_KEY_DOWN:
+            {
+                /* code for down key */
+                break;
+            }
+            case CLI_KEY_RIGHT:
+            {
+                /* code for right key */
+                break;
+            }
+            case CLI_KEY_LEFT:
+            {
+                /* code for left key */
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+        return;
+    }
+
     switch (received_data)
     {
         case '\r':
@@ -261,6 +323,11 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
                 current_msg->msg[current_msg->size] = '\0';
                 drv_uart_printf_direct((uint8_t*)"\b \b", 3U);
             }
+            break;
+        }
+        case '\x1B': // ESC 키 수신 시 시퀀스 파싱 시작
+        {
+            vt100_state = 1U;
             break;
         }
         default:
@@ -290,7 +357,7 @@ msg_buffer_t* drv_uart_rx_ring_buffer_pop(void)
  */
 void drv_uart_rx_irq_handler(void)
 {
-    if (LL_USART_IsActiveFlag_RXNE(USART2))
+    if (true == LL_USART_IsActiveFlag_RXNE(USART2))
     {
         uint8_t received_data = (uint8_t)LL_USART_ReceiveData8(USART2);
         drv_uart_rx_ring_buffer_push(received_data);

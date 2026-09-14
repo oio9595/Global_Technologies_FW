@@ -36,11 +36,10 @@
 /* USER CODE BEGIN PTD */
 typedef enum tag_CLI_CMD_LIST
 {
-    CLI_CMD_NONE    = 0,
+    CLI_CMD_NONE = 0U,
     CLI_CMD_UNKNOWN,
     CLI_CMD_HELP,
     CLI_CMD_RESET,
-    CLI_CMD_DEBUG_SPI,
     CLI_CMD_ID804_VDD,
     CLI_CMD_ID804_VLED,
     CLI_CMD_ID804_TM0,
@@ -49,6 +48,14 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID804_BOOT,
     CLI_CMD_ID804_ME,
     CLI_CMD_ID804_I2C,
+
+    CLI_CMD_ID804_RESET,
+    CLI_CMD_ID804_INITBIDIR,
+    CLI_CMD_ID804_CLRERROR,
+    CLI_CMD_ID804_GOSLEEP,
+    CLI_CMD_ID804_GOACTIVE,
+    CLI_CMD_ID804_GODEEPSLEEP,
+
     CLI_CMD_MAX
 } cli_cmd_list_t;
 
@@ -73,7 +80,6 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PD */
 #define CLI_CLEAR_SCREEN    "\033[2J\033[H"
 
-//#define CLI_PROMPT          "\r\nID804> "
 #define CLI_PROMPT          "\r\n\r\nID804> "
 
 #define CLI_MAX_TOKENS      (5)
@@ -94,22 +100,30 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PV */
 static const cli_cmd_entry_t gt_cli_command[] =
 {
-    { "help", CLI_CMD_HELP, "Display help information" },
-    { "?", CLI_CMD_HELP, "Display help information" },
-    { "reset", CLI_CMD_RESET, "Reset the system" },
-    { "debug_spi", CLI_CMD_DEBUG_SPI, "Debug SPI interface" },
+    /* ========================================================================================================= */
+    /* Command              Command ID                    Description                                              */
+    /* ========================================================================================================= */
+    { "help",               CLI_CMD_HELP,               "Display help information"                                                                  },
+    { "?",                  CLI_CMD_HELP,               "Display help information"                                                                  },
+    { "reset",              CLI_CMD_RESET,              "Reset the system"                                                                          },
 
-    { "id804_vdd", CLI_CMD_ID804_VDD, "Control ID804 VDD <0: OFF, 1: 5V, 2: 5.5V>" },
-    { "id804_vled", CLI_CMD_ID804_VLED, "Control ID804 VLED <0: OFF, 1: ON>" },
-    { "id804_tm0", CLI_CMD_ID804_TM0, "Control ID804 TM0 <0: GND, 1: VDD>" },
+    { "id804_vdd",          CLI_CMD_ID804_VDD,          "Control ID804 VDD <0: OFF, 1: 5V, 2: 5.5V>"                                                },
+    { "id804_vled",         CLI_CMD_ID804_VLED,         "Control ID804 VLED <0: OFF, 1: ON>"                                                        },
+    { "id804_tm0",          CLI_CMD_ID804_TM0,          "Control ID804 TM0 <0: GND, 1: VDD>"                                                        },
+    { "id804_sio1",         CLI_CMD_ID804_SIO1,         "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>"    },
+    { "id804_sio2",         CLI_CMD_ID804_SIO2,         "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>"    },
 
-    { "id804_sio1", CLI_CMD_ID804_SIO1, "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>" },
-    { "id804_sio2", CLI_CMD_ID804_SIO2, "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>" },
+    { "id804_boot",         CLI_CMD_ID804_BOOT,         "ID804 boot process <0: MCU, 1: I2C>"                                                       },
 
-    { "id804_boot", CLI_CMD_ID804_BOOT, "Control ID804 boot process <0: MCU, 1: I2C>" },
+    { "id804_reset",        CLI_CMD_ID804_RESET,        "ID804 Reset"                                                                               },
+    { "id804_initbidir",    CLI_CMD_ID804_INITBIDIR,    "ID804 Initbidir"                                                                           },
+    { "id804_clrerror",     CLI_CMD_ID804_CLRERROR,     "ID804 Clear Error"                                                                         },
+    { "id804_gosleep",      CLI_CMD_ID804_GOSLEEP,      "ID804 Go Sleep"                                                                            },
+    { "id804_goactive",     CLI_CMD_ID804_GOACTIVE,     "ID804 Go Active"                                                                           },
+    { "id804_godeepsleep",  CLI_CMD_ID804_GODEEPSLEEP,  "ID804 Go Deep Sleep"                                                                       },
 
-    { "id804_me", CLI_CMD_ID804_ME,   "Control ID804 ME interface  <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>" },
-    { "id804_i2c", CLI_CMD_ID804_I2C, "Control ID804 I2C interface <0: WRITE, 1: READ> <Address>  <Data: only for WRITE>" },
+    { "id804_me",           CLI_CMD_ID804_ME,           "ID804 ME interface <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>"            },
+    { "id804_i2c",          CLI_CMD_ID804_I2C,          "ID804 I2C interface <0: WRITE, 1: READ> <Address> <Data: only for WRITE>"                  },
 };
 
 static cli_request_t gt_cli_request;
@@ -122,6 +136,27 @@ static cli_request_t gt_cli_request;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/**
+ * @brief  Print the result of an ID804 communication attempt.
+ * @param  comm_result  The result of the communication attempt.
+ */
+static void cli_print_id804_comm_result(id804_comm_result_t comm_result,  uint16_t dev_addr, uint16_t target, uint32_t data)
+{
+    switch (comm_result)
+    {
+        case ID804_COMM_NONE:         {drv_uart_printf("\r\n    [ID804] [Comm Result] None"); break;}
+        case ID804_COMM_WRITE_OK:     {drv_uart_printf("\r\n    [ID804] [Comm Result] Write OK"); break;}
+        case ID804_COMM_READ_OK:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Read OK"); break;}
+        case ID804_COMM_ERR_DEV_ADDR: {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Device Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_CMD:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Command [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_ADDR:     {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_I2C:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: I2C Failure [0x%02X | 0x%06X]", target, data); break;}
+        case ID804_COMM_ERR_SPI:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: SPI Failure [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        default:                      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Unknown Error [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+    }
+}
+
 /**
  * @brief  Print the CLI banner with firmware information.
  *         This includes build date, firmware version, and Git revision.
@@ -162,6 +197,7 @@ static void cli_help(void)
             max_name_len = len;
         }
     }
+
     drv_uart_printf("\r\n====================================================");
     for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
@@ -189,7 +225,10 @@ static void cli_command_parse(msg_buffer_t* p_msg)
 {
     gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0U, 0U, 0U, 0U };
 
-    char* p_str = strtok(p_msg->msg, " ");
+    char temp[MSG_BUFFER_SIZE] = { 0U };
+    memcpy(temp, p_msg->msg, MSG_BUFFER_SIZE);
+
+    char* p_str = strtok(temp, " ");
     char* p_token[CLI_MAX_TOKENS] = { 0 };
     /* Tokenize the input message to extract the command */
     uint8_t token_cnt = 0U;
@@ -218,10 +257,10 @@ static void cli_command_parse(msg_buffer_t* p_msg)
     }
 
     gt_cli_request.last_command = command;
-    if (token_cnt > 1U) gt_cli_request.val_1 = (uint16_t)strtoul(p_token[1], NULL, 0);
-    if (token_cnt > 2U) gt_cli_request.val_2 = (uint16_t)strtoul(p_token[2], NULL, 0);
-    if (token_cnt > 3U) gt_cli_request.val_3 = (uint16_t)strtoul(p_token[3], NULL, 0);
-    if (token_cnt > 4U) gt_cli_request.val_4 = (uint16_t)strtoul(p_token[4], NULL, 0);
+    if (token_cnt > 1U) gt_cli_request.val_1 = (uint32_t)strtoul(p_token[1], NULL, 0);
+    if (token_cnt > 2U) gt_cli_request.val_2 = (uint32_t)strtoul(p_token[2], NULL, 0);
+    if (token_cnt > 3U) gt_cli_request.val_3 = (uint32_t)strtoul(p_token[3], NULL, 0);
+    if (token_cnt > 4U) gt_cli_request.val_4 = (uint32_t)strtoul(p_token[4], NULL, 0);
 }
 
 /**
@@ -230,17 +269,11 @@ static void cli_command_parse(msg_buffer_t* p_msg)
  */
 static void cli_command_execute(void)
 {
+    id804_comm_result_t comm_result = ID804_COMM_NONE;
     switch (gt_cli_request.last_command)
     {
         case CLI_CMD_NONE:
         {
-            break;
-        }
-        case CLI_CMD_DEBUG_SPI:
-        {
-            uint8_t spi_data[4] = { gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4 };
-            drv_uart_printf("\r\n    Debug SPI executed. (%u) (%u) (%u) (%u)", gt_cli_request.val_1, gt_cli_request.val_2, gt_cli_request.val_3, gt_cli_request.val_4);
-            drv_spi_transmit_direct(spi_data, 4);
             break;
         }
         case CLI_CMD_ID804_VDD:
@@ -400,33 +433,56 @@ static void cli_command_execute(void)
             }
             break;
         }
+        case CLI_CMD_ID804_RESET:
+        {
+            comm_result = id804_write(gt_cli_request.val_1, ID804_CMD_RESET, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_RESET, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_INITBIDIR:
+        {
+            comm_result = id804_read(gt_cli_request.val_1, ID804_CMD_INITBIDIR, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_INITBIDIR, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_CLRERROR:
+        {
+            comm_result = id804_write(gt_cli_request.val_1, ID804_CMD_CLRERROR, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_CLRERROR, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_GOSLEEP:
+        {
+            comm_result = id804_write(gt_cli_request.val_1, ID804_CMD_GOSLEEP, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_GOSLEEP, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_GOACTIVE:
+        {
+            comm_result = id804_write(gt_cli_request.val_1, ID804_CMD_GOACTIVE, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_GOACTIVE, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_GODEEPSLEEP:
+        {
+            comm_result = id804_write(gt_cli_request.val_1, ID804_CMD_GODEEPSLEEP, 0U);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_GODEEPSLEEP, 0U);
+            break;
+        }
         case CLI_CMD_ID804_ME:
         {
             uint16_t dev_addr = (uint16_t)gt_cli_request.val_2;
             uint16_t target = (uint16_t)gt_cli_request.val_3;
             uint32_t data = gt_cli_request.val_4;
-
             if (GET == gt_cli_request.val_1)
             {
-                if (true == id804_read(dev_addr, target, &data))
-                {
-                    drv_uart_printf("\r\n    ID804 ME read successful. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
-                else
-                {
-                    drv_uart_printf("\r\n    ID804 ME read failed. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
+                comm_result = id804_read(dev_addr, target, &data);
+                cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             }
             else if (SET == gt_cli_request.val_1)
             {
-                if (true == id804_write(dev_addr, target, data))
-                {
-                    drv_uart_printf("\r\n    ID804 ME write successful. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
-                else
-                {
-                    drv_uart_printf("\r\n    ID804 ME write failed. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
+                comm_result = id804_write(dev_addr, target, data);
+                cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             }
             else
             {
@@ -442,25 +498,13 @@ static void cli_command_execute(void)
 
             if (GET == gt_cli_request.val_1)
             {
-                if (true == id804_read(dev_addr, target, &data))
-                {
-                    drv_uart_printf("\r\n    ID804 I2C read successful. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
-                else
-                {
-                    drv_uart_printf("\r\n    ID804 I2C read failed. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
+                comm_result = id804_read(dev_addr, target, &data);
+                cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             }
             else if (SET == gt_cli_request.val_1)
             {
-                if (true == id804_write(dev_addr, target, data))
-                {
-                    drv_uart_printf("\r\n    ID804 I2C write successful. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
-                else
-                {
-                    drv_uart_printf("\r\n    ID804 I2C write failed. Addr: 0x%02X, Data: 0x%03X", target, data);
-                }
+                comm_result = id804_write(dev_addr, target, data);
+                cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             }
             else
             {

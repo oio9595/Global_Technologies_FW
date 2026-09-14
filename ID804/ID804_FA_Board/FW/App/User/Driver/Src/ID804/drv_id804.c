@@ -25,7 +25,6 @@
 #include "drv_id804_manchester.h"
 
 #include "drv_gpio.h"
-#include "drv_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

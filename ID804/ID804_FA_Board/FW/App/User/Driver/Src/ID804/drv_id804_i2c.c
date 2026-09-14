@@ -21,6 +21,7 @@
 #include <stddef.h>
 /* 3. Project internal / System-related headers */
 #include "drv_i2c.h"
+#include "drv_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,7 +76,8 @@ id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uin
     {
         return ID804_COMM_ERR_I2C;
     }
-    return ID804_COMM_OK;
+    drv_uart_printf("\r\n    [ID804] [I2C Write] [Addr:0x%03X | Data:0x%03X]", reg_addr, data);
+    return ID804_COMM_WRITE_OK;
 }
 
 id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint32_t* p_data)
@@ -96,6 +98,7 @@ id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint
     {
         *p_data = (uint16_t)((i2c_buffer[1] << 8U) | (i2c_buffer[2] << 0U));
     }
-    return ID804_COMM_OK;
+    drv_uart_printf("\r\n    [ID804] [I2C Read ] [Addr:0x%03X | Data:0x%03X]", reg_addr, *p_data);
+    return ID804_COMM_READ_OK;
 }
 /* USER CODE END 0 */

@@ -26,12 +26,12 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-
+#define SPI_DMA_DONE        (true)
+#define SPI_DMA_BUSY        (false)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -48,8 +48,15 @@ extern "C" {
 
 /* USER CODE BEGIN EFP */
 extern void drv_spi_init(void);
+
+extern void drv_spi_tx_dma_irq_handler(void);
+extern void drv_spi_rx_dma_irq_handler(void);
+
 extern bool drv_spi_transmit_direct(const uint8_t *p_data, uint16_t length);
 extern bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length);
+
+extern bool drv_spi_transmit_dma(const uint8_t *p_data, uint16_t length);
+extern bool drv_spi_receive_dma(uint8_t *p_data, uint16_t length);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
