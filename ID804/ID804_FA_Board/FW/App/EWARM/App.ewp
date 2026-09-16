@@ -2287,7 +2287,7 @@
             <data>
                 <buildActions>
                     <buildAction>
-                        <cmdline>py "$PROJ_DIR$\..\..\Build\prebuild.py"</cmdline>
+                        <cmdline>py "$PROJ_DIR$\..\..\Build\prebuild.py" --release</cmdline>
                         <workingDirectory>$PROJ_DIR$</workingDirectory>
                         <buildSequence>preCompile</buildSequence>
                         <outputs>

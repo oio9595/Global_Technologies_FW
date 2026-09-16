@@ -3,9 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-# 1. 명령행 인자 분석 (--minor, --major 확인)
+# 1. 명령행 인자 분석 (--minor, --major, --release 확인)
 is_minor_up = "--minor" in sys.argv
 is_major_up = "--major" in sys.argv
+is_release = "--release" in sys.argv
 
 # 2. 경로 정의
 script_dir = Path(__file__).resolve().parent
@@ -83,9 +84,11 @@ except Exception as e:
 with open(version_h, "r", encoding="utf-8") as f:
     text = f.read()
 
-
 # 5. 버전 제어 핵심 로직
-if is_major_up:
+if is_release:
+    print("[RELEASE MODE] Version number is unchanged.")
+
+elif is_major_up:
     # --- MAJOR 버전 업인 경우 ---
     major_match = re.search(r"#define\s+FW_VER_MAJOR\s+(\d+)", text)
     if major_match:
