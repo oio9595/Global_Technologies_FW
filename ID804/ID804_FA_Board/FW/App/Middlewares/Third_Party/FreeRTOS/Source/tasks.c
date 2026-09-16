@@ -1303,7 +1303,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 				}
 			}
 
-			/* Update the wake tiME Read y for the next call. */
+			/* Update the wake time ready for the next call. */
 			*pxPreviousWakeTime = xTimeToWake;
 
 			if( xShouldDelay != pdFALSE )

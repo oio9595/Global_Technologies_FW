@@ -45,7 +45,9 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID804_TM0,
     CLI_CMD_ID804_SIO1,
     CLI_CMD_ID804_SIO2,
-    CLI_CMD_ID804_BOOT,
+    CLI_CMD_ID804_BOOT_SINGLE,
+    CLI_CMD_ID804_BOOT_FORWARD,
+    CLI_CMD_ID804_BOOT_BACKWARD,
     CLI_CMD_ID804_ME,
     CLI_CMD_ID804_I2C,
 
@@ -113,14 +115,16 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "id804_sio1",         CLI_CMD_ID804_SIO1,         "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>"    },
     { "id804_sio2",         CLI_CMD_ID804_SIO2,         "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>"    },
 
-    { "id804_boot",         CLI_CMD_ID804_BOOT,         "ID804 boot process <0: MCU, 1: I2C>"                                                       },
+    { "id804_boot_single",  CLI_CMD_ID804_BOOT_SINGLE,  "ID804 boot process <0: MCU,  1: I2C>"                                                      },
+    { "id804_boot_forward", CLI_CMD_ID804_BOOT_FORWARD, "ID804 boot process <0: LVDS, 1: CAN>"                                                      },
+    { "id804_boot_backward",CLI_CMD_ID804_BOOT_BACKWARD,"ID804 boot process <0: LVDS, 1: CAN>"                                                      },
 
-    { "id804_reset",        CLI_CMD_ID804_RESET,        "ID804 Reset"                                                                               },
-    { "id804_initbidir",    CLI_CMD_ID804_INITBIDIR,    "ID804 Initbidir"                                                                           },
-    { "id804_clrerror",     CLI_CMD_ID804_CLRERROR,     "ID804 Clear Error"                                                                         },
-    { "id804_gosleep",      CLI_CMD_ID804_GOSLEEP,      "ID804 Go Sleep"                                                                            },
-    { "id804_goactive",     CLI_CMD_ID804_GOACTIVE,     "ID804 Go Active"                                                                           },
-    { "id804_godeepsleep",  CLI_CMD_ID804_GODEEPSLEEP,  "ID804 Go Deep Sleep"                                                                       },
+    { "id804_reset",        CLI_CMD_ID804_RESET,        "ID804 Reset <Dev Addr>"                                                                    },
+    { "id804_initbidir",    CLI_CMD_ID804_INITBIDIR,    "ID804 Initbidir <Dev Addr>"                                                                },
+    { "id804_clrerror",     CLI_CMD_ID804_CLRERROR,     "ID804 Clear Error <Dev Addr>"                                                              },
+    { "id804_gosleep",      CLI_CMD_ID804_GOSLEEP,      "ID804 Go Sleep <Dev Addr>"                                                                 },
+    { "id804_goactive",     CLI_CMD_ID804_GOACTIVE,     "ID804 Go Active <Dev Addr>"                                                                },
+    { "id804_godeepsleep",  CLI_CMD_ID804_GODEEPSLEEP,  "ID804 Go Deep Sleep <Dev Addr>"                                                            },
 
     { "id804_me",           CLI_CMD_ID804_ME,           "ID804 ME interface <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>"            },
     { "id804_i2c",          CLI_CMD_ID804_I2C,          "ID804 I2C interface <0: WRITE, 1: READ> <Address> <Data: only for WRITE>"                  },
@@ -415,21 +419,57 @@ static void cli_command_execute(void)
             }
             break;
         }
-        case CLI_CMD_ID804_BOOT:
+        case CLI_CMD_ID804_BOOT_SINGLE:
         {
             if (0U == gt_cli_request.val_1)
             {
                 id804_boot_me();
-                drv_uart_printf("\r\n    ID804 boot mcu executed.");
+                drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
             }
             else if (1U == gt_cli_request.val_1)
             {
                 id804_boot_i2c();
-                drv_uart_printf("\r\n    ID804 boot i2c executed.");
+                drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
             }
             else
             {
-                drv_uart_printf("\r\n    ID804 boot command not recognized.");
+                drv_uart_printf("\r\n    ID804 boot SINGLE (%u) command not recognized.", gt_cli_request.val_1);
+            }
+            break;
+        }
+        case CLI_CMD_ID804_BOOT_FORWARD:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                id804_boot_lvds(ID804_COMM_FORWARD);
+                drv_uart_printf("\r\n    ID804 boot with \"FORWARD LVDS\" executed.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                id804_boot_can(ID804_COMM_FORWARD);
+                drv_uart_printf("\r\n    ID804 boot with \"FORWARD CAN\" executed.");
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ID804 boot FORWARD (%u) command not recognized.", gt_cli_request.val_1);
+            }
+            break;
+        }
+        case CLI_CMD_ID804_BOOT_BACKWARD:
+        {
+            if (0U == gt_cli_request.val_1)
+            {
+                id804_boot_lvds(ID804_COMM_BACKWARD);
+                drv_uart_printf("\r\n    ID804 boot with \"BACKWARD LVDS\" executed.");
+            }
+            else if (1U == gt_cli_request.val_1)
+            {
+                id804_boot_can(ID804_COMM_BACKWARD);
+                drv_uart_printf("\r\n    ID804 boot with \"BACKWARD CAN\" executed.");
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ID804 boot BACKWARD (%u) command not recognized.", gt_cli_request.val_1);
             }
             break;
         }
@@ -441,8 +481,9 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_ID804_INITBIDIR:
         {
-            comm_result = id804_read(gt_cli_request.val_1, ID804_CMD_INITBIDIR, 0U);
-            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_INITBIDIR, 0U);
+            uint32_t dummy = 0U;
+            comm_result = id804_read(gt_cli_request.val_1, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, gt_cli_request.val_1, ID804_CMD_INITBIDIR, dummy);
             break;
         }
         case CLI_CMD_ID804_CLRERROR:

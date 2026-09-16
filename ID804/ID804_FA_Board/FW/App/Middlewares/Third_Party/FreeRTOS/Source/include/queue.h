@@ -542,7 +542,7 @@ typedef struct QueueDefinition * QueueSetMemberHandle_t;
 	ulVarToSend = 100;
 	xQueueOverwrite( xQueue, &ulVarToSend );
 
-	// This tiME Read  from the queue, leaving the queue empty once more.
+	// This time read from the queue, leaving the queue empty once more.
 	// A block time of 0 is used again.
 	xQueueReceive( xQueue, &ulValReceived, 0 );
 
