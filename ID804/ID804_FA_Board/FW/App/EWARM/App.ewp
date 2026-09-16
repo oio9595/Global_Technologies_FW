@@ -1145,7 +1145,7 @@
                         </outputs>
                     </buildAction>
                     <buildAction>
-                        <cmdline>py "$PROJ_DIR$\..\..\Build\postbuild.py" "$PROJ_DIR$\..\User\App\Inc\version.h" "$PROJ_DIR$\App\Exe\App.bin" "$PROJ_DIR$\App\Exe\Release"</cmdline>
+                        <cmdline>py "$PROJ_DIR$\..\..\Build\postbuild.py"</cmdline>
                         <workingDirectory>$PROJ_DIR$</workingDirectory>
                         <buildSequence>postLink</buildSequence>
                     </buildAction>
