@@ -87,47 +87,47 @@ with open(version_h, "r", encoding="utf-8") as f:
 # 5. 버전 제어 핵심 로직
 if is_major_up:
     # --- MAJOR 버전 업인 경우 ---
-    major_match = re.search(r"#define\s+FW_MAJOR\s+(\d+)", text)
+    major_match = re.search(r"#define\s+FW_VER_MAJOR\s+(\d+)", text)
     if major_match:
         new_major = int(major_match.group(1)) + 1
-        text = re.sub(r"(#define\s+FW_MAJOR\s+)(\d+)", rf"\g<1>{new_major}", text)
-        print(f"[MAJOR UP] FW_MAJOR has been bumped to {new_major}.")
+        text = re.sub(r"(#define\s+FW_VER_MAJOR\s+)(\d+)", rf"\g<1>{new_major}", text)
+        print(f"[MAJOR UP] FW_VER_MAJOR has been bumped to {new_major}.")
     else:
-        print("Warning: FW_MAJOR not found in version.h")
+        print("Warning: FW_VER_MAJOR not found in version.h")
 
     # MAJOR가 올라가면 MINOR와 BUILD는 모두 0으로 리셋하는 것이 일반적입니다.
-    if re.search(r"#define\s+FW_MINOR\s+\d+", text):
-        text = re.sub(r"(#define\s+FW_MINOR\s+)(\d+)", r"\g<1>0", text)
-        print("[MAJOR UP] FW_MINOR has been reset to 0.")
+    if re.search(r"#define\s+FW_VER_MINOR\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_VER_MINOR\s+)(\d+)", r"\g<1>0", text)
+        print("[MAJOR UP] FW_VER_MINOR has been reset to 0.")
 
-    if re.search(r"#define\s+FW_BUILD\s+\d+", text):
-        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", r"\g<1>0", text)
-        print("[MAJOR UP] FW_BUILD has been reset to 0.")
+    if re.search(r"#define\s+FW_VER_BUILD\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_VER_BUILD\s+)(\d+)", r"\g<1>0", text)
+        print("[MAJOR UP] FW_VER_BUILD has been reset to 0.")
 
 elif is_minor_up:
     # --- MINOR 버전 업인 경우 ---
-    minor_match = re.search(r"#define\s+FW_MINOR\s+(\d+)", text)
+    minor_match = re.search(r"#define\s+FW_VER_MINOR\s+(\d+)", text)
     if minor_match:
         new_minor = int(minor_match.group(1)) + 1
-        text = re.sub(r"(#define\s+FW_MINOR\s+)(\d+)", rf"\g<1>{new_minor}", text)
-        print(f"[MINOR UP] FW_MINOR has been bumped to {new_minor}.")
+        text = re.sub(r"(#define\s+FW_VER_MINOR\s+)(\d+)", rf"\g<1>{new_minor}", text)
+        print(f"[MINOR UP] FW_VER_MINOR has been bumped to {new_minor}.")
     else:
-        print("Warning: FW_MINOR not found in version.h")
+        print("Warning: FW_VER_MINOR not found in version.h")
 
     # MINOR가 올라가면 BUILD는 0으로 리셋
-    if re.search(r"#define\s+FW_BUILD\s+\d+", text):
-        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", r"\g<1>0", text)
-        print("[MINOR UP] FW_BUILD has been reset to 0.")
+    if re.search(r"#define\s+FW_VER_BUILD\s+\d+", text):
+        text = re.sub(r"(#define\s+FW_VER_BUILD\s+)(\d+)", r"\g<1>0", text)
+        print("[MINOR UP] FW_VER_BUILD has been reset to 0.")
 
 else:
     # --- 일반 모드 (아무 인자도 없을 때) ---
-    build_match = re.search(r"#define\s+FW_BUILD\s+(\d+)", text)
+    build_match = re.search(r"#define\s+FW_VER_BUILD\s+(\d+)", text)
     if build_match:
         new_build = int(build_match.group(1)) + 1
-        text = re.sub(r"(#define\s+FW_BUILD\s+)(\d+)", rf"\g<1>{new_build}", text)
-        print(f"[NORMAL MODE] FW_BUILD has been updated to {new_build}.")
+        text = re.sub(r"(#define\s+FW_VER_BUILD\s+)(\d+)", rf"\g<1>{new_build}", text)
+        print(f"[NORMAL MODE] FW_VER_BUILD has been updated to {new_build}.")
     else:
-        print("Warning: FW_BUILD not found in version.h")
+        print("Warning: FW_VER_BUILD not found in version.h")
 
 # 6. FW_GIT_REV 값 업데이트하기
 if re.search(r"#define\s+FW_GIT_REV\s+", text):

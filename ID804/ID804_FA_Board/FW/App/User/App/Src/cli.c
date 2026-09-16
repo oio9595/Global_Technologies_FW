@@ -172,10 +172,10 @@ static void cli_print_banner(void)
     drv_uart_printf(CLI_CLEAR_SCREEN);
 
     drv_uart_printf("\r\n====================================================");
-    drv_uart_printf("\r\n  %s", "ID804 Test Board");
+    drv_uart_printf("\r\n  %s", "ID804 FA Board");
     drv_uart_printf("\r\n====================================================");
     drv_uart_printf("\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
-    drv_uart_printf("\r\n  * FW Version  : v%d.%d.%d", FW_MAJOR, FW_MINOR, FW_BUILD);
+    drv_uart_printf("\r\n  * FW Version  : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
     drv_uart_printf("\r\n  * FW Git Rev  : %s", FW_GIT_REV);
 
     drv_uart_printf("\r\n====================================================");
