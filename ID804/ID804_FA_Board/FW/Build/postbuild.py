@@ -9,8 +9,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 
 VERSION_HEADER = PROJECT_ROOT / "App" / "User" / "App" / "Inc" / "version.h"
 SOURCE_BIN = PROJECT_ROOT / "App" / "EWARM" / "Release" / "Exe" / "App.bin"
-RELEASE_DIR = PROJECT_ROOT / "Release"
-
+RELEASE_DIR = PROJECT_ROOT / "App" / "EWARM" / "Release" / "Exe"
 
 def numeric_macro(text, name):
     match = re.search(
