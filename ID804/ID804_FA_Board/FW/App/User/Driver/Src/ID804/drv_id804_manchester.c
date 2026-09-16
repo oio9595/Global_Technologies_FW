@@ -43,6 +43,7 @@ typedef uint8_t (*id804_crc_func_t)(const uint8_t *p_data, uint16_t len);
 //#define ID804_RW_DEBUG                  (0U)
 
 #define ID805_BC_DEV_ADDR               (0U)
+#define ID805_MAX_DEV_ADDR              (50U)
 
 #define ID804_BC_ABL                    (true)  // Broadcast Able
 #define ID804_BC_DIS                    (false) // Broadcast Disable
@@ -64,6 +65,7 @@ typedef uint8_t (*id804_crc_func_t)(const uint8_t *p_data, uint16_t len);
 
 #define ID804_FRAME_BUF_SIZE            (8U)  /* 24-bit Data Frame: 7 Bytes + 1 Byte Margin */
 #define ID804_SPI_TX_BUF_SIZE           (16U) /* 16-Byte (2-times the maximum raw frame size) */
+#define ID804_SPI_RX_BUF_SIZE           (ID804_SPI_TX_BUF_SIZE * ID805_MAX_DEV_ADDR)
 
 #define ID804_SPI_DUMMY_HEADER_SIZE     (1U)
 
@@ -159,6 +161,8 @@ static const id804_cmd_info_t gt_id804_command[] =
     { "READ_TIMEOUT",           ID804_CMD_READ_TIMEOUT,         ID804_BC_ABL,   ID804_MC_DIS,   ID804_FRAME_LEN_0BIT,   ID804_FRAME_LEN_12BIT },
     { "READ_RGB",               ID804_CMD_READ_RGB,             ID804_BC_ABL,   ID804_MC_DIS,   ID804_FRAME_LEN_0BIT,   ID804_FRAME_LEN_24BIT }
 };
+
+static uint16_t gn_id804_daisy_length;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -168,6 +172,31 @@ static const id804_cmd_info_t gt_id804_command[] =
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/**
+ * @brief Get the current daisy chain length for the ID804 device.
+ * @return The current daisy chain length.
+ */
+static uint16_t id804_get_daisy_length(void)
+{
+    if (gn_id804_daisy_length == 0U)
+    {
+        gn_id804_daisy_length = 1U;
+    }
+    return gn_id804_daisy_length;
+}
+
+/**
+ * @brief Set the daisy chain length for the ID804 device.
+ * @param daisy_length The desired daisy chain length.
+ * @return true if the daisy chain length was successfully set, false otherwise.
+ */
+static bool id804_set_daisy_length(uint16_t daisy_length)
+{
+    gn_id804_daisy_length = daisy_length;
+    drv_uart_printf("\r\n    [ID804] [Daisy] Length %u", gn_id804_daisy_length);
+    return true;
+}
+
 /**
  * @brief Calculate the CRC for the given data using the ID804 CRC lookup table.
  * @param p_data Pointer to the data buffer.
@@ -425,7 +454,7 @@ static bool id804_build_frame_by_cmd(uint8_t dev_addr, id804_cmd_list_t cmd, uin
     drv_uart_printf("\r\n    Frame Build...");
     drv_uart_printf("\r\n    Length (Tx: %u / Rx: %u bytes)", frame_size[ID804_FRAME_TX_IDX], frame_size[ID804_FRAME_RX_IDX]);
 
-    offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, "\r\n    [ID804] Tx (%u B):", frame_size[ID804_FRAME_TX_IDX]);
+    offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, "\r\n    [ID804] Tx (%u bytes):", frame_size[ID804_FRAME_TX_IDX]);
     for (uint16_t i = 0U; i < frame_size[ID804_FRAME_TX_IDX] && offset < (int)sizeof(log_buf); ++i)
     {
         offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, " 0x%02X", p_out_buf[i]);
@@ -479,14 +508,13 @@ static bool id804_spi_parse_rx_packet(uint8_t* spi_rx_buffer, uint16_t spi_rx_le
     char log_buf[MSG_BUFFER_SIZE];
     int offset = 0;
 
-    offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, "\r\n    Received SPI data byte (%u bytes):", spi_rx_len);
+    offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, "\r\n    Received SPI data byte (%u bytes (daisy: %u)):", spi_rx_len, id804_get_daisy_length());
     for (uint16_t i = 0U; i < spi_rx_len && offset < (int)sizeof(log_buf); ++i)
     {
         offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, " 0x%02X", spi_rx_buffer[i]);
     }
     drv_uart_printf("%s", log_buf);
 #endif
-
     uint32_t preamble = 0U;
     uint32_t dev_addr = 0U;
     uint32_t command = 0U;
@@ -554,6 +582,24 @@ static bool id804_spi_parse_rx_packet(uint8_t* spi_rx_buffer, uint16_t spi_rx_le
         default:
         {
             return false;
+        }
+    }
+    switch (command)
+    {
+        case ID804_CMD_INITBIDIR:
+        {
+            id804_set_daisy_length(dev_addr);
+            break;
+        }
+        case ID804_CMD_READ_TEMP:
+        {
+            float f_temp = ((float)(data & 0x3FF) - 440) / 4.4f + 30.0f;
+            drv_uart_printf("\r\n    [ID804] [TEMP    ] [          Dev_addr:0x%03X | ADC:%4u | TEMP:%6.3fdegC]", dev_addr, data, (double)f_temp);
+            break;
+        }
+        default:
+        {
+            break;
         }
     }
 
@@ -652,12 +698,13 @@ id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* 
     uint8_t raw_packet[ID804_FRAME_BUF_SIZE] = { 0U };
 
     uint8_t spi_tx_buffer[ID804_SPI_TX_BUF_SIZE] = { 0U };
-    uint8_t spi_rx_buffer[ID804_SPI_TX_BUF_SIZE] = { 0U };
+    uint8_t spi_rx_buffer[ID804_SPI_RX_BUF_SIZE] = { 0U };
 
     uint16_t frame_size[2] = { 0U };
 
     uint16_t spi_tx_len = 0U;
     uint16_t spi_rx_len = 0U;
+    uint16_t id804_daisy_length = 1U;
 
 #ifdef ID804_RW_DEBUG
     drv_uart_printf("\r\n    ID804 Read via Manchester...");
@@ -672,6 +719,7 @@ id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* 
 
     spi_tx_len = id804_manchester_encode_buffer(raw_packet, frame_size[ID804_FRAME_TX_IDX], spi_tx_buffer);
 
+    id804_daisy_length = id804_get_daisy_length();
     spi_rx_len = frame_size[ID804_FRAME_RX_IDX];
 
     if (false == drv_spi_transmit_dma(spi_tx_buffer, spi_tx_len))
@@ -680,16 +728,22 @@ id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* 
         return ID804_COMM_ERR_SPI;
     }
 
-    if (false == drv_spi_receive_dma(spi_rx_buffer, spi_rx_len))
+    for (uint16_t idx = 0; idx < id804_daisy_length; ++idx)
     {
-        drv_uart_printf("\r\n    SPI Fail at Rx");
-        return ID804_COMM_ERR_SPI;
+        if (false == drv_spi_receive_dma(spi_rx_buffer + (idx * spi_rx_len), spi_rx_len))
+        {
+            drv_uart_printf("\r\n    SPI Fail at Rx");
+            return ID804_COMM_ERR_SPI;
+        }
     }
 
-    if (false == id804_spi_parse_rx_packet(spi_rx_buffer, spi_rx_len))
+    for (uint16_t idx = 0; idx < id804_daisy_length; ++idx)
     {
-        drv_uart_printf("\r\n    SPI Fail at Parse");
-        return ID804_COMM_ERR_SPI;
+        if (false == id804_spi_parse_rx_packet(spi_rx_buffer + (idx * spi_rx_len), spi_rx_len))
+        {
+            drv_uart_printf("\r\n    SPI Fail at Parse");
+            return ID804_COMM_ERR_SPI;
+        }
     }
 
     return ID804_COMM_READ_OK;
