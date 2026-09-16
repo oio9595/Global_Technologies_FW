@@ -52,6 +52,13 @@ typedef enum tag_ID804_IO_STATE
     ID804_IO_CON,
     ID804_IO_MAX,
 } id804_io_state_t;
+
+typedef enum tag_ID804_COMM_DIRECTION
+{
+    ID804_COMM_FORWARD = 0U,
+    ID804_COMM_BACKWARD,
+    ID804_COMM_MAX,
+} id804_comm_direction_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -71,6 +78,8 @@ extern void drv_gpio_init(void);
 
 extern void drv_gpio_id804_boot_i2c(void);
 extern void drv_gpio_id804_boot_mcu(void);
+extern void drv_gpio_id804_boot_lvds(id804_comm_direction_t direction);
+extern void drv_gpio_id804_boot_can(id804_comm_direction_t direction);
 
 extern bool drv_gpio_id804_vcc(id804_vcc_state_t state);
 extern bool drv_gpio_id804_vled(id804_vled_state_t state);
@@ -92,6 +101,8 @@ extern bool drv_gpio_id804_sio2_mcu(id804_io_state_t state);
 extern bool drv_gpio_id804_sio2_can(id804_io_state_t state);
 extern bool drv_gpio_id804_sio2_lvds(id804_io_state_t state);
 extern bool drv_gpio_id804_sio2_eol(id804_io_state_t state);
+
+extern bool drv_gpio_id804_2nd_comm_mode(bool comm_mode);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

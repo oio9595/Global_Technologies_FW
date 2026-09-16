@@ -22,6 +22,7 @@ extern "C" {
 #include <stdbool.h>
 /* 2. Project internal / System-related headers */
 #include "id804_metadata.h"
+#include "drv_gpio.h"
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/
@@ -64,6 +65,9 @@ typedef bool (*id804_set_cmd_func)(uint16_t, uint32_t);
 /* USER CODE BEGIN EFP */
 extern bool id804_boot_i2c(void);
 extern bool id804_boot_me(void);
+
+extern bool id804_boot_lvds(id804_comm_direction_t direction);
+extern bool id804_boot_can(id804_comm_direction_t direction);
 
 extern void id804_set_comm_mode(id804_comm_mode_t mode);
 extern id804_comm_mode_t id804_get_comm_mode(void);

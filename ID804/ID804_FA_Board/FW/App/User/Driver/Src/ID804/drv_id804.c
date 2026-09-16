@@ -96,6 +96,29 @@ bool id804_boot_me(void)
     gp_id804_comm_ops = &gp_id804_comm_ops_me;
     return true;
 }
+/**
+ * @brief Boot the ID804 device in LVDS mode.
+ * @return true if the boot process was successful, false otherwise.
+ */
+
+bool id804_boot_lvds(id804_comm_direction_t direction)
+{
+    drv_gpio_id804_boot_lvds(direction);
+    id804_set_comm_mode(ID804_COMM_MODE_ME);
+    gp_id804_comm_ops = &gp_id804_comm_ops_me;
+    return true;
+}
+/**
+ * @brief Boot the ID804 device in CAN mode.
+ * @return true if the boot process was successful, false otherwise.
+ */
+bool id804_boot_can(id804_comm_direction_t direction)
+{
+    drv_gpio_id804_boot_can(direction);
+    id804_set_comm_mode(ID804_COMM_MODE_ME);
+    gp_id804_comm_ops = &gp_id804_comm_ops_me;
+    return true;
+}
 
 /**
  * @brief Set the communication mode for the ID804 device.

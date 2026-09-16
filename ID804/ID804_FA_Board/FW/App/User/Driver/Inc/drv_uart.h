@@ -27,7 +27,7 @@ extern "C" {
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
 #define MSG_BUFFER_SIZE             (128U)
-#define UART_TX_RING_BUFFER_SIZE    (32U) // must be power of 2
+#define UART_TX_RING_BUFFER_SIZE    (128U) // must be power of 2
 #define UART_RX_RING_BUFFER_SIZE    (8U) // must be power of 2
 /* USER CODE END Private defines */
 
