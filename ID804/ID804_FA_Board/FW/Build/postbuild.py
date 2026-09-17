@@ -8,8 +8,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 VERSION_HEADER = PROJECT_ROOT / "App" / "User" / "App" / "Inc" / "version.h"
-SOURCE_BIN = PROJECT_ROOT / "App" / "EWARM" / "Release" / "Exe" / "App.bin"
-RELEASE_DIR = PROJECT_ROOT / "App" / "EWARM" / "Release" / "Exe" / "Release"
+SOURCE_BIN = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "App.bin"
+RELEASE_DIR = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "Release"
 
 def numeric_macro(text, name):
     match = re.search(
