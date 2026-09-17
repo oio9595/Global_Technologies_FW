@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import shutil
+import subprocess
 
 FIRMWARE_FILE_PREFIX = "ID804_FA_Board"
 
@@ -10,6 +11,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 VERSION_HEADER = PROJECT_ROOT / "App" / "User" / "App" / "Inc" / "version.h"
 SOURCE_BIN = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "App.bin"
 RELEASE_DIR = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "Release"
+
 
 def numeric_macro(text, name):
     match = re.search(
@@ -37,11 +39,50 @@ def string_macro(text, name):
     return match.group(1)
 
 
+def ensure_clean_working_tree():
+    try:
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            "ERROR: Git was not found. Release image will not be created."
+        ) from error
+    except subprocess.CalledProcessError as error:
+        details = error.stderr.strip()
+        message = (
+            "ERROR: Failed to check Git working tree status. "
+            "Release image will not be created."
+        )
+        if details:
+            message = f"{message}\nGit error: {details}"
+        raise RuntimeError(message) from error
+
+    if status.stdout.strip():
+        revision = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        print("ERROR: Git working tree is dirty. Release image will not be created.")
+        print(f"Git revision: {revision}-dirty")
+        print(status.stdout.strip())
+        raise SystemExit(1)
+
+
 def main():
     if not VERSION_HEADER.is_file():
         raise FileNotFoundError(
             f"ERROR: version.h file not found: {VERSION_HEADER}"
         )
+
+    ensure_clean_working_tree()
 
     if not SOURCE_BIN.is_file():
         raise FileNotFoundError(
@@ -54,11 +95,6 @@ def main():
     minor = numeric_macro(version_text, "FW_VER_MINOR")
     build = numeric_macro(version_text, "FW_VER_BUILD")
     git_revision = string_macro(version_text, "FW_GIT_REV")
-
-    if "-dirty" in git_revision:
-        print("ERROR: Git working tree is dirty. Release image will not be created.")
-        print(f"Git revision: {git_revision}")
-        raise SystemExit(1)
 
     version = f"v{major}.{minor}.{build}"
     filename = f"{FIRMWARE_FILE_PREFIX}_{version}_{git_revision}.bin"
