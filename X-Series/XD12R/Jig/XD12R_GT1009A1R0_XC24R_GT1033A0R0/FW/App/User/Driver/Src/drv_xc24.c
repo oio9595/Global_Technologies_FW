@@ -21,6 +21,7 @@
 
 #define XC_FLL_PAD_VSYNC        (0U)
 #define XC_FLL_PAD_FLLSYNC      (1U)
+#define XC_FLL_PAD              (XC_FLL_PAD_FLLSYNC)
 
 #define XC_MCLK_SEL_OSC_A       (1U)
 #define XC_MCLK_SEL_OSC_B       (0U)
@@ -328,7 +329,7 @@ static void xc24_regs_init_table(void)
             _r1->reg._r38.bit.fll1cnt = ((gn_xc_fll_cnt[0] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r38.bit.fll1_err_range = 0U;
             _r1->reg._r38.bit.fll1_range = 0U;
-            _r1->reg._r38.bit.fllsync = XC_FLL_PAD_VSYNC;
+            _r1->reg._r38.bit.fllsync = XC_FLL_PAD;
             _r1->reg._r38.bit.fll1_en = XC_FUNCTION_EN;
             break;
         case XC_FLLCNT21:
@@ -338,7 +339,7 @@ static void xc24_regs_init_table(void)
             _r1->reg._r3A.bit.fll2cnt = ((gn_xc_fll_cnt[1] & FLL_BIT_B20_B16) >> FLL_BIT_SHIFT_MSB);
             _r1->reg._r3A.bit.fll2_err_range = 0U;
             _r1->reg._r3A.bit.fll2_range = 0U;
-            _r1->reg._r3A.bit.fllsync = XC_FLL_PAD_VSYNC;
+            _r1->reg._r3A.bit.fllsync = XC_FLL_PAD;
             _r1->reg._r3A.bit.fll2_en = XC_FUNCTION_EN;
             break;
         case XC_VO_DELAY:
@@ -415,7 +416,7 @@ static void xc24_regs_init_table(void)
             _r1->reg._r65.bit.FLT_GAIN_A = 2U;
             break;
         case XC_OSC_FLL_MAN_B1:
-            _r1->reg._r67.bit.OSC_MAN_EN_B = XC_FUNCTION_EN;
+            _r1->reg._r67.bit.OSC_MAN_EN_B = XC_FUNCTION_DIS;
             _r1->reg._r67.bit.FLT_GAIN_B = 2U;
             break;
         default:
@@ -712,9 +713,13 @@ void xc24_init_param(void)
         }
 #endif
     }
-
-    gn_xc_fll_cnt[0] = XC_CONV_FREQ_TO_XC_MCLK(120U);
-    gn_xc_fll_cnt[1] = XC_CONV_FREQ_TO_XC_MCLK(120U);
+#if (XC_FLL_PAD == XC_FLL_PAD_VSYNC)
+    gn_xc_fll_cnt[0] = XC_CONV_FREQ_TO_XC_MCLK(TIM8_CLK);
+    gn_xc_fll_cnt[1] = XC_CONV_FREQ_TO_XC_MCLK(TIM8_CLK);
+#elif (XC_FLL_PAD == XC_FLL_PAD_FLLSYNC)
+    gn_xc_fll_cnt[0] = XC_CONV_FREQ_TO_XC_MCLK(TIM4_CLK);
+    gn_xc_fll_cnt[1] = XC_CONV_FREQ_TO_XC_MCLK(TIM4_CLK);
+#endif
 }
 
 void xc24_init(void)

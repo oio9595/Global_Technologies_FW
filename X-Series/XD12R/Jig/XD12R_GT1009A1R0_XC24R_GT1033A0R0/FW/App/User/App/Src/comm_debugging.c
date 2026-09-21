@@ -413,7 +413,13 @@ void comm_debugging_process(void)
             LL_mDelay(9U);
 
             ldim_set_block_color_buffer(LDIM_BLK_INDEX_ALL, 100U, 100U, 100U);
-            tim_vsync_out_start();
+
+            #if (XC_FLL_PAD == XC_FLL_PAD_VSYNC)
+                tim_vsync_out_start();
+            #elif (XC_FLL_PAD == XC_FLL_PAD_FLLSYNC)
+                tim_vsync_out_start();
+                tim_fllsync_start();
+            #endif
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
 
