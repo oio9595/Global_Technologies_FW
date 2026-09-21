@@ -109,7 +109,7 @@
 
 #define XD_SERIAL_LATENCY      (0x80U) /* default */
 
-#define XD_V_MASK              (0x72U)
+#define XD_V_MASK              (0xB4U)
 #define XD_SV_MASK             (0x89U)
 
 #define XD_RST_COUNT           (0x00U)

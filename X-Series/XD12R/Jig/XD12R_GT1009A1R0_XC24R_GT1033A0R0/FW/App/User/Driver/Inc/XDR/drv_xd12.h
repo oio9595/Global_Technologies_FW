@@ -40,7 +40,7 @@ extern "C" {
 
 #define XD_SYNC_MODE_CMD        (0U) /* cmd + svi */
 #define XD_SYNC_MODE_SVI        (1U) /*  vo + svi */
-#define XD_SYNC_MODE            (XD_SYNC_MODE_CMD)
+#define XD_SYNC_MODE            (XD_SYNC_MODE_SVI)
 
 #define XD_TYPE_A               (0U) /* NTS + TS */
 #define XD_TYPE_B               (1U) /* NTS + NTS + TS */
