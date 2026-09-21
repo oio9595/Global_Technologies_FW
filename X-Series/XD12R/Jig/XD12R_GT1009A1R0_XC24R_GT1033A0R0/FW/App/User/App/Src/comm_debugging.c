@@ -342,11 +342,6 @@ void comm_debugging_process(void)
             tim_vsync_out_stop();
             comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
         }
-        else if(Command_Param_is_("vsync_freq", "%u", &u32_recv_param[0]))
-        {
-            tim_set_vsync_out_freq((float)u32_recv_param[0]);
-            comm_UART_Printf(LOG_LV_INFO, gp_msg_prompt);
-        }
 
         /************* thread start **************/
         else if(!(strcmp(str_in, "xc_trim_start")))

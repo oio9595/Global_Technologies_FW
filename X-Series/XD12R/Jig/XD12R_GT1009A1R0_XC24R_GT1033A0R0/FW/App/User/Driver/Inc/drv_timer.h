@@ -27,8 +27,6 @@ void tim_fllsync_stop(void);
 void tim_svsync_out_handler(void);
 void tim_vsync_out_handler(void);
 
-void tim_set_vsync_out_freq(float f);
-
 void tim_vsync_out_process(void);
 
 void tim_set_vsync_out_running_flag(bool running);

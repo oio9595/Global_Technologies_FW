@@ -41,7 +41,6 @@ static rw_info_t gt_xd_rw_info;
 static rw_info_t gt_xc_rw_info;
 
 static bool gb_vsync_out_flag;
-static float gf_vsync_out_freq;
 static uint8_t gn_svsync_count;
 
 static float gf_svsync_sub_green_freq;
@@ -58,10 +57,8 @@ static void tim_read_write_xc(void);
 
 static inline void tim_update_vsync_out_freq(void)
 {
-    uint32_t AutoReload = LL_TIM_GetAutoReload(TIM8);
-    uint32_t Prescaler = LL_TIM_GetPrescaler(TIM8);
-    gf_vsync_out_freq = (float)(APB2_TIM_CLK) / ((float)(AutoReload + 1U) * (float)(Prescaler + 1U));
-    xc24_set_fll_cnt(0U, XC_CONV_FREQ_TO_XC_MCLK(gf_vsync_out_freq));
+    LL_TIM_SetPrescaler(TIM8, TIM8_PRESCALER);
+    LL_TIM_SetAutoReload(TIM8, TIM8_PERIOD);
 }
 
 static inline void tim_update_svsync_out_freq(void)
@@ -136,6 +133,8 @@ void tim_vsync_out_for_test_stop(void)
 
 void tim_fllsync_start(void)
 {
+    LL_TIM_SetPrescaler(TIM4, TIM4_PRESCALER);
+    LL_TIM_SetAutoReload(TIM4, TIM4_PERIOD);
     FLLSYNC_ENABLE();
     LL_TIM_SetCounter(TIM4, 0U);
     LL_TIM_OC_SetCompareCH2(TIM4, FLLSYNC_OUT_PULSE);
@@ -221,15 +220,6 @@ void tim_vsync_out_handler(void)
 #endif
         gb_vsync_out_flag = true;
     }
-}
-
-void tim_set_vsync_out_freq(float f)
-{
-    uint32_t AutoReload = TIM8_PERIOD_HZ(f);
-
-    LL_TIM_SetAutoReload(TIM8, AutoReload);
-
-    tim_update_vsync_out_freq();
 }
 
 void tim_vsync_out_process(void)
