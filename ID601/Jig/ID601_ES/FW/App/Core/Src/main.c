@@ -43,6 +43,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+I2C_HandleTypeDef hi2c1;
+
 /* Definitions for ID601TestTask */
 osThreadId_t ID601TestTaskHandle;
 const osThreadAttr_t ID601TestTask_attributes = {
@@ -76,6 +78,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM13_Init(void);
+static void MX_I2C1_Init(void);
 void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
 
@@ -129,6 +132,7 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM8_Init();
   MX_TIM13_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -296,6 +300,40 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -1031,14 +1069,13 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOA, LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, ID601_5V5_EN_Pin|ID601_TEST_RELAY_Pin|IC603_CS_Pin);
+  LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOC, IC603_VCC_EN_Pin|ID601_CH_MUX1_Pin);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOB, ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|CNT_RST_Pin
-                          |ID601_VLED_EN_Pin|ID601_VCC_EN_Pin);
+  LL_GPIO_SetOutputPin(GPIOB, ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|CNT_RST_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOA, ADC_CS1_Pin|ID601_CH_MUX2_Pin|ADC_CS2_Pin);
@@ -1068,8 +1105,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|ID601_5V5_EN_Pin
-                          |CNT_RST_Pin|ID601_VLED_EN_Pin|ID601_VCC_EN_Pin|ID601_TEST_RELAY_Pin
+  GPIO_InitStruct.Pin = ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|CNT_RST_Pin
                           |IC603_CS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -1102,9 +1138,6 @@ static void MX_GPIO_Init(void)
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE10);
 
   /**/
-  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE8);
-
-  /**/
   EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_4;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
@@ -1126,13 +1159,6 @@ static void MX_GPIO_Init(void)
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
-  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_8;
-  EXTI_InitStruct.LineCommand = ENABLE;
-  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
-  LL_EXTI_Init(&EXTI_InitStruct);
-
-  /**/
   LL_GPIO_SetPinPull(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_PULL_UP);
 
   /**/
@@ -1140,9 +1166,6 @@ static void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_SetPinPull(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_PULL_NO);
-
-  /**/
-  LL_GPIO_SetPinPull(ADC_DRDY2_GPIO_Port, ADC_DRDY2_Pin, LL_GPIO_PULL_UP);
 
   /**/
   LL_GPIO_SetPinMode(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_MODE_INPUT);
@@ -1153,14 +1176,9 @@ static void MX_GPIO_Init(void)
   /**/
   LL_GPIO_SetPinMode(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_MODE_INPUT);
 
-  /**/
-  LL_GPIO_SetPinMode(ADC_DRDY2_GPIO_Port, ADC_DRDY2_Pin, LL_GPIO_MODE_INPUT);
-
   /* EXTI interrupt init*/
   NVIC_SetPriority(EXTI4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(EXTI4_IRQn);
-  NVIC_SetPriority(EXTI9_5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
-  NVIC_EnableIRQ(EXTI9_5_IRQn);
   NVIC_SetPriority(EXTI15_10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(EXTI15_10_IRQn);
 

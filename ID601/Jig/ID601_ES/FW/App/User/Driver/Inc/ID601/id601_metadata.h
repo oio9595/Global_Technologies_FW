@@ -27,7 +27,7 @@ extern "C" {
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
 #define ID601_INTERNAL_MCLK (50000000UL)    /* 50.0MHz */
-#define XD_MODEL_NAME       "IC601 ES0"
+#define ID601_MODEL_NAME       "ID601 ES0"
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
