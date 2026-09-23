@@ -29,7 +29,33 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define I2C_TIMEOUT 100U
+#define MCP_I2C_ADDR   (0x21U << 1U)
+#define I2C_Tx              (0U)
+#define I2C_Rx              (1U)
+#define I2C_TIMEOUT         (100U)
+
+#define MCP_IODIRA          (0x00U)
+#define MCP_IODIRB          (0x01U)
+#define MCP_IPOLA           (0x02U)
+#define MCP_IPOLB           (0x03U)
+#define MCP_GPINTENA        (0x04U)
+#define MCP_GPINTENB        (0x05U)
+#define MCP_DEFVALA         (0x06U)
+#define MCP_DEFVALB         (0x07U)
+#define MCP_INTCONA         (0x08U)
+#define MCP_INTCONB         (0x09U)
+#define MCP_IOCONA          (0x0AU)
+#define MCP_IOCONB          (0x0BU)
+#define MCP_GPPUA           (0x0CU)
+#define MCP_GPPUB           (0x0DU)
+#define MCP_INTFA           (0x0EU)
+#define MCP_INTFB           (0x0FU)
+#define MCP_INTCAPA         (0x10U)
+#define MCP_INTCAPB         (0x11U)
+#define MCP_GPIOA           (0x12U)
+#define MCP_GPIOB           (0x13U)
+#define MCP_OLATA           (0x14U)
+#define MCP_OLATB           (0x15U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,7 +84,8 @@ HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
     i2c_tx_buff[0] = reg;
     i2c_tx_buff[1] = data;
 
-    return HAL_I2C_Master_Transmit(&hi2c1, (MCP23017_I2C_ADDR | I2C_Tx), i2c_tx_buff, 2U, I2C_TIMEOUT);
+    ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 2U, I2C_TIMEOUT);
+    return ret;
 }
 
 HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
@@ -66,15 +93,20 @@ HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
     HAL_StatusTypeDef ret = HAL_ERROR;
     uint8_t i2c_tx_buff[2] = { 0U };
 
+    if (p_buff == NULL)
+    {
+        return HAL_ERROR;
+    }
+
     i2c_tx_buff[0] = reg;
 
-    ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP23017_I2C_ADDR | I2C_Tx), i2c_tx_buff, 1U, I2C_TIMEOUT);
+    ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 1U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
         return ret;
     }
 
-    ret = HAL_I2C_Master_Receive(&hi2c1, (MCP23017_I2C_ADDR | I2C_Rx), p_buff, 1U, I2C_TIMEOUT);
+    ret = HAL_I2C_Master_Receive(&hi2c1, (MCP_I2C_ADDR | I2C_Rx), p_buff, 1U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
         return ret;
@@ -83,15 +115,22 @@ HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
     return HAL_OK;
 }
 
-void mcp23017_init(void)
+bool mcp23017_init(void)
 {
-    mcp23017_write(MCP_IODIRA, 0x00);
-    mcp23017_write(MCP_IODIRB, 0x00);
+    if (HAL_OK != mcp23017_write(MCP_IODIRA, 0x00))
+    {
+        return false;
+    }
+    if (HAL_OK != mcp23017_write(MCP_IODIRB, 0x00))
+    {
+        return false;
+    }
+    return true;
 }
 
 bool mcp23017_set_gpio_state(uint8_t pin, bool state)
 {
-    uint8_t i2c_tx_buff[2] = { 0U };
+    uint8_t reg = 0U;
     uint8_t port = 0U;
     uint8_t bit = 0U;
     uint8_t new_state = 0U;
@@ -114,10 +153,9 @@ bool mcp23017_set_gpio_state(uint8_t pin, bool state)
         new_state = (uint8_t)(gt_mcp_gpio_state[port] & (uint8_t)~(1U << bit));
     }
 
-    i2c_tx_buff[0] = (port == 0U) ? MCP_GPIOA : MCP_GPIOB;
-    i2c_tx_buff[1] = new_state;
+    reg = (port == 0U) ? MCP_GPIOA : MCP_GPIOB;
 
-    if (HAL_OK != mcp23017_write(i2c_tx_buff[0], i2c_tx_buff[1]))
+    if (HAL_OK != mcp23017_write(reg, new_state))
     {
         return false;
     }
@@ -129,17 +167,16 @@ bool mcp23017_set_gpio_state(uint8_t pin, bool state)
     return ret;
 }
 
-uint8_t mcp23017_get_gpio_state(uint8_t pin)
+bool mcp23017_get_gpio_state(uint8_t pin, bool* p_state)
 {
     uint8_t port = 0U;
     uint8_t bit = 0U;
     uint8_t reg = 0U;
     uint8_t value = 0U;
-    HAL_StatusTypeDef ret = HAL_ERROR;
 
-    if (pin >= MCP_GPIO_MAX)
+    if ((pin >= MCP_GPIO_MAX) || (p_state == NULL))
     {
-        return 0U;
+        return false;
     }
 
     port = pin >> 3U;       /* 0: GPIOA, 1: GPIOB */
@@ -148,12 +185,13 @@ uint8_t mcp23017_get_gpio_state(uint8_t pin)
 
     if (HAL_OK != mcp23017_read(reg, &value))
     {
-        return 0U;
+        return false;
     }
 
     gt_mcp_gpio_state[port] = value;
+    *p_state = (value & (1U << bit)) ? true : false;
 
-    return value;
+    return true;
 }
 
 /* USER CODE END 0 */
