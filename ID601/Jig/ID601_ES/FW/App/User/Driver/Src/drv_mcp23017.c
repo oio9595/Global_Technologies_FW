@@ -29,7 +29,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MCP_I2C_ADDR   (0x21U << 1U)
+#define MCP_I2C_ADDR        (0x21U << 1U)
 #define I2C_Tx              (0U)
 #define I2C_Rx              (1U)
 #define I2C_TIMEOUT         (100U)

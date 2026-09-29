@@ -19,6 +19,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
 #include <stdint.h>
+#include <stdbool.h>
 /* 2. Project internal / System-related headers */
 
 /* USER CODE END Includes */
@@ -46,8 +47,17 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern void drv_timer_delay_us(uint32_t us);
-extern void drv_timer_delay_ms(uint32_t ms);
+extern void drv_tim_init(void);
+
+extern void drv_tim_delay_us(uint32_t us);
+extern void drv_tim_delay_ms(uint32_t ms);
+
+extern bool drv_tim_generate_serial(uint16_t* p_duty, uint16_t length, uint16_t timeout);
+extern void drv_tim_generate_serial_irq_handler(void);
+
+extern bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length, uint16_t timeout);
+extern void drv_tim_capture_serial_rise_irq_handler(void);
+extern void drv_tim_capture_serial_fall_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

@@ -25,6 +25,10 @@
 #include "main.h"
 #include "version.h"
 #include "drv_uart.h"
+#include "drv_timer.h" // debug for pwm gen
+#include "drv_spi.h" // debug for spi
+#include "drv_gpio.h" // debug for GPIO control
+#include "drv_id601.h" // debug for ID601
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,6 +39,10 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_UNKNOWN,
     CLI_CMD_HELP,
     CLI_CMD_RESET,
+    CLI_CMD_DEBUG_SPI8,
+    CLI_CMD_DEBUG_SPI16,
+    CLI_CMD_DEBUG_DELAY,
+    CLI_CMD_DEBUG_ID601,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -60,7 +68,7 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PD */
 #define CLI_CLEAR_SCREEN    "\033[2J\033[H"
 
-#define CLI_PROMPT          "\r\n\r\nID804> "
+#define CLI_PROMPT          "\r\n\r\nID601> "
 
 #define CLI_MAX_TOKENS      (5)
 
@@ -86,9 +94,16 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "help",               CLI_CMD_HELP,               "Display help information"                                                                  },
     { "?",                  CLI_CMD_HELP,               "Display help information"                                                                  },
     { "reset",              CLI_CMD_RESET,              "Reset the system"                                                                          },
+    { "debug_spi8",         CLI_CMD_DEBUG_SPI8,         "Debug for SPI 8-bit communication"                                                         },
+    { "debug_spi16",        CLI_CMD_DEBUG_SPI16,        "Debug for SPI 16-bit communication"                                                        },
+    { "debug_delay",        CLI_CMD_DEBUG_DELAY,        "Debug for delay_us/ms"                                                                     },
+    { "debug_id601",        CLI_CMD_DEBUG_ID601,        "Debug for ID601 communication"                                                             },
 };
 
 static cli_request_t gt_cli_request;
+
+uint16_t pwm_duty_table[22] = { 0U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                                59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 0U }; // debug for pwm gen
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,7 +143,6 @@ static void cli_print_id804_comm_result(id804_comm_result_t comm_result,  uint16
  */
 static void cli_print_banner(void)
 {
-    // ANSI Escape Code를 이용해 화면을 정리하고 커서를 상단으로 옮김 (옵션)
     drv_uart_printf(CLI_CLEAR_SCREEN);
 
     drv_uart_printf("\r\n====================================================");
@@ -251,6 +265,100 @@ static void cli_command_execute(void)
             NVIC_SystemReset();
             break;
         }
+        case CLI_CMD_DEBUG_SPI8:
+        {
+            bool spi_rw_type = (bool)(gt_cli_request.val_1);
+            if (false == spi_rw_type)
+            {
+                uint8_t tx_buffer[3] = { 0x3FU, 0xA5U, 0x78U };
+                uint8_t rx_buffer[3] = { 0U };
+
+                drv_gpio_ic603_cs(false);
+                if (false == drv_spi_receive_dma_8bit(SPI1, tx_buffer, rx_buffer, 3U, 20U))
+                {
+                    drv_gpio_ic603_cs(true);
+                    drv_uart_printf("\r\n    SPI 8-bit read NG...");
+                }
+                drv_uart_printf("\r\n    SPI 8-bit read OK...");
+            }
+            else
+            {
+                uint8_t tx_buffer[3] = { 0x3FU, 0xA5U, 0x78U };
+
+                drv_gpio_ic603_cs(false);
+                if (false == drv_spi_transmit_dma_8bit(SPI1, tx_buffer, 3U, 20U))
+                {
+                    drv_gpio_ic603_cs(true);
+                    drv_uart_printf("\r\n    SPI 8-bit write NG...");
+                }
+                drv_uart_printf("\r\n    SPI 8-bit write OK...");
+            }
+            break;
+        }
+        case CLI_CMD_DEBUG_SPI16:
+        {
+            bool spi_rw_type = (bool)(gt_cli_request.val_1);
+            if (false == spi_rw_type)
+            {
+                uint16_t tx_buffer[3] = { 0x3F70U, 0x98A5U, 0x718CU };
+                uint16_t rx_buffer[3] = { 0U };
+
+                drv_gpio_ads114s08_dev_all_cs(false);
+                if (false == drv_spi_receive_dma_16bit(SPI2, tx_buffer, rx_buffer, 3U, 20U))
+                {
+                    drv_gpio_ads114s08_dev_all_cs(true);
+                    drv_uart_printf("\r\n    SPI 16-bit read NG...");
+                }
+                drv_uart_printf("\r\n    SPI 16-bit read OK...");
+            }
+            else
+            {
+                uint16_t tx_buffer[3] = { 0x3F70U, 0x98A5U, 0x718CU };
+
+                drv_gpio_ads114s08_dev_all_cs(false);
+                if (false == drv_spi_transmit_dma_16bit(SPI2, tx_buffer, 3U, 20U))
+                {
+                    drv_gpio_ads114s08_dev_all_cs(true);
+                    drv_uart_printf("\r\n    SPI 16-bit write NG...");
+                }
+                drv_uart_printf("\r\n    SPI 16-bit write OK...");
+            }
+            break;
+        }
+        case CLI_CMD_DEBUG_DELAY:
+        {
+            bool delay_us_ms = (bool)(gt_cli_request.val_1);
+            if (false == delay_us_ms)
+            {
+                LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
+                drv_tim_delay_us(10); // Example delay in microseconds
+                LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
+                drv_uart_printf("\r\n    Delay 10 us...");
+            }
+            else
+            {
+                LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
+                drv_tim_delay_ms(10); // Example delay in milliseconds
+                LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
+                drv_uart_printf("\r\n    Delay 10 ms...");
+            }
+            break;
+        }
+        case CLI_CMD_DEBUG_ID601:
+        {
+            bool serial_rw = (bool)(gt_cli_request.val_1);
+            if (false == serial_rw)
+            {
+                id601_read(0U, 0U);
+                drv_uart_printf("\r\n    ID601 read executed...");
+            }
+            else
+            {
+                id601_write(0U, 0U);
+                drv_uart_printf("\r\n    ID601 write executed...");
+            }
+            break;
+        }
         default:
         {
             // Handle unknown command
@@ -269,7 +377,10 @@ void cli_process(void)
 {
     if (true == drv_uart_tx_data_pending())
     {
-        drv_uart_tx_dma_start(drv_uart_tx_ring_buffer_pop());
+        //drv_uart_tx_dma_start(drv_uart_tx_ring_buffer_pop());
+        msg_buffer_t* p_msg = drv_uart_tx_ring_buffer_pop();
+        drv_uart_printf_direct((const uint8_t*)p_msg->msg, p_msg->size);
+
     }
 
     if (true == drv_uart_rx_data_pending())

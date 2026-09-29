@@ -22,8 +22,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "drv_uart.h"
 #include "cli.h"
+#include "drv_uart.h"
+#include "drv_timer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,7 +135,7 @@ int main(void)
   MX_TIM13_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+    drv_tim_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -391,6 +392,25 @@ static void MX_SPI1_Init(void)
 
   LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_3);
 
+  /* SPI1_RX Init */
+  LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_0, LL_DMA_CHANNEL_3);
+
+  LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_0, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+
+  LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_0, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_HALFWORD);
+
+  LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_HALFWORD);
+
+  LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_0);
+
   /* USER CODE BEGIN SPI1_Init 1 */
 
   /* USER CODE END SPI1_Init 1 */
@@ -463,6 +483,46 @@ static void MX_SPI2_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
   LL_GPIO_Init(ADC_CLK_GPIO_Port, &GPIO_InitStruct);
 
+  /* SPI2 DMA Init */
+
+  /* SPI2_TX Init */
+  LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_4, LL_DMA_CHANNEL_0);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_4, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_4, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_STREAM_4, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_4, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_4, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_4, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_4, LL_DMA_MDATAALIGN_BYTE);
+
+  LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_4);
+
+  /* SPI2_RX Init */
+  LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_3, LL_DMA_CHANNEL_0);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_3, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+
+  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_3, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_STREAM_3, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_3, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_3, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_3, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_3, LL_DMA_MDATAALIGN_BYTE);
+
+  LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_3);
+
   /* USER CODE BEGIN SPI2_Init 1 */
 
   /* USER CODE END SPI2_Init 1 */
@@ -511,7 +571,7 @@ static void MX_TIM1_Init(void)
   /* TIM1_CH1 Init */
   LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_1, LL_DMA_CHANNEL_6);
 
-  LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+  LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_1, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
   LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_1, LL_DMA_PRIORITY_LOW);
 
@@ -557,7 +617,7 @@ static void MX_TIM1_Init(void)
   TIM_BDTRInitStruct.DeadTime = 0;
   TIM_BDTRInitStruct.BreakState = LL_TIM_BREAK_DISABLE;
   TIM_BDTRInitStruct.BreakPolarity = LL_TIM_BREAK_POLARITY_HIGH;
-  TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
+  TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_ENABLE;
   LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
   /* USER CODE BEGIN TIM1_Init 2 */
 
@@ -622,9 +682,9 @@ static void MX_TIM2_Init(void)
 
   LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_6, LL_DMA_MEMORY_INCREMENT);
 
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_6, LL_DMA_PDATAALIGN_WORD);
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_6, LL_DMA_PDATAALIGN_HALFWORD);
 
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_6, LL_DMA_MDATAALIGN_WORD);
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_6, LL_DMA_MDATAALIGN_HALFWORD);
 
   LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_6);
 
@@ -642,13 +702,13 @@ static void MX_TIM2_Init(void)
   LL_TIM_SetSlaveMode(TIM2, LL_TIM_SLAVEMODE_RESET);
   LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
   LL_TIM_IC_SetFilter(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1);
-  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_FALLING);
+  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
   LL_TIM_DisableIT_TRIG(TIM2);
   LL_TIM_DisableDMAReq_TRIG(TIM2);
   LL_TIM_IC_SetActiveInput(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_INDIRECTTI);
   LL_TIM_IC_SetPrescaler(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
   LL_TIM_IC_SetFilter(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
-  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
+  LL_TIM_IC_SetPolarity(TIM2, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_FALLING);
   LL_TIM_IC_SetActiveInput(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
   LL_TIM_IC_SetPrescaler(TIM2, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
   LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
@@ -996,6 +1056,10 @@ static void MX_USART2_UART_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* USART2 interrupt Init */
+  NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(USART2_IRQn);
+
   /* USER CODE BEGIN USART2_Init 1 */
 
   /* USER CODE END USART2_Init 1 */
@@ -1030,9 +1094,18 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream2_IRQn interrupt configuration */
   NVIC_SetPriority(DMA1_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  NVIC_SetPriority(DMA1_Stream3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  NVIC_SetPriority(DMA1_Stream4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
   NVIC_SetPriority(DMA1_Stream6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  NVIC_SetPriority(DMA2_Stream0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(DMA2_Stream0_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   NVIC_SetPriority(DMA2_Stream1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -1069,16 +1142,14 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOA, LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
+  LL_GPIO_SetOutputPin(GPIOC, IC603_VCC_EN_Pin|ID601_CH_DEMUX1_Pin);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOC, IC603_VCC_EN_Pin|ID601_CH_MUX1_Pin);
+  LL_GPIO_SetOutputPin(GPIOB, ID601_CH_DEMUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_DEMUX3_Pin|CNT_RST_Pin
+                          |IC603_CS_Pin);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOB, ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|CNT_RST_Pin);
-
-  /**/
-  LL_GPIO_SetOutputPin(GPIOA, ADC_CS1_Pin|ID601_CH_MUX2_Pin|ADC_CS2_Pin);
+  LL_GPIO_SetOutputPin(GPIOA, ADC_CS1_Pin|ID601_CH_DEMUX2_Pin|ADC_CS2_Pin);
 
   /**/
   GPIO_InitStruct.Pin = B1_Pin|IC603_FB3_Pin|IC603_FB2_Pin;
@@ -1087,7 +1158,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LTC_CURRENT_HIGH_Pin|BUFFER_OE_Pin|IC603_VCC_EN_Pin|ID601_CH_MUX1_Pin
+  GPIO_InitStruct.Pin = LTC_CURRENT_HIGH_Pin|BUFFER_OE_Pin|IC603_VCC_EN_Pin|ID601_CH_DEMUX1_Pin
                           |IC603_5V5_EN_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -1096,7 +1167,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin|ADC_CS1_Pin|ID601_CH_MUX2_Pin
+  GPIO_InitStruct.Pin = LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin|ADC_CS1_Pin|ID601_CH_DEMUX2_Pin
                           |ADC_CS2_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -1105,7 +1176,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = ID601_CH_MUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_MUX3_Pin|CNT_RST_Pin
+  GPIO_InitStruct.Pin = ID601_CH_DEMUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_DEMUX3_Pin|CNT_RST_Pin
                           |IC603_CS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -1135,43 +1206,59 @@ static void MX_GPIO_Init(void)
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE13);
 
   /**/
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE14);
+
+  /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE10);
 
   /**/
   EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_4;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
   EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_13;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
+  LL_EXTI_Init(&EXTI_InitStruct);
+
+  /**/
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_14;
+  EXTI_InitStruct.LineCommand = ENABLE;
+  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
   EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_10;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
   LL_GPIO_SetPinPull(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_PULL_UP);
 
   /**/
-  LL_GPIO_SetPinPull(IC603_nINT_LD_GPIO_Port, IC603_nINT_LD_Pin, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinPull(IC603_nINT_LD_GPIO_Port, IC603_nINT_LD_Pin, LL_GPIO_PULL_UP);
 
   /**/
-  LL_GPIO_SetPinPull(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinPull(ADC_DRDY2_GPIO_Port, ADC_DRDY2_Pin, LL_GPIO_PULL_UP);
+
+  /**/
+  LL_GPIO_SetPinPull(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_PULL_UP);
 
   /**/
   LL_GPIO_SetPinMode(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_MODE_INPUT);
 
   /**/
   LL_GPIO_SetPinMode(IC603_nINT_LD_GPIO_Port, IC603_nINT_LD_Pin, LL_GPIO_MODE_INPUT);
+
+  /**/
+  LL_GPIO_SetPinMode(ADC_DRDY2_GPIO_Port, ADC_DRDY2_Pin, LL_GPIO_MODE_INPUT);
 
   /**/
   LL_GPIO_SetPinMode(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_MODE_INPUT);
@@ -1188,7 +1275,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+volatile bool g_ic603_nint_ld_flag = false;
+volatile bool g_ic603_nint_fault_flag = false;
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartID601TestTask */
@@ -1201,9 +1289,24 @@ static void MX_GPIO_Init(void)
 void StartID601TestTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+    drv_id601_init();
   /* Infinite loop */
   for(;;)
   {
+    if (g_ic603_nint_ld_flag)
+    {
+        uint16_t out[23] = { 0U,119U,119U,119U,59U,59U,59U,59U,59U,119U,59U,119U,59U,119U,119U,59U,119U,59U,59U,119U,59U,119U,0U };
+        drv_tim_generate_serial(out, 23U, 1000U);
+        drv_uart_printf("\r\n    nINT_LD...");
+        g_ic603_nint_ld_flag = false;
+    }
+    if (g_ic603_nint_fault_flag)
+    {
+        uint16_t out[23] = { 0U,119U,119U,119U,59U,59U,59U,59U,59U,119U,59U,119U,59U,119U,119U,59U,119U,59U,59U,119U,59U,119U,0U };
+        drv_tim_generate_serial(out, 23U, 1000U);
+        drv_uart_printf("\r\n    nINT_FAULT...");
+        g_ic603_nint_fault_flag = false;
+    }
     osDelay(1);
   }
   /* USER CODE END 5 */

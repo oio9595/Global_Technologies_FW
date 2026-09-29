@@ -31,34 +31,37 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-typedef enum tag_ID804_VCC_STATE
+typedef enum tag_ID601_VCC_STATE
 {
-    ID804_VCC_OFF = 0U,
-    ID804_VCC_5V0,
-    ID804_VCC_5V5,
-    ID804_VCC_MAX,
-} id804_vcc_state_t;
+    ID601_VCC_OFF = 0U,
+    ID601_VCC_5V0,
+    ID601_VCC_5V5,
+    ID601_VCC_MAX,
+} id601_vcc_state_t;
 
-typedef enum tag_ID804_VLED_STATE
+typedef enum tag_ID601_VLED_STATE
 {
-    ID804_VLED_OFF = 0U,
-    ID804_VLED_ON,
-    ID804_VLED_MAX,
-} id804_vled_state_t;
+    ID601_VLED_OFF = 0U,
+    ID601_VLED_ON,
+    ID601_VLED_MAX,
+} id601_vled_state_t;
 
-typedef enum tag_ID804_IO_STATE
+typedef enum tag_ID601_CH
 {
-    ID804_IO_DIS = 0U,
-    ID804_IO_CON,
-    ID804_IO_MAX,
-} id804_io_state_t;
-
-typedef enum tag_ID804_COMM_DIRECTION
-{
-    ID804_COMM_FORWARD = 0U,
-    ID804_COMM_BACKWARD,
-    ID804_COMM_MAX,
-} id804_comm_direction_t;
+    ID601_CH_01 = 0U,
+    ID601_CH_02,
+    ID601_CH_03,
+    ID601_CH_04,
+    ID601_CH_05,
+    ID601_CH_06,
+    ID601_CH_07,
+    ID601_CH_08,
+    ID601_CH_09,
+    ID601_CH_10,
+    ID601_CH_11,
+    ID601_CH_12,
+    ID601_CH_MAX,
+} id601_ch_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -75,6 +78,20 @@ typedef enum tag_ID804_COMM_DIRECTION
 
 /* USER CODE BEGIN EFP */
 extern void drv_gpio_init(void);
+
+extern bool drv_gpio_id601_vcc(id601_vcc_state_t state);
+extern bool drv_gpio_id601_vled(id601_vled_state_t state);
+extern bool drv_gpio_id601_ch_demux(id601_ch_t ch);
+
+extern bool drv_gpio_ic603_cs(bool state);
+extern bool drv_gpio_ads114s08_dev1_cs(bool state);
+extern bool drv_gpio_ads114s08_dev2_cs(bool state);
+extern bool drv_gpio_ads114s08_dev_all_cs(bool state);
+
+extern bool drv_gpio_serialize_out_enable(bool state);
+
+extern void drv_gpio_ic603_nINT_LD_irq_handler(void);
+extern void drv_gpio_ic603_nINT_FAULT_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

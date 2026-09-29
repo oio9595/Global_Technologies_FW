@@ -18,26 +18,39 @@
 /* 1. Direct pairing header (Corresponding header for this source file) */
 #include "drv_spi.h"
 /* 2. C standard library headers (Alphabetical order) */
+
 /* 3. Project internal / System-related headers */
-#include "main.h"
+#include "drv_gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum tag_SPI_STATUS
+{
+    SPI_STATUS_NONE = 0U,
+    SPI_STATUS_BUSY,
+    SPI_STATUS_DONE,
+    SPI_STATUS_ERROR,
+    SPI_STATUS_TIMEOUT
+} spi_status_t;
+typedef bool (*spi_cs_fn_t)(bool);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define SPI_TIMEOUT_MS      (100U)
 
-#define SPI1_RX_FLAG_INDEX  (0U)
+#define SPI1_TX_DMA_BASE    DMA2
+#define SPI1_TX_DMA_STREAM  LL_DMA_STREAM_3
+
 #define SPI1_RX_DMA_BASE    DMA2
 #define SPI1_RX_DMA_STREAM  LL_DMA_STREAM_0
 
-#define SPI1_TX_FLAG_INDEX  (1U)
-#define SPI1_TX_DMA_BASE    DMA2
-#define SPI1_TX_DMA_STREAM  LL_DMA_STREAM_3
+#define SPI2_TX_DMA_BASE    DMA1
+#define SPI2_TX_DMA_STREAM  LL_DMA_STREAM_4
+
+#define SPI2_RX_DMA_BASE    DMA1
+#define SPI2_RX_DMA_STREAM  LL_DMA_STREAM_3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,7 +60,18 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-bool gn_spi_dma_flag[2];
+static SPI_TypeDef* const SPI_BASE[2] = { SPI1, SPI2 };
+
+static DMA_TypeDef* const SPI_TX_DMA_BASE[2] = { SPI1_TX_DMA_BASE, SPI2_TX_DMA_BASE };
+static const uint32_t SPI_TX_DMA_STREAM[2]   = { SPI1_TX_DMA_STREAM, SPI2_TX_DMA_STREAM };
+
+static DMA_TypeDef* const SPI_RX_DMA_BASE[2] = { SPI1_RX_DMA_BASE, SPI2_RX_DMA_BASE };
+static const uint32_t SPI_RX_DMA_STREAM[2]   = { SPI1_RX_DMA_STREAM, SPI2_RX_DMA_STREAM };
+
+static spi_status_t gb_spi_tx_dma_flag[2] = { SPI_STATUS_NONE, SPI_STATUS_NONE };
+static spi_status_t gb_spi_rx_dma_flag[2] = { SPI_STATUS_NONE, SPI_STATUS_NONE };
+
+const static spi_cs_fn_t gp_spi_cs_transition[2] = { drv_gpio_ic603_cs, drv_gpio_ads114s08_dev_all_cs };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,268 +83,554 @@ bool gn_spi_dma_flag[2];
 /* USER CODE BEGIN 0 */
 void drv_spi_init(void)
 {
-    /* Implement the SPI initialization functionality here */
-    LL_DMA_EnableIT_TC(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
-    LL_DMA_EnableIT_TE(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
 
-    LL_DMA_EnableIT_TC(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
-    LL_DMA_EnableIT_TE(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
-
-    LL_SPI_SetBaudRatePrescaler(SPI1, LL_SPI_BAUDRATEPRESCALER_DIV16);
-
-    /* DMA2_Stream0_IRQn interrupt configuration */
-    NVIC_SetPriority(DMA2_Stream0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
-    NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-
-    /* DMA2_Stream3_IRQn interrupt configuration */
-    NVIC_SetPriority(DMA2_Stream3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
-    NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-
-    LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_0, LL_DMA_CHANNEL_3);
-    LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_0, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-    LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_0, LL_DMA_PRIORITY_LOW);
-    LL_DMA_SetMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
-    LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
-    LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
-    LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_BYTE);
-    LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
-    LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_0);
-
-    LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_3, LL_DMA_CHANNEL_3);
-    LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_3, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-    LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_3, LL_DMA_PRIORITY_LOW);
-    LL_DMA_SetMode(DMA2, LL_DMA_STREAM_3, LL_DMA_MODE_NORMAL);
-    LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_3, LL_DMA_PERIPH_NOINCREMENT);
-    LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_3, LL_DMA_MEMORY_INCREMENT);
-    LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_3, LL_DMA_PDATAALIGN_BYTE);
-    LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_3, LL_DMA_MDATAALIGN_BYTE);
-    LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_3);
-
-    // Transmit a dummy byte to set high MOSI line initially
-    uint8_t data = 0xFFU;
-    drv_spi_transmit_direct(&data, 1U);
-
-    gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_DONE;
-    gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] = SPI_DMA_DONE;
 }
 
-void drv_spi_tx_dma_irq_handler(void)
+static bool drv_dma_clear_tc_flag(DMA_TypeDef *DMAx, uint32_t stream)
 {
-    if (true == LL_DMA_IsActiveFlag_TC3(SPI1_TX_DMA_BASE))
-    {
-        gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] = SPI_DMA_DONE;
-        LL_DMA_ClearFlag_TC3(SPI1_TX_DMA_BASE);
-    }
-    if (true == LL_DMA_IsActiveFlag_TE3(SPI1_TX_DMA_BASE))
-    {
-        LL_DMA_ClearFlag_TE3(SPI1_TX_DMA_BASE);
-    }
-}
-
-void drv_spi_rx_dma_irq_handler(void)
-{
-    if (true == LL_DMA_IsActiveFlag_TC0(SPI1_RX_DMA_BASE))
-    {
-        gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_DONE;
-        //LL_GPIO_SetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
-        LL_DMA_ClearFlag_TC0(SPI1_RX_DMA_BASE);
-    }
-    if (true == LL_DMA_IsActiveFlag_TE0(SPI1_RX_DMA_BASE))
-    {
-        LL_DMA_ClearFlag_TE0(SPI1_RX_DMA_BASE);
-    }
-}
-
-bool drv_spi_transmit_direct(const uint8_t *p_data, uint16_t length)
-{
-    if ((p_data == NULL) || (length == 0U))
+    if (NULL == DMAx)
     {
         return false;
     }
-    /* Configure SPI1 as master, full duplex, CPOL low */
-    LL_SPI_Disable(SPI1);
-    LL_SPI_SetMode(SPI1, LL_SPI_MODE_MASTER);
-    LL_SPI_SetTransferDirection(SPI1, LL_SPI_FULL_DUPLEX);
-    LL_SPI_SetClockPolarity(SPI1, LL_SPI_POLARITY_LOW);
-    LL_SPI_Enable(SPI1);
-
-    for (uint16_t i = 0U; i < length; ++i)
+    switch (stream)
     {
-        uint32_t start_time = HAL_GetTick();
-        while (!LL_SPI_IsActiveFlag_TXE(SPI1))
+        case LL_DMA_STREAM_0:
         {
-            if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS)
-            {
-                LL_SPI_Disable(SPI1);
-                return false;
-            }
+            LL_DMA_ClearFlag_TC0(DMAx);
+            return true;
         }
-        LL_SPI_TransmitData8(SPI1, p_data[i]);
-    }
-
-    uint32_t start_time = HAL_GetTick();
-    while (!LL_SPI_IsActiveFlag_TXE(SPI1) || LL_SPI_IsActiveFlag_BSY(SPI1))
-    {
-        if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS)
+        case LL_DMA_STREAM_1:
         {
-            LL_SPI_Disable(SPI1);
+            LL_DMA_ClearFlag_TC1(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_2:
+        {
+            LL_DMA_ClearFlag_TC2(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_3:
+        {
+            LL_DMA_ClearFlag_TC3(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_4:
+        {
+            LL_DMA_ClearFlag_TC4(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_5:
+        {
+            LL_DMA_ClearFlag_TC5(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_6:
+        {
+            LL_DMA_ClearFlag_TC6(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_7:
+        {
+            LL_DMA_ClearFlag_TC7(DMAx);
+            return true;
+        }
+        default:
+        {
+            /* Invalid DMA stream: leave DMA flags unchanged. */
             return false;
         }
     }
-    LL_SPI_Disable(SPI1);
-    return true;
 }
 
-bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length)
+static bool drv_dma_clear_te_flag(DMA_TypeDef *DMAx, uint32_t stream)
 {
-    if ((p_data == NULL) || (length == 0U))
+    if (NULL == DMAx)
     {
         return false;
     }
-    /* Configure SPI1 as slave, simplex RX, CPOL high */
-    LL_SPI_Disable(SPI1);
-    LL_SPI_SetMode(SPI1, LL_SPI_MODE_SLAVE);
-    LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_RX);
-    LL_SPI_SetClockPolarity(SPI1, LL_SPI_POLARITY_HIGH);
-    LL_SPI_Enable(SPI1);
-
-    if (LL_SPI_IsActiveFlag_RXNE(SPI1))
+    switch (stream)
     {
-        (void)LL_SPI_ReceiveData8(SPI1);
-    }
-
-    for (uint16_t i = 0U; i < length; ++i)
-    {
-        uint32_t start_time = HAL_GetTick();
-        while (!LL_SPI_IsActiveFlag_RXNE(SPI1))
+        case LL_DMA_STREAM_0:
         {
-            if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS)
-            {
-                return false;
-            }
+            LL_DMA_ClearFlag_TE0(DMAx);
+            return true;
         }
-        p_data[i] = LL_SPI_ReceiveData8(SPI1);
+        case LL_DMA_STREAM_1:
+        {
+            LL_DMA_ClearFlag_TE1(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_2:
+        {
+            LL_DMA_ClearFlag_TE2(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_3:
+        {
+            LL_DMA_ClearFlag_TE3(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_4:
+        {
+            LL_DMA_ClearFlag_TE4(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_5:
+        {
+            LL_DMA_ClearFlag_TE5(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_6:
+        {
+            LL_DMA_ClearFlag_TE6(DMAx);
+            return true;
+        }
+        case LL_DMA_STREAM_7:
+        {
+            LL_DMA_ClearFlag_TE7(DMAx);
+            return true;
+        }
+        default:
+        {
+            /* Invalid DMA stream: leave DMA flags unchanged. */
+            return false;
+        }
     }
-
-    LL_SPI_Disable(SPI1);
-    return true;
 }
 
-bool drv_spi_transmit_dma(const uint8_t *p_data, uint16_t length)
+static bool drv_dma_is_active_tc_flag(DMA_TypeDef *DMAx, uint32_t stream)
 {
-    if ((p_data == NULL) || (length == 0U))
+    if (NULL == DMAx)
+    {
+        return false;
+    }
+    switch (stream)
+    {
+        case LL_DMA_STREAM_0:
+        {
+            return LL_DMA_IsActiveFlag_TC0(DMAx);
+        }
+        case LL_DMA_STREAM_1:
+        {
+            return LL_DMA_IsActiveFlag_TC1(DMAx);
+        }
+        case LL_DMA_STREAM_2:
+        {
+            return LL_DMA_IsActiveFlag_TC2(DMAx);
+        }
+        case LL_DMA_STREAM_3:
+        {
+            return LL_DMA_IsActiveFlag_TC3(DMAx);
+        }
+        case LL_DMA_STREAM_4:
+        {
+            return LL_DMA_IsActiveFlag_TC4(DMAx);
+        }
+        case LL_DMA_STREAM_5:
+        {
+            return LL_DMA_IsActiveFlag_TC5(DMAx);
+        }
+        case LL_DMA_STREAM_6:
+        {
+            return LL_DMA_IsActiveFlag_TC6(DMAx);
+        }
+        case LL_DMA_STREAM_7:
+        {
+            return LL_DMA_IsActiveFlag_TC7(DMAx);
+        }
+        default:
+        {
+            /* Invalid DMA stream: leave DMA flags unchanged. */
+            return false;
+        }
+    }
+}
+
+static bool drv_dma_is_active_te_flag(DMA_TypeDef *DMAx, uint32_t stream)
+{
+    if (NULL == DMAx)
+    {
+        return false;
+    }
+    switch (stream)
+    {
+        case LL_DMA_STREAM_0:
+        {
+            return LL_DMA_IsActiveFlag_TE0(DMAx);
+        }
+        case LL_DMA_STREAM_1:
+        {
+            return LL_DMA_IsActiveFlag_TE1(DMAx);
+        }
+        case LL_DMA_STREAM_2:
+        {
+            return LL_DMA_IsActiveFlag_TE2(DMAx);
+        }
+        case LL_DMA_STREAM_3:
+        {
+            return LL_DMA_IsActiveFlag_TE3(DMAx);
+        }
+        case LL_DMA_STREAM_4:
+        {
+            return LL_DMA_IsActiveFlag_TE4(DMAx);
+        }
+        case LL_DMA_STREAM_5:
+        {
+            return LL_DMA_IsActiveFlag_TE5(DMAx);
+        }
+        case LL_DMA_STREAM_6:
+        {
+            return LL_DMA_IsActiveFlag_TE6(DMAx);
+        }
+        case LL_DMA_STREAM_7:
+        {
+            return LL_DMA_IsActiveFlag_TE7(DMAx);
+        }
+        default:
+        {
+            /* Invalid DMA stream: leave DMA flags unchanged. */
+            return false;
+        }
+    }
+}
+
+bool drv_spi_transmit_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint16_t length, uint32_t timeout)
+{
+    if ((NULL == SPIx) || (NULL == p_tx) || (0U == length))
     {
         return false;
     }
 
-    /* Configure SPI1 as master, full duplex, CPOL low */
-    LL_SPI_Disable(SPI1);
-    LL_DMA_DisableStream(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
 
-    LL_SPI_SetMode(SPI1, LL_SPI_MODE_MASTER);
-    LL_SPI_SetTransferDirection(SPI1, LL_SPI_FULL_DUPLEX);
-    LL_SPI_SetClockPolarity(SPI1, LL_SPI_POLARITY_LOW);
-    LL_SPI_SetClockPhase(SPI1, LL_SPI_PHASE_2EDGE);
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
 
-    LL_DMA_ClearFlag_TC3(SPI1_TX_DMA_BASE);
-    LL_DMA_ClearFlag_TE3(SPI1_TX_DMA_BASE);
+    LL_DMA_SetMemorySize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_BYTE);
+    LL_DMA_SetPeriphSize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_BYTE);
+    //LL_DMA_SetMemoryIncMode(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MEMORY_INCREMENT);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_8BIT);
 
-    LL_DMA_SetDataTransferDirection(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-    LL_DMA_SetMemoryAddress(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM, (uint32_t)p_data);
-    LL_DMA_SetPeriphAddress(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM, LL_SPI_DMA_GetRegAddr(SPI1));
+    drv_dma_clear_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
 
-    LL_DMA_SetDataLength(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM, length);
+    LL_DMA_SetMemoryAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)p_tx);
+    LL_DMA_SetPeriphAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)length);
 
-    LL_SPI_EnableDMAReq_TX(SPI1);
-    LL_DMA_EnableStream(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
+    LL_DMA_EnableIT_TC(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
 
-    //LL_GPIO_SetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-    //LL_GPIO_ResetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
-    gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] = SPI_DMA_BUSY;
+    gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_BUSY;
 
-    LL_SPI_Enable(SPI1);
+    LL_SPI_EnableDMAReq_TX(SPI_BASE[spi_index]);
+    LL_DMA_EnableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_SPI_Enable(SPI_BASE[spi_index]);
 
     uint32_t start_time = HAL_GetTick();
-    while (SPI_DMA_BUSY == gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] || false == LL_SPI_IsActiveFlag_TXE(SPI1) || true == LL_SPI_IsActiveFlag_BSY(SPI1))
+
+    while (SPI_STATUS_BUSY == gb_spi_tx_dma_flag[spi_index])
     {
-        if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS)
+        if ((HAL_GetTick() - start_time) > timeout)
         {
-            //LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-            LL_DMA_DisableStream(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
-            LL_SPI_Disable(SPI1);
-            gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] = SPI_DMA_DONE;
+            LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_TIMEOUT;
             return false;
         }
     }
 
-    //LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-    LL_DMA_DisableStream(SPI1_TX_DMA_BASE, SPI1_TX_DMA_STREAM);
-    LL_SPI_Disable(SPI1);
-    gn_spi_dma_flag[SPI1_TX_FLAG_INDEX] = SPI_DMA_DONE;
     return true;
 }
 
-bool drv_spi_receive_dma(uint8_t *p_data, uint16_t length)
+bool drv_spi_receive_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, const uint8_t *p_rx, uint16_t length, uint32_t timeout)
 {
-    if ((p_data == NULL) || (length == 0U))
+    if ((NULL == SPIx) || (NULL == p_tx) || (NULL == p_rx) || (0U == length))
     {
         return false;
     }
 
-    /* Configure SPI1 as slave, simplex RX, CPOL high */
-    LL_SPI_Disable(SPI1);
-    LL_DMA_DisableStream(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
-
-    LL_SPI_SetMode(SPI1, LL_SPI_MODE_SLAVE);
-    LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_RX);
-    LL_SPI_SetClockPolarity(SPI1, LL_SPI_POLARITY_HIGH);
-    LL_SPI_SetClockPhase(SPI1, LL_SPI_PHASE_2EDGE);
-
-    while (LL_SPI_IsActiveFlag_RXNE(SPI1))
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
     {
-        volatile uint32_t dummy = LL_SPI_ReceiveData8(SPI1);
+        return false;
     }
 
-    LL_DMA_ClearFlag_TC0(SPI1_RX_DMA_BASE);
-    LL_DMA_ClearFlag_TE0(SPI1_RX_DMA_BASE);
-
-    LL_DMA_SetDataTransferDirection(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-    LL_DMA_SetMemoryAddress(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM, (uint32_t)p_data);
-    LL_DMA_SetPeriphAddress(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM, LL_SPI_DMA_GetRegAddr(SPI1));
-
-    LL_DMA_SetDataLength(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM, length);
-
-    volatile const uint32_t wait = 45U;
-    for (uint32_t i = 0U; i < wait; ++i)
+    if (LL_SPI_IsActiveFlag_RXNE(SPI_BASE[spi_index]))
     {
-        __NOP();
+        (void)LL_SPI_ReceiveData8(SPI_BASE[spi_index]);
     }
 
-    LL_SPI_EnableDMAReq_RX(SPI1);
-    LL_DMA_EnableStream(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
 
-    //LL_GPIO_SetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-    gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_BUSY;
+    LL_DMA_SetMemorySize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_BYTE);
+    LL_DMA_SetPeriphSize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_BYTE);
+    //LL_DMA_SetMemoryIncMode(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MEMORY_INCREMENT);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_8BIT);
 
-    LL_SPI_Enable(SPI1);
+    drv_dma_clear_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemoryAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)p_tx);
+    LL_DMA_SetPeriphAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)length);
+
+    LL_DMA_EnableIT_TC(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_BUSY;
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemorySize(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_BYTE);
+    LL_DMA_SetPeriphSize(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_BYTE);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_8BIT);
+
+    drv_dma_clear_tc_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemoryAddress(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)p_rx);
+    LL_DMA_SetPeriphAddress(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)length);
+
+    LL_DMA_EnableIT_TC(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    gb_spi_rx_dma_flag[spi_index] = SPI_STATUS_BUSY;
+
+    LL_SPI_EnableDMAReq_RX(SPI_BASE[spi_index]);
+    LL_SPI_EnableDMAReq_TX(SPI_BASE[spi_index]);
+
+    LL_DMA_EnableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_SPI_Enable(SPI_BASE[spi_index]);
 
     uint32_t start_time = HAL_GetTick();
-    while (SPI_DMA_BUSY == gn_spi_dma_flag[SPI1_RX_FLAG_INDEX])
+
+    while ((SPI_STATUS_BUSY == gb_spi_tx_dma_flag[spi_index]) || (SPI_STATUS_BUSY == gb_spi_rx_dma_flag[spi_index]))
     {
-        if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS)
+        if ((HAL_GetTick() - start_time) > timeout)
         {
-            //LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-            LL_DMA_DisableStream(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
-            LL_SPI_Disable(SPI1);
-            gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_DONE;
+            LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+            LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_TIMEOUT;
             return false;
         }
     }
 
-    //LL_GPIO_ResetOutputPin(DEBUG_GPIO_Port, DEBUG_Pin);
-    LL_DMA_DisableStream(SPI1_RX_DMA_BASE, SPI1_RX_DMA_STREAM);
-    LL_SPI_Disable(SPI1);
-    gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_DONE;
     return true;
+}
+
+bool drv_spi_transmit_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, uint16_t length, uint32_t timeout)
+{
+    if ((NULL == SPIx) || (NULL == p_tx) || (0U == length))
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemorySize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_HALFWORD);
+    LL_DMA_SetPeriphSize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_HALFWORD);
+    //LL_DMA_SetMemoryIncMode(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MEMORY_INCREMENT);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_16BIT);
+
+    drv_dma_clear_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemoryAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)p_tx);
+    LL_DMA_SetPeriphAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)length);
+
+    LL_DMA_EnableIT_TC(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_BUSY;
+
+    LL_SPI_EnableDMAReq_TX(SPI_BASE[spi_index]);
+    LL_DMA_EnableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_SPI_Enable(SPI_BASE[spi_index]);
+
+    uint32_t start_time = HAL_GetTick();
+
+    while (SPI_STATUS_BUSY == gb_spi_tx_dma_flag[spi_index])
+    {
+        if ((HAL_GetTick() - start_time) > timeout)
+        {
+            LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_TIMEOUT;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool drv_spi_receive_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, const uint16_t *p_rx, uint16_t length, uint32_t timeout)
+{
+    if ((NULL == SPIx) || (NULL == p_tx) || (NULL == p_rx) || (0U == length))
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    if (LL_SPI_IsActiveFlag_RXNE(SPI_BASE[spi_index]))
+    {
+        (void)LL_SPI_ReceiveData8(SPI_BASE[spi_index]);
+    }
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemorySize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_HALFWORD);
+    LL_DMA_SetPeriphSize(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_HALFWORD);
+    //LL_DMA_SetMemoryIncMode(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], LL_DMA_MEMORY_INCREMENT);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_16BIT);
+
+    drv_dma_clear_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemoryAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)p_tx);
+    LL_DMA_SetPeriphAddress(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index], (uint32_t)length);
+
+    LL_DMA_EnableIT_TC(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_BUSY;
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemorySize(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], LL_DMA_MDATAALIGN_HALFWORD);
+    LL_DMA_SetPeriphSize(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], LL_DMA_PDATAALIGN_HALFWORD);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_16BIT);
+
+    drv_dma_clear_tc_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    drv_dma_clear_te_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    LL_DMA_SetMemoryAddress(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)p_rx);
+    LL_DMA_SetPeriphAddress(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)&SPI_BASE[spi_index]->DR);
+    LL_DMA_SetDataLength(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index], (uint32_t)length);
+
+    LL_DMA_EnableIT_TC(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableIT_TE(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+
+    gb_spi_rx_dma_flag[spi_index] = SPI_STATUS_BUSY;
+
+    LL_SPI_EnableDMAReq_RX(SPI_BASE[spi_index]);
+    LL_SPI_EnableDMAReq_TX(SPI_BASE[spi_index]);
+
+    LL_DMA_EnableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+    LL_DMA_EnableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+
+    LL_SPI_Enable(SPI_BASE[spi_index]);
+
+    uint32_t start_time = HAL_GetTick();
+
+    while ((SPI_STATUS_BUSY == gb_spi_tx_dma_flag[spi_index]) || (SPI_STATUS_BUSY == gb_spi_rx_dma_flag[spi_index]))
+    {
+        if ((HAL_GetTick() - start_time) > timeout)
+        {
+            LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+            LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_TIMEOUT;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool drv_spi_tx_dma_irq_handler(SPI_TypeDef* SPIx)
+{
+    if (NULL == SPIx)
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    if (true == drv_dma_is_active_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]))
+    {
+        drv_dma_clear_tc_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+        while (true == LL_SPI_IsActiveFlag_BSY(SPI_BASE[spi_index]))
+        {
+            __NOP();
+        }
+        LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+        gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_DONE;
+        gp_spi_cs_transition[spi_index](true);
+        return true;
+    }
+    if (true == drv_dma_is_active_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]))
+    {
+        drv_dma_clear_te_flag(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+        LL_DMA_DisableStream(SPI_TX_DMA_BASE[spi_index], SPI_TX_DMA_STREAM[spi_index]);
+        gb_spi_tx_dma_flag[spi_index] = SPI_STATUS_ERROR;
+        gp_spi_cs_transition[spi_index](true);
+        return false;
+    }
+    return false;
+}
+
+bool drv_spi_rx_dma_irq_handler(SPI_TypeDef* SPIx)
+{
+    if (NULL == SPIx)
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    if (true == drv_dma_is_active_tc_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]))
+    {
+        drv_dma_clear_tc_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+        LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+        gb_spi_rx_dma_flag[spi_index] = SPI_STATUS_DONE;
+        gp_spi_cs_transition[spi_index](true);
+        return true;
+    }
+    if (true == drv_dma_is_active_te_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]))
+    {
+        drv_dma_clear_te_flag(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+        LL_DMA_DisableStream(SPI_RX_DMA_BASE[spi_index], SPI_RX_DMA_STREAM[spi_index]);
+        gb_spi_rx_dma_flag[spi_index] = SPI_STATUS_ERROR;
+        gp_spi_cs_transition[spi_index](true);
+        return false;
+    }
+    return false;
 }
 /* USER CODE END 0 */

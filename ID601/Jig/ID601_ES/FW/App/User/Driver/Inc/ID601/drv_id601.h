@@ -47,7 +47,9 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-
+extern void drv_id601_init(void);
+extern bool id601_write(uint16_t addr, uint16_t data);
+extern bool id601_read(uint16_t addr, uint16_t data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

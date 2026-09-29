@@ -21,13 +21,11 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 /* 2. Project internal / System-related headers */
-
+#include "main.h"
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-#define SPI_DMA_DONE        (true)
-#define SPI_DMA_BUSY        (false)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -49,14 +47,14 @@ extern "C" {
 /* USER CODE BEGIN EFP */
 extern void drv_spi_init(void);
 
-extern void drv_spi_tx_dma_irq_handler(void);
-extern void drv_spi_rx_dma_irq_handler(void);
+extern bool drv_spi_transmit_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint16_t length, uint32_t timeout);
+extern bool drv_spi_receive_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, const uint8_t *p_rx, uint16_t length, uint32_t timeout);
 
-extern bool drv_spi_transmit_direct(const uint8_t *p_data, uint16_t length);
-extern bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length);
+extern bool drv_spi_transmit_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, uint16_t length, uint32_t timeout);
+extern bool drv_spi_receive_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, const uint16_t *p_rx, uint16_t length, uint32_t timeout);
 
-extern bool drv_spi_transmit_dma(const uint8_t *p_data, uint16_t length);
-extern bool drv_spi_receive_dma(uint8_t *p_data, uint16_t length);
+extern bool drv_spi_tx_dma_irq_handler(SPI_TypeDef* SPIx);
+extern bool drv_spi_rx_dma_irq_handler(SPI_TypeDef* SPIx);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

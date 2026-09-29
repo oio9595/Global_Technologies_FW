@@ -87,12 +87,12 @@ void drv_uart_init(void)
     gt_uart_rx.head = 0U;
     gt_uart_rx.tail = 0U;
 
-    LL_USART_EnableDMAReq_TX(USART2);
+    //LL_USART_EnableDMAReq_TX(USART2);
     LL_USART_EnableIT_RXNE(USART2);
 
-    LL_DMA_EnableIT_TC(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
-    LL_DMA_EnableIT_TE(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
-    LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
+    //LL_DMA_EnableIT_TC(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
+    //LL_DMA_EnableIT_TE(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
+    //LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
 }
 
 /**
