@@ -16,11 +16,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. Direct pairing header (Corresponding header for this source file) */
-
+#include "drv_ads114s08.h"
 /* 2. C standard library headers (Alphabetical order) */
 
 /* 3. Project internal / System-related headers */
-#include "main.h"
 #include "drv_spi.h"
 #include "drv_gpio.h"
 #include "drv_uart.h"
@@ -28,13 +27,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum tag_ADS_DEVICE
-{
-    ADS_DEV_1 = 0U,
-    ADS_DEV_2,
-    ADS_DEV_MAX,
-} ads_device_t;
-
 typedef enum tag_ADS114_SPS
 {
     ADS_SPS_2_5 = 0U,
@@ -229,7 +221,8 @@ typedef bool (*ads114_spi_cs_fn_t)(bool);
 #define USE_DISPLAY_DEVICE_REGS
 #define ADS114S08_SPI_BASE      (SPI2)
 
-#define ADS114S08_READ_COUNT    (16U) /* must be power of 2 */
+#define ADS114S08_READ_COUNT    (16U)
+#define ADS114S08_TIMEOUT       (20U)
 
 /* Commands */
 #define CMD_NOP                 (0x00U)
@@ -274,8 +267,6 @@ static volatile bool gb_ads114s08_conversion_done;
 
 static int32_t gn_ads114s08_adc_sum;
 static uint16_t gn_ads114s08_conversion_count;
-
-static volatile uint16_t gn_ads114s08_conversion_timeout;
 
 static const ads114_spi_cs_fn_t gp_ads114s08_cs_transition[2] = { drv_gpio_ads114s08_dev1_cs, drv_gpio_ads114s08_dev2_cs };
 /* USER CODE END PV */
@@ -358,6 +349,66 @@ static bool ads114s08_write_register(ads_device_t dev, uint8_t reg_addr, uint8_t
     return true;
 }
 
+static void ads114s08_send_command(ads_device_t dev, uint8_t cmd_code)
+{
+    if (dev >= ADS_DEV_MAX)
+    {
+        return;
+    }
+    uint8_t TxBuffer[1] = { 0U };
+    TxBuffer[0] = cmd_code;
+
+    gp_ads114s08_cs_transition[dev](false);
+    if (false == drv_spi_transmit_dma_8bit(ADS114S08_SPI_BASE, TxBuffer, 1U, 20U))
+    {
+        gp_ads114s08_cs_transition[dev](true);
+        return;
+    }
+}
+
+static void ads114s08_reset(ads_device_t dev)
+{
+    if (dev >= ADS_DEV_MAX)
+    {
+        return;
+    }
+    ads114s08_send_command(dev, CMD_RESET);
+}
+
+void ads114s08_set_conversion_enable(ads_device_t dev, bool b_start)
+{
+    if (dev >= ADS_DEV_MAX)
+    {
+        return;
+    }
+    if(true == b_start)
+    {
+        gn_ads114s08_adc_sum = 0;
+        gb_ads114s08_conversion_done = false;
+        gn_ads114s08_conversion_count = ADS114S08_READ_COUNT;
+        ads114s08_send_command(dev, CMD_START);
+    }
+    else
+    {
+        ads114s08_send_command(dev, CMD_STOP);
+    }
+}
+
+bool ads114s08_wait_conversion_complete(void)
+{
+    uint32_t start_tick = HAL_GetTick();
+    while (false == gb_ads114s08_conversion_done)
+    {
+        if ((HAL_GetTick() - start_tick) > ADS114S08_TIMEOUT)
+        {
+            drv_uart_printf("\r\nADS114S08 timeout!");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static int16_t ads114s08_read_conversion(ads_device_t dev)
 {
     if (dev >= ADS_DEV_MAX)
@@ -380,88 +431,13 @@ static int16_t ads114s08_read_conversion(ads_device_t dev)
     return (int16_t)(((uint16_t)RxBuffer[1] << 8U) | ((uint16_t)RxBuffer[2] << 0U));
 }
 
-static void ads114s08_send_command(ads_device_t dev, uint8_t cmd_code)
+int32_t ads114s08_get_conversion(ads_device_t dev)
 {
     if (dev >= ADS_DEV_MAX)
     {
-        return;
+        return 0;
     }
-    uint8_t TxBuffer[1] = { 0U };
-    TxBuffer[0] = cmd_code;
-
-    gp_ads114s08_cs_transition[dev](false);
-    if (false == drv_spi_transmit_dma_8bit(ADS114S08_SPI_BASE, TxBuffer, 1U, 20U))
-    {
-        gp_ads114s08_cs_transition[dev](true);
-        return;
-    }
-}
-
-void ads114s08_set_input_mux(ads_device_t dev, uint8_t input_p, uint8_t input_n)
-{
-    if (dev >= ADS_DEV_MAX)
-    {
-        return;
-    }
-    ads114s08_inpmux_t input_mux;
-
-    input_mux.muxp = input_p;
-    input_mux.muxn = input_n;
-
-    uint8_t value = (input_mux.muxp << 4U) | (input_mux.muxn << 0U);
-
-    ads114s08_write_register(dev, REG_ADDR_INPMUX, value);
-}
-
-static void ads114s08_reset(ads_device_t dev)
-{
-    if (dev >= ADS_DEV_MAX)
-    {
-        return;
-    }
-    ads114s08_send_command(dev, CMD_RESET);
-}
-
-void ads114s08_set_conversion_enable(ads_device_t dev, bool b_start)
-{
-    if (dev >= ADS_DEV_MAX)
-    {
-        return;
-    }
-    if(true == b_start)
-    {
-        gb_ads114s08_conversion_done = false;
-        gn_ads114s08_adc_sum = 0;
-        gn_ads114s08_conversion_count = ADS114S08_READ_COUNT;
-        gn_ads114s08_conversion_timeout = 15U; // 2000SPS * 16 EA = 8ms
-        ads114s08_send_command(dev, CMD_START);
-    }
-    else
-    {
-        ads114s08_send_command(dev, CMD_STOP);
-    }
-}
-
-bool ads114s08_wait_conversion_complete(void)
-{
-    while (false == gb_ads114s08_conversion_done)
-    {
-        if (0U == gn_ads114s08_conversion_timeout)
-        {
-            drv_uart_printf("\r\nADS114S08 timeout!");
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void ads114s08_timeout(void)
-{
-    if (gn_ads114s08_conversion_timeout)
-    {
-        --gn_ads114s08_conversion_timeout;
-    }
+    return ((int32_t)((float)gn_ads114s08_adc_sum / ADS114S08_READ_COUNT));
 }
 
 void ads114s08_init(void)
@@ -496,6 +472,22 @@ void ads114s08_init(void)
     }
 }
 
+void ads114s08_set_input_mux(ads_device_t dev, uint8_t input_p, uint8_t input_n)
+{
+    if (dev >= ADS_DEV_MAX)
+    {
+        return;
+    }
+    ads114s08_inpmux_t input_mux;
+
+    input_mux.muxp = input_p;
+    input_mux.muxn = input_n;
+
+    uint8_t value = (input_mux.muxp << 4U) | (input_mux.muxn << 0U);
+
+    ads114s08_write_register(dev, REG_ADDR_INPMUX, value);
+}
+
 void ads114s08_drdy1_irq_handler(void)
 {
     int32_t temp = ads114s08_read_conversion(ADS_DEV_1);
@@ -520,7 +512,7 @@ void ads114s08_drdy1_irq_handler(void)
 
 void ads114s08_drdy2_irq_handler(void)
 {
-    int32_t temp = ads114s08_read_conversion(ADS_DEV_1);
+    int32_t temp = ads114s08_read_conversion(ADS_DEV_2);
 
     if (temp > 32767U)
     {
@@ -536,7 +528,7 @@ void ads114s08_drdy2_irq_handler(void)
     if (0U == gn_ads114s08_conversion_count)
     {
         gb_ads114s08_conversion_done = true;
-        ads114s08_set_conversion_enable(ADS_DEV_1, false);    /* stop continuous conversion */
+        ads114s08_set_conversion_enable(ADS_DEV_2, false);    /* stop continuous conversion */
     }
 }
 

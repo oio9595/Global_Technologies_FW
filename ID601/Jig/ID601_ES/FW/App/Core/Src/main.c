@@ -25,6 +25,7 @@
 #include "cli.h"
 #include "drv_uart.h"
 #include "drv_timer.h"
+#include "drv_id601.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -273,6 +274,10 @@ static void MX_ADC1_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(ID601_TEST_GPIO_Port, &GPIO_InitStruct);
 
+  /* ADC1 interrupt Init */
+  NVIC_SetPriority(ADC_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(ADC_IRQn);
+
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
@@ -286,7 +291,7 @@ static void MX_ADC1_Init(void)
   ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
   ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
-  ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
+  ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_CONTINUOUS;
   ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_NONE;
   LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
   LL_ADC_REG_SetFlagEndOfConversion(ADC1, LL_ADC_REG_FLAG_EOC_UNITARY_CONV);
@@ -297,7 +302,7 @@ static void MX_ADC1_Init(void)
   /** Configure Regular Channel
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_8);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_8, LL_ADC_SAMPLINGTIME_3CYCLES);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_8, LL_ADC_SAMPLINGTIME_480CYCLES);
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -1139,7 +1144,10 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOC, LTC_CURRENT_HIGH_Pin|BUFFER_OE_Pin|IC603_5V5_EN_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOA, LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin);
+  LL_GPIO_ResetOutputPin(GPIOA, LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin|DEBUG1_Pin);
+
+  /**/
+  LL_GPIO_ResetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOC, IC603_VCC_EN_Pin|ID601_CH_DEMUX1_Pin);
@@ -1167,8 +1175,8 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin|ADC_CS1_Pin|ID601_CH_DEMUX2_Pin
-                          |ADC_CS2_Pin;
+  GPIO_InitStruct.Pin = LTC_CURRENT_LOW_Pin|LTC_CURRENT_MID_Pin|ADC_CS1_Pin|DEBUG1_Pin
+                          |ID601_CH_DEMUX2_Pin|ADC_CS2_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -1177,7 +1185,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = ID601_CH_DEMUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_DEMUX3_Pin|CNT_RST_Pin
-                          |IC603_CS_Pin;
+                          |DEBUG2_Pin|IC603_CS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;

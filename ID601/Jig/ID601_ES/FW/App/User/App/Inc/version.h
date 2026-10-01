@@ -17,8 +17,8 @@ extern "C" {
 
 #define FW_VER_MAJOR    0
 #define FW_VER_MINOR    0
-#define FW_VER_BUILD    104
-#define FW_GIT_REV "3374ddb-dirty"
+#define FW_VER_BUILD    153
+#define FW_GIT_REV "7433465-dirty"
 
 #ifdef __cplusplus
 }

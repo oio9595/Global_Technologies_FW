@@ -18,9 +18,10 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
-
+#include <stdint.h>
+#include <stdbool.h>
 /* 2. Project internal / System-related headers */
-
+#include "main.h"
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/
@@ -30,7 +31,12 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef enum tag_ADS_DEVICE
+{
+    ADS_DEV_1 = 0U,
+    ADS_DEV_2,
+    ADS_DEV_MAX,
+} ads_device_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -46,7 +52,15 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
+extern void ads114s08_set_conversion_enable(ads_device_t dev, bool b_start);
+extern bool ads114s08_wait_conversion_complete(void);
+extern int32_t ads114s08_get_conversion(ads_device_t dev);
 
+extern void ads114s08_init(void);
+
+extern void ads114s08_set_input_mux(ads_device_t dev, uint8_t input_p, uint8_t input_n);
+extern void ads114s08_drdy1_irq_handler(void);
+extern void ads114s08_drdy2_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

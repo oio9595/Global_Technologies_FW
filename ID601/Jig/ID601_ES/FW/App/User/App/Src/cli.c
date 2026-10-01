@@ -29,6 +29,7 @@
 #include "drv_spi.h" // debug for spi
 #include "drv_gpio.h" // debug for GPIO control
 #include "drv_id601.h" // debug for ID601
+#include "drv_adc.h" // debug for ADC
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,6 +44,8 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_DEBUG_SPI16,
     CLI_CMD_DEBUG_DELAY,
     CLI_CMD_DEBUG_ID601,
+    CLI_CMD_DEBUG_TIM_GEN_SER,
+    CLI_CMD_DEBUG_ADC,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -88,16 +91,18 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PV */
 static const cli_cmd_entry_t gt_cli_command[] =
 {
-    /* ========================================================================================================= */
-    /* Command              Command ID                    Description                                              */
-    /* ========================================================================================================= */
-    { "help",               CLI_CMD_HELP,               "Display help information"                                                                  },
-    { "?",                  CLI_CMD_HELP,               "Display help information"                                                                  },
-    { "reset",              CLI_CMD_RESET,              "Reset the system"                                                                          },
-    { "debug_spi8",         CLI_CMD_DEBUG_SPI8,         "Debug for SPI 8-bit communication"                                                         },
-    { "debug_spi16",        CLI_CMD_DEBUG_SPI16,        "Debug for SPI 16-bit communication"                                                        },
-    { "debug_delay",        CLI_CMD_DEBUG_DELAY,        "Debug for delay_us/ms"                                                                     },
-    { "debug_id601",        CLI_CMD_DEBUG_ID601,        "Debug for ID601 communication"                                                             },
+    /* ======================================================================================================= */
+    /* Command              Command ID                    Description                                          */
+    /* ======================================================================================================= */
+    { "help",               CLI_CMD_HELP,               "Display help information"                              },
+    { "?",                  CLI_CMD_HELP,               "Display help information"                              },
+    { "reset",              CLI_CMD_RESET,              "Reset the system"                                      },
+    { "debug_spi8",         CLI_CMD_DEBUG_SPI8,         "Debug for SPI 8-bit communication"                     },
+    { "debug_spi16",        CLI_CMD_DEBUG_SPI16,        "Debug for SPI 16-bit communication"                    },
+    { "debug_delay",        CLI_CMD_DEBUG_DELAY,        "Debug for delay_us/ms"                                 },
+    { "debug_id601",        CLI_CMD_DEBUG_ID601,        "Debug for ID601 communication"                         },
+    { "debug_tim_gen_ser",  CLI_CMD_DEBUG_TIM_GEN_SER,  "Debug for TIM generate serial"                         },
+    { "debug_adc",          CLI_CMD_DEBUG_ADC,          "Debug for ADC"                                         },
 };
 
 static cli_request_t gt_cli_request;
@@ -346,19 +351,50 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_DEBUG_ID601:
         {
+            /*
             bool serial_rw = (bool)(gt_cli_request.val_1);
             if (false == serial_rw)
             {
-                id601_read(0U, 0U);
+                //id601_read(0U, 0U);
                 drv_uart_printf("\r\n    ID601 read executed...");
             }
             else
             {
-                id601_write(0U, 0U);
+                //id601_write(0U, 0U);
                 drv_uart_printf("\r\n    ID601 write executed...");
+            }
+            */
+            id601_reset();
+            break;
+        }
+        case CLI_CMD_DEBUG_TIM_GEN_SER:
+        {
+            uint16_t temp[62] = { 0U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
+                0U };
+            drv_tim_generate_serial((uint16_t*)temp, 62U, 100U);
+            break;
+        }
+        case CLI_CMD_DEBUG_ADC:
+        {
+            mcu_adc_set_conversion_enable(true);
+            if (true == mcu_adc_wait_conversion_complete())
+            {
+                uint32_t adc_value = mcu_adc_get_average_conversion();
+                drv_uart_printf("\r\n    ADC conversion complete. %lu", adc_value);
+            }
+            else
+            {
+                drv_uart_printf("\r\n    ADC conversion timeout.");
             }
             break;
         }
+
         default:
         {
             // Handle unknown command

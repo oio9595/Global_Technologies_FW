@@ -26,7 +26,7 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-#define DELAY_POWER_UP_MS   (10)  // Delay in milliseconds for VDD ramp-up
+
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -34,7 +34,7 @@ extern "C" {
 typedef enum tag_ID601_VCC_STATE
 {
     ID601_VCC_OFF = 0U,
-    ID601_VCC_5V0,
+    ID601_VCC_3V3,
     ID601_VCC_5V5,
     ID601_VCC_MAX,
 } id601_vcc_state_t;

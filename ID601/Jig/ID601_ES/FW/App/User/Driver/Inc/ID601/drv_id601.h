@@ -31,7 +31,14 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef uint8_t (*id601_crc_func_t)(uint32_t, uint16_t);
 
+typedef enum tag_ID601_REGISTER_BANK
+{
+    ID601_REGISTER_BANK_GENERAL = 0U,
+    ID601_REGISTER_BANK_MIRROR,
+    ID601_REGISTER_BANK_COUNT,
+} id601_register_bank_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -48,8 +55,10 @@ extern "C" {
 
 /* USER CODE BEGIN EFP */
 extern void drv_id601_init(void);
-extern bool id601_write(uint16_t addr, uint16_t data);
-extern bool id601_read(uint16_t addr, uint16_t data);
+
+extern bool id601_write_register(id601_register_bank_t bank, uint16_t addr, const uint16_t* p_value, id601_crc_func_t p_crc_func);
+extern bool id601_read_register(id601_register_bank_t bank, uint16_t addr, uint16_t* p_value, id601_crc_func_t p_crc_func);
+extern bool id601_reset(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

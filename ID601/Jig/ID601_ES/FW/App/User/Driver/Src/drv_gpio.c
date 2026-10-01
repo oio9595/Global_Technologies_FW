@@ -33,6 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define POWER_STABLE_MS     (100)  // Delay in milliseconds for VDD ramp-up
 #define SPI_CS_SETUP_US     (5U)
 /* USER CODE END PD */
 
@@ -69,7 +70,7 @@ bool drv_gpio_id601_vcc(id601_vcc_state_t state)
 
             break;
         }
-        case ID601_VCC_5V0:
+        case ID601_VCC_3V3:
         {
             // Implement the logic to set VCC to 5.0V
             break;
@@ -84,6 +85,7 @@ bool drv_gpio_id601_vcc(id601_vcc_state_t state)
             return false;
         }
     }
+    drv_tim_delay_ms(POWER_STABLE_MS);
     return true;
 }
 
@@ -107,6 +109,7 @@ bool drv_gpio_id601_vled(id601_vled_state_t state)
             return false;
         }
     }
+    drv_tim_delay_ms(POWER_STABLE_MS);
     return true;
 }
 
@@ -157,6 +160,7 @@ bool drv_gpio_id601_ch_demux(id601_ch_t ch)
     {
         LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
     }
+    drv_tim_delay_ms(POWER_STABLE_MS);
     return true;
 #if 0
     switch (ch)

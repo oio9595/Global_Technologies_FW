@@ -26,6 +26,7 @@
 #include "drv_uart.h"
 #include "drv_gpio.h"
 #include "drv_spi.h"
+#include "drv_adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -175,7 +176,7 @@ void EXTI4_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
     /* USER CODE BEGIN LL_EXTI_LINE_4 */
-
+      ads114s08_drdy1_irq_handler();
     /* USER CODE END LL_EXTI_LINE_4 */
   }
   /* USER CODE BEGIN EXTI4_IRQn 1 */
@@ -236,6 +237,19 @@ void DMA1_Stream6_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles ADC1, ADC2 and ADC3 interrupts.
+  */
+void ADC_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC_IRQn 0 */
+    mcu_adc_eoc_irq_handler();
+  /* USER CODE END ADC_IRQn 0 */
+  /* USER CODE BEGIN ADC_IRQn 1 */
+
+  /* USER CODE END ADC_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM3 global interrupt.
   */
 void TIM3_IRQHandler(void)
@@ -287,7 +301,7 @@ void EXTI15_10_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_14);
     /* USER CODE BEGIN LL_EXTI_LINE_14 */
-
+      ads114s08_drdy2_irq_handler();
     /* USER CODE END LL_EXTI_LINE_14 */
   }
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */

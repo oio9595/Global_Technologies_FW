@@ -131,14 +131,10 @@ bool drv_tim_generate_serial(uint16_t* p_cnt, uint16_t length, uint16_t timeout)
 {
     if ((NULL == p_cnt) || (0U == length) || (0U == timeout))
     {
+        drv_uart_printf("\r\n    (%s)Invalid count pointer or length or timeout.", __func__);
         return false;
     }
-    //drv_gpio_serialize_out_enable(true); // must be changed to true
-    drv_gpio_serialize_out_enable(false); // only for testing
-
-    LL_TIM_DisableCounter(TIM1);
-    LL_DMA_DisableStream(TIM1_PWM_DMA_BASE, TIM1_PWM_DMA_STREAM);
-    LL_TIM_SetCounter(TIM1, 0U);
+    drv_gpio_serialize_out_enable(true);
 
     LL_DMA_SetMemoryAddress(TIM1_PWM_DMA_BASE, TIM1_PWM_DMA_STREAM, (uint32_t)(p_cnt));
     LL_DMA_SetDataLength(TIM1_PWM_DMA_BASE, TIM1_PWM_DMA_STREAM, length);
@@ -173,8 +169,7 @@ bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length,
     {
         return false;
     }
-    //drv_gpio_serialize_out_enable(false); // must be changed to true
-    drv_gpio_serialize_out_enable(true); // only for testing
+    drv_gpio_serialize_out_enable(false);
 
     LL_TIM_DisableCounter(TIM2);
     LL_TIM_SetCounter(TIM2, 0U);
@@ -221,36 +216,6 @@ bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length,
             gb_tim2_capture_dma_active = false;
             drv_uart_printf("TIM2 Capture Serial timeout\r\n");
             return false;
-        }
-    }
-    return true;
-}
-
-bool drv_tim_decode_cnt_to_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t* p_serial, uint16_t length)
-{
-    if ((NULL == p_rise) || (NULL == p_fall) || (NULL == p_serial) || (0U == length))
-    {
-        return false;
-    }
-    uint16_t rise_cnt_sum = 0U;
-    float freq_avg = 0.0f;
-    for (uint16_t i = 1U; i < length; i++) // exclude the first element
-    {
-        rise_cnt_sum += p_rise[i];
-    }
-    freq_avg = (float)(rise_cnt_sum + 1U) / (float)(length - 1U); // exclude the first element
-
-    const uint16_t cnt_half_duty = (uint16_t)(freq_avg / 2.0f);
-
-    for (uint16_t i = 0U; i < length; i++)
-    {
-        if (p_rise[i] > cnt_half_duty)
-        {
-            p_serial[i] = 1U;
-        }
-        else
-        {
-            p_serial[i] = 0U;
         }
     }
     return true;

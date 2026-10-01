@@ -135,6 +135,8 @@ void Error_Handler(void);
 #define IC603_nINT_FAULT_Pin LL_GPIO_PIN_10
 #define IC603_nINT_FAULT_GPIO_Port GPIOA
 #define IC603_nINT_FAULT_EXTI_IRQn EXTI15_10_IRQn
+#define DEBUG1_Pin LL_GPIO_PIN_11
+#define DEBUG1_GPIO_Port GPIOA
 #define ID601_CH_DEMUX2_Pin LL_GPIO_PIN_12
 #define ID601_CH_DEMUX2_GPIO_Port GPIOA
 #define TMS_Pin LL_GPIO_PIN_13
@@ -153,6 +155,8 @@ void Error_Handler(void);
 #define IC603_FB1_GPIO_Port GPIOD
 #define ID601_SERIAL_IN_Pin LL_GPIO_PIN_3
 #define ID601_SERIAL_IN_GPIO_Port GPIOB
+#define DEBUG2_Pin LL_GPIO_PIN_4
+#define DEBUG2_GPIO_Port GPIOB
 #define IC603_FLLSYNC_Pin LL_GPIO_PIN_6
 #define IC603_FLLSYNC_GPIO_Port GPIOB
 #define IC603_CS_Pin LL_GPIO_PIN_9

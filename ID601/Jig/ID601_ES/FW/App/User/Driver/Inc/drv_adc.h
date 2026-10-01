@@ -18,7 +18,8 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
-
+#include <stdint.h>
+#include <stdbool.h>
 /* 2. Project internal / System-related headers */
 
 /* USER CODE END Includes */
@@ -46,7 +47,10 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-
+extern void mcu_adc_set_conversion_enable(bool b_start);
+extern bool mcu_adc_wait_conversion_complete(void);
+extern uint32_t mcu_adc_get_average_conversion(void);
+extern void mcu_adc_eoc_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
