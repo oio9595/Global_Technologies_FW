@@ -1496,8 +1496,7 @@ static bool _xd_aging_thread(struct thread_data* td)
             if (*list < XD_AGING_LIST_MAX)
             {
                 td->step = TEST_STEP_INITIAL_BY_LIST;
-                //if ((*list < XD_AGING_LIST_IOUT) || (info->chx >= (XD_CH_MAX - 1U))) // 1 ~ 12ch
-                if ((*list < XD_AGING_LIST_IOUT) || (info->chx >= (XD_CH_02))) // only 1 ch
+                if ((*list < XD_AGING_LIST_IOUT) || (info->chx >= (XD_CH_MAX - 1U))) // 1 ~ 12ch
                 {
                     ++(*list);
                 }
