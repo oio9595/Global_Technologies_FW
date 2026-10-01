@@ -1308,8 +1308,7 @@ static void xd_aging_log_summary(void)
     for (xd_aging_list_t list = XD_AGING_LIST_ICC_TEST; list < XD_AGING_LIST_MAX; ++list)
     {
         test_info_t* info = &__priv_test.t_xd_test_info[list];
-        //uint8_t max_ch = (list < XD_AGING_LIST_IOUT) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX; // 1 ~ 12ch
-        uint8_t max_ch = (uint8_t)(XD_CH_01 + 1U); // only 1 ch
+        uint8_t max_ch = (list < XD_AGING_LIST_IOUT) ? (uint8_t)(XD_CH_01 + 1U) : (uint8_t)XD_CH_MAX; // 1 ~ 12ch
         for (uint8_t ch = XD_CH_01; ch < max_ch; ++ch)
         {
             if (list == XD_AGING_LIST_ICC_TEST)
