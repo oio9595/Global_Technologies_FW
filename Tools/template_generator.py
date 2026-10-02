@@ -103,15 +103,15 @@ def create_source_files(file_name: str) -> None:
 
 /* USER CODE END PM */
 
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
