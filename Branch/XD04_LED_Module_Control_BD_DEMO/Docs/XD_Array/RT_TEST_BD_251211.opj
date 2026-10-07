@@ -1,0 +1,63 @@
+(ExpressProject ""
+  (ProjectVersion "19981106")
+  (SoftwareVersion "23.1 P001 (4147275)  [9/30/2023]-[12/12/25]")
+  (ProjectType "PCB")
+  (Folder "Design Resources"
+    (Folder "Library")
+    ("Allegro Netlist Directory" "allegro")
+    (File ".\rt_test_bd_251211.dsn"
+      (Type "Schematic Design"))
+    (BuildFileAddedOrDeleted "x")
+    (CompileFileAddedOrDeleted "x")
+    (DOCKED "TRUE")
+    (DOCKING_POSITION "59420")
+    (NoModify))
+  (Folder "Layout")
+  (Folder "Outputs")
+  (Folder "Referenced Projects")
+  (Folder "PSpice Resources"
+    (Folder "Simulation Profiles")
+    (Folder "Model Libraries"
+      (Sort User))
+    (Folder "Stimulus Files"
+      (Sort User))
+    (Folder "Include Files"
+      (Sort User)))
+  (Folder "Logs")
+  (PartMRUSelector)
+  (MPSSessionName "jylee")
+  (GlobalState
+    (FileView
+      (Path "Design Resources")
+      (Path "Design Resources" ".\rt_test_bd_251211.dsn")
+      (Path "Design Resources" ".\rt_test_bd_251211.dsn" "MAIN")
+      (Select "Design Resources" ".\rt_test_bd_251211.dsn" "MAIN"
+         "P2. XD ARRAY"))
+    (HierarchyView)
+    (Doc
+      (Type "COrCapturePMDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 0 247 0 747"))
+      (Tab 0))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 5 1627 24 765")
+        (Scroll "-215 50")
+        (Zoom "100")
+        (Occurrence "/"))
+      (Path
+         "C:\WORKING\01_PROJECT\JIG\XD_JIG\XD04\XD04_LED_MODULE_CONTROL_BD\DOCS\XD_ARRAY\RT_TEST_BD_251211.DSN")
+      (Schematic "MAIN")
+      (Page "P1. MAIN"))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 5 1627 24 765")
+        (Scroll "0 671")
+        (Zoom "42")
+        (Occurrence "/"))
+      (Path
+         "C:\WORKING\01_PROJECT\JIG\XD_JIG\XD04\XD04_LED_MODULE_CONTROL_BD\DOCS\XD_ARRAY\RT_TEST_BD_251211.DSN")
+      (Schematic "MAIN")
+      (Page "P2. XD ARRAY"))))
