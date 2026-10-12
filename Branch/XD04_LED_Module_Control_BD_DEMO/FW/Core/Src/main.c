@@ -334,8 +334,16 @@ static void Uart_Task(void)
         {
             if (u32_recv_param[0] <= TOTAL_BLOCK_SIZE)
             {
-                LED_BLK_Set_LD((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
-                LED_Change_Pattern(PATTERN_MAX);
+                uint8_t led_pat = LED_Get_Pattern();
+                if (PATTERN_NONE == led_pat)
+                {
+                    LED_BLK_Set_LD((uint8_t)u32_recv_param[0], (uint16_t)u32_recv_param[1]);
+                }
+                else
+                {
+                    print(LOG_PC, "\r\n    This command is valid on pattern none");
+
+                }
             }
             else
             {
@@ -348,7 +356,6 @@ static void Uart_Task(void)
             if (u32_recv_param[0] <= 128U)
             {
                 LED_Current_Select((float)u32_recv_param[0]);
-                LED_Change_Pattern(PATTERN_MAX);
             }
             else
             {
@@ -431,7 +438,7 @@ static void Key_Task(void)
                 gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
             }
             else
-            {
+            { 
                 if (gt_key_info[key_list].now_state == 0U)
                 {
                     ++gt_key_info[key_list].press_cnt;

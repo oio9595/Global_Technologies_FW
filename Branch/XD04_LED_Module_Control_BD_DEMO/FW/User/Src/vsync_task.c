@@ -17,7 +17,7 @@
 
 #define XDIC_PWM_DUTY_MAX           (100.0f)
 #define XDIC_CURRENT_MAX            (128.0f)
-#define XDIC_CURRENT_DEFAULT        (10.0f)
+#define XDIC_CURRENT_DEFAULT        (64.0f)
 #define PATTERN_CHANGE_FRAME_CNT    (120U)
 
 static bool gb_led_vsync_flag;
@@ -31,7 +31,6 @@ void Vsync_Timer_Start(void)
     LL_TIM_EnableIT_UPDATE(TIM8);
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM8);
-    gf_xd_max_current = 64.0f;
 }
 
 void Vsync_Timer_Stop(void)
@@ -41,7 +40,7 @@ void Vsync_Timer_Stop(void)
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_DisableIT_UPDATE(TIM8);
     gb_led_vsync_flag = false;
-    gf_xd_max_current = 0.0f;
+    gf_xd_max_current = XDIC_CURRENT_DEFAULT;
 }
 
 void Vsync_Update_Handler(void)
@@ -60,7 +59,7 @@ void Vsync_Task(void)
         us_delay(100U);
         XC24_Turn_On_Sync_Auto();
 
-        LED_Generate_Pattern(gn_pattern_idx, gn_vsync_tick);
+        LED_Generate_Pattern(gn_pattern_idx);
 
         XC24_IF_Write_LD(gn_led_ld_buffer);
         XDIC_Update_Max_Current_Vref(gf_xd_max_current);
@@ -115,163 +114,77 @@ void LED_Current_Select(float in_current)
     print(LOG_PC, "\r\n    Set Max Current to %.1f", gf_xd_max_current);
 }
 
-void LED_Generate_Pattern(uint8_t in_pattern, uint32_t in_vsync_tick)
+void LED_Generate_Pattern(uint8_t in_pattern)
 {
-    static bool gb_pattern_change_local = false;
     switch (in_pattern)
     {
         case PATTERN_01:
         {
-            if (true == gb_pattern_change_local)
+            static uint8_t off_col = 0U;
+            for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
             {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
+                const uint8_t row = i / BLK_COL_SIZE;
+                const uint8_t col = i % BLK_COL_SIZE;
+                if (off_col == col)
                 {
-                    if (i % 2U == 0U)
-                    {
-                        gn_led_ld_buffer[i] = 0x040U;
-                    }
-                    else
-                    {
-                        gn_led_ld_buffer[i] = 0xFFFU;
-                    }
+                    gn_led_ld_buffer[i] = 0x000U;
+                }
+                else
+                {
+                    gn_led_ld_buffer[i] = 0xFFFU;
                 }
             }
-            else
+
+            if (gn_vsync_tick % PATTERN_CHANGE_FRAME_CNT == 0U)
             {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
+                ++off_col;
+                if (off_col >= BLK_COL_SIZE)
                 {
-                    if (i % 2U == 0U)
-                    {
-                        gn_led_ld_buffer[i] = 0xFFFU;
-                    }
-                    else
-                    {
-                        gn_led_ld_buffer[i] = 0x040U;
-                    }
+                    off_col = 0U;
                 }
+                gn_vsync_tick = 0U;
             }
             break;
         }
         case PATTERN_02:
         {
-            if (true == gb_pattern_change_local)
+            static uint8_t off_row = 0U;
+            for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
             {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
+                const uint8_t row = i / BLK_COL_SIZE;
+                const uint8_t col = i % BLK_COL_SIZE;
+                if (off_row == row)
                 {
-                    uint8_t row = i / BLK_COL_SIZE;
-                    uint8_t col = i % BLK_COL_SIZE;
-
-                    if (row % 2U == 0U) // even row
-                    {
-                        if (col % 2U == 0U)
-                        {
-                            gn_led_ld_buffer[i] = 0x040U;
-                        }
-                        else
-                        {
-                            gn_led_ld_buffer[i] = 0xFFFU;
-                        }
-                    }
-                    else // odd row
-                    {
-                        if (col % 2U == 0U)
-                        {
-                            gn_led_ld_buffer[i] = 0xFFFU;
-                        }
-                        else
-                        {
-                            gn_led_ld_buffer[i] = 0x040U;
-                        }
-                    }
+                    gn_led_ld_buffer[i] = 0x000U;
+                }
+                else
+                {
+                    gn_led_ld_buffer[i] = 0xFFFU;
                 }
             }
-            else
-            {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
-                {
-                    uint8_t row = i / BLK_COL_SIZE;
-                    uint8_t col = i % BLK_COL_SIZE;
 
-                    if (row % 2U == 0U) // even row
-                    {
-                        if (col % 2U == 0U)
-                        {
-                            gn_led_ld_buffer[i] = 0xFFFU;
-                        }
-                        else
-                        {
-                            gn_led_ld_buffer[i] = 0x040U;
-                        }
-                    }
-                    else // odd row
-                    {
-                        if (col % 2U == 0U)
-                        {
-                            gn_led_ld_buffer[i] = 0x040U;
-                        }
-                        else
-                        {
-                            gn_led_ld_buffer[i] = 0xFFFU;
-                        }
-                    }
+            if (gn_vsync_tick % PATTERN_CHANGE_FRAME_CNT == 0U)
+            {
+                ++off_row;
+                if (off_row >= BLK_ROW_SIZE)
+                {
+                    off_row = 0U;
                 }
+                gn_vsync_tick = 0U;
             }
             break;
         }
         case PATTERN_03:
         {
-            if (true == gb_pattern_change_local)
+            for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
             {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
-                {
-                    uint8_t col = i % BLK_COL_SIZE;
-                    if (1U == ((col >> 1U) & 0x01U))
-                    {
-                        gn_led_ld_buffer[i] = 0xFFFU;
-                    }
-                    else
-                    {
-                        gn_led_ld_buffer[i] = 0x040U;
-                    }
-                }
-            }
-            else
-            {
-                for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
-                {
-                    uint8_t col = i % BLK_COL_SIZE;
-                    if (1U == ((col >> 1U) & 0x01U))
-                    {
-                        gn_led_ld_buffer[i] = 0x040U;
-                    }
-                    else
-                    {
-                        gn_led_ld_buffer[i] = 0xFFFU;
-                    }
-                }
+                gn_led_ld_buffer[i] = 0xFFFU;
             }
             break;
         }
         default:
         {
-            for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
-            {
-                gn_led_ld_buffer[i] = 0xFFFU;
-            }
-            gb_pattern_change_local = false;
             break;
-        }
-    }
-
-    if (in_vsync_tick % PATTERN_CHANGE_FRAME_CNT == 0U)
-    {
-        if (true == gb_pattern_change_local)
-        {
-            gb_pattern_change_local = false;
-        }
-        else
-        {
-            gb_pattern_change_local = true;
         }
     }
 }
@@ -295,27 +208,40 @@ void LED_Change_Pattern(uint8_t in_pattern)
     }
 }
 
+uint8_t LED_Get_Pattern(void)
+{
+    return gn_pattern_idx;
+}
+
 void LED_Change_Pattern_to_P1(void)
 {
     gn_pattern_idx = PATTERN_01;
+    gn_vsync_tick = 1U;
     print(LOG_PC, "\r\n    Set Pattern to %u", gn_pattern_idx);
 }
 
 void LED_Change_Pattern_to_P2(void)
 {
     gn_pattern_idx = PATTERN_02;
+    gn_vsync_tick = 1U;
     print(LOG_PC, "\r\n    Set Pattern to %u", gn_pattern_idx);
 }
 
 void LED_Change_Pattern_to_P3(void)
 {
     gn_pattern_idx = PATTERN_03;
+    gn_vsync_tick = 1U;
     print(LOG_PC, "\r\n    Set Pattern to %u", gn_pattern_idx);
 }
 
 void LED_Change_Pattern_to_None(void)
 {
     gn_pattern_idx = PATTERN_NONE;
+    for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
+    {
+        gn_led_ld_buffer[i] = 0xFFFU;
+    }
+    gn_vsync_tick = 1U;
     print(LOG_PC, "\r\n    Set Pattern to %u", gn_pattern_idx);
 }
 
@@ -323,9 +249,9 @@ void LED_System_Init(void)
 {
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gn_led_ld_buffer[i] = 0x800U;
+        gn_led_ld_buffer[i] = 0xFFFU;
     }
-    gn_pattern_idx = PATTERN_MAX;
+    gn_pattern_idx = PATTERN_NONE;
 
     XC24_Init();
     XDIC_Init();

@@ -211,7 +211,7 @@ void XDIC_Param_Init(void)
     gt_xd_short_level = SHORT_LEVEL_70V;
     gt_xd_fb_level = FB_LEVEL_0V4;
 
-    gf_xd_max_current = 0.0f;
+    gf_xd_max_current = 64.0f;
 }
 
 void XDIC_Init(void)

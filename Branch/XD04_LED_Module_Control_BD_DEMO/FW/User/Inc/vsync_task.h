@@ -20,8 +20,9 @@ extern void Vsync_Task(void);
 
 extern void LED_BLK_Set_LD(uint8_t in_blk_num, uint16_t in_ld_value);
 extern void LED_Current_Select(float in_current);
-extern void LED_Generate_Pattern(uint8_t in_pattern, uint32_t in_vsync_tick);
+extern void LED_Generate_Pattern(uint8_t in_pattern);
 extern void LED_Change_Pattern(uint8_t in_pattern);
+extern uint8_t LED_Get_Pattern(void);
 
 extern void LED_Change_Pattern_to_P1(void);
 extern void LED_Change_Pattern_to_P2(void);

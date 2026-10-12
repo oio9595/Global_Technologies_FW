@@ -486,7 +486,7 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r45.ch4_en = 1U;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE2 :
-                gt_xc24_general_regs._r46.ld_size = 20U;
+                gt_xc24_general_regs._r46.ld_size = 4U;
                 gt_xc24_general_regs._r46.ld_width = 3U;
                 break;
             default :
@@ -578,6 +578,16 @@ void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
     us_delay(XDIC_WRITE_DELAY + 20U);
 }
 
+uint8_t find_idx(uint8_t x)
+{
+    return (uint8_t)(
+        (((x >> 2) ^ 1U) & 1U) * 16U
+        + (((x >> 1) ^ x) & 1U) * 8U
+        + (((x >> 2) ^ (x >> 1)) & 1U) * 4U
+        + ((x >> 3) & 3U)
+    );
+}
+
 void XC24_IF_Write_LD(uint16_t* p_ld_buff)
 {
     _xc24_cmd_t cmd_format = { 0 };
@@ -590,8 +600,7 @@ void XC24_IF_Write_LD(uint16_t* p_ld_buff)
 
     for (uint8_t map_idx = 0U ; map_idx < TOTAL_BLOCK_SIZE ; ++map_idx)
     {
-        uint16_t val = 4U * map_idx;
-        uint16_t ld_idx = (map_idx == 31U) ? 31U : (val % 31U);
+        uint16_t ld_idx = find_idx(map_idx);
         gn_spi_ld_buffer[1 + ld_idx] = p_ld_buff[map_idx];
     }
 
