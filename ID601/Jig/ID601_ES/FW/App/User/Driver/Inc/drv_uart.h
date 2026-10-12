@@ -38,6 +38,17 @@ typedef struct tag_MSG_BUFFER
     char msg[MSG_BUFFER_SIZE];
     uint16_t size;
 } msg_buffer_t;
+
+typedef enum tag_LOG_LEVEL
+{
+    LOG_LV_OFF,
+    LOG_LV_ERROR,
+    LOG_LV_WARN,
+    LOG_LV_INFO,
+    LOG_LV_DEBUG,
+    LOG_LV_TRACE,
+    LOG_LV_MAX
+} log_level_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -61,7 +72,7 @@ msg_buffer_t* drv_uart_tx_ring_buffer_pop(void);
 void drv_uart_tx_dma_start(msg_buffer_t* p_msg);
 
 extern void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size);
-extern void drv_uart_printf(const char* format, ...);
+extern void drv_uart_printf(log_level_t level, const char* format, ...);
 
 bool drv_uart_rx_data_pending(void);
 msg_buffer_t* drv_uart_rx_ring_buffer_pop(void);

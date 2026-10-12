@@ -23,9 +23,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cli.h"
+#include "drv_gpio.h"
 #include "drv_uart.h"
 #include "drv_timer.h"
 #include "drv_id601.h"
+#include "id601_trim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,6 +63,13 @@ const osThreadAttr_t CLITask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for ID601TrimTask */
+osThreadId_t ID601TrimTaskHandle;
+const osThreadAttr_t ID601TrimTask_attributes = {
+  .name = "ID601TrimTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -83,6 +92,7 @@ static void MX_TIM13_Init(void);
 static void MX_I2C1_Init(void);
 void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
+void StartID601TrimTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -137,6 +147,8 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
     drv_tim_init();
+    drv_gpio_init();
+    drv_id601_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -164,6 +176,9 @@ int main(void)
 
   /* creation of CLITask */
   CLITaskHandle = osThreadNew(StartCLITask, NULL, &CLITask_attributes);
+
+  /* creation of ID601TrimTask */
+  ID601TrimTaskHandle = osThreadNew(StartID601TrimTask, NULL, &ID601TrimTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -942,7 +957,7 @@ static void MX_TIM8_Init(void)
   NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn);
   NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
-  NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),15, 0));
+  NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),4, 0));
   NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
 
   /* USER CODE BEGIN TIM8_Init 1 */
@@ -1251,13 +1266,13 @@ static void MX_GPIO_Init(void)
   LL_GPIO_SetPinPull(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_PULL_UP);
 
   /**/
-  LL_GPIO_SetPinPull(IC603_nINT_LD_GPIO_Port, IC603_nINT_LD_Pin, LL_GPIO_PULL_UP);
+  LL_GPIO_SetPinPull(IC603_nINT_LD_GPIO_Port, IC603_nINT_LD_Pin, LL_GPIO_PULL_NO);
 
   /**/
   LL_GPIO_SetPinPull(ADC_DRDY2_GPIO_Port, ADC_DRDY2_Pin, LL_GPIO_PULL_UP);
 
   /**/
-  LL_GPIO_SetPinPull(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_PULL_UP);
+  LL_GPIO_SetPinPull(IC603_nINT_FAULT_GPIO_Port, IC603_nINT_FAULT_Pin, LL_GPIO_PULL_NO);
 
   /**/
   LL_GPIO_SetPinMode(ADC_DRDY1_GPIO_Port, ADC_DRDY1_Pin, LL_GPIO_MODE_INPUT);
@@ -1283,8 +1298,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-volatile bool g_ic603_nint_ld_flag = false;
-volatile bool g_ic603_nint_fault_flag = false;
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartID601TestTask */
@@ -1297,24 +1311,10 @@ volatile bool g_ic603_nint_fault_flag = false;
 void StartID601TestTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-    drv_id601_init();
+
   /* Infinite loop */
   for(;;)
   {
-    if (g_ic603_nint_ld_flag)
-    {
-        uint16_t out[23] = { 0U,119U,119U,119U,59U,59U,59U,59U,59U,119U,59U,119U,59U,119U,119U,59U,119U,59U,59U,119U,59U,119U,0U };
-        drv_tim_generate_serial(out, 23U, 1000U);
-        drv_uart_printf("\r\n    nINT_LD...");
-        g_ic603_nint_ld_flag = false;
-    }
-    if (g_ic603_nint_fault_flag)
-    {
-        uint16_t out[23] = { 0U,119U,119U,119U,59U,59U,59U,59U,59U,119U,59U,119U,59U,119U,119U,59U,119U,59U,59U,119U,59U,119U,0U };
-        drv_tim_generate_serial(out, 23U, 1000U);
-        drv_uart_printf("\r\n    nINT_FAULT...");
-        g_ic603_nint_fault_flag = false;
-    }
     osDelay(1);
   }
   /* USER CODE END 5 */
@@ -1339,6 +1339,41 @@ void StartCLITask(void *argument)
     cli_process();
   }
   /* USER CODE END StartCLITask */
+}
+
+/* USER CODE BEGIN Header_StartID601TrimTask */
+/**
+* @brief Function implementing the ID601TrimTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartID601TrimTask */
+void StartID601TrimTask(void *argument)
+{
+  /* USER CODE BEGIN StartID601TrimTask */
+    static thread_data_t td = { 0U };
+  /* Infinite loop */
+  for(;;)
+  {
+      uint32_t flags = osThreadFlagsWait(TRIM_START_FLAG, osFlagsWaitAny, osWaitForever);
+
+      if ((int32_t)flags < 0)
+      {
+          /* 플래그 대기 오류 처리 */
+          continue;
+      }
+
+      id601_trim_init(&td);
+
+      while (true == id601_trim_process(&td))
+      {
+          if (td.tout > 0U)
+          {
+              osDelay(td.tout);
+          }
+      }
+  }
+  /* USER CODE END StartID601TrimTask */
 }
 
 /**

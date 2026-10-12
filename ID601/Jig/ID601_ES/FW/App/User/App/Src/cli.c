@@ -23,6 +23,7 @@
 #include <string.h>
 /* 3. Project internal / System-related headers */
 #include "main.h"
+#include "cmsis_os.h"
 #include "version.h"
 #include "drv_uart.h"
 #include "drv_timer.h" // debug for pwm gen
@@ -30,6 +31,7 @@
 #include "drv_gpio.h" // debug for GPIO control
 #include "drv_id601.h" // debug for ID601
 #include "drv_adc.h" // debug for ADC
+#include "id601_trim.h" // trim for ID601
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,11 +42,16 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_UNKNOWN,
     CLI_CMD_HELP,
     CLI_CMD_RESET,
+
+    CLI_CMD_TRIM_START,
+
+
     CLI_CMD_DEBUG_SPI8,
     CLI_CMD_DEBUG_SPI16,
     CLI_CMD_DEBUG_DELAY,
     CLI_CMD_DEBUG_ID601,
     CLI_CMD_DEBUG_TIM_GEN_SER,
+    CLI_CMD_DEBUG_TIM_CAPTURE,
     CLI_CMD_DEBUG_ADC,
 
     CLI_CMD_MAX
@@ -97,18 +104,18 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "help",               CLI_CMD_HELP,               "Display help information"                              },
     { "?",                  CLI_CMD_HELP,               "Display help information"                              },
     { "reset",              CLI_CMD_RESET,              "Reset the system"                                      },
+    { "trim_start",         CLI_CMD_TRIM_START,         "Start the ID601 trim process"                          },
     { "debug_spi8",         CLI_CMD_DEBUG_SPI8,         "Debug for SPI 8-bit communication"                     },
     { "debug_spi16",        CLI_CMD_DEBUG_SPI16,        "Debug for SPI 16-bit communication"                    },
     { "debug_delay",        CLI_CMD_DEBUG_DELAY,        "Debug for delay_us/ms"                                 },
     { "debug_id601",        CLI_CMD_DEBUG_ID601,        "Debug for ID601 communication"                         },
     { "debug_tim_gen_ser",  CLI_CMD_DEBUG_TIM_GEN_SER,  "Debug for TIM generate serial"                         },
+    { "debug_tim_capture",  CLI_CMD_DEBUG_TIM_CAPTURE,  "Debug for TIM capture"                                 },
     { "debug_adc",          CLI_CMD_DEBUG_ADC,          "Debug for ADC"                                         },
 };
 
 static cli_request_t gt_cli_request;
-
-uint16_t pwm_duty_table[22] = { 0U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                                59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 0U }; // debug for pwm gen
+extern osThreadId_t ID601TrimTaskHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,15 +135,15 @@ static void cli_print_id804_comm_result(id804_comm_result_t comm_result,  uint16
 {
     switch (comm_result)
     {
-        case ID804_COMM_NONE:         {drv_uart_printf("\r\n    [ID804] [Comm Result] None"); break;}
-        case ID804_COMM_WRITE_OK:     {drv_uart_printf("\r\n    [ID804] [Comm Result] Write OK"); break;}
-        case ID804_COMM_READ_OK:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Read OK"); break;}
-        case ID804_COMM_ERR_DEV_ADDR: {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Device Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_CMD:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Command [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_ADDR:     {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Invalid Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_I2C:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: I2C Failure [0x%02X | 0x%06X]", target, data); break;}
-        case ID804_COMM_ERR_SPI:      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: SPI Failure [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        default:                      {drv_uart_printf("\r\n    [ID804] [Comm Result] Error: Unknown Error [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_NONE:         {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] None"); break;}
+        case ID804_COMM_WRITE_OK:     {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Write OK"); break;}
+        case ID804_COMM_READ_OK:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Read OK"); break;}
+        case ID804_COMM_ERR_DEV_ADDR: {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Device Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_CMD:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Command [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_ADDR:     {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        case ID804_COMM_ERR_I2C:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: I2C Failure [0x%02X | 0x%06X]", target, data); break;}
+        case ID804_COMM_ERR_SPI:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: SPI Failure [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
+        default:                      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Unknown Error [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
     }
 }
 #endif
@@ -148,19 +155,19 @@ static void cli_print_id804_comm_result(id804_comm_result_t comm_result,  uint16
  */
 static void cli_print_banner(void)
 {
-    drv_uart_printf(CLI_CLEAR_SCREEN);
+    drv_uart_printf(LOG_LV_INFO, CLI_CLEAR_SCREEN);
 
-    drv_uart_printf("\r\n====================================================");
-    drv_uart_printf("\r\n  %s", "ID601 TEST Board");
-    drv_uart_printf("\r\n====================================================");
-    drv_uart_printf("\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
-    drv_uart_printf("\r\n  * FW Version  : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
-    drv_uart_printf("\r\n  * FW Git Rev  : %s", FW_GIT_REV);
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  %s", "ID601 TEST Board");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Version  : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Git Rev  : %s", FW_GIT_REV);
 
-    drv_uart_printf("\r\n====================================================");
-    drv_uart_printf("\r\n  Type 'help' or '?' to view available CLI commands.");
-    drv_uart_printf("\r\n====================================================");
-    drv_uart_printf(CLI_PROMPT);
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  Type 'help' or '?' to view available CLI commands.");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, CLI_PROMPT);
 }
 
 /**
@@ -181,12 +188,12 @@ static void cli_help(void)
         }
     }
 
-    drv_uart_printf("\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
     for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
-        drv_uart_printf("\r\n\"%-*s\" - %s", max_name_len, gt_cli_command[idx].name, gt_cli_command[idx].description);
+        drv_uart_printf(LOG_LV_INFO, "\r\n\"%-*s\" - %s", max_name_len, gt_cli_command[idx].name, gt_cli_command[idx].description);
     }
-    drv_uart_printf("\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
 }
 
 /**
@@ -266,8 +273,14 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_RESET:
         {
-            drv_uart_printf("\r\n    System resetting...");
+            drv_uart_printf(LOG_LV_INFO, "\r\n    System resetting...");
             NVIC_SystemReset();
+            break;
+        }
+        case CLI_CMD_TRIM_START:
+        {
+            osThreadFlagsSet(ID601TrimTaskHandle, TRIM_START_FLAG);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 trim process started...");
             break;
         }
         case CLI_CMD_DEBUG_SPI8:
@@ -282,9 +295,9 @@ static void cli_command_execute(void)
                 if (false == drv_spi_receive_dma_8bit(SPI1, tx_buffer, rx_buffer, 3U, 20U))
                 {
                     drv_gpio_ic603_cs(true);
-                    drv_uart_printf("\r\n    SPI 8-bit read NG...");
+                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 8-bit read NG...");
                 }
-                drv_uart_printf("\r\n    SPI 8-bit read OK...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit read OK...");
             }
             else
             {
@@ -294,9 +307,9 @@ static void cli_command_execute(void)
                 if (false == drv_spi_transmit_dma_8bit(SPI1, tx_buffer, 3U, 20U))
                 {
                     drv_gpio_ic603_cs(true);
-                    drv_uart_printf("\r\n    SPI 8-bit write NG...");
+                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 8-bit write NG...");
                 }
-                drv_uart_printf("\r\n    SPI 8-bit write OK...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit write OK...");
             }
             break;
         }
@@ -312,9 +325,9 @@ static void cli_command_execute(void)
                 if (false == drv_spi_receive_dma_16bit(SPI2, tx_buffer, rx_buffer, 3U, 20U))
                 {
                     drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf("\r\n    SPI 16-bit read NG...");
+                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 16-bit read NG...");
                 }
-                drv_uart_printf("\r\n    SPI 16-bit read OK...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit read OK...");
             }
             else
             {
@@ -324,9 +337,9 @@ static void cli_command_execute(void)
                 if (false == drv_spi_transmit_dma_16bit(SPI2, tx_buffer, 3U, 20U))
                 {
                     drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf("\r\n    SPI 16-bit write NG...");
+                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 16-bit write NG...");
                 }
-                drv_uart_printf("\r\n    SPI 16-bit write OK...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit write OK...");
             }
             break;
         }
@@ -338,14 +351,14 @@ static void cli_command_execute(void)
                 LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
                 drv_tim_delay_us(10); // Example delay in microseconds
                 LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_uart_printf("\r\n    Delay 10 us...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    Delay 10 us...");
             }
             else
             {
                 LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
                 drv_tim_delay_ms(10); // Example delay in milliseconds
                 LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_uart_printf("\r\n    Delay 10 ms...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    Delay 10 ms...");
             }
             break;
         }
@@ -356,15 +369,15 @@ static void cli_command_execute(void)
             if (false == serial_rw)
             {
                 //id601_read(0U, 0U);
-                drv_uart_printf("\r\n    ID601 read executed...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ID601 read executed...");
             }
             else
             {
                 //id601_write(0U, 0U);
-                drv_uart_printf("\r\n    ID601 write executed...");
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ID601 write executed...");
             }
             */
-            id601_reset();
+
             break;
         }
         case CLI_CMD_DEBUG_TIM_GEN_SER:
@@ -380,17 +393,30 @@ static void cli_command_execute(void)
             drv_tim_generate_serial((uint16_t*)temp, 62U, 100U);
             break;
         }
+        case CLI_CMD_DEBUG_TIM_CAPTURE:
+        {
+            mcu_tim_set_conversion_enable(true);
+            if (true == mcu_tim_wait_conversion_complete())
+            {
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    TIM capture complete. (period: %lu)", mcu_tim_get_average_conversion());
+            }
+            else
+            {
+                drv_uart_printf(LOG_LV_WARN, "\r\n    TIM capture timeout.");
+            }
+            break;
+        }
         case CLI_CMD_DEBUG_ADC:
         {
             mcu_adc_set_conversion_enable(true);
             if (true == mcu_adc_wait_conversion_complete())
             {
                 uint32_t adc_value = mcu_adc_get_average_conversion();
-                drv_uart_printf("\r\n    ADC conversion complete. %lu", adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ADC conversion complete. %lu", adc_value);
             }
             else
             {
-                drv_uart_printf("\r\n    ADC conversion timeout.");
+                drv_uart_printf(LOG_LV_WARN, "\r\n    ADC conversion timeout.");
             }
             break;
         }
@@ -398,11 +424,11 @@ static void cli_command_execute(void)
         default:
         {
             // Handle unknown command
-            drv_uart_printf("\r\n    Unknown CMD.");
+            drv_uart_printf(LOG_LV_WARN, "\r\n    Unknown CMD.");
             break;
         }
     }
-    drv_uart_printf(CLI_PROMPT);
+    drv_uart_printf(LOG_LV_INFO, CLI_PROMPT);
 }
 
 /**

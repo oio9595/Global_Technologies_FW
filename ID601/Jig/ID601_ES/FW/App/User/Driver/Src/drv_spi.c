@@ -38,8 +38,6 @@ typedef bool (*spi_cs_fn_t)(bool);
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define SPI_TIMEOUT_MS      (100U)
-
 #define SPI1_TX_DMA_BASE    DMA2
 #define SPI1_TX_DMA_STREAM  LL_DMA_STREAM_3
 
@@ -632,5 +630,110 @@ bool drv_spi_rx_dma_irq_handler(SPI_TypeDef* SPIx)
         return false;
     }
     return false;
+}
+
+bool drv_spi_transmit_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint16_t length, uint32_t timeout)
+{
+    if ((NULL == SPIx) || (NULL == p_tx) || (0U == length))
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_8BIT);
+
+    LL_SPI_Enable(SPI_BASE[spi_index]);
+
+    uint32_t start_time = HAL_GetTick();
+
+    for (uint16_t i = 0U; i < length; ++i)
+    {
+        while (!LL_SPI_IsActiveFlag_TXE(SPI_BASE[spi_index]))
+        {
+            if ((HAL_GetTick() - start_time) > timeout)
+            {
+                LL_SPI_Disable(SPI_BASE[spi_index]);
+                return false;
+            }
+        }
+        LL_SPI_TransmitData8(SPI_BASE[spi_index], p_tx[i]);
+    }
+
+    while (!LL_SPI_IsActiveFlag_TXE(SPI_BASE[spi_index]) || LL_SPI_IsActiveFlag_BSY(SPI_BASE[spi_index]))
+    {
+        if ((HAL_GetTick() - start_time) > timeout)
+        {
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            return false;
+        }
+    }
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+
+    return true;
+}
+
+bool drv_spi_receive_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint8_t *p_rx, uint16_t length, uint32_t timeout)
+{
+    if ((NULL == SPIx) || (NULL == p_tx) || (NULL == p_rx) || (0U == length))
+    {
+        return false;
+    }
+
+    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    if (spi_index >= 2U)
+    {
+        return false;
+    }
+
+    if (LL_SPI_IsActiveFlag_RXNE(SPI_BASE[spi_index]))
+    {
+        (void)LL_SPI_ReceiveData8(SPI_BASE[spi_index]);
+    }
+
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+    LL_SPI_SetDataWidth(SPI_BASE[spi_index], LL_SPI_DATAWIDTH_8BIT);
+    LL_SPI_Enable(SPI_BASE[spi_index]);
+
+    uint32_t start_time = HAL_GetTick();
+    for (uint16_t i = 0U; i < length; ++i)
+    {
+        while (!LL_SPI_IsActiveFlag_TXE(SPI_BASE[spi_index]))
+        {
+            if ((HAL_GetTick() - start_time) > timeout)
+            {
+                LL_SPI_Disable(SPI_BASE[spi_index]);
+                return false;
+            }
+        }
+        LL_SPI_TransmitData8(SPI_BASE[spi_index], p_tx[i]);
+
+        while (!LL_SPI_IsActiveFlag_RXNE(SPI_BASE[spi_index]))
+        {
+            if ((HAL_GetTick() - start_time) > timeout)
+            {
+                LL_SPI_Disable(SPI_BASE[spi_index]);
+                return false;
+            }
+        }
+        ((uint8_t*)p_rx)[i] = LL_SPI_ReceiveData8(SPI_BASE[spi_index]);
+    }
+
+    while (!LL_SPI_IsActiveFlag_TXE(SPI_BASE[spi_index]) || LL_SPI_IsActiveFlag_BSY(SPI_BASE[spi_index]))
+    {
+        if ((HAL_GetTick() - start_time) > timeout)
+        {
+            LL_SPI_Disable(SPI_BASE[spi_index]);
+            return false;
+        }
+    }
+    LL_SPI_Disable(SPI_BASE[spi_index]);
+
+    return true;
 }
 /* USER CODE END 0 */

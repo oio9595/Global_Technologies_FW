@@ -24,14 +24,83 @@
 #include "drv_timer.h"
 #include "drv_uart.h"
 #include "drv_gpio.h"
+#include "cmsis_os.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum tag_ID601_TEST_ANA_EN
+{
+    ID601_TEST_ANA_IREF_TEST            = 0x00U, // 0x00
+    ID601_TEST_ANA_IREF2_TEST           = 0x01U, // 0x01
+    ID601_TEST_ANA_VREF1P5_BGR2_RES     = 0x02U, // 0x02
+    ID601_TEST_ANA_VDD1P5_DIG_RES       = 0x03U, // 0x03
+    ID601_TEST_ANA_VDD1P5_DAC_RES       = 0x04U, // 0x04
+    ID601_TEST_ANA_VDD1P5_FLL_RES       = 0x05U, // 0x05
+    ID601_TEST_ANA_VREF_TEST            = 0x06U, // 0x06
+    ID601_TEST_ANA_VREF2_TEST           = 0x07U, // 0x07
+    ID601_TEST_ANA_TEST_VREF2_ZTC_O1    = 0x08U, // 0x08
+    ID601_TEST_ANA_TEST_VREF2_ZTC_O2    = 0x09U, // 0x09
+    ID601_TEST_ANA_VDD_UV               = 0x0AU, // 0x0A
+    ID601_TEST_ANA_VSS_0B               = 0x0BU, // 0x0B
+    ID601_TEST_ANA_VSS_0C               = 0x0CU, // 0x0C
+    ID601_TEST_ANA_1P5_UVOV_TEST        = 0x0DU, // 0x0D
+    ID601_TEST_ANA_1P5_DAC_UVOV_TEST    = 0x0EU, // 0x0E
+    ID601_TEST_ANA_1P5_OSC_UVOV_TEST    = 0x0FU, // 0x0F
+    ID601_TEST_ANA_VSS_10               = 0x10U, // 0x10
+    ID601_TEST_ANA_VSS_11               = 0x11U, // 0x11
+    ID601_TEST_ANA_VSS_12               = 0x12U, // 0x12
+    ID601_TEST_ANA_VSS_13               = 0x13U, // 0x13
+    ID601_TEST_ANA_VSS_14               = 0x14U, // 0x14
+    ID601_TEST_ANA_VSS_15               = 0x15U, // 0x15
+    ID601_TEST_ANA_VREF_FB1             = 0x16U, // 0x16
+    ID601_TEST_ANA_VREF_FB2             = 0x17U, // 0x17
+    ID601_TEST_ANA_VREF_FB3             = 0x18U, // 0x18
+    ID601_TEST_ANA_VREF2_OPEN           = 0x19U, // 0x19
+    ID601_TEST_ANA_VREF2_SHORT1         = 0x1AU, // 0x1A
+    ID601_TEST_ANA_VREF2_SHORT2         = 0x1BU, // 0x1B
+    ID601_TEST_ANA_VREF2_SHORT3         = 0x1CU, // 0x1C
+    ID601_TEST_ANA_VSS_1D               = 0x1DU, // 0x1D
+    ID601_TEST_ANA_VSS_1E               = 0x1EU, // 0x1E
+    ID601_TEST_ANA_VSS_1F               = 0x1FU, // 0x1F
+} id601_test_ana_en_t;
+
+typedef enum tag_ID601_MAX_CURRENT_LEVEL
+{
+    ID601_MAX_CURRENT_LEVEL_04mA = 0x00U,  // 0x00
+    ID601_MAX_CURRENT_LEVEL_08mA = 0x01U,  // 0x01
+    ID601_MAX_CURRENT_LEVEL_12mA = 0x02U,  // 0x02
+    ID601_MAX_CURRENT_LEVEL_16mA = 0x03U,  // 0x03
+    ID601_MAX_CURRENT_LEVEL_20mA = 0x04U,  // 0x04
+    ID601_MAX_CURRENT_LEVEL_24mA = 0x05U,  // 0x05
+    ID601_MAX_CURRENT_LEVEL_28mA = 0x06U,  // 0x06
+    ID601_MAX_CURRENT_LEVEL_32mA = 0x07U,  // 0x07
+    ID601_MAX_CURRENT_LEVEL_36mA = 0x08U,  // 0x08
+    ID601_MAX_CURRENT_LEVEL_40mA = 0x09U,  // 0x09
+    ID601_MAX_CURRENT_LEVEL_44mA = 0x0AU,  // 0x0A
+    ID601_MAX_CURRENT_LEVEL_48mA = 0x0BU,  // 0x0B
+    ID601_MAX_CURRENT_LEVEL_52mA = 0x0CU,  // 0x0C
+    ID601_MAX_CURRENT_LEVEL_56mA = 0x0DU,  // 0x0D
+    ID601_MAX_CURRENT_LEVEL_60mA = 0x0EU,  // 0x0E
+    ID601_MAX_CURRENT_LEVEL_64mA = 0x0FU,  // 0x0F
+} id601_max_current_level_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ID601_ASSERT(cond) \
+    do { \
+        if (!(cond)) \
+        { \
+            static const char msg[] = \
+                "\r\n    ID601 Assertion failed: " #cond; \
+            drv_uart_printf_direct( \
+                (const uint8_t*)msg, \
+                (uint16_t)(sizeof(msg) - 1U)); \
+            while (1) { /* 여기서 멈추거나 리셋 */ } \
+        } \
+    } while (0)
+
 #define ID601_DAISY_LENGTH_MAX              (5U)
 #define ID601_DAISY_LENGTH_INITIAL          (3U)
 #define ID601_BROADCAST                     (0U)
@@ -45,6 +114,8 @@
 
 /********************** ID601 CRC **********************/
 #define ID601_CRC8_BIT_COUNT                (8U)
+#define ID601_CRC8_Pos                      (0U)
+#define ID601_CRC8_Msk                      (0x00FFU << ID601_CRC8_Pos)
 
 #define ID601_CRC8_POLY                     (0x1DU)
 #define ID601_CRC8_INIT                     (0xFFU)
@@ -60,7 +131,7 @@
 #define ID601_WRITE_COMMAND_Msk             (0x000FU << ID601_WRITE_COMMAND_Pos)
 
 #define ID601_WRITE_ADDRESS_Pos             (12U)
-#define ID601_WRITE_ADDRESS_Msk             (0x001FU << ID601_WRITE_ADDRESS_Pos)
+#define ID601_WRITE_ADDRESS_Msk             (0x003FU << ID601_WRITE_ADDRESS_Pos)
 
 #define ID601_WRITE_DATA_Pos                (0U)
 #define ID601_WRITE_DATA_Msk                (0x0FFFU << ID601_WRITE_DATA_Pos)
@@ -153,6 +224,52 @@
 #define ID601_RX_CCR_BUFFER_CAPACITY        (ID601_DAISY_LENGTH_MAX * ID601_READ_RECV_SERIAL_BIT_COUNT)
 
 #define ID601_DELAY_RESET_MS                (1U)
+
+#define ID601_FT_MODE                       (0x0000U)
+#define ID601_FB_MODE                       (0x0001U)
+#define ID601_O_FB_E                        (0x0001U)
+#define ID601_T_DET_E                       (0x0001U)
+#define ID601_S_DET_E                       (0x0001U)
+#define ID601_O_DET_E                       (0x0001U)
+#define ID601_T_OFF_E                       (0x0001U)
+#define ID601_S_OFF_E                       (0x0001U)
+#define ID601_O_OFF_E                       (0x0001U)
+
+#define ID601_FLL_CNT_1                     (0x0DCDU)
+
+#define ID601_OPEN_MASK_OPT                 (0x0000U)
+#define ID601_CHOP_EN                       (0x0001U)
+#define ID601_CHOP_DRV_EN                   (0x0001U)
+#define ID601_CHOP_OSC_LDO_EN               (0x0001U)
+#define ID601_CHOP_OSC_EN                   (0x0001U)
+#define ID601_CHOP_DAC_EN                   (0x0001U)
+#define ID601_CHOP_BGR_EN                   (0x0001U)
+
+#define ID601_TEST_EN                       (0x0001U)
+#define ID601_SW_SEL                        (0x0001U)
+#define ID601_PWMOUT_FULL                   (0x0001U)
+#define ID601_MCLK64_O                      (0x0000U)
+#define ID601_DTEST_MUX_EN                  (0x0000U)
+#define ID601_RD_EN                         (0x0001U)
+#define ID601_EXT_CLKIN                     (0x0000U)
+#define ID601_ADDR_EXT                      (0x0000U)
+
+#define ID601_GAIN_VREF1                    (0x0001U)
+#define ID601_GAIN_VREF2                    (0x0001U)
+
+#define ID601_OFFSET_VREF1                  (0x0001U)
+#define ID601_OFFSET_VREF2                  (0x0001U)
+
+#define ID601_IREF1_MAX                     (0x001FU)
+#define ID601_IREF2_MAX                     (0x001FU)
+#define ID601_LDO_BGR2_CTL_MAX              (0x001FU)
+#define ID601_LDO_CTL_MAX                   (0x000FU)
+#define ID601_LDO_DAC_CTL_MAX               (0x001FU)
+#define ID601_LDO_OSC_CTL_MAX               (0x000FU)
+#define ID601_OFS_TEMP_MAX                  (0x000FU)
+#define ID601_OSC_RCTL_MAX                  (0x001FU)
+#define ID601_GAIN_MAX                      (0x007FU)
+#define ID601_OFFSET_MAX                    (0x01FFU)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -162,6 +279,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+static osMutexId_t gh_id601_mutex_id;
+
+static const osMutexAttr_t gs_id601_mutex_attr = {
+    .name      = "id601Mutex",
+    .attr_bits = osMutexPrioInherit,   /* 우선순위 역전 방지 */
+    .cb_mem    = NULL,
+    .cb_size   = 0U,
+};
+
 static uint16_t gn_id601_tx_ccr_buffer[ID601_TX_CCR_BUFFER_CAPACITY] = { 0U };
 static uint16_t gn_id601_rx_ccr_rise_buffer[ID601_RX_CCR_BUFFER_CAPACITY] = { 0U };
 static uint16_t gn_id601_rx_ccr_fall_buffer[ID601_RX_CCR_BUFFER_CAPACITY] = { 0U };
@@ -173,8 +299,8 @@ static uint16_t gn_id601_daisy_length;
 
 static id601_crc_func_t gp_id601_crc_func = NULL;
 
-static uint16_t gn_id601_general_regs[ID601_ADDR_GENERAL_COUNT][ID601_DAISY_LENGTH_MAX];
-static uint16_t gn_id601_mirror_regs[ID601_ADDR_MIRROR_COUNT][ID601_DAISY_LENGTH_MAX];
+static uint16_t gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_COUNT][ID601_DAISY_LENGTH_MAX];
+static uint16_t gn_id601_mirror_regs[ID601_ADDR_MIRROR_MAX_COUNT][ID601_DAISY_LENGTH_MAX];
 static uint16_t gn_id601_fault;
 /* USER CODE END PV */
 
@@ -192,6 +318,22 @@ void drv_id601_init(void)
     gn_id601_serial_bit1_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT1) / ID601_SERIAL_RATIO_SUM);
 
     gn_id601_daisy_length = ID601_DAISY_LENGTH_INITIAL;
+
+    gh_id601_mutex_id = osMutexNew(&gs_id601_mutex_attr);
+    if (NULL == gh_id601_mutex_id)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Failed to create ID601 mutex.", __func__);
+    }
+}
+
+static inline bool id601_lock(void)
+{
+    return (osOK == osMutexAcquire(gh_id601_mutex_id, ID601_SERIAL_TIMEOUT_MS));
+}
+
+static inline void id601_unlock(void)
+{
+    osMutexRelease(gh_id601_mutex_id);
 }
 
 static uint8_t id601_calculate_crc(uint32_t data, uint16_t size)
@@ -205,7 +347,7 @@ static uint8_t id601_calculate_crc(uint32_t data, uint16_t size)
     uint32_t mask = 0U;
     for (uint32_t i = 0U; i < size; i++)
     {
-        mask |= 1U << i;
+        mask |= (1UL << i);
     }
     data &= mask;
     int8_t repeat = (size - 1U);
@@ -215,7 +357,7 @@ static uint8_t id601_calculate_crc(uint32_t data, uint16_t size)
         uint8_t data_bit = (data >> i) & 0x01;
         uint8_t feedback = ((crc >> 7) & 0x01) ^ data_bit;
 
-        crc <<= 1;
+        crc <<= 1U;
 
         if (feedback)
             crc ^= ID601_CRC8_POLY;
@@ -228,7 +370,7 @@ static uint16_t id601_encode_ccr_buffer_from_serial(uint32_t serial, uint16_t* p
 {
     if ((NULL == p_cnt) || (0U == length))
     {
-        drv_uart_printf("\r\n    (%s)Invalid CCR buffer or length.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Invalid CCR buffer or length.", __func__);
         return 0U;
     }
     uint16_t count = 0U;
@@ -251,20 +393,20 @@ static bool id601_decode_serial_from_ccr_buffer(uint16_t* p_rise, uint16_t* p_fa
 {
     if ((NULL == p_rise) || (NULL == p_fall) || (NULL == p_serial) || (0U == length))
     {
-        drv_uart_printf("\r\n    (%s)Invalid CCR buffer or length.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Invalid CCR buffer or length.", __func__);
         return false;
     }
-    uint16_t rise_cnt_sum = 0U;
-    float freq_avg = 0.0f;
-    for (uint16_t i = 1U; i < length; i++) // exclude the first element
+    uint32_t rise_cnt_sum = 0U;
+    for (uint32_t i = 1U; i < length; i++) // exclude the first element
     {
         rise_cnt_sum += p_rise[i];
     }
-    freq_avg = (float)(rise_cnt_sum + 1U) / (float)(length - 1U); // exclude the first element
 
-    const uint16_t cnt_half_duty = (uint16_t)(freq_avg / 2.0f);
+    const uint32_t sample_count = (uint32_t)(length - 1U);
+    const uint32_t numerator    = (rise_cnt_sum + 1U) + sample_count;
+    const uint16_t cnt_half_duty = (uint16_t)(numerator / (2U * sample_count));
 
-    for (uint16_t i = 0U; i < length; i++)
+    for (uint32_t i = 0U; i < length; i++)
     {
         if (p_rise[i] > cnt_half_duty)
         {
@@ -278,17 +420,17 @@ static bool id601_decode_serial_from_ccr_buffer(uint16_t* p_rise, uint16_t* p_fa
     return true;
 }
 
-static inline uint16_t id601_set_field(uint16_t reg_value, uint16_t field_msk, uint16_t field_pos, uint16_t field_value)
+static inline uint32_t id601_set_field(uint32_t reg_value, uint32_t field_msk, uint32_t field_pos, uint32_t field_value)
 {
-    reg_value &= (uint16_t)~field_msk;
-    reg_value |= (uint16_t)((field_value << field_pos) & field_msk);
+    reg_value &= ~field_msk;
+    reg_value |= ((field_value << field_pos) & field_msk);
 
     return reg_value;
 }
 
-static inline uint16_t id601_get_field(uint16_t reg_value, uint16_t field_msk, uint16_t field_pos)
+static inline uint32_t id601_get_field(uint32_t reg_value, uint32_t field_msk, uint32_t field_pos)
 {
-    return (uint16_t)((reg_value & field_msk) >> field_pos);
+    return ((reg_value & field_msk) >> field_pos);
 }
 
 static inline uint32_t id601_build_write_payload(uint16_t addr, uint16_t data)
@@ -304,7 +446,7 @@ static bool id601_write_command(uint16_t addr, const uint16_t* p_data, id601_crc
 {
     if (p_data == NULL)
     {
-        drv_uart_printf("\r\n    (%s)Invalid data pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid data pointer.", __func__);
         return false;
     }
 
@@ -366,11 +508,11 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
 {
     if (NULL == p_data)
     {
-        drv_uart_printf("\r\n    (%s)Invalid data pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid data pointer.", __func__);
         return false;
     }
 
-    uint16_t frame_length = ID601_WRITE_PAYLOAD_BIT_COUNT;
+    uint16_t frame_length = ID601_READ_RECV_PAYLOAD_BIT_COUNT;
     if (NULL != p_crc_func)
     {
         frame_length += ID601_CRC8_BIT_COUNT;
@@ -385,14 +527,41 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
             return false;
         }
         uint32_t serial_data = 0U;
-        if (false == id601_decode_serial_from_ccr_buffer(p_rise, p_fall, &serial_data, ID601_READ_RECV_PAYLOAD_BIT_COUNT))
+        if (false == id601_decode_serial_from_ccr_buffer(p_rise, p_fall, &serial_data, frame_length))
         {
             return false;
         }
-        uint16_t command = id601_get_field(serial_data, ID601_READ_RECV_COMMAND_Msk, ID601_READ_RECV_COMMAND_Pos);
-        uint16_t ID = id601_get_field(serial_data, ID601_READ_RECV_DEVICE_ID_Msk, ID601_READ_RECV_DEVICE_ID_Pos);
-        uint16_t data = id601_get_field(serial_data, ID601_READ_RECV_DATA_Msk, ID601_READ_RECV_DATA_Pos);
-        drv_uart_printf("\r\n    [ID601 Read Recv] [device_index: %u, command: 0x%02X, ID: 0x%02X, data: 0x%03X]", device_index, command, ID, data);
+        uint32_t payload = serial_data;
+
+        uint16_t command = 0U;
+        uint16_t ID = 0U;
+        uint16_t data = 0U;
+        uint16_t recv_crc = 0U;
+
+        if (NULL != p_crc_func)
+        {
+            recv_crc = (serial_data & ID601_CRC8_Msk) >> ID601_CRC8_Pos;
+            payload = (serial_data >> ID601_CRC8_BIT_COUNT);
+            uint16_t calc_crc = p_crc_func(payload, ID601_READ_RECV_PAYLOAD_BIT_COUNT);
+            if (recv_crc != calc_crc)
+            {
+                drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
+                return false;
+            }
+        }
+
+        command = id601_get_field(payload, ID601_READ_RECV_COMMAND_Msk, ID601_READ_RECV_COMMAND_Pos);
+        ID = id601_get_field(payload, ID601_READ_RECV_DEVICE_ID_Msk, ID601_READ_RECV_DEVICE_ID_Pos);
+        data = id601_get_field(payload, ID601_READ_RECV_DATA_Msk, ID601_READ_RECV_DATA_Pos);
+
+        if (NULL != p_crc_func)
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Read Recv] [device_index: %u, command: 0x%02X, ID: 0x%02X, data: 0x%03X, crc: 0x%02X]", device_index, command, ID, data, recv_crc);
+        }
+        else
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Read Recv] [device_index: %u, command: 0x%02X, ID: 0x%02X, data: 0x%03X]", device_index, command, ID, data);
+        }
         p_data[device_index] = data;
     }
 
@@ -456,7 +625,7 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
 {
     if (NULL == p_status)
     {
-        drv_uart_printf("\r\n    (%s)Invalid status pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid status pointer.", __func__);
         return false;
     }
 
@@ -473,33 +642,60 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
         return false;
     }
     uint32_t serial_data = 0U;
-    if (false == id601_decode_serial_from_ccr_buffer(p_rise, p_fall, &serial_data, ID601_FAULT_RECV_PAYLOAD_BIT_COUNT))
+    if (false == id601_decode_serial_from_ccr_buffer(p_rise, p_fall, &serial_data, frame_length))
     {
         return false;
     }
-    uint16_t command = id601_get_field(serial_data, ID601_FAULT_RECV_COMMAND_Msk, ID601_FAULT_RECV_COMMAND_Pos);
-    uint16_t fault = id601_get_field(serial_data, ID601_FAULT_RECV_STATUS_Msk, ID601_FAULT_RECV_STATUS_Pos);
-    drv_uart_printf("\r\n    [ID601 Fault Recv] [command: 0x%02X, Fault: 0x%01X]", command, fault);
+
+    uint32_t payload = serial_data;
+
+    uint16_t command = 0U;
+    uint16_t fault = 0U;
+    uint16_t recv_crc = 0U;
+
+    if (NULL != p_crc_func)
+    {
+        recv_crc = (serial_data & ID601_CRC8_Msk) >> ID601_CRC8_Pos;
+        payload = (serial_data >> ID601_CRC8_BIT_COUNT);
+        uint16_t calc_crc = p_crc_func(payload, ID601_FAULT_RECV_PAYLOAD_BIT_COUNT);
+        if (recv_crc != calc_crc)
+        {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
+            return false;
+        }
+    }
+
+    command = id601_get_field(payload, ID601_FAULT_RECV_COMMAND_Msk, ID601_FAULT_RECV_COMMAND_Pos);
+    fault = id601_get_field(payload, ID601_FAULT_RECV_STATUS_Msk, ID601_FAULT_RECV_STATUS_Pos);
+
+    if (NULL != p_crc_func)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Fault Recv] [command: 0x%02X, Fault: 0x%01X, crc: 0x%02X]", command, fault, recv_crc);
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Fault Recv] [command: 0x%02X, Fault: 0x%01X]", command, fault);
+    }
     *p_status = fault;
 
     return true;
 }
 
-static inline uint32_t id601_build_syncgen_payload(void)
+static inline uint32_t id601_build_sync_gen_payload(void)
 {
     uint32_t payload = 0U;
     payload = id601_set_field(payload, ID601_SYNCGEN_COMMAND_Msk, ID601_SYNCGEN_COMMAND_Pos, ID601_SYNCGEN_COMMAND);
     return payload;
 }
 
-static bool id601_syncgen_command(id601_crc_func_t p_crc_func)
+static bool id601_sync_gen_command(id601_crc_func_t p_crc_func)
 {
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
-        uint32_t payload = id601_build_syncgen_payload();
+        uint32_t payload = id601_build_sync_gen_payload();
         uint16_t frame_length = ID601_SYNCGEN_PAYLOAD_BIT_COUNT;
 
         if (NULL != p_crc_func)
@@ -516,21 +712,21 @@ static bool id601_syncgen_command(id601_crc_func_t p_crc_func)
     return drv_tim_generate_serial((uint16_t*)gn_id601_tx_ccr_buffer, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
 }
 
-static inline uint32_t id601_build_idgen_payload(void)
+static inline uint32_t id601_build_id_gen_payload(void)
 {
     uint32_t payload = 0U;
     payload = id601_set_field(payload, ID601_IDGEN_COMMAND_Msk, ID601_IDGEN_COMMAND_Pos, ID601_IDGEN_COMMAND);
     return payload;
 }
 
-static bool id601_idgen_command(id601_crc_func_t p_crc_func)
+static bool id601_id_gen_command(id601_crc_func_t p_crc_func)
 {
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
-        uint32_t payload = id601_build_idgen_payload();
+        uint32_t payload = id601_build_id_gen_payload();
         uint16_t frame_length = ID601_IDGEN_PAYLOAD_BIT_COUNT;
 
         if (NULL != p_crc_func)
@@ -547,9 +743,9 @@ static bool id601_idgen_command(id601_crc_func_t p_crc_func)
     return drv_tim_generate_serial((uint16_t*)gn_id601_tx_ccr_buffer, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
 }
 
-static bool id601_select_register_bank(id601_register_bank_t bank, id601_crc_func_t p_crc_func)
+static bool id601_select_register_bank(const uint16_t bank, id601_crc_func_t p_crc_func)
 {
-    static id601_register_bank_t id601_register_bank = ID601_REGISTER_BANK_GENERAL;
+    static uint16_t prev_id601_bank = ID601_REGISTER_BANK_GENERAL;
     uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
     uint16_t* p_op_mode = gn_id601_general_regs[ID601_ADDR_GENERAL_OP_MODE];
 
@@ -558,7 +754,7 @@ static bool id601_select_register_bank(id601_register_bank_t bank, id601_crc_fun
         tx_data[device_index] = p_op_mode[device_index];
     }
 
-    if (bank != id601_register_bank)
+    if (bank != prev_id601_bank)
     {
         for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
         {
@@ -575,7 +771,7 @@ static bool id601_select_register_bank(id601_register_bank_t bank, id601_crc_fun
             {
                 return false;
             }
-            tx_data[device_index] = id601_set_field(p_op_mode[device_index], ID601_OP_MODE_ADDR_EXT_Msk, ID601_OP_MODE_ADDR_EXT_Pos, addr_ext);
+            tx_data[device_index] = (uint16_t)id601_set_field(p_op_mode[device_index], ID601_OP_MODE_ADDR_EXT_Msk, ID601_OP_MODE_ADDR_EXT_Pos, addr_ext);
         }
         if (false == id601_write_command(ID601_ADDR_GENERAL_OP_MODE, tx_data, p_crc_func))
         {
@@ -586,62 +782,254 @@ static bool id601_select_register_bank(id601_register_bank_t bank, id601_crc_fun
         {
             p_op_mode[device_index] = tx_data[device_index];
         }
-        id601_register_bank = bank;
+        prev_id601_bank = bank;
     }
     return true;
 }
 
-bool id601_write_register(id601_register_bank_t bank, uint16_t addr, const uint16_t* p_value, id601_crc_func_t p_crc_func)
+bool id601_write_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, const uint16_t new_value, id601_crc_func_t p_crc_func)
 {
+    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
+    uint16_t* p_id601 = NULL;
+    uint16_t max_addr_count = 0xFFFFU;
+
+    if (ID601_REGISTER_BANK_GENERAL == bank)
+    {
+        p_id601 = gn_id601_general_regs[addr];
+        max_addr_count = ID601_ADDR_GENERAL_MAX_COUNT;
+    }
+    else if (ID601_REGISTER_BANK_MIRROR == bank)
+    {
+        p_id601 = gn_id601_mirror_regs[addr];
+        max_addr_count = ID601_ADDR_MIRROR_MAX_COUNT;
+    }
+    else
+    {
+        return false;
+    }
+
+    if (addr >= max_addr_count)
+    {
+        return false;
+    }
+
+    if (device_select > gn_id601_daisy_length)
+    {
+        return false;
+    }
+
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
     if (false == id601_select_register_bank(bank, p_crc_func))
     {
+        id601_unlock();
         return false;
     }
-    if (false == id601_write_command(addr, p_value, p_crc_func))
+
+    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
+        tx_data[device_index] = p_id601[device_index];
+    }
+
+    if (ID601_BROADCAST == device_select)
+    {
+        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        {
+            tx_data[device_index] = new_value;
+        }
+    }
+    else
+    {
+        const uint16_t device_index = device_select - 1U;
+        tx_data[device_index] = new_value;
+    }
+
+    if (false == id601_write_command(addr, tx_data, p_crc_func))
+    {
+        id601_unlock();
         return false;
     }
-    drv_uart_printf("\r\n    (%s)Write register success.", __func__);
+
+    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    {
+        p_id601[device_index] = tx_data[device_index];
+    }
+
+    id601_unlock();
+
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)Write register success.", __func__);
     return true;
 }
 
-bool id601_read_register(id601_register_bank_t bank, uint16_t addr, uint16_t* p_value, id601_crc_func_t p_crc_func)
+bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func)
 {
+    uint16_t rx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
+    uint16_t* p_id601 = NULL;
+    uint16_t max_addr_count = 0xFFFFU;
+
+    if (ID601_REGISTER_BANK_GENERAL == bank)
+    {
+        p_id601 = gn_id601_general_regs[addr];
+        max_addr_count = ID601_ADDR_GENERAL_MAX_COUNT;
+    }
+    else if (ID601_REGISTER_BANK_MIRROR == bank)
+    {
+        p_id601 = gn_id601_mirror_regs[addr];
+        max_addr_count = ID601_ADDR_MIRROR_MAX_COUNT;
+    }
+    else
+    {
+        return false;
+    }
+
+    if (addr >= max_addr_count)
+    {
+        return false;
+    }
+
+    if (device_select > gn_id601_daisy_length)
+    {
+        return false;
+    }
+
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
     if (false == id601_select_register_bank(bank, p_crc_func))
     {
+        id601_unlock();
         return false;
     }
     if (false == id601_read_command(addr, p_crc_func))
     {
+        id601_unlock();
         return false;
     }
-    if (false == id601_read_receive_command(p_value, p_crc_func))
+    if (false == id601_read_receive_command(rx_data, p_crc_func))
     {
+        id601_unlock();
         return false;
     }
-    drv_uart_printf("\r\n    (%s)Read register success.", __func__);
+
+    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    {
+        p_id601[device_index] = rx_data[device_index];
+    }
+
+    id601_unlock();
+
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)Read register success.", __func__);
     return true;
 }
 
-bool id601_reset(void)
+bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func)
+{
+    return 0U;
+}
+
+bool id601_fault_read(id601_crc_func_t p_crc_func)
+{
+    uint16_t rx_data = 0U;
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
+    if (false == id601_fault_read_command(p_crc_func))
+    {
+        id601_unlock();
+        return false;
+    }
+    if (false == id601_fault_receive_command(&rx_data, p_crc_func))
+    {
+        id601_unlock();
+        return false;
+    }
+    gn_id601_fault = rx_data;
+
+    id601_unlock();
+
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)fault read success.", __func__);
+    return true;
+}
+
+bool id601_sync_gen(id601_crc_func_t p_crc_func)
+{
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
+    if (false == id601_sync_gen_command(p_crc_func))
+    {
+        id601_unlock();
+        return false;
+    }
+
+    id601_unlock();
+
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)sync gen success.", __func__);
+    return true;
+}
+
+bool id601_id_gen(id601_crc_func_t p_crc_func)
+{
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
+    if (false == id601_id_gen_command(p_crc_func))
+    {
+        id601_unlock();
+        return false;
+    }
+
+    id601_unlock();
+
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)id gen success.", __func__);
+    return true;
+}
+
+static bool id601_reset(id601_crc_func_t p_crc_func)
 {
     uint16_t reset[ID601_DAISY_LENGTH_MAX] = { 0U };
+
+    if (false == id601_lock())
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        return false;
+    }
+
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
         reset[device_index] = id601_set_field(reset[device_index], ID601_RESET_ID_RST_Msk, ID601_RESET_ID_RST_Pos, 1U);
     }
 
-    if (false == id601_write_command(ID601_ADDR_GENERAL_OP_MODE, reset, NULL))
+    if (false == id601_write_command(ID601_ADDR_GENERAL_RESET_ID, reset, p_crc_func))
     {
+        id601_unlock();
         return false;
     }
+
+    id601_unlock();
     drv_tim_delay_ms(ID601_DELAY_RESET_MS);
     return true;
 }
 
-static inline uint16_t id601_build_reset_id(uint16_t rst, uint16_t vs_rst, uint16_t e_rst, uint16_t lkg_e, uint16_t id)
+static inline uint32_t id601_build_reset_id(uint16_t rst, uint16_t vs_rst, uint16_t e_rst, uint16_t lkg_e, uint16_t id)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_RESET_ID_RST_Msk, ID601_RESET_ID_RST_Pos, (uint16_t)rst);
     register_value = id601_set_field(register_value, ID601_RESET_ID_VS_RST_Msk, ID601_RESET_ID_VS_RST_Pos, (uint16_t)vs_rst);
     register_value = id601_set_field(register_value, ID601_RESET_ID_E_RST_Msk, ID601_RESET_ID_E_RST_Pos, (uint16_t)e_rst);
@@ -652,45 +1040,13 @@ static inline uint16_t id601_build_reset_id(uint16_t rst, uint16_t vs_rst, uint1
 
 bool id601_write_reset_id(uint16_t device_select, uint16_t rst, uint16_t vs_rst, uint16_t e_rst, uint16_t lkg_e, uint16_t id)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_reset_id = gn_id601_general_regs[ID601_ADDR_GENERAL_RESET_ID];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_reset_id[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_reset_id(rst, vs_rst, e_rst, lkg_e, id);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_reset_id(rst, vs_rst, e_rst, lkg_e, id);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_RESET_ID, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_reset_id[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_reset_id(rst, vs_rst, e_rst, lkg_e, id);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_RESET_ID, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_ld_control(uint16_t sv_no, uint16_t ld_type, uint16_t delay_ch_en, uint16_t syncmode, uint16_t pwm_res, uint16_t ld_dir, uint16_t ld_mode)
+static inline uint32_t id601_build_ld_control(uint16_t sv_no, uint16_t ld_type, uint16_t delay_ch_en, uint16_t syncmode, uint16_t pwm_res, uint16_t ld_dir, uint16_t ld_mode)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_LD_CONTROL_SV_NO_Msk, ID601_LD_CONTROL_SV_NO_Pos, (uint16_t)sv_no);
     register_value = id601_set_field(register_value, ID601_LD_CONTROL_LD_TYPE_Msk, ID601_LD_CONTROL_LD_TYPE_Pos, (uint16_t)ld_type);
     register_value = id601_set_field(register_value, ID601_LD_CONTROL_DELAY_CH_EN_Msk, ID601_LD_CONTROL_DELAY_CH_EN_Pos, (uint16_t)delay_ch_en);
@@ -703,90 +1059,26 @@ static inline uint16_t id601_build_ld_control(uint16_t sv_no, uint16_t ld_type, 
 
 bool id601_write_ld_control(uint16_t device_select, uint16_t sv_no, uint16_t ld_type, uint16_t delay_ch_en, uint16_t syncmode, uint16_t pwm_res, uint16_t ld_dir, uint16_t ld_mode)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_ld_control = gn_id601_general_regs[ID601_ADDR_GENERAL_LD_CONTROL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_ld_control[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_ld_control(sv_no, ld_type, delay_ch_en, syncmode, pwm_res, ld_dir, ld_mode);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_ld_control(sv_no, ld_type, delay_ch_en, syncmode, pwm_res, ld_dir, ld_mode);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_LD_CONTROL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_ld_control[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_ld_control(sv_no, ld_type, delay_ch_en, syncmode, pwm_res, ld_dir, ld_mode);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_LD_CONTROL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_ld_size(uint16_t ld_size)
+static inline uint32_t id601_build_ld_size(uint16_t ld_size)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_LD_SIZE_LD_SIZE_Msk, ID601_LD_SIZE_LD_SIZE_Pos, (uint16_t)ld_size);
     return register_value;
 }
 
 bool id601_write_ld_size(uint16_t device_select, uint16_t ld_size)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_ld_size = gn_id601_general_regs[ID601_ADDR_GENERAL_LD_SIZE];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_ld_size[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_ld_size(ld_size);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_ld_size(ld_size);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_LD_SIZE, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_ld_size[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_ld_size(ld_size);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_LD_SIZE, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_pwmclk_div_1_2(uint16_t fpwm_div_2, uint16_t fpwm_div_1)
+static inline uint32_t id601_build_pwmclk_div_1_2(uint16_t fpwm_div_2, uint16_t fpwm_div_1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_PWMCLK_DIV1_2_FPWM_DIV2_Msk, ID601_PWMCLK_DIV1_2_FPWM_DIV2_Pos, (uint16_t)fpwm_div_2);
     register_value = id601_set_field(register_value, ID601_PWMCLK_DIV1_2_FPWM_DIV1_Msk, ID601_PWMCLK_DIV1_2_FPWM_DIV1_Pos, (uint16_t)fpwm_div_1);
     return register_value;
@@ -794,45 +1086,13 @@ static inline uint16_t id601_build_pwmclk_div_1_2(uint16_t fpwm_div_2, uint16_t 
 
 bool id601_write_pwmclk_div_1_2(uint16_t device_select, uint16_t fpwm_div_2, uint16_t fpwm_div_1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_pwmclk_div_1_2 = gn_id601_general_regs[ID601_ADDR_GENERAL_PWMCLK_DIV1_2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_pwmclk_div_1_2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_pwmclk_div_1_2(fpwm_div_2, fpwm_div_1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_pwmclk_div_1_2(fpwm_div_2, fpwm_div_1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_PWMCLK_DIV1_2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_pwmclk_div_1_2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_pwmclk_div_1_2(fpwm_div_2, fpwm_div_1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_PWMCLK_DIV1_2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_pwmclk_div_2_3(uint16_t fpwm_div_3, uint16_t fpwm_div_2)
+static inline uint32_t id601_build_pwmclk_div_2_3(uint16_t fpwm_div_3, uint16_t fpwm_div_2)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_PWMCLK_DIV2_3_FPWM_DIV3_Msk, ID601_PWMCLK_DIV2_3_FPWM_DIV3_Pos, (uint16_t)fpwm_div_3);
     register_value = id601_set_field(register_value, ID601_PWMCLK_DIV2_3_FPWM_DIV2_Msk, ID601_PWMCLK_DIV2_3_FPWM_DIV2_Pos, (uint16_t)fpwm_div_2);
     return register_value;
@@ -840,45 +1100,13 @@ static inline uint16_t id601_build_pwmclk_div_2_3(uint16_t fpwm_div_3, uint16_t 
 
 bool id601_write_pwmclk_div_2_3(uint16_t device_select, uint16_t fpwm_div_3, uint16_t fpwm_div_2)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_pwmclk_div_2_3 = gn_id601_general_regs[ID601_ADDR_GENERAL_PWMCLK_DIV2_3];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_pwmclk_div_2_3[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_pwmclk_div_2_3(fpwm_div_3, fpwm_div_2);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_pwmclk_div_2_3(fpwm_div_3, fpwm_div_2);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_PWMCLK_DIV2_3, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_pwmclk_div_2_3[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_pwmclk_div_2_3(fpwm_div_3, fpwm_div_2);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_PWMCLK_DIV2_3, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_channel_enable(uint16_t ch12_en, uint16_t ch11_en, uint16_t ch10_en, uint16_t ch9_en, uint16_t ch8_en, uint16_t ch7_en, uint16_t ch6_en, uint16_t ch5_en, uint16_t ch4_en, uint16_t ch3_en, uint16_t ch2_en, uint16_t ch1_en)
+static inline uint32_t id601_build_channel_enable(uint16_t ch12_en, uint16_t ch11_en, uint16_t ch10_en, uint16_t ch9_en, uint16_t ch8_en, uint16_t ch7_en, uint16_t ch6_en, uint16_t ch5_en, uint16_t ch4_en, uint16_t ch3_en, uint16_t ch2_en, uint16_t ch1_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_CHANNEL_ENABLE_CH12_EN_Msk, ID601_CHANNEL_ENABLE_CH12_EN_Pos, (uint16_t)ch12_en);
     register_value = id601_set_field(register_value, ID601_CHANNEL_ENABLE_CH11_EN_Msk, ID601_CHANNEL_ENABLE_CH11_EN_Pos, (uint16_t)ch11_en);
     register_value = id601_set_field(register_value, ID601_CHANNEL_ENABLE_CH10_EN_Msk, ID601_CHANNEL_ENABLE_CH10_EN_Pos, (uint16_t)ch10_en);
@@ -896,45 +1124,13 @@ static inline uint16_t id601_build_channel_enable(uint16_t ch12_en, uint16_t ch1
 
 bool id601_write_channel_enable(uint16_t device_select, uint16_t ch12_en, uint16_t ch11_en, uint16_t ch10_en, uint16_t ch9_en, uint16_t ch8_en, uint16_t ch7_en, uint16_t ch6_en, uint16_t ch5_en, uint16_t ch4_en, uint16_t ch3_en, uint16_t ch2_en, uint16_t ch1_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_channel_enable = gn_id601_general_regs[ID601_ADDR_GENERAL_CHANNEL_ENABLE];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_channel_enable[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_channel_enable(ch12_en, ch11_en, ch10_en, ch9_en, ch8_en, ch7_en, ch6_en, ch5_en, ch4_en, ch3_en, ch2_en, ch1_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_channel_enable(ch12_en, ch11_en, ch10_en, ch9_en, ch8_en, ch7_en, ch6_en, ch5_en, ch4_en, ch3_en, ch2_en, ch1_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_channel_enable[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_channel_enable(ch12_en, ch11_en, ch10_en, ch9_en, ch8_en, ch7_en, ch6_en, ch5_en, ch4_en, ch3_en, ch2_en, ch1_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_CHANNEL_ENABLE, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fault_control(uint16_t ft_mode, uint16_t fb_mode, uint16_t o_fb_e, uint16_t t_det_e, uint16_t s_det_e, uint16_t o_det_e, uint16_t t_off_e, uint16_t s_off_e, uint16_t o_off_e)
+static inline uint32_t id601_build_fault_control(uint16_t ft_mode, uint16_t fb_mode, uint16_t o_fb_e, uint16_t t_det_e, uint16_t s_det_e, uint16_t o_det_e, uint16_t t_off_e, uint16_t s_off_e, uint16_t o_off_e)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_FAULT_CONTROL_FT_MODE_Msk, ID601_FAULT_CONTROL_FT_MODE_Pos, (uint16_t)ft_mode);
     register_value = id601_set_field(register_value, ID601_FAULT_CONTROL_FB_MODE_Msk, ID601_FAULT_CONTROL_FB_MODE_Pos, (uint16_t)fb_mode);
     register_value = id601_set_field(register_value, ID601_FAULT_CONTROL_O_FB_E_Msk, ID601_FAULT_CONTROL_O_FB_E_Pos, (uint16_t)o_fb_e);
@@ -949,45 +1145,13 @@ static inline uint16_t id601_build_fault_control(uint16_t ft_mode, uint16_t fb_m
 
 bool id601_write_fault_control(uint16_t device_select, uint16_t ft_mode, uint16_t fb_mode, uint16_t o_fb_e, uint16_t t_det_e, uint16_t s_det_e, uint16_t o_det_e, uint16_t t_off_e, uint16_t s_off_e, uint16_t o_off_e)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_fault_control = gn_id601_general_regs[ID601_ADDR_GENERAL_FAULT_CONTROL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_fault_control[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_fault_control(ft_mode, fb_mode, o_fb_e, t_det_e, s_det_e, o_det_e, t_off_e, s_off_e, o_off_e);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_fault_control(ft_mode, fb_mode, o_fb_e, t_det_e, s_det_e, o_det_e, t_off_e, s_off_e, o_off_e);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_FAULT_CONTROL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_fault_control[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_fault_control(ft_mode, fb_mode, o_fb_e, t_det_e, s_det_e, o_det_e, t_off_e, s_off_e, o_off_e);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_FAULT_CONTROL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fb_level(uint16_t fb3_level, uint16_t fb2_level, uint16_t fb1_level)
+static inline uint32_t id601_build_fb_level(uint16_t fb3_level, uint16_t fb2_level, uint16_t fb1_level)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_FB_LEVEL_FB3_LEVEL_Msk, ID601_FB_LEVEL_FB3_LEVEL_Pos, (uint16_t)fb3_level);
     register_value = id601_set_field(register_value, ID601_FB_LEVEL_FB2_LEVEL_Msk, ID601_FB_LEVEL_FB2_LEVEL_Pos, (uint16_t)fb2_level);
     register_value = id601_set_field(register_value, ID601_FB_LEVEL_FB1_LEVEL_Msk, ID601_FB_LEVEL_FB1_LEVEL_Pos, (uint16_t)fb1_level);
@@ -996,45 +1160,13 @@ static inline uint16_t id601_build_fb_level(uint16_t fb3_level, uint16_t fb2_lev
 
 bool id601_write_fb_level(uint16_t device_select, uint16_t fb3_level, uint16_t fb2_level, uint16_t fb1_level)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_fb_level = gn_id601_general_regs[ID601_ADDR_GENERAL_FB_LEVEL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_fb_level[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_fb_level(fb3_level, fb2_level, fb1_level);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_fb_level(fb3_level, fb2_level, fb1_level);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_FB_LEVEL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_fb_level[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_fb_level(fb3_level, fb2_level, fb1_level);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_FB_LEVEL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_short_level(uint16_t short3_level, uint16_t short2_level, uint16_t short1_level)
+static inline uint32_t id601_build_short_level(uint16_t short3_level, uint16_t short2_level, uint16_t short1_level)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_SHORT_LEVEL_SHORT3_LEVEL_Msk, ID601_SHORT_LEVEL_SHORT3_LEVEL_Pos, (uint16_t)short3_level);
     register_value = id601_set_field(register_value, ID601_SHORT_LEVEL_SHORT2_LEVEL_Msk, ID601_SHORT_LEVEL_SHORT2_LEVEL_Pos, (uint16_t)short2_level);
     register_value = id601_set_field(register_value, ID601_SHORT_LEVEL_SHORT1_LEVEL_Msk, ID601_SHORT_LEVEL_SHORT1_LEVEL_Pos, (uint16_t)short1_level);
@@ -1043,43 +1175,11 @@ static inline uint16_t id601_build_short_level(uint16_t short3_level, uint16_t s
 
 bool id601_write_short_level(uint16_t device_select, uint16_t short3_level, uint16_t short2_level, uint16_t short1_level)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_short_level = gn_id601_general_regs[ID601_ADDR_GENERAL_SHORT_LEVEL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_short_level[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_short_level(short3_level, short2_level, short1_level);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_short_level(short3_level, short2_level, short1_level);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_SHORT_LEVEL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_short_level[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_short_level(short3_level, short2_level, short1_level);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_SHORT_LEVEL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fault_status0(void)
+static inline uint32_t id601_build_fault_status0(void)
 {
     return 0U; // read only
 }
@@ -1090,7 +1190,7 @@ bool id601_write_fault_status0(void)
     return false; // read only
 }
 
-static inline uint16_t id601_build_fault_status1(void)
+static inline uint32_t id601_build_fault_status1(void)
 {
     return 0U; // read only
 }
@@ -1101,7 +1201,7 @@ bool id601_write_fault_status1(void)
     return false; // read only
 }
 
-static inline uint16_t id601_build_fault_status2(void)
+static inline uint32_t id601_build_fault_status2(void)
 {
     return 0U; // read only
 }
@@ -1112,7 +1212,7 @@ bool id601_write_fault_status2(void)
     return false; // read only
 }
 
-static inline uint16_t id601_build_fault_status3(void)
+static inline uint32_t id601_build_fault_status3(void)
 {
     return 0U; // read only
 }
@@ -1123,9 +1223,9 @@ bool id601_write_fault_status3(void)
     return false; // read only
 }
 
-static inline uint16_t id601_build_max_current_level(uint16_t max_curr_level3, uint16_t max_curr_level2, uint16_t max_curr_level1)
+static inline uint32_t id601_build_max_current_level(uint16_t max_curr_level3, uint16_t max_curr_level2, uint16_t max_curr_level1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL3_Msk, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL3_Pos, (uint16_t)max_curr_level3);
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL2_Msk, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL2_Pos, (uint16_t)max_curr_level2);
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL1_Msk, ID601_MAX_CURRENT_LEVEL_MAX_CURR_LEVEL1_Pos, (uint16_t)max_curr_level1);
@@ -1134,181 +1234,53 @@ static inline uint16_t id601_build_max_current_level(uint16_t max_curr_level3, u
 
 bool id601_write_max_current_level(uint16_t device_select, uint16_t max_curr_level3, uint16_t max_curr_level2, uint16_t max_curr_level1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_max_current_level = gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_CURR_LEVEL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_max_current_level[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_max_current_level(max_curr_level3, max_curr_level2, max_curr_level1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_max_current_level(max_curr_level3, max_curr_level2, max_curr_level1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_MAX_CURR_LEVEL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_max_current_level[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_max_current_level(max_curr_level3, max_curr_level2, max_curr_level1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_MAX_CURR_LEVEL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_max_curr_vref1(uint16_t max_curr_vref1)
+static inline uint32_t id601_build_max_curr_vref1(uint16_t max_curr_vref1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_VREF1_MAX_CURR_VREF1_Msk, ID601_MAX_CURRENT_VREF1_MAX_CURR_VREF1_Pos, (uint16_t)max_curr_vref1);
     return register_value;
 }
 
 bool id601_write_max_curr_vref1(uint16_t device_select, uint16_t max_curr_vref1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_max_curr_vref1 = gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_CURR_VREF1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_max_curr_vref1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_max_curr_vref1(max_curr_vref1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_max_curr_vref1(max_curr_vref1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_MAX_CURR_VREF1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_max_curr_vref1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_max_curr_vref1(max_curr_vref1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_MAX_CURR_VREF1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_max_curr_vref2(uint16_t max_curr_vref2)
+static inline uint32_t id601_build_max_curr_vref2(uint16_t max_curr_vref2)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_VREF2_MAX_CURR_VREF2_Msk, ID601_MAX_CURRENT_VREF2_MAX_CURR_VREF2_Pos, (uint16_t)max_curr_vref2);
     return register_value;
 }
 
 bool id601_write_max_curr_vref2(uint16_t device_select, uint16_t max_curr_vref2)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_max_curr_vref2 = gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_CURR_VREF2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_max_curr_vref2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_max_curr_vref2(max_curr_vref2);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_max_curr_vref2(max_curr_vref2);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_MAX_CURR_VREF2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_max_curr_vref2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_max_curr_vref2(max_curr_vref2);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_MAX_CURR_VREF2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_max_curr_vref3(uint16_t max_curr_vref3)
+static inline uint32_t id601_build_max_curr_vref3(uint16_t max_curr_vref3)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_MAX_CURRENT_VREF3_MAX_CURR_VREF3_Msk, ID601_MAX_CURRENT_VREF3_MAX_CURR_VREF3_Pos, (uint16_t)max_curr_vref3);
     return register_value;
 }
 
 bool id601_write_max_curr_vref3(uint16_t device_select, uint16_t max_curr_vref3)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_max_curr_vref3 = gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_CURR_VREF3];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_max_curr_vref3[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_max_curr_vref3(max_curr_vref3);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_max_curr_vref3(max_curr_vref3);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_MAX_CURR_VREF3, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_max_curr_vref3[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_max_curr_vref3(max_curr_vref3);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_MAX_CURR_VREF3, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_ch_ld_type(uint16_t ch12_ld_type, uint16_t ch11_ld_type, uint16_t ch10_ld_type, uint16_t ch9_ld_type, uint16_t ch8_ld_type, uint16_t ch7_ld_type,
+static inline uint32_t id601_build_ch_ld_type(uint16_t ch12_ld_type, uint16_t ch11_ld_type, uint16_t ch10_ld_type, uint16_t ch9_ld_type, uint16_t ch8_ld_type, uint16_t ch7_ld_type,
                                                 uint16_t ch6_ld_type, uint16_t ch5_ld_type, uint16_t ch4_ld_type, uint16_t ch3_ld_type, uint16_t ch2_ld_type, uint16_t ch1_ld_type)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_CH_LD_TYPE_CH12_LD_TYPE_Msk, ID601_CH_LD_TYPE_CH12_LD_TYPE_Pos, (uint16_t)ch12_ld_type);
     register_value = id601_set_field(register_value, ID601_CH_LD_TYPE_CH11_LD_TYPE_Msk, ID601_CH_LD_TYPE_CH11_LD_TYPE_Pos, (uint16_t)ch11_ld_type);
     register_value = id601_set_field(register_value, ID601_CH_LD_TYPE_CH10_LD_TYPE_Msk, ID601_CH_LD_TYPE_CH10_LD_TYPE_Pos, (uint16_t)ch10_ld_type);
@@ -1327,47 +1299,14 @@ static inline uint16_t id601_build_ch_ld_type(uint16_t ch12_ld_type, uint16_t ch
 bool id601_write_ch_ld_type(uint16_t device_select, uint16_t ch12_ld_type, uint16_t ch11_ld_type, uint16_t ch10_ld_type, uint16_t ch9_ld_type, uint16_t ch8_ld_type, uint16_t ch7_ld_type,
                                                         uint16_t ch6_ld_type, uint16_t ch5_ld_type, uint16_t ch4_ld_type, uint16_t ch3_ld_type, uint16_t ch2_ld_type, uint16_t ch1_ld_type)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_ch_ld_type = gn_id601_general_regs[ID601_ADDR_GENERAL_CH_LD_TYPE];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_ch_ld_type[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_ch_ld_type(ch12_ld_type, ch11_ld_type, ch10_ld_type, ch9_ld_type, ch8_ld_type, ch7_ld_type,
+    uint32_t value = id601_build_ch_ld_type(ch12_ld_type, ch11_ld_type, ch10_ld_type, ch9_ld_type, ch8_ld_type, ch7_ld_type,
                                                             ch6_ld_type, ch5_ld_type, ch4_ld_type, ch3_ld_type, ch2_ld_type, ch1_ld_type);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_ch_ld_type(ch12_ld_type, ch11_ld_type, ch10_ld_type, ch9_ld_type, ch8_ld_type, ch7_ld_type,
-                                                        ch6_ld_type, ch5_ld_type, ch4_ld_type, ch3_ld_type, ch2_ld_type, ch1_ld_type);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_CH_LD_TYPE, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_ch_ld_type[device_index] = tx_data[device_index];
-    }
-    return true;
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_CH_LD_TYPE, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch1_2(uint16_t delay_ch2, uint16_t delay_ch1)
+static inline uint32_t id601_build_delay_ch1_2(uint16_t delay_ch2, uint16_t delay_ch1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH1_2_DELAY_CH2_Msk, ID601_DELAY_CH1_2_DELAY_CH2_Pos, (uint16_t)delay_ch2);
     register_value = id601_set_field(register_value, ID601_DELAY_CH1_2_DELAY_CH1_Msk, ID601_DELAY_CH1_2_DELAY_CH1_Pos, (uint16_t)delay_ch1);
     return register_value;
@@ -1375,45 +1314,13 @@ static inline uint16_t id601_build_delay_ch1_2(uint16_t delay_ch2, uint16_t dela
 
 bool id601_write_delay_ch1_2(uint16_t device_select, uint16_t delay_ch2, uint16_t delay_ch1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch1_2 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH1_2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch1_2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch1_2(delay_ch2, delay_ch1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch1_2(delay_ch2, delay_ch1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH1_2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch1_2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch1_2(delay_ch2, delay_ch1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH1_2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch3_4(uint16_t delay_ch4, uint16_t delay_ch3)
+static inline uint32_t id601_build_delay_ch3_4(uint16_t delay_ch4, uint16_t delay_ch3)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH3_4_DELAY_CH4_Msk, ID601_DELAY_CH3_4_DELAY_CH4_Pos, (uint16_t)delay_ch4);
     register_value = id601_set_field(register_value, ID601_DELAY_CH3_4_DELAY_CH3_Msk, ID601_DELAY_CH3_4_DELAY_CH3_Pos, (uint16_t)delay_ch3);
     return register_value;
@@ -1421,45 +1328,13 @@ static inline uint16_t id601_build_delay_ch3_4(uint16_t delay_ch4, uint16_t dela
 
 bool id601_write_delay_ch3_4(uint16_t device_select, uint16_t delay_ch4, uint16_t delay_ch3)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch3_4 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH3_4];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch3_4[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch3_4(delay_ch4, delay_ch3);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch3_4(delay_ch4, delay_ch3);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH3_4, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch3_4[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch3_4(delay_ch4, delay_ch3);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH3_4, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch5_6(uint16_t delay_ch6, uint16_t delay_ch5)
+static inline uint32_t id601_build_delay_ch5_6(uint16_t delay_ch6, uint16_t delay_ch5)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH5_6_DELAY_CH6_Msk, ID601_DELAY_CH5_6_DELAY_CH6_Pos, (uint16_t)delay_ch6);
     register_value = id601_set_field(register_value, ID601_DELAY_CH5_6_DELAY_CH5_Msk, ID601_DELAY_CH5_6_DELAY_CH5_Pos, (uint16_t)delay_ch5);
     return register_value;
@@ -1467,45 +1342,13 @@ static inline uint16_t id601_build_delay_ch5_6(uint16_t delay_ch6, uint16_t dela
 
 bool id601_write_delay_ch5_6(uint16_t device_select, uint16_t delay_ch6, uint16_t delay_ch5)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch5_6 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH5_6];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch5_6[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch5_6(delay_ch6, delay_ch5);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch5_6(delay_ch6, delay_ch5);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH5_6, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch5_6[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch5_6(delay_ch6, delay_ch5);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH5_6, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch7_8(uint16_t delay_ch8, uint16_t delay_ch7)
+static inline uint32_t id601_build_delay_ch7_8(uint16_t delay_ch8, uint16_t delay_ch7)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH7_8_DELAY_CH8_Msk, ID601_DELAY_CH7_8_DELAY_CH8_Pos, (uint16_t)delay_ch8);
     register_value = id601_set_field(register_value, ID601_DELAY_CH7_8_DELAY_CH7_Msk, ID601_DELAY_CH7_8_DELAY_CH7_Pos, (uint16_t)delay_ch7);
     return register_value;
@@ -1513,45 +1356,13 @@ static inline uint16_t id601_build_delay_ch7_8(uint16_t delay_ch8, uint16_t dela
 
 bool id601_write_delay_ch7_8(uint16_t device_select, uint16_t delay_ch8, uint16_t delay_ch7)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch7_8 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH7_8];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch7_8[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch7_8(delay_ch8, delay_ch7);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch7_8(delay_ch8, delay_ch7);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH7_8, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch7_8[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch7_8(delay_ch8, delay_ch7);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH7_8, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch9_10(uint16_t delay_ch10, uint16_t delay_ch9)
+static inline uint32_t id601_build_delay_ch9_10(uint16_t delay_ch10, uint16_t delay_ch9)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH9_10_DELAY_CH10_Msk, ID601_DELAY_CH9_10_DELAY_CH10_Pos, (uint16_t)delay_ch10);
     register_value = id601_set_field(register_value, ID601_DELAY_CH9_10_DELAY_CH9_Msk, ID601_DELAY_CH9_10_DELAY_CH9_Pos, (uint16_t)delay_ch9);
     return register_value;
@@ -1559,45 +1370,13 @@ static inline uint16_t id601_build_delay_ch9_10(uint16_t delay_ch10, uint16_t de
 
 bool id601_write_delay_ch9_10(uint16_t device_select, uint16_t delay_ch10, uint16_t delay_ch9)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch9_10 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH9_10];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch9_10[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch9_10(delay_ch10, delay_ch9);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch9_10(delay_ch10, delay_ch9);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH9_10, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch9_10[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch9_10(delay_ch10, delay_ch9);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH9_10, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_delay_ch11_12(uint16_t delay_ch12, uint16_t delay_ch11)
+static inline uint32_t id601_build_delay_ch11_12(uint16_t delay_ch12, uint16_t delay_ch11)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_DELAY_CH11_12_DELAY_CH12_Msk, ID601_DELAY_CH11_12_DELAY_CH12_Pos, (uint16_t)delay_ch12);
     register_value = id601_set_field(register_value, ID601_DELAY_CH11_12_DELAY_CH11_Msk, ID601_DELAY_CH11_12_DELAY_CH11_Pos, (uint16_t)delay_ch11);
     return register_value;
@@ -1605,46 +1384,14 @@ static inline uint16_t id601_build_delay_ch11_12(uint16_t delay_ch12, uint16_t d
 
 bool id601_write_delay_ch11_12(uint16_t device_select, uint16_t delay_ch12, uint16_t delay_ch11)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_delay_ch11_12 = gn_id601_general_regs[ID601_ADDR_GENERAL_DELAY_CH11_12];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_delay_ch11_12[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_delay_ch11_12(delay_ch12, delay_ch11);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_delay_ch11_12(delay_ch12, delay_ch11);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_DELAY_CH11_12, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_delay_ch11_12[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_delay_ch11_12(delay_ch12, delay_ch11);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_DELAY_CH11_12, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fault_configuration(uint16_t crc_en, uint16_t wd_dimm_en, uint16_t wd_timecfg, uint16_t wd_en, uint16_t vs_miss_dimm_en, uint16_t vs_miss_en, uint16_t ch_ctrl_mismatch_en, \
+static inline uint32_t id601_build_fault_configuration(uint16_t crc_en, uint16_t wd_dimm_en, uint16_t wd_timecfg, uint16_t wd_en, uint16_t vs_miss_dimm_en, uint16_t vs_miss_en, uint16_t ch_ctrl_mismatch_en, \
         uint16_t vref_ovuv_off_en, uint16_t vref_ovuv_en, uint16_t osc_ldo_ovuv_en, uint16_t ldo_ovuv_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_FAULT_CONFIGURATION_CRC_EN_Msk, ID601_FAULT_CONFIGURATION_CRC_EN_Pos, (uint16_t)crc_en);
     register_value = id601_set_field(register_value, ID601_FAULT_CONFIGURATION_WD_DIMM_EN_Msk, ID601_FAULT_CONFIGURATION_WD_DIMM_EN_Pos, (uint16_t)wd_dimm_en);
     register_value = id601_set_field(register_value, ID601_FAULT_CONFIGURATION_WD_TIMECFG_Msk, ID601_FAULT_CONFIGURATION_WD_TIMECFG_Pos, (uint16_t)wd_timecfg);
@@ -1662,135 +1409,39 @@ static inline uint16_t id601_build_fault_configuration(uint16_t crc_en, uint16_t
 bool id601_write_fault_configuration(uint16_t device_select, uint16_t crc_en, uint16_t wd_dimm_en, uint16_t wd_timecfg, uint16_t wd_en, uint16_t vs_miss_dimm_en, uint16_t vs_miss_en, uint16_t ch_ctrl_mismatch_en, \
         uint16_t vref_ovuv_off_en, uint16_t vref_ovuv_en, uint16_t osc_ldo_ovuv_en, uint16_t ldo_ovuv_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_fault_configuration = gn_id601_general_regs[ID601_ADDR_GENERAL_FAULT_CONFIGURATION];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_fault_configuration[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_fault_configuration(crc_en, wd_dimm_en, wd_timecfg, wd_en, vs_miss_dimm_en, vs_miss_en, ch_ctrl_mismatch_en, vref_ovuv_off_en, vref_ovuv_en, osc_ldo_ovuv_en, ldo_ovuv_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_fault_configuration(crc_en, wd_dimm_en, wd_timecfg, wd_en, vs_miss_dimm_en, vs_miss_en, ch_ctrl_mismatch_en, vref_ovuv_off_en, vref_ovuv_en, osc_ldo_ovuv_en, ldo_ovuv_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_FAULT_CONFIGURATION, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_fault_configuration[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_fault_configuration(crc_en, wd_dimm_en, wd_timecfg, wd_en, vs_miss_dimm_en, vs_miss_en, ch_ctrl_mismatch_en, vref_ovuv_off_en, vref_ovuv_en, osc_ldo_ovuv_en, ldo_ovuv_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_FAULT_CONFIGURATION, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_bist(uint16_t bist_start)
+static inline uint32_t id601_build_bist(uint16_t bist_start)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_BIST_BIST_START_Msk, ID601_BIST_BIST_START_Pos, (uint16_t)bist_start);
     return register_value;
 }
 
 bool id601_write_bist(uint16_t device_select, uint16_t bist_start)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_bist = gn_id601_general_regs[ID601_ADDR_GENERAL_BIST];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_bist[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_bist(bist_start);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_bist(bist_start);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_BIST, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_bist[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_bist(bist_start);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_BIST, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_test_mode0(uint16_t dmux_sel)
+static inline uint32_t id601_build_test_mode0(uint16_t dmux_sel)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_TEST_MODE0_DMUX_SEL_Msk, ID601_TEST_MODE0_DMUX_SEL_Pos, (uint16_t)dmux_sel);
     return register_value;
 }
 
 bool id601_write_test_mode0(uint16_t device_select, uint16_t dmux_sel)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_test_mode0 = gn_id601_general_regs[ID601_ADDR_GENERAL_TEST_MODE0];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_test_mode0[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_test_mode0(dmux_sel);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_test_mode0(dmux_sel);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_TEST_MODE0, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_test_mode0[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_test_mode0(dmux_sel);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_TEST_MODE0, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_test_mode1(uint16_t testmode, uint16_t tm_ch_ctrl_input_flip)
+static inline uint32_t id601_build_test_mode1(uint16_t testmode, uint16_t tm_ch_ctrl_input_flip)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_TEST_MODE1_TESTMODE_Msk, ID601_TEST_MODE1_TESTMODE_Pos, (uint16_t)testmode);
     register_value = id601_set_field(register_value, ID601_TEST_MODE1_TM_CH_CTRL_INPUT_FLIP_Msk, ID601_TEST_MODE1_TM_CH_CTRL_INPUT_FLIP_Pos, (uint16_t)tm_ch_ctrl_input_flip);
     return register_value;
@@ -1798,45 +1449,13 @@ static inline uint16_t id601_build_test_mode1(uint16_t testmode, uint16_t tm_ch_
 
 bool id601_write_test_mode1(uint16_t device_select, uint16_t testmode, uint16_t tm_ch_ctrl_input_flip)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_test_mode1 = gn_id601_general_regs[ID601_ADDR_GENERAL_TEST_MODE1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_test_mode1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_test_mode1(testmode, tm_ch_ctrl_input_flip);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_test_mode1(testmode, tm_ch_ctrl_input_flip);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_TEST_MODE1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_test_mode1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_test_mode1(testmode, tm_ch_ctrl_input_flip);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_TEST_MODE1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_serial_clk_gen(uint16_t serial_clk_low, uint16_t serial_clk_high)
+static inline uint32_t id601_build_serial_clk_gen(uint16_t serial_clk_low, uint16_t serial_clk_high)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_SERIAL_CLK_GEN_SERIAL_CLK_LOW_Msk, ID601_SERIAL_CLK_GEN_SERIAL_CLK_LOW_Pos, (uint16_t)serial_clk_low);
     register_value = id601_set_field(register_value, ID601_SERIAL_CLK_GEN_SERIAL_CLK_HIGH_Msk, ID601_SERIAL_CLK_GEN_SERIAL_CLK_HIGH_Pos, (uint16_t)serial_clk_high);
     return register_value;
@@ -1844,135 +1463,39 @@ static inline uint16_t id601_build_serial_clk_gen(uint16_t serial_clk_low, uint1
 
 bool id601_write_serial_clk_gen(uint16_t device_select, uint16_t serial_clk_low, uint16_t serial_clk_high)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_serial_clk_gen = gn_id601_general_regs[ID601_ADDR_GENERAL_SERIAL_CLK_GEN];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_serial_clk_gen[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_serial_clk_gen(serial_clk_low, serial_clk_high);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_serial_clk_gen(serial_clk_low, serial_clk_high);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_SERIAL_CLK_GEN, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_serial_clk_gen[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_serial_clk_gen(serial_clk_low, serial_clk_high);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_SERIAL_CLK_GEN, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_serial_latency(uint16_t serial_latency)
+static inline uint32_t id601_build_serial_latency(uint16_t serial_latency)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_SERIAL_LATENCY_SERIAL_LATENCY_Msk, ID601_SERIAL_LATENCY_SERIAL_LATENCY_Pos, (uint16_t)serial_latency);
     return register_value;
 }
 
 bool id601_write_serial_latency(uint16_t device_select, uint16_t serial_latency)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_serial_latency = gn_id601_general_regs[ID601_ADDR_GENERAL_SERIAL_LATENCY];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_serial_latency[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_serial_latency(serial_latency);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_serial_latency(serial_latency);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_SERIAL_LATENCY, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_serial_latency[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_serial_latency(serial_latency);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_SERIAL_LATENCY, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_v_mask(uint16_t v_mask)
+static inline uint32_t id601_build_v_mask(uint16_t v_mask)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_V_MASK_V_MASK_Msk, ID601_V_MASK_V_MASK_Pos, (uint16_t)v_mask);
     return register_value;
 }
 
 bool id601_write_v_mask(uint16_t device_select, uint16_t v_mask)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_v_mask = gn_id601_general_regs[ID601_ADDR_GENERAL_V_MASK];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_v_mask[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_v_mask(v_mask);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_v_mask(v_mask);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_V_MASK, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_v_mask[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_v_mask(v_mask);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_V_MASK, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_sv_mask(uint16_t sv_mask_en, uint16_t sv_mask)
+static inline uint32_t id601_build_sv_mask(uint16_t sv_mask_en, uint16_t sv_mask)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_SV_MASK_SV_MASK_EN_Msk, ID601_SV_MASK_SV_MASK_EN_Pos, (uint16_t)sv_mask_en);
     register_value = id601_set_field(register_value, ID601_SV_MASK_SV_MASK_Msk, ID601_SV_MASK_SV_MASK_Pos, (uint16_t)sv_mask);
     return register_value;
@@ -1980,180 +1503,52 @@ static inline uint16_t id601_build_sv_mask(uint16_t sv_mask_en, uint16_t sv_mask
 
 bool id601_write_sv_mask(uint16_t device_select, uint16_t sv_mask_en, uint16_t sv_mask)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_sv_mask = gn_id601_general_regs[ID601_ADDR_GENERAL_SV_MASK];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_sv_mask[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_sv_mask(sv_mask_en, sv_mask);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_sv_mask(sv_mask_en, sv_mask);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_SV_MASK, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_sv_mask[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_sv_mask(sv_mask_en, sv_mask);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_SV_MASK, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_rstcnt(uint16_t rstcnt)
+static inline uint32_t id601_build_rstcnt(uint16_t rstcnt)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_RSTCNT_RSTCNT_Msk, ID601_RSTCNT_RSTCNT_Pos, (uint16_t)rstcnt);
     return register_value;
 }
 
 bool id601_write_rstcnt(uint16_t device_select, uint16_t rstcnt)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_rstcnt = gn_id601_general_regs[ID601_ADDR_GENERAL_RSTCNT];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_rstcnt[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_rstcnt(rstcnt);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_rstcnt(rstcnt);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_RSTCNT, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_rstcnt[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_rstcnt(rstcnt);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_RSTCNT, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_timeout(uint16_t timeout)
+static inline uint32_t id601_build_timeout(uint16_t timeout)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_TIMEOUT_TIMEOUT_Msk, ID601_TIMEOUT_TIMEOUT_Pos, (uint16_t)timeout);
     return register_value;
 }
 
 bool id601_write_timeout(uint16_t device_select, uint16_t timeout)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_timeout = gn_id601_general_regs[ID601_ADDR_GENERAL_TIMEOUT];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_timeout[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_timeout(timeout);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_timeout(timeout);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_TIMEOUT, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_timeout[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_timeout(timeout);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_TIMEOUT, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fllcnt1(uint16_t fllcnt)
+static inline uint32_t id601_build_fllcnt1(uint16_t fllcnt)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_FLLCNT1_FLLCNT_Msk, ID601_FLLCNT1_FLLCNT_Pos, (uint16_t)fllcnt);
     return register_value;
 }
 
 bool id601_write_fllcnt1(uint16_t device_select, uint16_t fllcnt)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_fllcnt1 = gn_id601_general_regs[ID601_ADDR_GENERAL_FLLCNT1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_fllcnt1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_fllcnt1(fllcnt);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_fllcnt1(fllcnt);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_FLLCNT1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_fllcnt1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_fllcnt1(fllcnt);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_FLLCNT1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_fllcnt2(uint16_t fll_en, uint16_t fll_range, uint16_t fllcnt)
+static inline uint32_t id601_build_fllcnt2(uint16_t fll_en, uint16_t fll_range, uint16_t fllcnt)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_FLLCNT2_FLL_EN_Msk, ID601_FLLCNT2_FLL_EN_Pos, (uint16_t)fll_en);
     register_value = id601_set_field(register_value, ID601_FLLCNT2_FLL_RANGE_Msk, ID601_FLLCNT2_FLL_RANGE_Pos, (uint16_t)fll_range);
     register_value = id601_set_field(register_value, ID601_FLLCNT2_FLLCNT_Msk, ID601_FLLCNT2_FLLCNT_Pos, (uint16_t)fllcnt);
@@ -2162,90 +1557,26 @@ static inline uint16_t id601_build_fllcnt2(uint16_t fll_en, uint16_t fll_range, 
 
 bool id601_write_fllcnt2(uint16_t device_select, uint16_t fll_en, uint16_t fll_range, uint16_t fllcnt)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_fllcnt2 = gn_id601_general_regs[ID601_ADDR_GENERAL_FLLCNT2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_fllcnt2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_fllcnt2(fll_en, fll_range, fllcnt);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_fllcnt2(fll_en, fll_range, fllcnt);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_FLLCNT2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_fllcnt2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_fllcnt2(fll_en, fll_range, fllcnt);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_FLLCNT2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_wr_protect(uint16_t wr_protect)
+static inline uint32_t id601_build_wr_protect(uint16_t wr_protect)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_WR_PROTECT_WR_PROTECT_Msk, ID601_WR_PROTECT_WR_PROTECT_Pos, (uint16_t)wr_protect);
     return register_value;
 }
 
 bool id601_write_wr_protect(uint16_t device_select, uint16_t wr_protect)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_wr_protect = gn_id601_general_regs[ID601_ADDR_GENERAL_WR_PROTECT];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_wr_protect[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_wr_protect(wr_protect);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_wr_protect(wr_protect);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_WR_PROTECT, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_wr_protect[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_wr_protect(wr_protect);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_WR_PROTECT, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_nf_control(uint16_t bbkn_th, uint16_t o_emi_rej_en, uint16_t sgrjt_en2, uint16_t sgrjt_en1, uint16_t bbkn_en, uint16_t dgrjt_en2, uint16_t dgrjt_en1)
+static inline uint32_t id601_build_nf_control(uint16_t bbkn_th, uint16_t o_emi_rej_en, uint16_t sgrjt_en2, uint16_t sgrjt_en1, uint16_t bbkn_en, uint16_t dgrjt_en2, uint16_t dgrjt_en1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_NF_CONTROL_BBKN_TH_Msk, ID601_NF_CONTROL_BBKN_TH_Pos, (uint16_t)bbkn_th);
     register_value = id601_set_field(register_value, ID601_NF_CONTROL_O_EMI_REJ_EN_Msk, ID601_NF_CONTROL_O_EMI_REJ_EN_Pos, (uint16_t)o_emi_rej_en);
     register_value = id601_set_field(register_value, ID601_NF_CONTROL_SGRJT_EN2_Msk, ID601_NF_CONTROL_SGRJT_EN2_Pos, (uint16_t)sgrjt_en2);
@@ -2258,45 +1589,13 @@ static inline uint16_t id601_build_nf_control(uint16_t bbkn_th, uint16_t o_emi_r
 
 bool id601_write_nf_control(uint16_t device_select, uint16_t o_emi_rej_en, uint16_t sgrjt_en2, uint16_t sgrjt_en1, uint16_t bbkn_en, uint16_t dgrjt_en2, uint16_t dgrjt_en1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_nf_control = gn_id601_general_regs[ID601_ADDR_GENERAL_NF_CONTROL];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_nf_control[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_nf_control(0U, o_emi_rej_en, sgrjt_en2, sgrjt_en1, bbkn_en, dgrjt_en2, dgrjt_en1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_nf_control(0U, o_emi_rej_en, sgrjt_en2, sgrjt_en1, bbkn_en, dgrjt_en2, dgrjt_en1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_NF_CONTROL, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_nf_control[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_nf_control(0U, o_emi_rej_en, sgrjt_en2, sgrjt_en1, bbkn_en, dgrjt_en2, dgrjt_en1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_NF_CONTROL, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_chop_en(uint16_t open_mask_opt, uint16_t chop_en, uint16_t chop_drv_en, uint16_t chop_osc_ldo_en, uint16_t chop_osc_en, uint16_t chop_dac_en, uint16_t chop_bgr_en)
+static inline uint32_t id601_build_chop_en(uint16_t open_mask_opt, uint16_t chop_en, uint16_t chop_drv_en, uint16_t chop_osc_ldo_en, uint16_t chop_osc_en, uint16_t chop_dac_en, uint16_t chop_bgr_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_CHOP_EN_OPEN_MASK_OPT_Msk, ID601_CHOP_EN_OPEN_MASK_OPT_Pos, (uint16_t)open_mask_opt);
     register_value = id601_set_field(register_value, ID601_CHOP_EN_CHOP_EN_Msk, ID601_CHOP_EN_CHOP_EN_Pos, (uint16_t)chop_en);
     register_value = id601_set_field(register_value, ID601_CHOP_EN_CHOP_DRV_EN_Msk, ID601_CHOP_EN_CHOP_DRV_EN_Pos, (uint16_t)chop_drv_en);
@@ -2309,45 +1608,13 @@ static inline uint16_t id601_build_chop_en(uint16_t open_mask_opt, uint16_t chop
 
 bool id601_write_chop_en(uint16_t device_select, uint16_t open_mask_opt, uint16_t chop_en, uint16_t chop_drv_en, uint16_t chop_osc_ldo_en, uint16_t chop_osc_en, uint16_t chop_dac_en, uint16_t chop_bgr_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_chop_en = gn_id601_general_regs[ID601_ADDR_GENERAL_CHOP_EN];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_chop_en[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_chop_en(open_mask_opt, chop_en, chop_drv_en, chop_osc_ldo_en, chop_osc_en, chop_dac_en, chop_bgr_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_chop_en(open_mask_opt, chop_en, chop_drv_en, chop_osc_ldo_en, chop_osc_en, chop_dac_en, chop_bgr_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_CHOP_EN, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_chop_en[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_chop_en(open_mask_opt, chop_en, chop_drv_en, chop_osc_ldo_en, chop_osc_en, chop_dac_en, chop_bgr_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_CHOP_EN, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_temp(uint16_t ov_swap_en, uint16_t dac_rng, uint16_t flt_ctl, uint16_t o_slew, uint16_t flt_gain)
+static inline uint32_t id601_build_temp(uint16_t ov_swap_en, uint16_t dac_rng, uint16_t flt_ctl, uint16_t o_slew, uint16_t flt_gain)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_TEMP_OV_SWAP_EN_Msk, ID601_TEMP_OV_SWAP_EN_Pos, (uint16_t)ov_swap_en);
     register_value = id601_set_field(register_value, ID601_TEMP_DAC_RNG_Msk, ID601_TEMP_DAC_RNG_Pos, (uint16_t)dac_rng);
     register_value = id601_set_field(register_value, ID601_TEMP_FLT_CTL_Msk, ID601_TEMP_FLT_CTL_Pos, (uint16_t)flt_ctl);
@@ -2358,90 +1625,26 @@ static inline uint16_t id601_build_temp(uint16_t ov_swap_en, uint16_t dac_rng, u
 
 bool id601_write_temp(uint16_t device_select, uint16_t ov_swap_en, uint16_t dac_rng, uint16_t flt_ctl, uint16_t o_slew, uint16_t flt_gain)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_temp = gn_id601_general_regs[ID601_ADDR_GENERAL_TEMP];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_temp[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_temp(ov_swap_en, dac_rng, flt_ctl, o_slew, flt_gain);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_temp(ov_swap_en, dac_rng, flt_ctl, o_slew, flt_gain);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_TEMP, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_temp[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_temp(ov_swap_en, dac_rng, flt_ctl, o_slew, flt_gain);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_TEMP, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_osc_fll_man1(uint16_t osc_fll_man)
+static inline uint32_t id601_build_osc_fll_man1(uint16_t osc_fll_man)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OSC_FLL_MAN1_OSC_FLL_MAN_Msk, ID601_OSC_FLL_MAN1_OSC_FLL_MAN_Pos, (uint16_t)osc_fll_man);
     return register_value;
 }
 
 bool id601_write_osc_fll_man1(uint16_t device_select, uint16_t osc_fll_man)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_osc_fll_man1 = gn_id601_general_regs[ID601_ADDR_GENERAL_OSC_FLL_MAN1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_osc_fll_man1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_osc_fll_man1(osc_fll_man);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_osc_fll_man1(osc_fll_man);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OSC_FLL_MAN1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_osc_fll_man1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_osc_fll_man1(osc_fll_man);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OSC_FLL_MAN1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_osc_fll_man2(uint16_t osc_man_en, uint16_t osc_fll_err_range, uint16_t osc_fll_man)
+static inline uint32_t id601_build_osc_fll_man2(uint16_t osc_man_en, uint16_t osc_fll_err_range, uint16_t osc_fll_man)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OSC_FLL_MAN2_OSC_MAN_EN_Msk, ID601_OSC_FLL_MAN2_OSC_MAN_EN_Pos, (uint16_t)osc_man_en);
     register_value = id601_set_field(register_value, ID601_OSC_FLL_MAN2_OSC_FLL_ERR_RANGE_Msk, ID601_OSC_FLL_MAN2_OSC_FLL_ERR_RANGE_Pos, (uint16_t)osc_fll_err_range);
     register_value = id601_set_field(register_value, ID601_OSC_FLL_MAN2_OSC_FLL_MAN_Msk, ID601_OSC_FLL_MAN2_OSC_FLL_MAN_Pos, (uint16_t)osc_fll_man);
@@ -2450,45 +1653,13 @@ static inline uint16_t id601_build_osc_fll_man2(uint16_t osc_man_en, uint16_t os
 
 bool id601_write_osc_fll_man2(uint16_t device_select, uint16_t osc_man_en, uint16_t osc_fll_err_range, uint16_t osc_fll_man)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_osc_fll_man2 = gn_id601_general_regs[ID601_ADDR_GENERAL_OSC_FLL_MAN2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_osc_fll_man2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_osc_fll_man2(osc_man_en, osc_fll_err_range, osc_fll_man);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_osc_fll_man2(osc_man_en, osc_fll_err_range, osc_fll_man);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OSC_FLL_MAN2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_osc_fll_man2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_osc_fll_man2(osc_man_en, osc_fll_err_range, osc_fll_man);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OSC_FLL_MAN2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_osc_spread(uint16_t sprd_en, uint16_t sprd_spd, uint16_t sprd_gain)
+static inline uint32_t id601_build_osc_spread(uint16_t sprd_en, uint16_t sprd_spd, uint16_t sprd_gain)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OSC_SPREAD_SPRD_EN_Msk, ID601_OSC_SPREAD_SPRD_EN_Pos, (uint16_t)sprd_en);
     register_value = id601_set_field(register_value, ID601_OSC_SPREAD_SPRD_SPD_Msk, ID601_OSC_SPREAD_SPRD_SPD_Pos, (uint16_t)sprd_spd);
     register_value = id601_set_field(register_value, ID601_OSC_SPREAD_SPRD_GAIN_Msk, ID601_OSC_SPREAD_SPRD_GAIN_Pos, (uint16_t)sprd_gain);
@@ -2497,45 +1668,13 @@ static inline uint16_t id601_build_osc_spread(uint16_t sprd_en, uint16_t sprd_sp
 
 bool id601_write_osc_spread(uint16_t device_select, uint16_t sprd_en, uint16_t sprd_spd, uint16_t sprd_gain)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_osc_spread = gn_id601_general_regs[ID601_ADDR_GENERAL_OSC_SPREAD];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_osc_spread[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_osc_spread(sprd_en, sprd_spd, sprd_gain);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_osc_spread(sprd_en, sprd_spd, sprd_gain);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OSC_SPREAD, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_osc_spread[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_osc_spread(sprd_en, sprd_spd, sprd_gain);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OSC_SPREAD, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_clock_gate_en(uint16_t otp_mclk_en, uint16_t fr2_mclk_en, uint16_t fr1_mclk_en, uint16_t dc_mclk_en)
+static inline uint32_t id601_build_clock_gate_en(uint16_t otp_mclk_en, uint16_t fr2_mclk_en, uint16_t fr1_mclk_en, uint16_t dc_mclk_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_CLOCK_GATE_EN_OTP_MCLK_EN_Msk, ID601_CLOCK_GATE_EN_OTP_MCLK_EN_Pos, (uint16_t)otp_mclk_en);
     register_value = id601_set_field(register_value, ID601_CLOCK_GATE_EN_FR2_MCLK_EN_Msk, ID601_CLOCK_GATE_EN_FR2_MCLK_EN_Pos, (uint16_t)fr2_mclk_en);
     register_value = id601_set_field(register_value, ID601_CLOCK_GATE_EN_FR1_MCLK_EN_Msk, ID601_CLOCK_GATE_EN_FR1_MCLK_EN_Pos, (uint16_t)fr1_mclk_en);
@@ -2545,315 +1684,91 @@ static inline uint16_t id601_build_clock_gate_en(uint16_t otp_mclk_en, uint16_t 
 
 bool id601_write_clock_gate_en(uint16_t device_select, uint16_t otp_mclk_en, uint16_t fr2_mclk_en, uint16_t fr1_mclk_en, uint16_t dc_mclk_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_clock_gate_en = gn_id601_general_regs[ID601_ADDR_GENERAL_CLOCK_GATE_EN];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_clock_gate_en[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_clock_gate_en(otp_mclk_en, fr2_mclk_en, fr1_mclk_en, dc_mclk_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_clock_gate_en(otp_mclk_en, fr2_mclk_en, fr1_mclk_en, dc_mclk_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_CLOCK_GATE_EN, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_clock_gate_en[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_clock_gate_en(otp_mclk_en, fr2_mclk_en, fr1_mclk_en, dc_mclk_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_CLOCK_GATE_EN, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_vref_fix1(uint16_t vref_fix1)
+static inline uint32_t id601_build_vref_fix1(uint16_t vref_fix1)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_VREF_FIX1_VREF_FIX1_Msk, ID601_VREF_FIX1_VREF_FIX1_Pos, (uint16_t)vref_fix1);
     return register_value;
 }
 
 bool id601_write_vref_fix1(uint16_t device_select, uint16_t vref_fix1)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_vref_fix1 = gn_id601_general_regs[ID601_ADDR_GENERAL_VREF_FIX1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_vref_fix1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_vref_fix1(vref_fix1);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_vref_fix1(vref_fix1);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_VREF_FIX1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_vref_fix1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_vref_fix1(vref_fix1);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_VREF_FIX1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_vref_fix2(uint16_t vref_fix2)
+static inline uint32_t id601_build_vref_fix2(uint16_t vref_fix2)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_VREF_FIX2_VREF_FIX2_Msk, ID601_VREF_FIX2_VREF_FIX2_Pos, (uint16_t)vref_fix2);
     return register_value;
 }
 
 bool id601_write_vref_fix2(uint16_t device_select, uint16_t vref_fix2)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_vref_fix2 = gn_id601_general_regs[ID601_ADDR_GENERAL_VREF_FIX2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_vref_fix2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_vref_fix2(vref_fix2);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_vref_fix2(vref_fix2);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_VREF_FIX2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_vref_fix2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_vref_fix2(vref_fix2);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_VREF_FIX2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_vref_fix3(uint16_t vref_fix3)
+static inline uint32_t id601_build_vref_fix3(uint16_t vref_fix3)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_VREF_FIX3_VREF_FIX3_Msk, ID601_VREF_FIX3_VREF_FIX3_Pos, (uint16_t)vref_fix3);
     return register_value;
 }
 
 bool id601_write_vref_fix3(uint16_t device_select, uint16_t vref_fix3)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_vref_fix3 = gn_id601_general_regs[ID601_ADDR_GENERAL_VREF_FIX3];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_vref_fix3[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_vref_fix3(vref_fix3);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_vref_fix3(vref_fix3);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_VREF_FIX3, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_vref_fix3[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_vref_fix3(vref_fix3);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_VREF_FIX3, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_test_ana_en(uint16_t test_ana_en)
+static inline uint32_t id601_build_test_ana_en(uint16_t test_ana_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_TEST_ANA_EN_TEST_ANA_EN_Msk, ID601_TEST_ANA_EN_TEST_ANA_EN_Pos, (uint16_t)test_ana_en);
     return register_value;
 }
 
 bool id601_write_test_ana_en(uint16_t device_select, uint16_t test_ana_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_test_ana_en = gn_id601_general_regs[ID601_ADDR_GENERAL_TEST_ANA_EN];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_test_ana_en[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_test_ana_en(test_ana_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_test_ana_en(test_ana_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_TEST_ANA_EN, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_test_ana_en[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_test_ana_en(test_ana_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_TEST_ANA_EN, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_otp_access1(uint16_t otp_pg_acc_cycle)
+static inline uint32_t id601_build_otp_access1(uint16_t otp_pg_acc_cycle)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OTP_ACCESS1_OTP_PG_ACC_CYCLE_Msk, ID601_OTP_ACCESS1_OTP_PG_ACC_CYCLE_Pos, (uint16_t)otp_pg_acc_cycle);
     return register_value;
 }
 
 bool id601_write_otp_access1(uint16_t device_select, uint16_t otp_pg_acc_cycle)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_otp_access1 = gn_id601_general_regs[ID601_ADDR_GENERAL_OTP_ACCESS1];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_otp_access1[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_otp_access1(otp_pg_acc_cycle);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_otp_access1(otp_pg_acc_cycle);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OTP_ACCESS1, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_otp_access1[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_otp_access1(otp_pg_acc_cycle);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OTP_ACCESS1, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_otp_access2(uint16_t otp_pg_acc_cycle)
+static inline uint32_t id601_build_otp_access2(uint16_t otp_pg_acc_cycle)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OTP_ACCESS2_OTP_PG_ACC_CYCLE_Msk, ID601_OTP_ACCESS2_OTP_PG_ACC_CYCLE_Pos, (uint16_t)otp_pg_acc_cycle);
     return register_value;
 }
 
 bool id601_write_otp_access2(uint16_t device_select, uint16_t otp_pg_acc_cycle)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_otp_access2 = gn_id601_general_regs[ID601_ADDR_GENERAL_OTP_ACCESS2];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_otp_access2[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_otp_access2(otp_pg_acc_cycle);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_otp_access2(otp_pg_acc_cycle);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OTP_ACCESS2, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_otp_access2[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_otp_access2(otp_pg_acc_cycle);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OTP_ACCESS2, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_otp_write(uint16_t otp_rd, uint16_t otp_wsel)
+static inline uint32_t id601_build_otp_write(uint16_t otp_rd, uint16_t otp_wsel)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OTP_WRITE_OTP_RD_Msk, ID601_OTP_WRITE_OTP_RD_Pos, (uint16_t)otp_rd);
     register_value = id601_set_field(register_value, ID601_OTP_WRITE_OTP_WSEL_Msk, ID601_OTP_WRITE_OTP_WSEL_Pos, (uint16_t)otp_wsel);
     return register_value;
@@ -2861,45 +1776,13 @@ static inline uint16_t id601_build_otp_write(uint16_t otp_rd, uint16_t otp_wsel)
 
 bool id601_write_otp_write(uint16_t device_select, uint16_t otp_rd, uint16_t otp_wsel)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_otp_write = gn_id601_general_regs[ID601_ADDR_GENERAL_OTP_WRITE];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_otp_write[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_otp_write(otp_rd, otp_wsel);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_otp_write(otp_rd, otp_wsel);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OTP_WRITE, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_otp_write[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_otp_write(otp_rd, otp_wsel);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OTP_WRITE, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_otp_rd_prog(uint16_t otp_pg_done, uint16_t otp_rd_s, uint16_t otp_pg_s)
+static inline uint32_t id601_build_otp_rd_prog(uint16_t otp_pg_done, uint16_t otp_rd_s, uint16_t otp_pg_s)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OTP_RD_PROG_OTP_PG_DONE_Msk, ID601_OTP_RD_PROG_OTP_PG_DONE_Pos, (uint16_t)otp_pg_done);
     register_value = id601_set_field(register_value, ID601_OTP_RD_PROG_OTP_RD_S_Msk, ID601_OTP_RD_PROG_OTP_RD_S_Pos, (uint16_t)otp_rd_s);
     register_value = id601_set_field(register_value, ID601_OTP_RD_PROG_OTP_PG_S_Msk, ID601_OTP_RD_PROG_OTP_PG_S_Pos, (uint16_t)otp_pg_s);
@@ -2908,90 +1791,26 @@ static inline uint16_t id601_build_otp_rd_prog(uint16_t otp_pg_done, uint16_t ot
 
 bool id601_write_otp_rd_prog(uint16_t device_select, uint16_t otp_pg_done, uint16_t otp_rd_s, uint16_t otp_pg_s)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_otp_rd_prog = gn_id601_general_regs[ID601_ADDR_GENERAL_OTP_RD_PROG];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_otp_rd_prog[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_otp_rd_prog(otp_pg_done, otp_rd_s, otp_pg_s);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_otp_rd_prog(otp_pg_done, otp_rd_s, otp_pg_s);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OTP_RD_PROG, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_otp_rd_prog[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_otp_rd_prog(otp_pg_done, otp_rd_s, otp_pg_s);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OTP_RD_PROG, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_otp_protect(uint16_t protect_en)
+static inline uint32_t id601_build_otp_protect(uint16_t protect_en)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OTP_PROTECT_PROTECT_EN_Msk, ID601_OTP_PROTECT_PROTECT_EN_Pos, (uint16_t)protect_en);
     return register_value;
 }
 
 bool id601_write_otp_protect(uint16_t device_select, uint16_t protect_en)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_otp_protect = gn_id601_general_regs[ID601_ADDR_GENERAL_OTP_PROTECT];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_otp_protect[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_otp_protect(protect_en);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_otp_protect(protect_en);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OTP_PROTECT, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_otp_protect[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_otp_protect(protect_en);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OTP_PROTECT, (uint16_t)value, gp_id601_crc_func);
 }
 
-static inline uint16_t id601_build_op_mode(uint16_t test_en, uint16_t sw_sel, uint16_t pwmout_full, uint16_t mclk64_o, uint16_t dtest_mux_en, uint16_t rd_en, uint16_t ext_clkin, uint16_t addr_ext)
+static inline uint32_t id601_build_op_mode(uint16_t test_en, uint16_t sw_sel, uint16_t pwmout_full, uint16_t mclk64_o, uint16_t dtest_mux_en, uint16_t rd_en, uint16_t ext_clkin, uint16_t addr_ext)
 {
-    uint16_t register_value = 0U;
+    uint32_t register_value = 0U;
     register_value = id601_set_field(register_value, ID601_OP_MODE_TEST_EN_Msk, ID601_OP_MODE_TEST_EN_Pos, (uint16_t)test_en);
     register_value = id601_set_field(register_value, ID601_OP_MODE_SW_SEL_Msk, ID601_OP_MODE_SW_SEL_Pos, (uint16_t)sw_sel);
     register_value = id601_set_field(register_value, ID601_OP_MODE_PWMOUT_FULL_Msk, ID601_OP_MODE_PWMOUT_FULL_Pos, (uint16_t)pwmout_full);
@@ -3005,69 +1824,27 @@ static inline uint16_t id601_build_op_mode(uint16_t test_en, uint16_t sw_sel, ui
 
 bool id601_write_op_mode(uint16_t device_select, uint16_t test_en, uint16_t sw_sel, uint16_t pwmout_full, uint16_t mclk64_o, uint16_t dtest_mux_en, uint16_t rd_en, uint16_t ext_clkin, uint16_t addr_ext)
 {
-    uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-    uint16_t* p_op_mode = gn_id601_general_regs[ID601_ADDR_GENERAL_OP_MODE];
-    if (device_select > gn_id601_daisy_length)
-    {
-        return false;
-    }
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        tx_data[device_index] = p_op_mode[device_index];
-    }
-
-    if (ID601_BROADCAST == device_select)
-    {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            tx_data[device_index] = id601_build_op_mode(test_en, sw_sel, pwmout_full, mclk64_o, dtest_mux_en, rd_en, ext_clkin, addr_ext);
-        }
-    }
-    else
-    {
-        const uint16_t device_index = device_select - 1U;
-        tx_data[device_index] = id601_build_op_mode(test_en, sw_sel, pwmout_full, mclk64_o, dtest_mux_en, rd_en, ext_clkin, addr_ext);
-    }
-
-    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, ID601_ADDR_GENERAL_OP_MODE, tx_data, NULL))
-    {
-        return false;
-    }
-
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-    {
-        p_op_mode[device_index] = tx_data[device_index];
-    }
-    return true;
+    uint32_t value = id601_build_op_mode(test_en, sw_sel, pwmout_full, mclk64_o, dtest_mux_en, rd_en, ext_clkin, addr_ext);
+    return id601_write_register(ID601_REGISTER_BANK_GENERAL, device_select, ID601_ADDR_GENERAL_OP_MODE, (uint16_t)value, gp_id601_crc_func);
 }
 
-static bool id601_read_all(void)
+static bool id601_read_all(id601_crc_func_t p_crc_func)
 {
-    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
-        uint16_t rx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, id601_addr, rx_data, NULL))
+        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, ID601_BROADCAST, id601_addr, p_crc_func))
         {
-            drv_uart_printf("\r\n    ID601 Failed to read general register 0x%04X\r\n    Read Stoped!!", id601_addr);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    ID601 Failed to read general register 0x%04X\r\n    Read Stoped!!", id601_addr);
             return false;
-        }
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            gn_id601_general_regs[id601_addr][device_index] = rx_data[device_index];
         }
     }
 
-    for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_MAX_COUNT ; ++id601_addr)
     {
-        uint16_t rx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, id601_addr, rx_data, NULL))
+        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, ID601_BROADCAST, id601_addr, p_crc_func))
         {
-            drv_uart_printf("\r\n    ID601 Failed to read mirror register 0x%04X\r\n    Read Stoped!!", id601_addr);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    ID601 Failed to read mirror register 0x%04X\r\n    Read Stoped!!", id601_addr);
             return false;
-        }
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
-        {
-            gn_id601_mirror_regs[id601_addr][device_index] = rx_data[device_index];
         }
     }
     return true;
@@ -3075,40 +1852,44 @@ static bool id601_read_all(void)
 
 static bool id601_dump_all(void)
 {
-    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
-        drv_uart_printf("\r\n    ID601 General Register 0x%04X Dump:", id601_addr);
+        drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 General Register 0x%04X Dump:", id601_addr);
         for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
         {
-            drv_uart_printf("\r\n        Device %u: 0x%04X", device_index, gn_id601_general_regs[id601_addr][device_index]);
+            drv_uart_printf(LOG_LV_INFO, "\r\n        Device %u: 0x%04X", device_index, gn_id601_general_regs[id601_addr][device_index]);
         }
     }
 
-    for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_MAX_COUNT ; ++id601_addr)
     {
-        drv_uart_printf("\r\n    ID601 Mirror Register 0x%04X Dump:", id601_addr);
+        drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 Mirror Register 0x%04X Dump:", id601_addr);
         for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
         {
-            drv_uart_printf("\r\n        Device %u: 0x%04X", device_index, gn_id601_mirror_regs[id601_addr][device_index]);
+            drv_uart_printf(LOG_LV_INFO, "\r\n        Device %u: 0x%04X", device_index, gn_id601_mirror_regs[id601_addr][device_index]);
         }
     }
     return true;
 }
 
-bool id601_test_init_analog(void)
+bool id601_init_analog_test_mode(void)
 {
+    gn_id601_daisy_length = 1U;
+
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
     drv_gpio_id601_vcc(ID601_VCC_3V3);
-    id601_reset();
-    id601_idgen_command(gp_id601_crc_func);
-    id601_read_all();
+    id601_reset(gp_id601_crc_func);
+    id601_id_gen(gp_id601_crc_func);
+    id601_read_all(gp_id601_crc_func);
     id601_dump_all();
-    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
         switch (id601_addr)
         {
             case ID601_ADDR_GENERAL_FAULT_CONTROL:
             {
-                if (false == id601_write_fault_control(ID601_BROADCAST, 0U, 1U, 1U, 1U, 1U, 1U, 1U, 1U, 1U))
+                if (false == id601_write_fault_control(1U, ID601_FT_MODE, ID601_FB_MODE, ID601_O_FB_E, ID601_T_DET_E, ID601_S_DET_E, ID601_O_DET_E, ID601_T_OFF_E, ID601_S_OFF_E, ID601_O_OFF_E))
                 {
                     return false;
                 }
@@ -3116,7 +1897,7 @@ bool id601_test_init_analog(void)
             }
             case ID601_ADDR_GENERAL_FLLCNT1:
             {
-                if (false == id601_write_fllcnt1(ID601_BROADCAST, 0xDCDU))
+                if (false == id601_write_fllcnt1(1U, ID601_FLL_CNT_1))
                 {
                     return false;
                 }
@@ -3124,7 +1905,7 @@ bool id601_test_init_analog(void)
             }
             case ID601_ADDR_GENERAL_CHOP_EN:
             {
-                if (false == id601_write_chop_en(ID601_BROADCAST, 0U, 1U, 1U, 1U, 1U, 1U, 1U))
+                if (false == id601_write_chop_en(1U, ID601_OPEN_MASK_OPT, ID601_CHOP_EN, ID601_CHOP_DRV_EN, ID601_CHOP_OSC_LDO_EN, ID601_CHOP_OSC_EN, ID601_CHOP_DAC_EN, ID601_CHOP_BGR_EN))
                 {
                     return false;
                 }
@@ -3132,7 +1913,7 @@ bool id601_test_init_analog(void)
             }
             case ID601_ADDR_GENERAL_OP_MODE:
             {
-                if (false == id601_write_op_mode(ID601_BROADCAST, 1U, 1U, 1U, 0U, 0U, 1U, 0U, 0U))
+                if (false == id601_write_op_mode(1U, ID601_TEST_EN, ID601_SW_SEL, ID601_PWMOUT_FULL, ID601_MCLK64_O, ID601_DTEST_MUX_EN, ID601_RD_EN, ID601_EXT_CLKIN, ID601_ADDR_EXT))
                 {
                     return false;
                 }
@@ -3144,6 +1925,264 @@ bool id601_test_init_analog(void)
             }
         }
     }
+    id601_read_all(gp_id601_crc_func);
+    id601_dump_all();
     return true;
 }
+
+void id601_trim_init_iref1(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    drv_gpio_id601_test_relay(ID601_RELAY_CON);
+}
+void id601_trim_init_iref2(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST);
+    drv_gpio_id601_test_relay(ID601_RELAY_CON);
+}
+void id601_trim_init_ldo_det(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES);
+    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
+}
+void id601_trim_init_ldo_dig(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES);
+}
+void id601_trim_init_ldo_dac(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES);
+}
+void id601_trim_init_ldo_fll(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES);
+}
+void id601_trim_init_ofs_temp(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    // nothing to initialize for offset temperature trim
+}
+void id601_trim_init_ofs_temp_o1(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O1);
+    drv_gpio_id601_o1_relay(ID601_RELAY_CON);
+    drv_gpio_id601_o2_relay(ID601_RELAY_DIS);
+}
+void id601_trim_init_ofs_temp_o2(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O2);
+    drv_gpio_id601_o1_relay(ID601_RELAY_DIS);
+    drv_gpio_id601_o2_relay(ID601_RELAY_CON);
+}
+void id601_trim_init_osc_rctl(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+
+    const uint16_t osc_man_en = 1U;
+    const uint16_t osc_fll_err_range = 0U;
+    const uint16_t osc_fll_man = 8U;
+    id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man);
+}
+void id601_trim_init_gain(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    const uint16_t gain_max_current_level3 = ID601_MAX_CURRENT_LEVEL_08mA;
+    const uint16_t gain_max_current_level2 = ID601_MAX_CURRENT_LEVEL_08mA;
+    const uint16_t gain_max_current_level1 = ID601_MAX_CURRENT_LEVEL_08mA;
+    id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
+}
+void id601_trim_init_gain_vref1(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_max_curr_vref1(1U, ID601_GAIN_VREF1);
+    id601_write_max_curr_vref2(1U, ID601_GAIN_VREF1);
+    id601_write_max_curr_vref3(1U, ID601_GAIN_VREF1);
+}
+void id601_trim_init_gain_vref2(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_max_curr_vref1(1U, ID601_GAIN_VREF2);
+    id601_write_max_curr_vref2(1U, ID601_GAIN_VREF2);
+    id601_write_max_curr_vref3(1U, ID601_GAIN_VREF2);
+}
+void id601_trim_init_offset(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    const uint16_t offset_max_current_level3 = ID601_MAX_CURRENT_LEVEL_08mA;
+    const uint16_t offset_max_current_level2 = ID601_MAX_CURRENT_LEVEL_08mA;
+    const uint16_t offset_max_current_level1 = ID601_MAX_CURRENT_LEVEL_08mA;
+    id601_write_max_current_level(1U, offset_max_current_level3, offset_max_current_level2, offset_max_current_level1);
+}
+void id601_trim_init_offset_vref1(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_max_curr_vref1(1U, ID601_OFFSET_VREF1);
+    id601_write_max_curr_vref2(1U, ID601_OFFSET_VREF1);
+    id601_write_max_curr_vref3(1U, ID601_OFFSET_VREF1);
+}
+void id601_trim_init_offset_vref2(void)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    id601_write_max_curr_vref1(1U, ID601_OFFSET_VREF2);
+    id601_write_max_curr_vref2(1U, ID601_OFFSET_VREF2);
+    id601_write_max_curr_vref3(1U, ID601_OFFSET_VREF2);
+}
+void id601_trim_init_current_chx(uint16_t ch)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    uint16_t channel[12] = { 0U };
+    channel[ch] = 1U;
+    id601_write_channel_enable(1U, channel[0], channel[1], channel[2], channel[3], channel[4], channel[5], channel[6], channel[7], channel[8], channel[9], channel[10], channel[11]);
+}
+
+void id601_trim_write_iref1(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_IREF1_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r01 = gn_id601_mirror_regs[ID601_ADDR_MIRROR2][0];
+    _r01 = id601_set_field(_r01, ID601_OTP2_IREF_CTL_Msk, ID601_OTP2_IREF_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR2, _r01, gp_id601_crc_func);
+}
+void id601_trim_write_iref2(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_IREF2_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r02 = gn_id601_mirror_regs[ID601_ADDR_MIRROR3][0];
+    _r02 = id601_set_field(_r02, ID601_OTP3_IREF2_CTL_Msk, ID601_OTP3_IREF2_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR3, _r02, gp_id601_crc_func);
+}
+void id601_trim_write_ldo_det(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_LDO_BGR2_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r03 = gn_id601_mirror_regs[ID601_ADDR_MIRROR4][0];
+    _r03 = id601_set_field(_r03, ID601_OTP4_LDO_BGR2_CTL_Msk, ID601_OTP4_LDO_BGR2_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func);
+}
+void id601_trim_write_ldo_dig(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_LDO_OSC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r05 = gn_id601_mirror_regs[ID601_ADDR_MIRROR6][0];
+    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_CTL_Msk, ID601_OTP6_LDO_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func);
+}
+void id601_trim_write_ldo_dac(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_LDO_DAC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r04 = gn_id601_mirror_regs[ID601_ADDR_MIRROR5][0];
+    _r04 = id601_set_field(_r04, ID601_OTP5_LDO_DAC_CTL_Msk, ID601_OTP5_LDO_DAC_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func);
+}
+void id601_trim_write_ldo_fll(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_LDO_OSC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r05 = gn_id601_mirror_regs[ID601_ADDR_MIRROR6][0];
+    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_OSC_CTL_Msk, ID601_OTP6_LDO_OSC_CTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func);
+}
+void id601_trim_write_ofs_temp(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_OFS_TEMP_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r03 = gn_id601_mirror_regs[ID601_ADDR_MIRROR4][0];
+    _r03 = id601_set_field(_r03, ID601_OTP4_OFS_TEMP_Msk, ID601_OTP4_OFS_TEMP_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func);
+}
+void id601_trim_write_osc_rctl(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_OSC_RCTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r04 = gn_id601_mirror_regs[ID601_ADDR_MIRROR5][0];
+    _r04 = id601_set_field(_r04, ID601_OTP5_OSC_RCTL_Msk, ID601_OTP5_OSC_RCTL_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func);
+}
+void id601_trim_write_gain(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_GAIN_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r12 = gn_id601_mirror_regs[ID601_ADDR_MIRROR_GAIN_CH01][0];
+    _r12 = id601_set_field(_r12, ID601_GAIN_CH01_GAIN_CH1_Msk, ID601_GAIN_CH01_GAIN_CH1_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR_GAIN_CH01, _r12, gp_id601_crc_func);
+}
+void id601_trim_write_offset(uint16_t val)
+{
+    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+
+    if (val > ID601_OFFSET_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
+        ID601_ASSERT(0);
+    }
+
+    uint16_t _r11 = gn_id601_mirror_regs[ID601_ADDR_MIRROR_OFS_CH01][0];
+    _r11 = id601_set_field(_r11, ID601_OFFSET_CH01_OFS_CH1_Msk, ID601_OFFSET_CH01_OFS_CH1_Pos, val);
+    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR_OFS_CH01, _r11, gp_id601_crc_func);
+}
+
 /* USER CODE END 0 */

@@ -18,6 +18,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
+#include <stdint.h>
 #include <stdbool.h>
 
 /* 2. Project internal / System-related headers */
@@ -45,6 +46,13 @@ typedef enum tag_ID601_VLED_STATE
     ID601_VLED_ON,
     ID601_VLED_MAX,
 } id601_vled_state_t;
+
+typedef enum tag_ID601_RELAY_STATE
+{
+    ID601_RELAY_DIS = 0U,
+    ID601_RELAY_CON,
+    ID601_RELAY_MAX,
+} id601_relay_state_t;
 
 typedef enum tag_ID601_CH
 {
@@ -79,9 +87,12 @@ typedef enum tag_ID601_CH
 /* USER CODE BEGIN EFP */
 extern void drv_gpio_init(void);
 
-extern bool drv_gpio_id601_vcc(id601_vcc_state_t state);
-extern bool drv_gpio_id601_vled(id601_vled_state_t state);
-extern bool drv_gpio_id601_ch_demux(id601_ch_t ch);
+extern bool drv_gpio_id601_vcc(uint16_t state);
+extern bool drv_gpio_id601_vled(uint16_t state);
+extern bool drv_gpio_id601_test_relay(uint16_t state);
+extern bool drv_gpio_id601_o1_relay(uint16_t state);
+extern bool drv_gpio_id601_o2_relay(uint16_t state);
+extern bool drv_gpio_id601_ch_demux(uint16_t ch);
 
 extern bool drv_gpio_ic603_cs(bool state);
 extern bool drv_gpio_ads114s08_dev1_cs(bool state);
@@ -89,6 +100,7 @@ extern bool drv_gpio_ads114s08_dev2_cs(bool state);
 extern bool drv_gpio_ads114s08_dev_all_cs(bool state);
 
 extern bool drv_gpio_serialize_out_enable(bool state);
+extern bool drv_gpio_counter_reset(bool state);
 
 extern void drv_gpio_ic603_nINT_LD_irq_handler(void);
 extern void drv_gpio_ic603_nINT_FAULT_irq_handler(void);

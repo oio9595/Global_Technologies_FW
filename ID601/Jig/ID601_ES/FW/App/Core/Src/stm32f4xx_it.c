@@ -27,6 +27,7 @@
 #include "drv_gpio.h"
 #include "drv_spi.h"
 #include "drv_adc.h"
+#include "drv_ads114s08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -190,7 +191,7 @@ void EXTI4_IRQHandler(void)
 void DMA1_Stream2_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
-
+    drv_tim_capture_freq_irq_handler();
   /* USER CODE END DMA1_Stream2_IRQn 0 */
   /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
 

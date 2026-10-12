@@ -18,8 +18,7 @@
 /* 1. Direct pairing header (Corresponding header for this source file) */
 #include "drv_gpio.h"
 /* 2. C standard library headers (Alphabetical order) */
-#include <stdint.h>
-#include <stdbool.h>
+
 /* 3. Project internal / System-related headers */
 #include "drv_mcp23017.h"
 #include "drv_timer.h"
@@ -33,8 +32,16 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define POWER_STABLE_MS     (100)  // Delay in milliseconds for VDD ramp-up
-#define SPI_CS_SETUP_US     (5U)
+#define POWER_STABLE_MS         (100)  // Delay in milliseconds for VDD ramp-up
+#define RELAY_STABLE_MS         (10)  // Delay in milliseconds for relay stabilization
+#define SPI_CS_SETUP_US         (5U)
+
+#define ID601_VCC_EN_MCP_PORT   (MCP_GPA0)
+#define ID601_VCC_5V5_MCP_PORT  (MCP_GPA1)
+#define ID601_VLED_CTL_9V       (MCP_GPA2)
+#define ID601_TEST_RELAY        (MCP_GPA3)
+#define ID601_O1_RELAY          (MCP_GPA4)
+#define ID601_O2_RELAY          (MCP_GPA5)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,8 +51,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern volatile bool g_ic603_nint_ld_flag;
-extern volatile bool g_ic603_nint_fault_flag;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,31 +63,43 @@ extern volatile bool g_ic603_nint_fault_flag;
 /* USER CODE BEGIN 0 */
 void drv_gpio_init(void)
 {
+    mcp23017_init();
+    drv_gpio_id601_vcc(ID601_VCC_OFF);
+    drv_gpio_id601_vled(ID601_VLED_OFF);
+    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
+    drv_gpio_id601_o1_relay(ID601_RELAY_DIS);
+    drv_gpio_id601_o2_relay(ID601_RELAY_DIS);
 
+    drv_gpio_ic603_cs(false);
+    drv_gpio_ads114s08_dev_all_cs(false);
 }
 
-bool drv_gpio_id601_vcc(id601_vcc_state_t state)
+bool drv_gpio_id601_vcc(uint16_t state)
 {
     switch (state)
     {
         case ID601_VCC_OFF:
         {
-            // Implement the logic to turn off VCC
-
+            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, true);
+            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
             break;
         }
         case ID601_VCC_3V3:
         {
-            // Implement the logic to set VCC to 5.0V
+            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, false);
+            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
             break;
         }
         case ID601_VCC_5V5:
         {
-            // Implement the logic to set VCC to 5.5V
+            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, false);
+            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, true);
             break;
         }
         default:
         {
+            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, true);
+            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
             return false;
         }
     }
@@ -89,23 +107,23 @@ bool drv_gpio_id601_vcc(id601_vcc_state_t state)
     return true;
 }
 
-bool drv_gpio_id601_vled(id601_vled_state_t state)
+bool drv_gpio_id601_vled(uint16_t state)
 {
     switch (state)
     {
         case ID601_VLED_OFF:
         {
-            // Implement the logic to turn off VLED
-
+            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, true);
             break;
         }
         case ID601_VLED_ON:
         {
-            // Implement the logic to turn on VLED
+            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, false);
             break;
         }
         default:
         {
+            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, false);
             return false;
         }
     }
@@ -113,7 +131,79 @@ bool drv_gpio_id601_vled(id601_vled_state_t state)
     return true;
 }
 
-bool drv_gpio_id601_ch_demux(id601_ch_t ch)
+bool drv_gpio_id601_test_relay(uint16_t state)
+{
+    switch (state)
+    {
+        case ID601_RELAY_DIS:
+        {
+            mcp23017_set_gpio_state(ID601_TEST_RELAY, false);
+            break;
+        }
+        case ID601_RELAY_CON:
+        {
+            mcp23017_set_gpio_state(ID601_TEST_RELAY, true);
+            break;
+        }
+        default:
+        {
+            mcp23017_set_gpio_state(ID601_TEST_RELAY, false);
+            return false;
+        }
+    }
+    drv_tim_delay_ms(RELAY_STABLE_MS);
+    return true;
+}
+
+bool drv_gpio_id601_o1_relay(uint16_t state)
+{
+    switch (state)
+    {
+        case ID601_RELAY_DIS:
+        {
+            mcp23017_set_gpio_state(ID601_O1_RELAY, false);
+            break;
+        }
+        case ID601_RELAY_CON:
+        {
+            mcp23017_set_gpio_state(ID601_O1_RELAY, true);
+            break;
+        }
+        default:
+        {
+            mcp23017_set_gpio_state(ID601_O1_RELAY, false);
+            return false;
+        }
+    }
+    drv_tim_delay_ms(RELAY_STABLE_MS);
+    return true;
+}
+
+bool drv_gpio_id601_o2_relay(uint16_t state)
+{
+    switch (state)
+    {
+        case ID601_RELAY_DIS:
+        {
+            mcp23017_set_gpio_state(ID601_O2_RELAY, false);
+            break;
+        }
+        case ID601_RELAY_CON:
+        {
+            mcp23017_set_gpio_state(ID601_O2_RELAY, true);
+            break;
+        }
+        default:
+        {
+            mcp23017_set_gpio_state(ID601_O2_RELAY, false);
+            return false;
+        }
+    }
+    drv_tim_delay_ms(RELAY_STABLE_MS);
+    return true;
+}
+
+bool drv_gpio_id601_ch_demux(uint16_t ch)
 {
     const uint32_t ch_val = (uint32_t)ch;
     if (ch_val >= ID601_CH_MAX)
@@ -349,13 +439,26 @@ bool drv_gpio_serialize_out_enable(bool state)
     return true;
 }
 
+bool drv_gpio_counter_reset(bool state)
+{
+    if (false == state)
+    {
+        LL_GPIO_ResetOutputPin(CNT_RST_GPIO_Port, CNT_RST_Pin);
+    }
+    else
+    {
+        LL_GPIO_SetOutputPin(CNT_RST_GPIO_Port, CNT_RST_Pin);
+    }
+    return true;
+}
+
 void drv_gpio_ic603_nINT_LD_irq_handler(void)
 {
-    g_ic603_nint_ld_flag = true;
+
 }
 
 void drv_gpio_ic603_nINT_FAULT_irq_handler(void)
 {
-    g_ic603_nint_fault_flag = true;
+
 }
 /* USER CODE END 0 */

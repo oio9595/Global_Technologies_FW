@@ -67,6 +67,8 @@ static tx_ring_buffer_t gt_uart_tx;
 static rx_ring_buffer_t gt_uart_rx;
 
 bool gb_uart_tx_dma_progress = false;
+
+static log_level_t gt_log_level;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,6 +95,8 @@ void drv_uart_init(void)
     //LL_DMA_EnableIT_TC(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
     //LL_DMA_EnableIT_TE(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
     //LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
+
+    gt_log_level = LOG_LV_DEBUG;
 }
 
 /**
@@ -209,8 +213,13 @@ void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
  * @param  format  Format string (similar to printf).
  * @note   This function formats the string and pushes it into the UART TX ring buffer.
  */
-void drv_uart_printf(const char* format, ...)
+void drv_uart_printf(log_level_t level, const char* format, ...)
 {
+    if (level > gt_log_level)
+    {
+        return;
+    }
+
     char buffer[MSG_BUFFER_SIZE];
     va_list args;
     va_start(args, format);
@@ -332,9 +341,12 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
         }
         default:
         {
-            drv_uart_printf_direct(&received_data, 1U);
-            current_msg->msg[current_msg->size++] = received_data;
-            current_msg->msg[current_msg->size] = '\0';
+            if (current_msg->size < (MSG_BUFFER_SIZE - 1U))
+            {
+                drv_uart_printf_direct(&received_data, 1U);
+                current_msg->msg[current_msg->size++] = received_data;
+                current_msg->msg[current_msg->size] = '\0';
+            }
             break;
         }
     }

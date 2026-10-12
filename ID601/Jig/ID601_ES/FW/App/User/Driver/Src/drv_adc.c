@@ -61,7 +61,6 @@ void mcu_adc_set_conversion_enable(bool b_start)
         gn_mcu_adc_sum = 0U;
         gb_mcu_adc_conversion_done = false;
         gn_mcu_conversion_count = MCU_ADC_READ_COUNT;
-        LL_GPIO_SetOutputPin(DEBUG1_GPIO_Port, DEBUG1_Pin);
         LL_ADC_EnableIT_EOCS(ADC1);
         LL_ADC_Enable(ADC1);
         LL_ADC_REG_StartConversionSWStart(ADC1);
@@ -70,7 +69,6 @@ void mcu_adc_set_conversion_enable(bool b_start)
     {
         LL_ADC_Disable(ADC1);
         LL_ADC_DisableIT_EOCS(ADC1);
-        LL_GPIO_ResetOutputPin(DEBUG1_GPIO_Port, DEBUG1_Pin);
     }
 }
 
@@ -81,7 +79,8 @@ bool mcu_adc_wait_conversion_complete(void)
     {
         if ((HAL_GetTick() - start_tick) > MCU_ADC_TIMEOUT)
         {
-            drv_uart_printf("\r\nMCU ADC timeout!");
+            drv_uart_printf(LOG_LV_WARN, "\r\nMCU ADC timeout!");
+            mcu_adc_set_conversion_enable(false);
             return false;
         }
     }
@@ -104,7 +103,6 @@ void mcu_adc_eoc_irq_handler(void)
     if (true == LL_ADC_IsActiveFlag_EOCS(ADC1))
     {
         LL_ADC_ClearFlag_EOCS(ADC1);
-        LL_GPIO_TogglePin(DEBUG2_GPIO_Port, DEBUG2_Pin);
         gn_mcu_adc_sum += mcu_adc_read_conversion();
         --gn_mcu_conversion_count;
 

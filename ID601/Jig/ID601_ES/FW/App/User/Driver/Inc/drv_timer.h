@@ -58,6 +58,11 @@ extern void drv_tim_generate_serial_irq_handler(void);
 extern bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length, uint16_t timeout);
 extern void drv_tim_capture_serial_rise_irq_handler(void);
 extern void drv_tim_capture_serial_fall_irq_handler(void);
+
+extern void mcu_tim_set_conversion_enable(bool b_start);
+extern bool mcu_tim_wait_conversion_complete(void);
+extern uint32_t mcu_tim_get_average_conversion(void);
+extern void drv_tim_capture_freq_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

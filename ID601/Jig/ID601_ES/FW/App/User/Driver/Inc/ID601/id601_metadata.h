@@ -728,7 +728,7 @@ typedef enum tag_ID601_GENERAL_REGISTER_ADDR
     ID601_ADDR_GENERAL_OTP_PROTECT,              /* 0x3E */
     ID601_ADDR_GENERAL_OP_MODE,                  /* 0x3F */
 
-    ID601_ADDR_GENERAL_COUNT,
+    ID601_ADDR_GENERAL_MAX_COUNT,
 } id601_general_register_addr_t;
 
 typedef enum tag_ID601_MIRROR_REGISTER_ADDR
@@ -766,16 +766,16 @@ typedef enum tag_ID601_MIRROR_REGISTER_ADDR
     ID601_ADDR_MIRROR_GAIN_CH12,         /* 0x1D */
     ID601_ADDR_MIRROR_VERSION,           /* 0x1E */
 
-    ID601_ADDR_MIRROR_COUNT,
+    ID601_ADDR_MIRROR_MAX_COUNT,
 } id601_mirror_register_addr_t;
 
-typedef struct tag_ID601_DUMMY
+typedef struct tag_ID601_DUMMY_REG
 {
     uint16_t dummy :12;
     uint16_t       : 4;
-} _id601_dummy_t;
+} id601_dummy_reg_t;
 
-typedef struct tag_ID601_RESET_ID
+typedef struct tag_ID601_RESET_ID_REG
 {
     uint16_t id     : 5;
     uint16_t        : 3;
@@ -784,9 +784,9 @@ typedef struct tag_ID601_RESET_ID
     uint16_t vs_rst : 1;
     uint16_t rst    : 1;
     uint16_t        : 4;
-} _id601_reset_id_t;
+} id601_reset_id_reg_t;
 
-typedef struct tag_ID601_LD_CONTROL
+typedef struct tag_ID601_LD_CONTROL_REG
 {
     uint16_t ld_mode     : 1;
     uint16_t ld_dir      : 1;
@@ -796,29 +796,29 @@ typedef struct tag_ID601_LD_CONTROL
     uint16_t ld_type     : 1;
     uint16_t sv_no       : 6;
     uint16_t             : 4;
-} _id601_ld_control_t;
+} id601_ld_control_reg_t;
 
-typedef struct tag_ID601_LD_SIZE
+typedef struct tag_ID601_LD_SIZE_REG
 {
     uint16_t ld_size : 6;
     uint16_t         :10;
-} _id601_ld_size_t;
+} id601_ld_size_reg_t;
 
-typedef struct tag_ID601_PWMCLK_DIV1_2
+typedef struct tag_ID601_PWMCLK_DIV1_2_REG
 {
     uint16_t fpwm_div1 : 8;
     uint16_t fpwm_div2 : 4;
     uint16_t           : 4;
-} _id601_pwmclk_div1_2_t;
+} id601_pwmclk_div1_2_reg_t;
 
-typedef struct tag_ID601_PWMCLK_DIV2_3
+typedef struct tag_ID601_PWMCLK_DIV2_3_REG
 {
     uint16_t fpwm_div2 : 4;
     uint16_t fpwm_div3 : 8;
     uint16_t           : 4;
-} _id601_pwmclk_div2_3_t;
+} id601_pwmclk_div2_3_reg_t;
 
-typedef struct tag_ID601_CHANNEL_ENABLE
+typedef struct tag_ID601_CHANNEL_ENABLE_REG
 {
     uint16_t ch1_en  : 1;
     uint16_t ch2_en  : 1;
@@ -833,9 +833,9 @@ typedef struct tag_ID601_CHANNEL_ENABLE
     uint16_t ch11_en : 1;
     uint16_t ch12_en : 1;
     uint16_t         : 4;
-} _id601_channel_enable_t;
+} id601_channel_enable_reg_t;
 
-typedef struct tag_ID601_FAULT_CONTROL0
+typedef struct tag_ID601_FAULT_CONTROL0_REG
 {
     uint16_t o_off_e  : 1;
     uint16_t s_off_e  : 1;
@@ -847,25 +847,25 @@ typedef struct tag_ID601_FAULT_CONTROL0
     uint16_t fb_mode  : 2;
     uint16_t ft_mode  : 2;
     uint16_t          : 5;
-} _id601_fault_control0_t;
+} id601_fault_control0_reg_t;
 
-typedef struct tag_ID601_FB_LEVEL
+typedef struct tag_ID601_FB_LEVEL_REG
 {
     uint16_t fb1_level : 3;
     uint16_t fb2_level : 3;
     uint16_t fb3_level : 3;
     uint16_t           : 7;
-} _id601_fb_level_t;
+} id601_fb_level_reg_t;
 
-typedef struct tag_ID601_SHORT_LEVEL
+typedef struct tag_ID601_SHORT_LEVEL_REG
 {
     uint16_t short1_level : 3;
     uint16_t short2_level : 3;
     uint16_t short3_level : 3;
     uint16_t              : 7;
-} _id601_short_level_t;
+} id601_short_level_reg_t;
 
-typedef struct tag_ID601_FAULT_STATUS0
+typedef struct tag_ID601_FAULT_STATUS0_REG
 {
     uint16_t bit_fb1   : 1;
     uint16_t bit_fb2   : 1;
@@ -873,9 +873,9 @@ typedef struct tag_ID601_FAULT_STATUS0
     uint16_t bit_open  : 1;
     uint16_t bit_short : 1;
     uint16_t           :11;
-} _id601_fault_status0_t;
+} id601_fault_status0_reg_t;
 
-typedef struct tag_ID601_FAULT_STATUS1
+typedef struct tag_ID601_FAULT_STATUS1_REG
 {
     uint16_t thermal          : 1;
     uint16_t ldo_uv           : 1;
@@ -890,9 +890,9 @@ typedef struct tag_ID601_FAULT_STATUS1
     uint16_t cmd_err          : 1;
     uint16_t resp_err         : 1;
     uint16_t                  : 4;
-} _id601_fault_status1_t;
+} id601_fault_status1_reg_t;
 
-typedef struct tag_ID601_FAULT_STATUS2
+typedef struct tag_ID601_FAULT_STATUS2_REG
 {
     uint16_t open_ch1  : 1;
     uint16_t open_ch2  : 1;
@@ -907,9 +907,9 @@ typedef struct tag_ID601_FAULT_STATUS2
     uint16_t open_ch11 : 1;
     uint16_t open_ch12 : 1;
     uint16_t           : 4;
-} _id601_fault_status2_t;
+} id601_fault_status2_reg_t;
 
-typedef struct tag_ID601_FAULT_STATUS3
+typedef struct tag_ID601_FAULT_STATUS3_REG
 {
     uint16_t short_ch1  : 1;
     uint16_t short_ch2  : 1;
@@ -924,23 +924,23 @@ typedef struct tag_ID601_FAULT_STATUS3
     uint16_t short_ch11 : 1;
     uint16_t short_ch12 : 1;
     uint16_t            : 4;
-} _id601_fault_status3_t;
+} id601_fault_status3_reg_t;
 
-typedef struct tag_ID601_MAX_CURRENT_LEVEL
+typedef struct tag_ID601_MAX_CURRENT_LEVEL_REG
 {
     uint16_t max_curr_level1 : 4;
     uint16_t max_curr_level2 : 4;
     uint16_t max_curr_level3 : 4;
     uint16_t                 : 4;
-} _id601_max_current_level_t;
+} id601_max_current_level_reg_t;
 
-typedef struct tag_ID601_MAX_CURR_VREF
+typedef struct tag_ID601_MAX_CURR_VREF_REG
 {
     uint16_t max_curr_vref :12;
     uint16_t               : 4;
-} _id601_max_curr_vref_t;
+} id601_max_curr_vref_reg_t;
 
-typedef struct tag_ID601_CHX_LD_TYPE
+typedef struct tag_ID601_CHX_LD_TYPE_REG
 {
     uint16_t ch1_ld_type  : 1;
     uint16_t ch2_ld_type  : 1;
@@ -955,16 +955,16 @@ typedef struct tag_ID601_CHX_LD_TYPE
     uint16_t ch11_ld_type : 1;
     uint16_t ch12_ld_type : 1;
     uint16_t              : 4;
-} _id601_chx_ld_type_t;
+} id601_chx_ld_type_reg_t;
 
-typedef struct tag_ID601_DELAY_CH
+typedef struct tag_ID601_DELAY_CH_REG
 {
     uint16_t delay_ch_x1 : 5;
     uint16_t delay_ch_x2 : 5;
     uint16_t             : 6;
-} _id601_delay_ch_t;
+} id601_delay_ch_reg_t;
 
-typedef struct tag_ID601_FAULT_CONFIGURATION
+typedef struct tag_ID601_FAULT_CONFIGURATION_REG
 {
     uint16_t ldo_ovuv_en          : 1;
     uint16_t osc_ldo_ovuv_en      : 1;
@@ -978,9 +978,9 @@ typedef struct tag_ID601_FAULT_CONFIGURATION
     uint16_t wd_dimm_en           : 1;
     uint16_t crc_en               : 1;
     uint16_t                      : 4;
-} _id601_fault_configuration_t;
+} id601_fault_configuration_reg_t;
 
-typedef struct tag_ID601_BIST
+typedef struct tag_ID601_BIST_REG
 {
     uint16_t bist_err   : 1;
     uint16_t bist_done  : 1;
@@ -988,83 +988,83 @@ typedef struct tag_ID601_BIST
     uint16_t            : 8;
     uint16_t bist_start : 1;
     uint16_t            : 4;
-} _id601_bist_t;
+} id601_bist_reg_t;
 
-typedef struct tag_ID601_TEST_MODE0
+typedef struct tag_ID601_TEST_MODE0_REG
 {
     uint16_t dmux_sel : 5;
     uint16_t          :11;
-} _id601_test_mode0_t;
+} id601_test_mode0_reg_t;
 
-typedef struct tag_ID601_TEST_MODE1
+typedef struct tag_ID601_TEST_MODE1_REG
 {
     uint16_t tm_ch_ctrl_input_flip : 1;
     uint16_t                       :10;
     uint16_t testmode              : 1;
     uint16_t                       : 4;
-} _id601_test_mode1_t;
+} id601_test_mode1_reg_t;
 
-typedef struct tag_ID601_SERIAL_CLK_GEN
+typedef struct tag_ID601_SERIAL_CLK_GEN_REG
 {
     uint16_t serial_clk_high : 6;
     uint16_t serial_clk_low  : 6;
     uint16_t                 : 4;
-} _id601_serial_clk_gen_t;
+} id601_serial_clk_gen_reg_t;
 
-typedef struct tag_ID601_SERIAL_LATENCY
+typedef struct tag_ID601_SERIAL_LATENCY_REG
 {
     uint16_t serial_latency : 9;
     uint16_t                : 7;
-} _id601_serial_latency_t;
+} id601_serial_latency_reg_t;
 
-typedef struct tag_ID601_V_MASK
+typedef struct tag_ID601_V_MASK_REG
 {
     uint16_t v_mask :10;
     uint16_t        : 6;
-} _id601_v_mask_t;
+} id601_v_mask_reg_t;
 
-typedef struct tag_ID601_SV_MASK
+typedef struct tag_ID601_SV_MASK_REG
 {
     uint16_t sv_mask    :10;
     uint16_t            : 1;
     uint16_t sv_mask_en : 1;
     uint16_t            : 4;
-} _id601_sv_mask_t;
+} id601_sv_mask_reg_t;
 
-typedef struct tag_ID601_RSTCNT
+typedef struct tag_ID601_RSTCNT_REG
 {
     uint16_t rstcnt :10;
     uint16_t        : 6;
-} _id601_rstcnt_t;
+} id601_rstcnt_reg_t;
 
-typedef struct tag_ID601_TIMEOUT
+typedef struct tag_ID601_TIMEOUT_REG
 {
     uint16_t timeout :11;
     uint16_t         : 5;
-} _id601_timeout_t;
+} id601_timeout_reg_t;
 
-typedef struct tag_ID601_FLLCNT1
+typedef struct tag_ID601_FLLCNT1_REG
 {
     uint16_t fllcnt :12;
     uint16_t        : 4;
-} _id601_fllcnt1_t;
+} id601_fllcnt1_reg_t;
 
-typedef struct tag_ID601_FLLCNT2
+typedef struct tag_ID601_FLLCNT2_REG
 {
     uint16_t fllcnt_high : 8;
     uint16_t             : 1;
     uint16_t fll_range   : 2;
     uint16_t fll_en      : 1;
     uint16_t             : 4;
-} _id601_fllcnt2_t;
+} id601_fllcnt2_reg_t;
 
-typedef struct tag_ID601_WR_PROTECT
+typedef struct tag_ID601_WR_PROTECT_REG
 {
     uint16_t wr_protect :12;
     uint16_t            : 4;
-} _id601_wr_protect_t;
+} id601_wr_protect_reg_t;
 
-typedef struct tag_ID601_NF_CONTROL
+typedef struct tag_ID601_NF_CONTROL_REG
 {
     uint16_t dgrjt_en1    : 1;
     uint16_t dgrjt_en2    : 1;
@@ -1074,9 +1074,9 @@ typedef struct tag_ID601_NF_CONTROL
     uint16_t o_emi_rej_en : 1;
     uint16_t bbkn_th      : 6;
     uint16_t              : 4;
-} _id601_nf_control_t;
+} id601_nf_control_reg_t;
 
-typedef struct tag_ID601_CHOP_EN
+typedef struct tag_ID601_CHOP_EN_REG
 {
     uint16_t chop_bgr_en     : 1;
     uint16_t chop_dac_en     : 1;
@@ -1087,9 +1087,9 @@ typedef struct tag_ID601_CHOP_EN
     uint16_t                 : 5;
     uint16_t open_mask_opt   : 1;
     uint16_t                 : 1;
-} _id601_chop_en_t;
+} id601_chop_en_reg_t;
 
-typedef struct tag_ID601_TEMP
+typedef struct tag_ID601_TEMP_REG
 {
     uint16_t flt_gain   : 2;
     uint16_t o_slew     : 2;
@@ -1097,24 +1097,24 @@ typedef struct tag_ID601_TEMP
     uint16_t dac_rng    : 1;
     uint16_t ov_swap_en : 1;
     uint16_t            : 8;
-} _id601_temp_t;
+} id601_temp_reg_t;
 
-typedef struct tag_ID601_OSC_FLL_MAN1
+typedef struct tag_ID601_OSC_FLL_MAN1_REG
 {
     uint16_t osc_fll_man :12;
     uint16_t             : 4;
-} _id601_osc_fll_man1_t;
+} id601_osc_fll_man1_reg_t;
 
-typedef struct tag_ID601_OSC_FLL_MAN2
+typedef struct tag_ID601_OSC_FLL_MAN2_REG
 {
     uint16_t osc_fll_man       : 4;
     uint16_t osc_fll_err_range : 2;
     uint16_t                   : 5;
     uint16_t osc_man_en        : 1;
     uint16_t                   : 4;
-} _id601_osc_fll_man2_t;
+} id601_osc_fll_man2_reg_t;
 
-typedef struct tag_ID601_OSC_SPREAD
+typedef struct tag_ID601_OSC_SPREAD_REG
 {
     uint16_t sprd_gain : 3;
     uint16_t           : 1;
@@ -1122,9 +1122,9 @@ typedef struct tag_ID601_OSC_SPREAD
     uint16_t           : 4;
     uint16_t sprd_en   : 1;
     uint16_t           : 4;
-} _id601_osc_spread_t;
+} id601_osc_spread_reg_t;
 
-typedef struct tag_ID601_CLOCK_GATE_EN
+typedef struct tag_ID601_CLOCK_GATE_EN_REG
 {
     uint16_t dc_mclk_en  : 1;
     uint16_t fr1_mclk_en : 1;
@@ -1132,55 +1132,55 @@ typedef struct tag_ID601_CLOCK_GATE_EN
     uint16_t             : 1;
     uint16_t otp_mclk_en : 1;
     uint16_t             :11;
-} _id601_clock_gate_en_t;
+} id601_clock_gate_en_reg_t;
 
-typedef struct tag_ID601_VREF_FIX
+typedef struct tag_ID601_VREF_FIX_REG
 {
     uint16_t vref_fix :12;
     uint16_t          : 4;
-} _id601_vref_fix_t;
+} id601_vref_fix_reg_t;
 
-typedef struct tag_ID601_TEST_ANA_EN
+typedef struct tag_ID601_TEST_ANA_EN_REG
 {
     uint16_t test_ana_en : 5;
     uint16_t             :11;
-} _id601_test_ana_en_t;
+} id601_test_ana_en_reg_t;
 
-typedef struct tag_ID601_OTP_ACCESS1
+typedef struct tag_ID601_OTP_ACCESS1_REG
 {
     uint16_t otp_pg_acc_cycle : 4;
     uint16_t                  :12;
-} _id601_otp_access1_t;
+} id601_otp_access1_reg_t;
 
-typedef struct tag_ID601_OTP_ACCESS2
+typedef struct tag_ID601_OTP_ACCESS2_REG
 {
     uint16_t otp_pg_acc_cycle :12;
     uint16_t                  : 4;
-} _id601_otp_access2_t;
+} id601_otp_access2_reg_t;
 
-typedef struct tag_ID601_OTP_WRITE
+typedef struct tag_ID601_OTP_WRITE_REG
 {
     uint16_t otp_wsel : 4;
     uint16_t otp_rd   : 2;
     uint16_t          :10;
-} _id601_otp_write_t;
+} id601_otp_write_reg_t;
 
-typedef struct tag_ID601_OTP_RD_PROG
+typedef struct tag_ID601_OTP_RD_PROG_REG
 {
     uint16_t otp_pg_s    : 1;
     uint16_t otp_rd_s    : 1;
     uint16_t             : 9;
     uint16_t otp_pg_done : 1;
     uint16_t             : 4;
-} _id601_otp_rd_prog_t;
+} id601_otp_rd_prog_reg_t;
 
-typedef struct tag_ID601_OTP_PROTECT
+typedef struct tag_ID601_OTP_PROTECT_REG
 {
     uint16_t protect_en :12;
     uint16_t            : 4;
-} _id601_otp_protect_t;
+} id601_otp_protect_reg_t;
 
-typedef struct tag_ID601_OP_MODE
+typedef struct tag_ID601_OP_MODE_REG
 {
     uint16_t addr_ext     : 1;
     uint16_t ext_clkin    : 1;
@@ -1192,173 +1192,173 @@ typedef struct tag_ID601_OP_MODE
     uint16_t              : 3;
     uint16_t test_en      : 1;
     uint16_t              : 4;
-} _id601_op_mode_t;
+} id601_op_mode_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR1
+typedef struct tag_ID601_OTP_MIRROR1_REG
 {
     uint16_t otp_crc_checksum : 8;
     uint16_t                  : 8;
-} _id601_otp_mirror1_t;
+} id601_otp_mirror1_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR2
+typedef struct tag_ID601_OTP_MIRROR2_REG
 {
     uint16_t bgr_tc   : 5;
     uint16_t iref_ctl : 5;
     uint16_t          : 6;
-} _id601_otp_mirror2_t;
+} id601_otp_mirror2_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR3
+typedef struct tag_ID601_OTP_MIRROR3_REG
 {
     uint16_t bgr2_tc   : 5;
     uint16_t iref2_ctl : 5;
     uint16_t           : 6;
-} _id601_otp_mirror3_t;
+} id601_otp_mirror3_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR4
+typedef struct tag_ID601_OTP_MIRROR4_REG
 {
     uint16_t ldo_bgr2_ctl : 5;
     uint16_t              : 3;
     uint16_t ofs_temp     : 4;
     uint16_t              : 4;
-} _id601_otp_mirror4_t;
+} id601_otp_mirror4_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR5
+typedef struct tag_ID601_OTP_MIRROR5_REG
 {
     uint16_t osc_rctl    : 5;
     uint16_t             : 2;
     uint16_t ldo_dac_ctl : 5;
     uint16_t             : 4;
-} _id601_otp_mirror5_t;
+} id601_otp_mirror5_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR6
+typedef struct tag_ID601_OTP_MIRROR6_REG
 {
     uint16_t ldo_ctl     : 4;
     uint16_t ldo_osc_ctl : 4;
     uint16_t             : 8;
-} _id601_otp_mirror6_t;
+} id601_otp_mirror6_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR_OFS
+typedef struct tag_ID601_OTP_MIRROR_OFS_REG
 {
     uint16_t ofs_ch : 9;
     uint16_t        : 7;
-} _id601_otp_mirror_ofs_t;
+} id601_otp_mirror_ofs_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR_GAIN
+typedef struct tag_ID601_OTP_MIRROR_GAIN_REG
 {
     uint16_t gain_ch : 7;
     uint16_t         : 9;
-} _id601_otp_mirror_gain_t;
+} id601_otp_mirror_gain_reg_t;
 
-typedef struct tag_ID601_OTP_MIRROR_VERSION
+typedef struct tag_ID601_OTP_MIRROR_VERSION_REG
 {
     uint16_t version0 : 8;
     uint16_t          : 8;
-} _id601_otp_mirror_version_t;
+} id601_otp_mirror_version_reg_t;
 
 typedef struct tag_ID601_GENERAL_REGS
 {
-    _id601_reset_id_t               _r00;
-    _id601_ld_control_t             _r01;
-    _id601_ld_size_t                _r02;
-    _id601_pwmclk_div1_2_t          _r03;
-    _id601_pwmclk_div2_3_t          _r04;
-    _id601_channel_enable_t         _r05;
-    _id601_fault_control0_t         _r06;
-    _id601_fb_level_t               _r07;
-    _id601_short_level_t            _r08;
-    _id601_fault_status0_t          _r09;
-    _id601_fault_status1_t          _r0A;
-    _id601_fault_status2_t          _r0B;
-    _id601_fault_status3_t          _r0C;
-    _id601_max_current_level_t      _r0D;
-    _id601_max_curr_vref_t          _r0E;
-    _id601_max_curr_vref_t          _r0F;
+    id601_reset_id_reg_t               _r00;
+    id601_ld_control_reg_t             _r01;
+    id601_ld_size_reg_t                _r02;
+    id601_pwmclk_div1_2_reg_t          _r03;
+    id601_pwmclk_div2_3_reg_t          _r04;
+    id601_channel_enable_reg_t         _r05;
+    id601_fault_control0_reg_t         _r06;
+    id601_fb_level_reg_t               _r07;
+    id601_short_level_reg_t            _r08;
+    id601_fault_status0_reg_t          _r09;
+    id601_fault_status1_reg_t          _r0A;
+    id601_fault_status2_reg_t          _r0B;
+    id601_fault_status3_reg_t          _r0C;
+    id601_max_current_level_reg_t      _r0D;
+    id601_max_curr_vref_reg_t          _r0E;
+    id601_max_curr_vref_reg_t          _r0F;
 
-    _id601_max_curr_vref_t          _r10;
-    _id601_chx_ld_type_t            _r11;
-    _id601_delay_ch_t               _r12;
-    _id601_delay_ch_t               _r13;
-    _id601_delay_ch_t               _r14;
-    _id601_delay_ch_t               _r15;
-    _id601_delay_ch_t               _r16;
-    _id601_delay_ch_t               _r17;
-    _id601_fault_configuration_t    _r18;
-    _id601_bist_t                   _r19;
-    _id601_test_mode0_t             _r1A;
-    _id601_test_mode1_t             _r1B;
-    _id601_serial_clk_gen_t         _r1C;
-    _id601_serial_latency_t         _r1D;
-    _id601_v_mask_t                 _r1E;
-    _id601_sv_mask_t                _r1F;
-    _id601_rstcnt_t                 _r20;
-    _id601_timeout_t                _r21;
-    _id601_fllcnt1_t                _r22;
-    _id601_fllcnt2_t                _r23;
-    _id601_wr_protect_t             _r24;
-    _id601_nf_control_t             _r25;
-    _id601_chop_en_t                _r26;
-    _id601_temp_t                   _r27;
-    _id601_osc_fll_man1_t           _r28;
-    _id601_osc_fll_man2_t           _r29;
-    _id601_osc_spread_t             _r2A;
-    _id601_clock_gate_en_t          _r2B;
-    _id601_vref_fix_t               _r2C;
-    _id601_vref_fix_t               _r2D;
-    _id601_vref_fix_t               _r2E;
-    _id601_dummy_t                  _r2F;
+    id601_max_curr_vref_reg_t          _r10;
+    id601_chx_ld_type_reg_t            _r11;
+    id601_delay_ch_reg_t               _r12;
+    id601_delay_ch_reg_t               _r13;
+    id601_delay_ch_reg_t               _r14;
+    id601_delay_ch_reg_t               _r15;
+    id601_delay_ch_reg_t               _r16;
+    id601_delay_ch_reg_t               _r17;
+    id601_fault_configuration_reg_t    _r18;
+    id601_bist_reg_t                   _r19;
+    id601_test_mode0_reg_t             _r1A;
+    id601_test_mode1_reg_t             _r1B;
+    id601_serial_clk_gen_reg_t         _r1C;
+    id601_serial_latency_reg_t         _r1D;
+    id601_v_mask_reg_t                 _r1E;
+    id601_sv_mask_reg_t                _r1F;
+    id601_rstcnt_reg_t                 _r20;
+    id601_timeout_reg_t                _r21;
+    id601_fllcnt1_reg_t                _r22;
+    id601_fllcnt2_reg_t                _r23;
+    id601_wr_protect_reg_t             _r24;
+    id601_nf_control_reg_t             _r25;
+    id601_chop_en_reg_t                _r26;
+    id601_temp_reg_t                   _r27;
+    id601_osc_fll_man1_reg_t           _r28;
+    id601_osc_fll_man2_reg_t           _r29;
+    id601_osc_spread_reg_t             _r2A;
+    id601_clock_gate_en_reg_t          _r2B;
+    id601_vref_fix_reg_t               _r2C;
+    id601_vref_fix_reg_t               _r2D;
+    id601_vref_fix_reg_t               _r2E;
+    id601_dummy_reg_t                  _r2F;
 
-    _id601_dummy_t                  _r30;
-    _id601_dummy_t                  _r31;
-    _id601_dummy_t                  _r32;
-    _id601_dummy_t                  _r33;
-    _id601_dummy_t                  _r34;
-    _id601_dummy_t                  _r35;
-    _id601_dummy_t                  _r36;
-    _id601_dummy_t                  _r37;
-    _id601_dummy_t                  _r38;
-    _id601_test_ana_en_t            _r39;
-    _id601_otp_access1_t            _r3A;
-    _id601_otp_access2_t            _r3B;
-    _id601_otp_write_t              _r3C;
-    _id601_otp_rd_prog_t            _r3D;
-    _id601_otp_protect_t            _r3E;
-    _id601_op_mode_t                _r3F;
+    id601_dummy_reg_t                  _r30;
+    id601_dummy_reg_t                  _r31;
+    id601_dummy_reg_t                  _r32;
+    id601_dummy_reg_t                  _r33;
+    id601_dummy_reg_t                  _r34;
+    id601_dummy_reg_t                  _r35;
+    id601_dummy_reg_t                  _r36;
+    id601_dummy_reg_t                  _r37;
+    id601_dummy_reg_t                  _r38;
+    id601_test_ana_en_reg_t            _r39;
+    id601_otp_access1_reg_t            _r3A;
+    id601_otp_access2_reg_t            _r3B;
+    id601_otp_write_reg_t              _r3C;
+    id601_otp_rd_prog_reg_t            _r3D;
+    id601_otp_protect_reg_t            _r3E;
+    id601_op_mode_reg_t                _r3F;
 } _id601_general_regs_t;
 
 typedef struct tag_ID601_MIRROR_REGS
 {
-    _id601_otp_mirror1_t        _r00;
-    _id601_otp_mirror2_t        _r01;
-    _id601_otp_mirror3_t        _r02;
-    _id601_otp_mirror4_t        _r03;
-    _id601_otp_mirror5_t        _r04;
-    _id601_otp_mirror6_t        _r05;
-    _id601_otp_mirror_ofs_t     _r06;
-    _id601_otp_mirror_ofs_t     _r07;
-    _id601_otp_mirror_ofs_t     _r08;
-    _id601_otp_mirror_ofs_t     _r09;
-    _id601_otp_mirror_ofs_t     _r0A;
-    _id601_otp_mirror_ofs_t     _r0B;
-    _id601_otp_mirror_ofs_t     _r0C;
-    _id601_otp_mirror_ofs_t     _r0D;
-    _id601_otp_mirror_ofs_t     _r0E;
-    _id601_otp_mirror_ofs_t     _r0F;
+    id601_otp_mirror1_reg_t        _r00;
+    id601_otp_mirror2_reg_t        _r01;
+    id601_otp_mirror3_reg_t        _r02;
+    id601_otp_mirror4_reg_t        _r03;
+    id601_otp_mirror5_reg_t        _r04;
+    id601_otp_mirror6_reg_t        _r05;
+    id601_otp_mirror_ofs_reg_t     _r06;
+    id601_otp_mirror_ofs_reg_t     _r07;
+    id601_otp_mirror_ofs_reg_t     _r08;
+    id601_otp_mirror_ofs_reg_t     _r09;
+    id601_otp_mirror_ofs_reg_t     _r0A;
+    id601_otp_mirror_ofs_reg_t     _r0B;
+    id601_otp_mirror_ofs_reg_t     _r0C;
+    id601_otp_mirror_ofs_reg_t     _r0D;
+    id601_otp_mirror_ofs_reg_t     _r0E;
+    id601_otp_mirror_ofs_reg_t     _r0F;
 
-    _id601_otp_mirror_ofs_t     _r10;
-    _id601_otp_mirror_ofs_t     _r11;
-    _id601_otp_mirror_gain_t    _r12;
-    _id601_otp_mirror_gain_t    _r13;
-    _id601_otp_mirror_gain_t    _r14;
-    _id601_otp_mirror_gain_t    _r15;
-    _id601_otp_mirror_gain_t    _r16;
-    _id601_otp_mirror_gain_t    _r17;
-    _id601_otp_mirror_gain_t    _r18;
-    _id601_otp_mirror_gain_t    _r19;
-    _id601_otp_mirror_gain_t    _r1A;
-    _id601_otp_mirror_gain_t    _r1B;
-    _id601_otp_mirror_gain_t    _r1C;
-    _id601_otp_mirror_gain_t    _r1D;
-    _id601_otp_mirror_version_t _r1E;
+    id601_otp_mirror_ofs_reg_t     _r10;
+    id601_otp_mirror_ofs_reg_t     _r11;
+    id601_otp_mirror_gain_reg_t    _r12;
+    id601_otp_mirror_gain_reg_t    _r13;
+    id601_otp_mirror_gain_reg_t    _r14;
+    id601_otp_mirror_gain_reg_t    _r15;
+    id601_otp_mirror_gain_reg_t    _r16;
+    id601_otp_mirror_gain_reg_t    _r17;
+    id601_otp_mirror_gain_reg_t    _r18;
+    id601_otp_mirror_gain_reg_t    _r19;
+    id601_otp_mirror_gain_reg_t    _r1A;
+    id601_otp_mirror_gain_reg_t    _r1B;
+    id601_otp_mirror_gain_reg_t    _r1C;
+    id601_otp_mirror_gain_reg_t    _r1D;
+    id601_otp_mirror_version_reg_t _r1E;
 } _id601_mirror_regs_t;
 /* USER CODE END ET */
 

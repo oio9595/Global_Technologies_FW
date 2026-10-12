@@ -56,9 +56,45 @@ typedef enum tag_ID601_REGISTER_BANK
 /* USER CODE BEGIN EFP */
 extern void drv_id601_init(void);
 
-extern bool id601_write_register(id601_register_bank_t bank, uint16_t addr, const uint16_t* p_value, id601_crc_func_t p_crc_func);
-extern bool id601_read_register(id601_register_bank_t bank, uint16_t addr, uint16_t* p_value, id601_crc_func_t p_crc_func);
-extern bool id601_reset(void);
+extern bool id601_write_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, const uint16_t new_value, id601_crc_func_t p_crc_func);
+extern bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func);
+extern bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func);
+extern bool id601_fault_read(id601_crc_func_t p_crc_func);
+extern bool id601_sync_gen(id601_crc_func_t p_crc_func);
+extern bool id601_id_gen(id601_crc_func_t p_crc_func);
+
+extern bool id601_init_analog_test_mode(void);
+
+extern void id601_trim_init_iref1(void);
+extern void id601_trim_init_iref2(void);
+extern void id601_trim_init_ldo_det(void);
+extern void id601_trim_init_ldo_dig(void);
+extern void id601_trim_init_ldo_dac(void);
+extern void id601_trim_init_ldo_fll(void);
+extern void id601_trim_init_ofs_temp(void);
+extern void id601_trim_init_osc_rctl(void);
+extern void id601_trim_init_gain(void);
+extern void id601_trim_init_offset(void);
+
+extern void id601_trim_init_gain_vref1(void);
+extern void id601_trim_init_gain_vref2(void);
+extern void id601_trim_init_offset_vref1(void);
+extern void id601_trim_init_offset_vref2(void);
+
+extern void id601_trim_init_ofs_temp_o1(void);
+extern void id601_trim_init_ofs_temp_o2(void);
+extern void id601_trim_init_current_chx(uint16_t ch);
+
+extern void id601_trim_write_iref1(uint16_t val);
+extern void id601_trim_write_iref2(uint16_t val);
+extern void id601_trim_write_ldo_det(uint16_t val);
+extern void id601_trim_write_ldo_dig(uint16_t val);
+extern void id601_trim_write_ldo_dac(uint16_t val);
+extern void id601_trim_write_ldo_fll(uint16_t val);
+extern void id601_trim_write_ofs_temp(uint16_t val);
+extern void id601_trim_write_osc_rctl(uint16_t val);
+extern void id601_trim_write_gain(uint16_t val);
+extern void id601_trim_write_offset(uint16_t val);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

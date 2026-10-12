@@ -55,6 +55,9 @@ extern bool drv_spi_receive_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, c
 
 extern bool drv_spi_tx_dma_irq_handler(SPI_TypeDef* SPIx);
 extern bool drv_spi_rx_dma_irq_handler(SPI_TypeDef* SPIx);
+
+extern bool drv_spi_transmit_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint16_t length, uint32_t timeout);
+extern bool drv_spi_receive_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint8_t *p_rx, uint16_t length, uint32_t timeout);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
