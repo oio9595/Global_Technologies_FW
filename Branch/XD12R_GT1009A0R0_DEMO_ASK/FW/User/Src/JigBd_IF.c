@@ -43,6 +43,8 @@
 #define SERIAL_DECODE_MASK_ID       (uint32_t)(0x1F)
 #define SERIAL_DECODE_MASK_DATA     (uint32_t)(0xFFF)
 
+#define GRAY_BLEND_RATIO            (40UL) /* 0~100, 0: max only, 100: gray only */
+
 #if defined(TIME_SAVE)
     #define PATTERN_CHANGE_COLOR_COUNT                  (10U)
 #else
@@ -1796,14 +1798,32 @@ static void LED_Update_Buffer_By_Pattern(uint32_t* p_vsync_tick)
     {
         for (uint8_t map_idx = 0U ; map_idx < LED_MAP_SIZE ; ++map_idx)
         {
+            const uint16_t ld_r = gt_led_ld_buffer[map_idx].ld_r;
+            const uint16_t ld_g = gt_led_ld_buffer[map_idx].ld_g;
+            const uint16_t ld_b = gt_led_ld_buffer[map_idx].ld_b;
+
+            const uint32_t gray =
+                (299UL * ld_r + 587UL * ld_g + 114UL * ld_b) / 1000UL;
+
+            uint32_t max = ld_r;
+
+            if (ld_g > max)
+            {
+                max = ld_g;
+            }
+
+            if (ld_b > max)
+            {
+                max = ld_b;
+            }
+
+            const uint32_t blue =
+                (gray * GRAY_BLEND_RATIO +
+                max * (100UL - GRAY_BLEND_RATIO) + 50UL) / 100UL;
+
             gt_led_ld_buffer[map_idx].ld_r = 0U;
             gt_led_ld_buffer[map_idx].ld_g = 0U;
-            uint16_t ld_b = gt_led_ld_buffer[map_idx].ld_b * 1.5f;
-            if (ld_b > LD_DATA_14B_MAX)
-            {
-                ld_b = LD_DATA_14B_MAX;
-            }
-            gt_led_ld_buffer[map_idx].ld_b = ld_b;
+            gt_led_ld_buffer[map_idx].ld_b = (uint16_t)blue;
         }
     }
 }
