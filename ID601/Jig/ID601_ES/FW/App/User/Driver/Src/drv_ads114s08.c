@@ -23,6 +23,7 @@
 #include "drv_spi.h"
 #include "drv_gpio.h"
 #include "drv_uart.h"
+#include "drv_timer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -221,8 +222,9 @@ typedef bool (*ads114_spi_cs_fn_t)(bool);
 #define USE_DISPLAY_DEVICE_REGS
 #define ADS114S08_SPI_BASE      (SPI2)
 
-#define ADS114S08_READ_COUNT    (16U)
-#define ADS114S08_TIMEOUT       (20U)
+#define ADS114S08_READ_COUNT                (16U)
+#define ADS114S08_CONVERSION_TIMEOUT_MS     (20U)
+#define ADS114S08_SPI_TIMEOUT_MS            (5U)
 
 /* Commands */
 #define CMD_NOP                 (0x00U)
@@ -247,12 +249,12 @@ typedef bool (*ads114_spi_cs_fn_t)(bool);
 #define ICC_XD_R                (22.0f)
 #define ICC_XC_R                (4.7f)
 
-#define ADC_VREF                (5000.0f) /* mV */
-#define ADC_RES                 (32768U)
-#define mVOLTAGE_PER_ADC        (ADC_VREF / (float)ADC_RES)
-#define ADC_CONV_COEFF_HIGH     (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
-#define ADC_CONV_COEFF_MID      (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))
-#define ADC_CONV_COEFF_LOW      (mVOLTAGE_PER_ADC * (LTC_R_RIN / (LTC_R_RS_LOW * LTC_R_ROUT)))
+#define ADS_ADC_VREF                (5000.0f) /* mV */
+#define ADS_ADC_RES                 (32768U)
+#define ADS_ADC_MV_PER_COUNT        (ADS_ADC_VREF / (float)ADS_ADC_RES)
+#define ADS_ADC_CONV_COEFF_HIGH     (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
+#define ADS_ADC_CONV_COEFF_MID      (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))
+#define ADS_ADC_CONV_COEFF_LOW      (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_LOW * LTC_R_ROUT)))
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -285,23 +287,23 @@ static void ads114s08_dump_registers(ads_device_t dev)
     {
         return;
     }
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n======== ADS114S08 regs value ========");
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======== ADS114S08 regs value ========");
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\nID : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].id));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tDEV ID : %s", (gt_ads114s08_regs[dev].id.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs[dev].id.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] ID : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].id));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDEV ID : %s", (gt_ads114s08_regs[dev].id.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs[dev].id.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\nDevice Status : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].status));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tPOR : %u", gt_ads114s08_regs[dev].status.fl_por);
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tRDY : %u", gt_ads114s08_regs[dev].status.rdy);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] Device Status : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].status));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tPOR : %u", gt_ads114s08_regs[dev].status.fl_por);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tRDY : %u", gt_ads114s08_regs[dev].status.rdy);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\nData Rate : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].datarate));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tDR : %u", gt_ads114s08_regs[dev].datarate.dr);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] Data Rate : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].datarate));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDR : %u", gt_ads114s08_regs[dev].datarate.dr);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\nSYS : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].sys));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tSENDSTAT : %u", gt_ads114s08_regs[dev].sys.sendstat);
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n\tCRC : %u", gt_ads114s08_regs[dev].sys.crc);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] SYS : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].sys));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tSENDSTAT : %u", gt_ads114s08_regs[dev].sys.sendstat);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tCRC : %u", gt_ads114s08_regs[dev].sys.crc);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n======================================");
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======================================");
 }
 #endif
 
@@ -318,7 +320,7 @@ static uint8_t ads114s08_read_register(ads_device_t dev, uint8_t reg_addr)
     TxBuffer[0] = (CMD_RREG | (reg_addr & 0x1FU));
 
     gp_ads114s08_cs_transition[dev](false);
-    if (false == drv_spi_receive_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, RxBuffer, 3U, 20U))
+    if (false == drv_spi_receive_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, RxBuffer, 3U, ADS114S08_SPI_TIMEOUT_MS))
     {
         gp_ads114s08_cs_transition[dev](true);
         return 0U;
@@ -342,7 +344,7 @@ static bool ads114s08_write_register(ads_device_t dev, uint8_t reg_addr, uint8_t
     TxBuffer[2] = reg_data;
 
     gp_ads114s08_cs_transition[dev](false);
-    if (false == drv_spi_transmit_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, 3U, 20U))
+    if (false == drv_spi_transmit_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, 3U, ADS114S08_SPI_TIMEOUT_MS))
     {
         gp_ads114s08_cs_transition[dev](true);
         return false;
@@ -362,7 +364,7 @@ static void ads114s08_send_command(ads_device_t dev, uint8_t cmd_code)
     TxBuffer[0] = cmd_code;
 
     gp_ads114s08_cs_transition[dev](false);
-    if (false == drv_spi_transmit_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, 1U, 20U))
+    if (false == drv_spi_transmit_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, 1U, ADS114S08_SPI_TIMEOUT_MS))
     {
         gp_ads114s08_cs_transition[dev](true);
         return;
@@ -377,6 +379,7 @@ static void ads114s08_reset(ads_device_t dev)
         return;
     }
     ads114s08_send_command(dev, CMD_RESET);
+    drv_tim_delay_ms(1U);
 }
 
 void ads114s08_set_conversion_enable(ads_device_t dev, bool b_start)
@@ -403,9 +406,9 @@ bool ads114s08_wait_conversion_complete(void)
     uint32_t start_tick = HAL_GetTick();
     while (false == gb_ads114s08_conversion_done)
     {
-        if ((HAL_GetTick() - start_tick) > ADS114S08_TIMEOUT)
+        if ((HAL_GetTick() - start_tick) > ADS114S08_CONVERSION_TIMEOUT_MS)
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    ADS114S08 timeout!!\r\n    All devices stopped.");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ADS] ADS114S08 timeout!!\r\n    All ADS Devices stopped.");
             ads114s08_set_conversion_enable(ADS_DEV_1, false);
             ads114s08_set_conversion_enable(ADS_DEV_2, false);
             return false;
@@ -428,7 +431,7 @@ static int16_t ads114s08_read_conversion(ads_device_t dev)
     TxBuffer[0] = CMD_RDATA;
 
     gp_ads114s08_cs_transition[dev](false);
-    if (false == drv_spi_receive_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, RxBuffer, 3U, 20U))
+    if (false == drv_spi_receive_polling_8bit(ADS114S08_SPI_BASE, TxBuffer, RxBuffer, 3U, ADS114S08_SPI_TIMEOUT_MS))
     {
         gp_ads114s08_cs_transition[dev](true);
         return 0;
@@ -447,18 +450,22 @@ int32_t ads114s08_get_average_conversion(ads_device_t dev)
     return ((int32_t)((float)gn_ads114s08_adc_sum / ADS114S08_READ_COUNT));
 }
 
+float ads114s08_conversion_adc_to_mvoltage(uint32_t adc_value)
+{
+    return ((float)adc_value * ADS_ADC_MV_PER_COUNT);
+}
+
 void ads114s08_init(void)
 {
     drv_gpio_ads114s08_dev_all_cs(true);
     for (ads_device_t dev = ADS_DEV_1; dev < ADS_DEV_MAX; ++dev)
     {
         ads114s08_reset(dev);
-        LL_mDelay(1U);
 
         for(uint8_t reg = REG_ADDR_ID; reg < REG_ADDR_MAX; ++reg)
         {
             *((uint8_t *)&(gt_ads114s08_regs[dev].id) + reg) = ads114s08_read_register(dev, reg);
-            drv_uart_printf(LOG_LV_DEBUG, "\r\nreg[0x%02X] = 0x%02X", reg, *((uint8_t *)&(gt_ads114s08_regs[dev].id) + reg));
+            drv_uart_printf(LOG_LV_TRACE, "\r\n    [ADS] reg[0x%02X] = 0x%02X", reg, *((uint8_t *)&(gt_ads114s08_regs[dev].id) + reg));
         }
         gt_ads114s08_regs[dev].status.fl_por = 0U; /* Clear POR flag */
         gt_ads114s08_regs[dev].status.rdy = 0U; /* Clear Device Ready Flag */

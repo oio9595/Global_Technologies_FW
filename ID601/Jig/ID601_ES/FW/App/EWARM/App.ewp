@@ -1322,6 +1322,9 @@
           <name>$PROJ_DIR$\..\User\App\Inc\cli.h</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\User\App\Inc\common_def.h</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\User\App\Inc\id601_test.h</name>
         </file>
         <file>

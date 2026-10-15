@@ -18,6 +18,9 @@
 /* 1. Direct pairing header (Corresponding header for this source file) */
 #include "id601_trim.h"
 /* 2. C standard library headers (Alphabetical order) */
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
 /* 3. Project internal / System-related headers */
 #include "main.h"
@@ -27,6 +30,8 @@
 #include "drv_timer.h"
 #include "drv_adc.h"
 #include "drv_ads114s08.h"
+#include "cmsis_os.h"
+#include "common_def.h"
 
 /* USER CODE END Includes */
 
@@ -36,7 +41,7 @@ typedef enum tag_TRIM_STEP_T
 {
     TRIM_STEP_NONE = 0U,
     TRIM_STEP_INITIAL,
-    TRIM_STEP_INITIAL_BY_LIST,
+    TRIM_STEP_SETUP_BY_LIST,
     TRIM_STEP_VSYNC_STOP,
     TRIM_STEP_START_MEASURE,
     TRIM_STEP_GET_MEASURED_VALUE,
@@ -67,19 +72,93 @@ typedef enum tag_TRIM_LIST_T
     TRIM_LIST_MAX,
 } trim_list_t;
 
+typedef struct
+{
+    bool initialized;
+    bool searched;
+    uint16_t attempts;
+    int32_t low;
+    int32_t high;
+    uint16_t best_code;
+    uint16_t best_reg;
+    float best_error;
+} trim_search_t;
+
 typedef struct tag_TRIM_INFO
 {
-    float value[12][2];
-    bool repeat[12];
+    float tmp_value[12][2];
+    float value[12];
+    uint16_t trim_code[12];
+    uint16_t reg_val[12];
     uint16_t ch;
+    bool repeat[12];
+    trim_search_t search[12];
 } trim_info_t;
+
+typedef enum tag_TRIM_RANGE_T
+{
+    TRIM_RANGE_TARGET = 0U,
+    TRIM_RANGE_LOWER,
+    TRIM_RANGE_UPPER,
+    TRIM_RANGE_MAX,
+} trim_range_t;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define REPEAT_FIRST                (false)
+#define REPEAT_SECOND               (true)
+
 //#define RTOS_TIME_DEBUG
 #define T_DEFAULT_MS        (1U)
+#define T_STABLE_MS         (10U)
+#define T_MEASURE_DONE_MS   (100U)
+#define T_RAMP_UP_MS        (10U)
+#define T_FUSING_DONE_MS    (10U)
+#define T_RAMP_DOWN_MS      (10U)
+
+#define TRIM_IREF1_TARGET_UA        (10.0f)  // 10uA
+#define TRIM_IREF2_TARGET_UA        (10.0f)  // 10uA
+#define TRIM_LDO_DET_TARGET_V       (1.5f)   // 1.5V
+#define TRIM_LDO_DIG_TARGET_V       (1.5f)   // 1.5V
+#define TRIM_LDO_DAC_TARGET_V       (1.5f)   // 1.5V
+#define TRIM_LDO_FLL_TARGET_V       (1.5f)   // 1.5V
+#define TRIM_OFS_TEMP_TARGET_MV     (209.4f) // 209.4mV
+#define TRIM_OSC_RCTL_TARGET_MHZ    (51.0f)  // 51MHz
+#if (ID601_TRIM_GAIN_MAX_CURR_LVL == ID601_MAX_CURRENT_LEVEL_08mA)
+    #define TRIM_GAIN_TARGET_MA     ((8.0f * (ID601_TRIM_GAIN_VREF2 - ID601_TRIM_GAIN_VREF1)) / 4095.0f)
+#else
+    #error "Unsupported ID601_TRIM_GAIN_MAX_CURR_LVL value"
+#endif
+#if (ID601_TRIM_OFFSET_MAX_CURR_LVL == ID601_MAX_CURRENT_LEVEL_08mA)
+    #define TRIM_OFFSET_TARGET_MA   ((8.0f * (ID601_TRIM_OFFSET_VREF2 + ID601_TRIM_OFFSET_VREF1) / 2.0f) / 4095.0f)
+#else
+    #error "Unsupported ID601_TRIM_OFFSET_MAX_CURR_LVL value"
+#endif
+
+#define TRIM_IREF1_TOL_RATIO        (3.0f / 100.0f)
+#define TRIM_IREF2_TOL_RATIO        (3.0f / 100.0f)
+#define TRIM_LDO_DET_TOL_RATIO      (3.0f / 100.0f)
+#define TRIM_LDO_DIG_TOL_RATIO      (3.0f / 100.0f)
+#define TRIM_LDO_DAC_TOL_RATIO      (3.0f / 100.0f)
+#define TRIM_LDO_FLL_TOL_RATIO      (3.0f / 100.0f)
+#define TRIM_OFS_TEMP_TOL_RATIO     (3.0f / 100.0f)
+#define TRIM_OSC_RCTL_TOL_RATIO     (3.0f / 100.0f)
+#define TRIM_GAIN_TOL_RATIO         (3.0f / 100.0f)
+#define TRIM_OFFSET_TOL_RATIO       (3.0f / 100.0f)
+
+// remove below if not used
+#define TRIM_IREF1_INIT_MOVE        (4U)
+#define TRIM_IREF2_INIT_MOVE        (4U)
+#define TRIM_LDO_DET_INIT_MOVE      (4U)
+#define TRIM_LDO_DIG_INIT_MOVE      (4U)
+#define TRIM_LDO_DAC_INIT_MOVE      (4U)
+#define TRIM_LDO_FLL_INIT_MOVE      (4U)
+#define TRIM_OFS_TEMP_INIT_MOVE     (4U)
+#define TRIM_OSC_RCTL_INIT_MOVE     (4U)
+#define TRIM_GAIN_INIT_MOVE         (4U)
+#define TRIM_OFFSET_INIT_MOVE       (4U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -91,7 +170,7 @@ typedef struct tag_TRIM_INFO
 /* USER CODE BEGIN PFP */
 static bool trim_step_none(thread_data_t *td);
 static bool trim_step_initial(thread_data_t *td);
-static bool trim_step_initial_by_list(thread_data_t *td);
+static bool trim_step_setup_by_list(thread_data_t *td);
 static bool trim_step_vsync_stop(thread_data_t *td);
 static bool trim_step_start_measure(thread_data_t *td);
 static bool trim_step_get_measured_value(thread_data_t *td);
@@ -107,11 +186,11 @@ static bool trim_step_pwr_off(thread_data_t *td);
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-static const trim_step_handler_t trim_step_handlers[TRIM_STEP_MAX] =
+static const trim_step_handler_t gp_trim_step_handlers[TRIM_STEP_MAX] =
 {
     [TRIM_STEP_NONE]                        = trim_step_none,
     [TRIM_STEP_INITIAL]                     = trim_step_initial,
-    [TRIM_STEP_INITIAL_BY_LIST]             = trim_step_initial_by_list,
+    [TRIM_STEP_SETUP_BY_LIST]               = trim_step_setup_by_list,
     [TRIM_STEP_VSYNC_STOP]                  = trim_step_vsync_stop,
     [TRIM_STEP_START_MEASURE]               = trim_step_start_measure,
     [TRIM_STEP_GET_MEASURED_VALUE]          = trim_step_get_measured_value,
@@ -125,53 +204,131 @@ static const trim_step_handler_t trim_step_handlers[TRIM_STEP_MAX] =
     [TRIM_STEP_PWR_OFF]                     = trim_step_pwr_off,
 };
 
-static const trim_init_func_t trim_init_by_list_funcs[TRIM_LIST_MAX] =
+static const trim_setup_func_t gp_trim_setup_by_list[TRIM_LIST_MAX] =
 {
-    [TRIM_LIST_IREF1] = id601_trim_init_iref1,
-    [TRIM_LIST_IREF2] = id601_trim_init_iref2,
-    [TRIM_LIST_LDO_DET] = id601_trim_init_ldo_det,
-    [TRIM_LIST_LDO_DIG] = id601_trim_init_ldo_dig,
-    [TRIM_LIST_LDO_DAC] = id601_trim_init_ldo_dac,
-    [TRIM_LIST_LDO_FLL] = id601_trim_init_ldo_fll,
-    [TRIM_LIST_OFS_TEMP] = id601_trim_init_ofs_temp,
-    [TRIM_LIST_OSC_RCTL] = id601_trim_init_osc_rctl,
-    [TRIM_LIST_GAIN] = id601_trim_init_gain,
-    [TRIM_LIST_OFFSET] = id601_trim_init_offset,
+    [TRIM_LIST_IREF1] = id601_trim_setup_iref1,
+    [TRIM_LIST_IREF2] = id601_trim_setup_iref2,
+    [TRIM_LIST_LDO_DET] = id601_trim_setup_ldo_det,
+    [TRIM_LIST_LDO_DIG] = id601_trim_setup_ldo_dig,
+    [TRIM_LIST_LDO_DAC] = id601_trim_setup_ldo_dac,
+    [TRIM_LIST_LDO_FLL] = id601_trim_setup_ldo_fll,
+    [TRIM_LIST_OFS_TEMP] = id601_trim_setup_ofs_temp,
+    [TRIM_LIST_OSC_RCTL] = id601_trim_setup_osc_rctl,
+    [TRIM_LIST_GAIN] = id601_trim_setup_gain,
+    [TRIM_LIST_OFFSET] = id601_trim_setup_offset,
 };
 
-static const trim_write_func_t trim_write_funcs[TRIM_LIST_MAX] =
+static const trim_apply_code_func_t gp_trim_apply_code_by_list[TRIM_LIST_MAX] =
 {
-    [TRIM_LIST_IREF1] = id601_trim_write_iref1,
-    [TRIM_LIST_IREF2] = id601_trim_write_iref2,
-    [TRIM_LIST_LDO_DET] = id601_trim_write_ldo_det,
-    [TRIM_LIST_LDO_DIG] = id601_trim_write_ldo_dig,
-    [TRIM_LIST_LDO_DAC] = id601_trim_write_ldo_dac,
-    [TRIM_LIST_LDO_FLL] = id601_trim_write_ldo_fll,
-    [TRIM_LIST_OFS_TEMP] = id601_trim_write_ofs_temp,
-    [TRIM_LIST_OSC_RCTL] = id601_trim_write_osc_rctl,
-    [TRIM_LIST_GAIN] = id601_trim_write_gain,
-    [TRIM_LIST_OFFSET] = id601_trim_write_offset,
+    [TRIM_LIST_IREF1] = id601_trim_apply_iref1,
+    [TRIM_LIST_IREF2] = id601_trim_apply_iref2,
+    [TRIM_LIST_LDO_DET] = id601_trim_apply_ldo_det,
+    [TRIM_LIST_LDO_DIG] = id601_trim_apply_ldo_dig,
+    [TRIM_LIST_LDO_DAC] = id601_trim_apply_ldo_dac,
+    [TRIM_LIST_LDO_FLL] = id601_trim_apply_ldo_fll,
+    [TRIM_LIST_OFS_TEMP] = id601_trim_apply_ofs_temp,
+    [TRIM_LIST_OSC_RCTL] = id601_trim_apply_osc_rctl,
+    [TRIM_LIST_GAIN] = id601_trim_apply_gain,
+    [TRIM_LIST_OFFSET] = id601_trim_apply_offset,
+};
+
+static const float gf_trim_tolerance[TRIM_LIST_MAX][TRIM_RANGE_MAX] =
+{
+    [TRIM_LIST_IREF1]    = {     TRIM_IREF1_TARGET_UA,     TRIM_IREF1_TARGET_UA * (1 - TRIM_IREF1_TOL_RATIO),        TRIM_IREF1_TARGET_UA    * (1 + TRIM_IREF1_TOL_RATIO) },
+    [TRIM_LIST_IREF2]    = {     TRIM_IREF2_TARGET_UA,     TRIM_IREF2_TARGET_UA * (1 - TRIM_IREF2_TOL_RATIO),        TRIM_IREF2_TARGET_UA    * (1 + TRIM_IREF2_TOL_RATIO) },
+    [TRIM_LIST_LDO_DET]  = {    TRIM_LDO_DET_TARGET_V,    TRIM_LDO_DET_TARGET_V * (1 - TRIM_LDO_DET_TOL_RATIO),     TRIM_LDO_DET_TARGET_V  * (1 + TRIM_LDO_DET_TOL_RATIO) },
+    [TRIM_LIST_LDO_DIG]  = {    TRIM_LDO_DIG_TARGET_V,    TRIM_LDO_DIG_TARGET_V * (1 - TRIM_LDO_DIG_TOL_RATIO),     TRIM_LDO_DIG_TARGET_V  * (1 + TRIM_LDO_DIG_TOL_RATIO) },
+    [TRIM_LIST_LDO_DAC]  = {    TRIM_LDO_DAC_TARGET_V,    TRIM_LDO_DAC_TARGET_V * (1 - TRIM_LDO_DAC_TOL_RATIO),     TRIM_LDO_DAC_TARGET_V  * (1 + TRIM_LDO_DAC_TOL_RATIO) },
+    [TRIM_LIST_LDO_FLL]  = {    TRIM_LDO_FLL_TARGET_V,    TRIM_LDO_FLL_TARGET_V * (1 - TRIM_LDO_FLL_TOL_RATIO),     TRIM_LDO_FLL_TARGET_V  * (1 + TRIM_LDO_FLL_TOL_RATIO) },
+    [TRIM_LIST_OFS_TEMP] = {  TRIM_OFS_TEMP_TARGET_MV,  TRIM_OFS_TEMP_TARGET_MV * (1 - TRIM_OFS_TEMP_TOL_RATIO),  TRIM_OFS_TEMP_TARGET_MV * (1 + TRIM_OFS_TEMP_TOL_RATIO) },
+    [TRIM_LIST_OSC_RCTL] = { TRIM_OSC_RCTL_TARGET_MHZ, TRIM_OSC_RCTL_TARGET_MHZ * (1 - TRIM_OSC_RCTL_TOL_RATIO), TRIM_OSC_RCTL_TARGET_MHZ * (1 + TRIM_OSC_RCTL_TOL_RATIO) },
+    [TRIM_LIST_GAIN]     = {      TRIM_GAIN_TARGET_MA,      TRIM_GAIN_TARGET_MA * (1 - TRIM_GAIN_TOL_RATIO),          TRIM_GAIN_TARGET_MA     * (1 + TRIM_GAIN_TOL_RATIO) },
+    [TRIM_LIST_OFFSET]   = {    TRIM_OFFSET_TARGET_MA,    TRIM_OFFSET_TARGET_MA * (1 - TRIM_OFFSET_TOL_RATIO),      TRIM_OFFSET_TARGET_MA   * (1 + TRIM_OFFSET_TOL_RATIO) },
+};
+
+static const char * const gp_trim_list_name[TRIM_LIST_MAX] =
+{
+    [TRIM_LIST_NONE]     = "NONE",
+    [TRIM_LIST_IREF1]    = "IREF1",
+    [TRIM_LIST_IREF2]    = "IREF2",
+    [TRIM_LIST_LDO_DET]  = "LDO_DET",
+    [TRIM_LIST_LDO_DIG]  = "LDO_DIG",
+    [TRIM_LIST_LDO_DAC]  = "LDO_DAC",
+    [TRIM_LIST_LDO_FLL]  = "LDO_FLL",
+    [TRIM_LIST_OFS_TEMP] = "OFS_TEMP",
+    [TRIM_LIST_OSC_RCTL] = "OSC_RCTL",
+    [TRIM_LIST_GAIN]     = "GAIN",
+    [TRIM_LIST_OFFSET]   = "OFFSET",
 };
 
 static trim_list_t gt_trim_list;
 static trim_info_t gt_trim_info[TRIM_LIST_MAX];
+static uint8_t gn_id601_iout_gain;
+static bool gb_id601_efuse_burn;
 /* USER CODE END PV */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void id601_trim_initiate_parameters(void)
+static const char *trim_get_list_name(trim_list_t list)
 {
-    gt_trim_list = TRIM_LIST_NONE;
-    for (trim_list_t i = 0; i < TRIM_LIST_MAX; i++)
+    if ((unsigned)list >= (unsigned)TRIM_LIST_MAX)
     {
-        gt_trim_info[i].ch = 0U;
-        for (uint16_t j = 0U; j < 12U; j++)
+        return "INVALID";
+    }
+
+    return gp_trim_list_name[list];
+}
+static const char *trim_get_unit(trim_list_t list)
+{
+    switch (list)
+    {
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
         {
-            gt_trim_info[i].repeat[j] = false;
-            gt_trim_info[i].value[j][0] = 0.0f;
-            gt_trim_info[i].value[j][1] = 0.0f;
+            return "uA";
+        }
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
+        {
+            return "V";
+        }
+        case TRIM_LIST_OFS_TEMP:
+        {
+            return "mV";
+        }
+        case TRIM_LIST_OSC_RCTL:
+        {
+            return "MHz";
+        }
+        case TRIM_LIST_GAIN:
+        case TRIM_LIST_OFFSET:
+        {
+            return "mA";
+        }
+        default:
+        {
+            return "";
         }
     }
+}
+static void trim_make_prefix(char *buffer, size_t size, trim_list_t list, uint16_t ch)
+{
+    if ((list == TRIM_LIST_GAIN) || (list == TRIM_LIST_OFFSET))
+    {
+        snprintf(buffer, size, "    [TRIM][%s][CH%02u]", trim_get_list_name(list), (unsigned)(ch + 1U));
+    }
+    else
+    {
+        snprintf(buffer, size, "    [TRIM][%s]", trim_get_list_name(list));
+    }
+}
+static inline bool trim_error_handler(thread_data_t *td)
+{
+    td->step = TRIM_STEP_PWR_OFF;
+    td->tout = T_DEFAULT_MS;
+    return true;
 }
 
 static bool trim_step_none(thread_data_t *td)
@@ -182,341 +339,755 @@ static bool trim_step_none(thread_data_t *td)
 
 static bool trim_step_initial(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    if (false == id601_trim_init_analog_test_mode())
     {
-        return false;
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] %s: ID601 initialization failed", __func__);
+        return trim_error_handler(td);
     }
-    id601_init_analog_test_mode();
-    td->step = TRIM_STEP_INITIAL_BY_LIST;
-    td->tout = T_DEFAULT_MS;
+
+    for (uint16_t i = TRIM_LIST_IREF1; i < TRIM_LIST_MAX; i++)
+    {
+        const uint16_t j_loop = ((i == TRIM_LIST_GAIN) || (i == TRIM_LIST_OFFSET)) ? (12U) : (1U);
+        for (uint16_t j = 0U; j < j_loop; ++j)
+        {
+            if (NULL != gp_trim_apply_code_by_list[i])
+            {
+                const uint16_t reg_val = gp_trim_apply_code_by_list[i](j, gt_trim_info[i].trim_code[j]);
+                if (0xFFFF != reg_val)
+                {
+                    gt_trim_info[i].reg_val[j] = reg_val;
+                }
+                else
+                {
+                    drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Initial trim write failed, ch=%u code=%u", trim_get_list_name((trim_list_t)i), __func__, (unsigned)j,(unsigned)gt_trim_info[i].trim_code[j]);
+                    return trim_error_handler(td);
+                }
+            }
+        }
+    }
+
+    gn_id601_iout_gain = ID601_IOUT_GAIN_MID;
+    drv_gpio_id601_iout_gain(gn_id601_iout_gain);
+
+    td->step = TRIM_STEP_SETUP_BY_LIST;
+    td->tout = T_STABLE_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
-static bool trim_step_initial_by_list(thread_data_t *td)
+static bool trim_step_setup_by_list(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+    USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
+    USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
+    USER_ASSERT(NULL != gp_trim_setup_by_list[gt_trim_list]);
 
-    if (NULL != trim_init_by_list_funcs[gt_trim_list])
-    {
-        trim_init_by_list_funcs[gt_trim_list]();
-    }
+    const uint16_t ch = gt_trim_info[gt_trim_list].ch;
+    USER_ASSERT(ch < (sizeof(gt_trim_info[gt_trim_list].repeat) / sizeof(gt_trim_info[gt_trim_list].repeat[0])));
+    const bool repeat = gt_trim_info[gt_trim_list].repeat[ch];
 
-    if ((TRIM_LIST_IREF1 == gt_trim_list) || (TRIM_LIST_IREF2 == gt_trim_list) || (TRIM_LIST_LDO_DET == gt_trim_list) || (TRIM_LIST_LDO_DIG == gt_trim_list) || \
-        (TRIM_LIST_LDO_DAC == gt_trim_list) || (TRIM_LIST_LDO_FLL == gt_trim_list))
+    gp_trim_setup_by_list[gt_trim_list]();
+
+    switch (gt_trim_list)
     {
-        td->step = TRIM_STEP_START_MEASURE;
-    }
-    else if (TRIM_LIST_OFS_TEMP == gt_trim_list)
-    {
-        uint16_t ch = gt_trim_info[TRIM_LIST_OFS_TEMP].ch;
-        if (false == gt_trim_info[TRIM_LIST_OFS_TEMP].repeat[ch])
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
         {
-            id601_trim_init_ofs_temp_o1();
-            gt_trim_info[TRIM_LIST_OFS_TEMP].repeat[ch] = true;
+            break;
         }
-        else
+        case TRIM_LIST_OFS_TEMP:
         {
-            id601_trim_init_ofs_temp_o2();
-            gt_trim_info[TRIM_LIST_OFS_TEMP].repeat[ch] = false;
+            if (false == repeat)
+            {
+                id601_trim_setup_ofs_temp_o1();
+                ads114s08_set_input_mux(ADS_DEV_2, ADS_DEV2_AIN06_ID601_O1, ADS_INPUT_N_GND);
+            }
+            else
+            {
+                id601_trim_setup_ofs_temp_o2();
+                ads114s08_set_input_mux(ADS_DEV_2, ADS_DEV2_AIN07_ID601_O2, ADS_INPUT_N_GND);
+            }
+            break;
         }
-        td->step = TRIM_STEP_START_MEASURE;
-    }
-    else if (TRIM_LIST_OSC_RCTL == gt_trim_list)
-    {
-        td->step = TRIM_STEP_START_MEASURE;
-    }
-    else if ((TRIM_LIST_GAIN == gt_trim_list) || (TRIM_LIST_OFFSET == gt_trim_list))
-    {
-        uint16_t ch = gt_trim_info[gt_trim_list].ch;
-        id601_trim_init_current_chx(ch);
-        drv_gpio_id601_ch_demux(ch);
-        if (false == gt_trim_info[gt_trim_list].repeat[ch])
+        case TRIM_LIST_OSC_RCTL:
         {
-            id601_trim_init_gain_vref1();
-            gt_trim_info[gt_trim_list].repeat[ch] = true;
+            break;
         }
-        else
+        case TRIM_LIST_GAIN:
+        case TRIM_LIST_OFFSET:
         {
-            id601_trim_init_gain_vref2();
-            gt_trim_info[gt_trim_list].repeat[ch] = false;
+            id601_trim_setup_current_chx(ch);
+            drv_gpio_id601_ch_demux(ch);
+            ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
+
+            void_func_ptr_t fp_init = NULL;
+            if (TRIM_LIST_GAIN == gt_trim_list)
+            {
+                fp_init = (false == repeat) ? (id601_trim_setup_gain_vref1) : (id601_trim_setup_gain_vref2);
+            }
+            else
+            {
+                fp_init = (false == repeat) ? (id601_trim_setup_offset_vref1) : (id601_trim_setup_offset_vref2);
+            }
+
+            if (NULL == fp_init)
+            {
+                USER_ASSERT(false);
+            }
+            fp_init();
+            break;
         }
-        td->step = TRIM_STEP_START_MEASURE;
+        default:
+        {
+            USER_ASSERT(false);
+        }
     }
-    td->tout = T_DEFAULT_MS;
+    td->step = TRIM_STEP_START_MEASURE;
+    td->tout = T_STABLE_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_vsync_stop(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_start_measure(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+    USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
+    USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
 
-    if ((TRIM_LIST_IREF1 == gt_trim_list) || (TRIM_LIST_IREF2 == gt_trim_list) || (TRIM_LIST_LDO_DET == gt_trim_list) || (TRIM_LIST_LDO_DIG == gt_trim_list) || (TRIM_LIST_LDO_DAC == gt_trim_list) || (TRIM_LIST_LDO_FLL == gt_trim_list))
+    switch (gt_trim_list)
     {
-        mcu_adc_set_conversion_enable(true);
-        td->step = TRIM_STEP_GET_MEASURED_VALUE;
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
+        {
+            mcu_adc_set_conversion_enable(true);
+            break;
+        }
+        case TRIM_LIST_OFS_TEMP:
+        {
+            ads114s08_set_conversion_enable(ADS_DEV_2, true);
+            break;
+        }
+        case TRIM_LIST_OSC_RCTL:
+        {
+            mcu_tim_set_conversion_enable(true);
+            break;
+        }
+        case TRIM_LIST_GAIN:
+        case TRIM_LIST_OFFSET:
+        {
+            ads114s08_set_conversion_enable(ADS_DEV_1, true);
+            break;
+        }
+        default:
+        {
+            USER_ASSERT(false);
+        }
     }
-    else if (TRIM_LIST_OFS_TEMP == gt_trim_list)
-    {
-        ads114s08_set_input_mux(ADS_DEV_2, ADS_DEV2_AIN06_ID601_O1, ADS_INPUT_N_GND);
-        ads114s08_set_conversion_enable(ADS_DEV_2, true);
-        td->step = TRIM_STEP_GET_MEASURED_VALUE;
-    }
-    else if (TRIM_LIST_OSC_RCTL == gt_trim_list)
-    {
-        mcu_tim_set_conversion_enable(true);
-        td->step = TRIM_STEP_GET_MEASURED_VALUE;
-    }
-    else if ((TRIM_LIST_GAIN == gt_trim_list) || (TRIM_LIST_OFFSET == gt_trim_list))
-    {
-        ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
-        ads114s08_set_conversion_enable(ADS_DEV_1, true);
-        td->step = TRIM_STEP_GET_MEASURED_VALUE;
-    }
-    td->tout = T_DEFAULT_MS;
+    td->step = TRIM_STEP_GET_MEASURED_VALUE;
+    td->tout = T_MEASURE_DONE_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_get_measured_value(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+    USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
+    USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
+
+    const uint16_t ch = gt_trim_info[gt_trim_list].ch;
+    USER_ASSERT(ch < (sizeof(gt_trim_info[gt_trim_list].repeat) / sizeof(gt_trim_info[gt_trim_list].repeat[0])));
+    const bool repeat = gt_trim_info[gt_trim_list].repeat[ch];
+
+    bool conversion_success = false;
+
+    switch (gt_trim_list)
     {
-        return false;
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
+        {
+            if (true == mcu_adc_wait_conversion_complete())
+            {
+                const uint32_t adc_value = mcu_adc_get_average_conversion();
+                const float voltage_mv = mcu_adc_conversion_adc_to_mvoltage(adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: MCU ADC=%lu voltage=%.2f mV", trim_get_list_name(gt_trim_list), (unsigned long)adc_value, (double)voltage_mv);
+                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = CONST_MA_to_UA(voltage_mv / HW_ID601_IREF_SENSE_OHM);
+                conversion_success = true;
+            }
+            break;
+        }
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
+        {
+            if (true == mcu_adc_wait_conversion_complete())
+            {
+                const uint32_t adc_value = mcu_adc_get_average_conversion();
+                const float voltage_mv = mcu_adc_conversion_adc_to_mvoltage(adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: MCU ADC=%lu voltage=%.2f mV", trim_get_list_name(gt_trim_list), (unsigned long)adc_value, (double)voltage_mv);
+                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = CONST_MV_to_V(voltage_mv);
+                conversion_success = true;
+            }
+            break;
+        }
+        case TRIM_LIST_OFS_TEMP:
+        {
+            if (true == ads114s08_wait_conversion_complete())
+            {
+                int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_2);
+                const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: ADS ADC=%ld voltage=%.2f mV", trim_get_list_name(gt_trim_list), (long)adc_value, (double)voltage_mv);
+                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = voltage_mv;
+                conversion_success = true;
+            }
+            break;
+        }
+        case TRIM_LIST_OSC_RCTL:
+        {
+            if (true == mcu_tim_wait_conversion_complete())
+            {
+                const uint32_t cnt_value = mcu_tim_get_average_conversion();
+                const float frequency_hz = mcu_tim_conversion_cnt_to_frequency(cnt_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: Timer CNT=%lu frequency=%.2f Hz", trim_get_list_name(gt_trim_list), (unsigned long)cnt_value, (double)frequency_hz);
+                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = frequency_hz * HW_ID601_FREQ_DIV_RATIO;
+                conversion_success = true;
+            }
+            break;
+        }
+        case TRIM_LIST_GAIN:
+        {
+            if (true == ads114s08_wait_conversion_complete())
+            {
+                int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_1);
+                const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: ADS ADC=%ld voltage=%.2f mV", trim_get_list_name(gt_trim_list), (long)adc_value, (double)voltage_mv);
+                switch (gn_id601_iout_gain)
+                {
+                    case ID601_IOUT_GAIN_LOW:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_LOW(voltage_mv);
+                        break;
+                    }
+                    case ID601_IOUT_GAIN_MID:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_MID(voltage_mv);
+                        break;
+                    }
+                    case ID601_IOUT_GAIN_HIGH:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_HIGH(voltage_mv);
+                        break;
+                    }
+                    default:
+                    {
+                        USER_ASSERT(false);
+                    }
+                }
+                conversion_success = true;
+            }
+            break;
+        }
+        case TRIM_LIST_OFFSET:
+        {
+            if (true == ads114s08_wait_conversion_complete())
+            {
+                int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_1);
+                const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: ADS ADC=%ld voltage=%.2f mV", trim_get_list_name(gt_trim_list), (long)adc_value, (double)voltage_mv);
+                switch (gn_id601_iout_gain)
+                {
+                    case ID601_IOUT_GAIN_LOW:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_LOW(voltage_mv);
+                        break;
+                    }
+                    case ID601_IOUT_GAIN_MID:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_MID(voltage_mv);
+                        break;
+                    }
+                    case ID601_IOUT_GAIN_HIGH:
+                    {
+                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_HIGH(voltage_mv);
+                        break;
+                    }
+                    default:
+                    {
+                        USER_ASSERT(false);
+                    }
+                }
+                conversion_success = true;
+            }
+            break;
+        }
+        default:
+        {
+            USER_ASSERT(false);
+        }
     }
 
-    if ((TRIM_LIST_IREF1 == gt_trim_list) || (TRIM_LIST_IREF2 == gt_trim_list) || (TRIM_LIST_LDO_DET == gt_trim_list) || (TRIM_LIST_LDO_DIG == gt_trim_list) || (TRIM_LIST_LDO_DAC == gt_trim_list) || (TRIM_LIST_LDO_FLL == gt_trim_list))
+    if (false == conversion_success)
     {
-        if (true == mcu_adc_wait_conversion_complete())
-        {
-            uint32_t adc_value = mcu_adc_get_average_conversion();
-            drv_uart_printf(LOG_LV_DEBUG, "\r\n    ADC conversion complete. %lu", adc_value);
-        }
-        td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Conversion failed, powering off", trim_get_list_name(gt_trim_list), __func__);
+        return trim_error_handler(td);
     }
-    else if (TRIM_LIST_OFS_TEMP == gt_trim_list)
+    else
     {
-        if (true == ads114s08_wait_conversion_complete())
+        if (REPEAT_FIRST == repeat)
         {
-            int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_2);
-            drv_uart_printf(LOG_LV_DEBUG, "\r\n    ADS114S08 conversion complete. %ld", adc_value);
+            td->step = TRIM_STEP_SETUP_BY_LIST;
+            gt_trim_info[gt_trim_list].repeat[ch] = REPEAT_SECOND;
         }
-        td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
-    }
-    else if (TRIM_LIST_OSC_RCTL == gt_trim_list)
-    {
-        if (true == mcu_tim_wait_conversion_complete())
+        else
         {
-            uint32_t tim_value = mcu_tim_get_average_conversion();
-            drv_uart_printf(LOG_LV_DEBUG, "\r\n    Timer conversion complete. %lu", tim_value);
+            td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
+            gt_trim_info[gt_trim_list].repeat[ch] = REPEAT_FIRST;
+
+            const float first_val = gt_trim_info[gt_trim_list].tmp_value[ch][REPEAT_FIRST];
+            const float second_val = gt_trim_info[gt_trim_list].tmp_value[ch][REPEAT_SECOND];
+
+            if ((TRIM_LIST_OFS_TEMP == gt_trim_list) || (TRIM_LIST_GAIN == gt_trim_list))
+            {
+                gt_trim_info[gt_trim_list].value[ch] = GET_DELTA(first_val, second_val);
+            }
+            else
+            {
+                gt_trim_info[gt_trim_list].value[ch] = GET_AVERAGE(first_val, second_val);
+            }
         }
-        td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
+        td->tout = T_DEFAULT_MS;
     }
-    else if ((TRIM_LIST_GAIN == gt_trim_list) || (TRIM_LIST_OFFSET == gt_trim_list))
-    {
-        if (true == ads114s08_wait_conversion_complete())
-        {
-            int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_1);
-            drv_uart_printf(LOG_LV_DEBUG, "\r\n    ADS114S08 conversion complete. %ld", adc_value);
-        }
-        td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
-    }
-    td->tout = T_DEFAULT_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_judge_range_update_register(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+    USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
+    USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
+
+    const uint16_t max_code[TRIM_LIST_MAX] =
     {
-        return false;
+        [TRIM_LIST_IREF1]    = ID601_TRIM_CODE_IREF1_MAX,
+        [TRIM_LIST_IREF2]    = ID601_TRIM_CODE_IREF2_MAX,
+        [TRIM_LIST_LDO_DET]  = ID601_TRIM_CODE_LDO_BGR2_CTL_MAX,
+        [TRIM_LIST_LDO_DIG]  = ID601_TRIM_CODE_LDO_CTL_MAX,
+        [TRIM_LIST_LDO_DAC]  = ID601_TRIM_CODE_LDO_DAC_CTL_MAX,
+        [TRIM_LIST_LDO_FLL]  = ID601_TRIM_CODE_LDO_OSC_CTL_MAX,
+        [TRIM_LIST_OFS_TEMP] = ID601_TRIM_CODE_OFS_TEMP_MAX,
+        [TRIM_LIST_OSC_RCTL] = ID601_TRIM_CODE_OSC_RCTL_MAX,
+        [TRIM_LIST_GAIN]     = ID601_TRIM_CODE_GAIN_MAX,
+        [TRIM_LIST_OFFSET]   = ID601_TRIM_CODE_OFFSET_MAX,
+    };
+
+    trim_info_t *trim_info = &gt_trim_info[gt_trim_list];
+
+    const uint16_t ch = trim_info->ch;
+    const uint16_t channel_count = ((TRIM_LIST_GAIN == gt_trim_list) || (TRIM_LIST_OFFSET == gt_trim_list)) ? (12U) : (1U);
+    if (ch >= channel_count)
+    {
+        return trim_error_handler(td);
     }
+    trim_search_t *search = &trim_info->search[ch];
+    const uint16_t now_code = trim_info->trim_code[ch];
+
+    const float measured = trim_info->value[ch];
+    const float target = gf_trim_tolerance[gt_trim_list][TRIM_RANGE_TARGET];
+    const float lower_limit = gf_trim_tolerance[gt_trim_list][TRIM_RANGE_LOWER];
+    const float upper_limit = gf_trim_tolerance[gt_trim_list][TRIM_RANGE_UPPER];
+    const float error = measured - target;
+    const float abs_error = (error >= 0.0f) ? error : -error;
+
+    char prefix[48];
+    trim_make_prefix(prefix, sizeof(prefix), gt_trim_list, ch);
+    const char *unit = trim_get_unit(gt_trim_list);
+
+    if ((now_code > max_code[gt_trim_list]) || (lower_limit > upper_limit) || !isfinite(measured) || !isfinite(target) || !isfinite(lower_limit) || !isfinite(upper_limit) || !isfinite(error) || !isfinite(abs_error))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Invalid trim data, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)now_code);
+        return trim_error_handler(td);
+    }
+
+    const trim_apply_code_func_t apply_code = gp_trim_apply_code_by_list[gt_trim_list];
+
+    if (NULL == apply_code)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Trim apply function missing", trim_get_list_name(gt_trim_list), __func__);
+        return trim_error_handler(td);
+    }
+
+    if (true == search->searched)
+    {
+        if ((now_code != search->best_code) || (trim_info->reg_val[ch] != search->best_reg) || (measured < lower_limit) || (measured > upper_limit))
+        {
+            if ((now_code != search->best_code) || (trim_info->reg_val[ch] != search->best_reg))
+            {
+                drv_uart_printf(LOG_LV_WARN, "\r\n%s FAIL: code=%u expected_code=%u reg=0x%04X expected_reg=0x%04X", prefix, (unsigned)now_code, (unsigned)search->best_code, (unsigned)trim_info->reg_val[ch], (unsigned)search->best_reg);
+            }
+            else
+            {
+                drv_uart_printf(LOG_LV_WARN, "\r\n%s FAIL: measured=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)measured, unit, (double)lower_limit, (double)upper_limit, unit);
+            }
+            return trim_error_handler(td);
+        }
+        drv_uart_printf(LOG_LV_INFO, "\r\n%s PASS: trials=%u code=%u reg=0x%04X measured=%.3f %s", prefix, (unsigned)search->attempts, (unsigned)now_code, (unsigned)trim_info->reg_val[ch], (double)measured, unit);
+        if ((ch + 1U) < channel_count)
+        {
+            ++trim_info->ch;
+            td->step = TRIM_STEP_SETUP_BY_LIST;
+        }
+        else if ((gt_trim_list + 1U) < TRIM_LIST_MAX)
+        {
+            gt_trim_list = (trim_list_t)(gt_trim_list + 1U);
+            td->step = TRIM_STEP_SETUP_BY_LIST;
+        }
+        else
+        {
+            td->step = TRIM_STEP_PREPARE_EFUSE;
+        }
+
+        td->tout = T_STABLE_MS;
+        return true;
+    }
+
+    if (false == search->initialized)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n%s START: target=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)target, unit, (double)lower_limit, (double)upper_limit, unit);
+
+        search->low = 0U; // smallest possible code
+        search->high = max_code[gt_trim_list]; // biggest possible code
+        search->best_code = now_code; // initial code
+        search->best_error = abs_error;
+        search->best_reg = trim_info->reg_val[ch];
+        search->attempts = 0U;
+        search->searched = false;
+        search->initialized = true;
+    }
+
+    if (abs_error < search->best_error)
+    {
+        search->best_error = abs_error;
+        search->best_code = now_code;
+        search->best_reg = trim_info->reg_val[ch];
+    }
+
+    ++search->attempts;
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n%s TRIAL: n=%u code=%u measured=%.3f %s error=%+.3f %s", prefix, (unsigned)search->attempts, (unsigned)now_code, (double)measured, unit, (double)error, unit);
+
+    if (measured < target)
+    {
+        search->low = (int32_t)now_code + 1; // increase the lower bound since measured is less than target
+    }
+    else if (measured > target)
+    {
+        search->high = (int32_t)now_code - 1; // decrease the upper bound since measured is greater than target
+    }
+    else
+    {
+        search->low = search->high + 1;
+    }
+
+    uint16_t next_code = 0xFFFFU;
+    bool next_verifying = false;
+
+    if (search->low <= search->high)
+    {
+        next_code = (uint16_t)(search->low + (search->high - search->low) / 2);
+    }
+    else
+    {
+        next_code = search->best_code;
+        next_verifying = true;
+    }
+
+    const uint16_t reg_val = apply_code(ch, next_code);
+
+    if (UINT16_MAX == reg_val)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Trim register write failed, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)next_code);
+        return trim_error_handler(td);
+    }
+
+    /* 레지스터 쓰기가 성공한 뒤 소프트웨어 상태를 갱신한다. */
+    trim_info->trim_code[ch] = next_code;
+    trim_info->reg_val[ch] = reg_val;
+    search->searched = next_verifying;
+
+    td->step = TRIM_STEP_SETUP_BY_LIST;
+    td->tout = T_STABLE_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_prepare_efuse(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
 
+    if (true == gb_id601_efuse_burn)
+    {
+        if (false == id601_trim_save_mirror_registers())
+        {
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: Failed to save mirror registers", __func__);
+            return trim_error_handler(td);
+        }
+        drv_gpio_id601_vcc(ID601_VCC_5V5); // should check time for VDD ramp-up (3.3V -> 5.5V)
+        td->step = TRIM_STEP_START_EFUSE;
+        td->tout = T_RAMP_UP_MS;
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n[TRIM] OTP: SKIPPED");
+        td->step = TRIM_STEP_LOG_SUMMARY;
+        td->tout = T_DEFAULT_MS;
+    }
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_start_efuse(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    id601_trim_setup_otp_pg_s();
+    td->tout = T_FUSING_DONE_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_end_efuse(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    drv_gpio_id601_vcc(ID601_VCC_OFF); // should check time for VDD ramp-down (5.5V -> 0V)
+    td->tout = T_RAMP_DOWN_MS;
+    td->step = TRIM_STEP_PWR_REBOOT;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_pwr_reboot(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    if (false == id601_trim_init_after_efuse())
     {
-        return false;
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: Failed to initialize after efuse", __func__);
+        return trim_error_handler(td);
     }
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_verify_otp_dump(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    if (false == id601_trim_compare_mirror_registers())
     {
-        return false;
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] OTP VERIFY: FAIL");
+        return trim_error_handler(td);
     }
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] OTP VERIFY: PASS");
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_log_summary(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] SUMMARY");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %-10s %4s %5s %6s %10s %4s", "ITEM", "CH", "CODE", "REG", "VALUE", "UNIT");
+
+    for (uint16_t list = TRIM_LIST_IREF1; list < TRIM_LIST_MAX; ++list)
     {
-        return false;
+        const trim_info_t *info = &gt_trim_info[list];
+        const char *list_name = trim_get_list_name((trim_list_t)list);
+        const char *unit = trim_get_unit((trim_list_t)list);
+
+        const bool has_channel = (list == TRIM_LIST_GAIN) || (list == TRIM_LIST_OFFSET);
+        const uint8_t max_ch = has_channel ? 12U : 1U;
+
+        for (uint8_t ch = 0U; ch < max_ch; ++ch)
+        {
+            char channel[4] = "-";
+            if (has_channel)
+            {
+                snprintf(channel, sizeof(channel), "%02u", (unsigned)(ch + 1U));
+            }
+            drv_uart_printf(LOG_LV_INFO, "\r\n    %-10s %4s %5u 0x%04X %10.3f %4s", list_name, channel, (unsigned)info->trim_code[ch], (unsigned)info->reg_val[ch], (double)info->value[ch], unit);
+        }
     }
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] COMPLETE: PASS");
+
+    td->step = TRIM_STEP_PWR_OFF;
+    td->tout = T_DEFAULT_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
     return true;
 }
 
 static bool trim_step_pwr_off(thread_data_t *td)
 {
-    if ((NULL == td) || (NULL == td->func) || (0U == td->tout))
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
+    USER_ASSERT(NULL != td->func);
+    USER_ASSERT(0U != td->tout);
+
+    drv_gpio_id601_vcc(ID601_VCC_OFF);
+    drv_gpio_id601_vled(ID601_VLED_OFF);
+
+    td->step = TRIM_STEP_NONE;
+    td->tout = T_DEFAULT_MS;
 
     #ifdef RTOS_TIME_DEBUG
         LL_GPIO_TogglePin(DEBUG1_GPIO_Port, DEBUG1_Pin);
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    %s executed after: %u ms", __func__, td->tout);
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] %s: Next execution in %u ms", trim_get_list_name(gt_trim_list), __func__, (unsigned)td->tout);
     #endif
-    return true;
+    return false; // Power off step always returns false to indicate termination of the trim process
 }
 
-void id601_trim_init(thread_data_t *td)
+void id601_trim_clear_parameters(thread_data_t *td)
 {
-    if (NULL == td)
+    USER_ASSERT(NULL != td);
+
+    gt_trim_list = TRIM_LIST_NONE;
+
+    memset(gt_trim_info, 0, sizeof(gt_trim_info));
+
+    for (uint8_t i = 0U; i < 12U; ++i)
     {
-        return;
+        gt_trim_info[TRIM_LIST_IREF1].trim_code[i]    = ((       ID601_TRIM_CODE_IREF1_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_IREF2].trim_code[i]    = ((       ID601_TRIM_CODE_IREF2_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_LDO_DET].trim_code[i]  = ((ID601_TRIM_CODE_LDO_BGR2_CTL_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_LDO_DIG].trim_code[i]  = ((     ID601_TRIM_CODE_LDO_CTL_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_LDO_DAC].trim_code[i]  = (( ID601_TRIM_CODE_LDO_DAC_CTL_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_LDO_FLL].trim_code[i]  = (( ID601_TRIM_CODE_LDO_OSC_CTL_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_OFS_TEMP].trim_code[i] = ((    ID601_TRIM_CODE_OFS_TEMP_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_OSC_RCTL].trim_code[i] = ((    ID601_TRIM_CODE_OSC_RCTL_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_GAIN].trim_code[i]     = ((        ID601_TRIM_CODE_GAIN_MAX + 1U) >> 1U);
+        gt_trim_info[TRIM_LIST_OFFSET].trim_code[i]   = ((      ID601_TRIM_CODE_OFFSET_MAX + 1U) >> 1U);
     }
-
-    id601_trim_initiate_parameters();
-
-    td->step = TRIM_STEP_INITIAL;
-    td->tout = 10U;
-    td->func = trim_step_initial;
-}
-
-void id601_trim_deinit(thread_data_t *td)
-{
-    if (NULL == td)
-    {
-        return;
-    }
-
-    id601_trim_initiate_parameters();
 
     td->step = TRIM_STEP_NONE;
     td->tout = 10U;
     td->func = trim_step_none;
 }
 
+void id601_trim_start(thread_data_t *td)
+{
+    USER_ASSERT(NULL != td);
+
+    id601_trim_clear_parameters(td);
+
+    gt_trim_list = TRIM_LIST_IREF1;
+
+    td->step = TRIM_STEP_INITIAL;
+    td->tout = 10U;
+    td->func = trim_step_initial;
+}
+
 bool id601_trim_process(thread_data_t *td)
 {
-    if (NULL == td)
-    {
-        return false;
-    }
+    USER_ASSERT(NULL != td);
 
     const uint32_t step = td->step;
-    if ((TRIM_STEP_MAX <= step) || (NULL == trim_step_handlers[step]))
+    if ((TRIM_STEP_MAX <= step) || (NULL == gp_trim_step_handlers[step]))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    Invalid trim step: %u", step);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Invalid trim step=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)step);
         return false;
     }
 
-    return trim_step_handlers[step](td);
+    return gp_trim_step_handlers[step](td);
 }
 /* USER CODE END 0 */

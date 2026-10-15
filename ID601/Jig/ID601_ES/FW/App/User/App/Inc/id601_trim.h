@@ -36,8 +36,8 @@ extern "C" {
 typedef struct tag_THREAD_DATA thread_data_t;
 typedef bool (*trim_step_handler_t)(thread_data_t *td);
 
-typedef void (*trim_init_func_t)(void);
-typedef void (*trim_write_func_t)(uint16_t val);
+typedef void (*trim_setup_func_t)(void);
+typedef uint16_t (*trim_apply_code_func_t)(uint16_t, uint16_t);
 
 struct tag_THREAD_DATA
 {
@@ -62,8 +62,8 @@ struct tag_THREAD_DATA
 
 /* USER CODE BEGIN EFP */
 
-void id601_trim_init(thread_data_t *td);
-void id601_trim_deinit(thread_data_t *td);
+void id601_trim_clear_parameters(thread_data_t *td);
+void id601_trim_start(thread_data_t *td);
 
 extern bool id601_trim_process(thread_data_t *td);
 

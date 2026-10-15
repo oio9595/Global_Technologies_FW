@@ -28,6 +28,7 @@
 #include "drv_timer.h"
 #include "drv_id601.h"
 #include "id601_trim.h"
+#include "drv_ads114s08.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,21 +54,21 @@ I2C_HandleTypeDef hi2c1;
 osThreadId_t ID601TestTaskHandle;
 const osThreadAttr_t ID601TestTask_attributes = {
   .name = "ID601TestTask",
-  .stack_size = 256 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CLITask */
 osThreadId_t CLITaskHandle;
 const osThreadAttr_t CLITask_attributes = {
   .name = "CLITask",
-  .stack_size = 256 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for ID601TrimTask */
 osThreadId_t ID601TrimTaskHandle;
 const osThreadAttr_t ID601TrimTask_attributes = {
   .name = "ID601TrimTask",
-  .stack_size = 256 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* USER CODE BEGIN PV */
@@ -111,7 +112,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  __enable_irq();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -146,6 +147,9 @@ int main(void)
   MX_TIM13_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+    drv_uart_init();
+    cli_init();
+
     drv_tim_init();
     drv_gpio_init();
     drv_id601_init();
@@ -156,6 +160,9 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+    drv_id601_make_mutex();
+    drv_uart_make_mutex();
+    //ads114s08_init();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -1330,8 +1337,6 @@ void StartID601TestTask(void *argument)
 void StartCLITask(void *argument)
 {
   /* USER CODE BEGIN StartCLITask */
-    drv_uart_init();
-    cli_init();
   /* Infinite loop */
   for(;;)
   {
@@ -1363,7 +1368,7 @@ void StartID601TrimTask(void *argument)
           continue;
       }
 
-      id601_trim_init(&td);
+      id601_trim_start(&td);
 
       while (true == id601_trim_process(&td))
       {

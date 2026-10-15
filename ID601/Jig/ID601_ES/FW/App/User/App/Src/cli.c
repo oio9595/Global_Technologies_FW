@@ -125,29 +125,6 @@ extern osThreadId_t ID601TrimTaskHandle;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-#if 0
-/**
- * @brief  Print the result of an ID804 communication attempt.
- * @param  comm_result  The result of the communication attempt.
- */
-static void cli_print_id804_comm_result(id804_comm_result_t comm_result,  uint16_t dev_addr, uint16_t target, uint32_t data)
-{
-    switch (comm_result)
-    {
-        case ID804_COMM_NONE:         {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] None"); break;}
-        case ID804_COMM_WRITE_OK:     {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Write OK"); break;}
-        case ID804_COMM_READ_OK:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Read OK"); break;}
-        case ID804_COMM_ERR_DEV_ADDR: {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Device Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_CMD:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Command [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_ADDR:     {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Invalid Address [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        case ID804_COMM_ERR_I2C:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: I2C Failure [0x%02X | 0x%06X]", target, data); break;}
-        case ID804_COMM_ERR_SPI:      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: SPI Failure [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-        default:                      {drv_uart_printf(LOG_LV_INFO, "\r\n    [ID804] [Comm Result] Error: Unknown Error [0x%04X | 0x%02X | 0x%06X]", dev_addr, target, data); break;}
-    }
-}
-#endif
-
 /**
  * @brief  Print the CLI banner with firmware information.
  *         This includes build date, firmware version, and Git revision.
@@ -280,7 +257,6 @@ static void cli_command_execute(void)
         case CLI_CMD_TRIM_START:
         {
             osThreadFlagsSet(ID601TrimTaskHandle, TRIM_START_FLAG);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 trim process started...");
             break;
         }
         case CLI_CMD_DEBUG_SPI8:
@@ -295,7 +271,7 @@ static void cli_command_execute(void)
                 if (false == drv_spi_receive_dma_8bit(SPI1, tx_buffer, rx_buffer, 3U, 20U))
                 {
                     drv_gpio_ic603_cs(true);
-                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 8-bit read NG...");
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 8-bit read NG...");
                 }
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit read OK...");
             }
@@ -307,7 +283,7 @@ static void cli_command_execute(void)
                 if (false == drv_spi_transmit_dma_8bit(SPI1, tx_buffer, 3U, 20U))
                 {
                     drv_gpio_ic603_cs(true);
-                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 8-bit write NG...");
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 8-bit write NG...");
                 }
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit write OK...");
             }
@@ -325,7 +301,7 @@ static void cli_command_execute(void)
                 if (false == drv_spi_receive_dma_16bit(SPI2, tx_buffer, rx_buffer, 3U, 20U))
                 {
                     drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 16-bit read NG...");
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 16-bit read NG...");
                 }
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit read OK...");
             }
@@ -337,7 +313,7 @@ static void cli_command_execute(void)
                 if (false == drv_spi_transmit_dma_16bit(SPI2, tx_buffer, 3U, 20U))
                 {
                     drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf(LOG_LV_WARN, "\r\n    SPI 16-bit write NG...");
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 16-bit write NG...");
                 }
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit write OK...");
             }
@@ -402,7 +378,7 @@ static void cli_command_execute(void)
             }
             else
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n    TIM capture timeout.");
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    TIM capture timeout.");
             }
             break;
         }
@@ -416,7 +392,7 @@ static void cli_command_execute(void)
             }
             else
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n    ADC conversion timeout.");
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    ADC conversion timeout.");
             }
             break;
         }
@@ -442,7 +418,6 @@ void cli_process(void)
         //drv_uart_tx_dma_start(drv_uart_tx_ring_buffer_pop());
         msg_buffer_t* p_msg = drv_uart_tx_ring_buffer_pop();
         drv_uart_printf_direct((const uint8_t*)p_msg->msg, p_msg->size);
-
     }
 
     if (true == drv_uart_rx_data_pending())

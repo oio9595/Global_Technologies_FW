@@ -63,7 +63,7 @@ typedef enum tag_ADS_DEV2_INPUT_MUX
     ADS_DEV2_AIN04_IC603_S3     = 0x04U, // 0x04U
     ADS_DEV2_AIN05_IC603_G3     = 0x05U, // 0x05U
     ADS_DEV2_AIN06_ID601_O1     = 0x06U, // 0x06U
-    ADS_DEV2_AIN07_ID602_O2     = 0x07U, // 0x07U
+    ADS_DEV2_AIN07_ID601_O2     = 0x07U, // 0x07U
     ADS_DEV2_AIN08_NONE         = 0x08U, // 0x08U
     ADS_DEV2_AIN09_NONE         = 0x09U, // 0x09U
     ADS_DEV2_AIN10_NONE         = 0x0AU, // 0x0AU
@@ -87,6 +87,7 @@ typedef enum tag_ADS_DEV2_INPUT_MUX
 extern void ads114s08_set_conversion_enable(ads_device_t dev, bool b_start);
 extern bool ads114s08_wait_conversion_complete(void);
 extern int32_t ads114s08_get_average_conversion(ads_device_t dev);
+extern float ads114s08_conversion_adc_to_mvoltage(uint32_t adc_value);
 
 extern void ads114s08_init(void);
 

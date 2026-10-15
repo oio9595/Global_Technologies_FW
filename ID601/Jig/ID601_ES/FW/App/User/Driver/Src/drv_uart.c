@@ -22,6 +22,7 @@
 #include <string.h>
 /* 3. Project internal / System-related headers */
 #include "main.h"
+#include "cmsis_os.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,13 @@ typedef struct tag_RING_BUFFER_RX
 #define CLI_KEY_DOWN            (0x42)
 #define CLI_KEY_RIGHT           (0x43)
 #define CLI_KEY_LEFT            (0x44)
+
+#define LOG_COLOR_RESET    "\x1B[0m"
+#define LOG_COLOR_ERROR    "\x1B[31m"
+#define LOG_COLOR_WARN     "\x1B[33m"
+#define LOG_COLOR_INFO     "\x1B[32m"
+#define LOG_COLOR_DEBUG    "\x1B[36m"
+#define LOG_COLOR_TRACE    "\x1B[90m"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -63,12 +71,24 @@ typedef struct tag_RING_BUFFER_RX
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+static osMutexId_t uart_tx_mutex;
+
 static tx_ring_buffer_t gt_uart_tx;
 static rx_ring_buffer_t gt_uart_rx;
 
 bool gb_uart_tx_dma_progress = false;
 
 static log_level_t gt_log_level;
+
+static const char* const gp_log_colors[LOG_LV_MAX] =
+{
+    [LOG_LV_OFF]   = LOG_COLOR_RESET,
+    [LOG_LV_ERROR] = LOG_COLOR_ERROR,
+    [LOG_LV_WARN]  = LOG_COLOR_WARN,
+    [LOG_LV_INFO]  = LOG_COLOR_INFO,
+    [LOG_LV_DEBUG] = LOG_COLOR_DEBUG,
+    [LOG_LV_TRACE] = LOG_COLOR_TRACE,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,6 +117,15 @@ void drv_uart_init(void)
     //LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
 
     gt_log_level = LOG_LV_DEBUG;
+}
+
+void drv_uart_make_mutex(void)
+{
+    uart_tx_mutex = osMutexNew(NULL);
+    if (NULL == uart_tx_mutex)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [UART] %s: Failed to create UART TX mutex.", __func__);
+    }
 }
 
 /**
@@ -159,7 +188,7 @@ msg_buffer_t* drv_uart_tx_ring_buffer_pop(void)
 {
     msg_buffer_t* p_msg = NULL;
     p_msg = &gt_uart_tx.buffer[gt_uart_tx.tail];
-    gt_uart_tx.tail = (gt_uart_tx.tail + 1U) % UART_TX_RING_BUFFER_SIZE;
+    gt_uart_tx.tail = ((gt_uart_tx.tail + 1U) % UART_TX_RING_BUFFER_SIZE);
     return p_msg;
 }
 
@@ -188,6 +217,18 @@ void drv_uart_tx_dma_start(msg_buffer_t* p_msg)
     LL_DMA_EnableStream(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
 }
 
+static void uart_tx_polling(const uint8_t* p_data, uint16_t size)
+{
+    for (uint16_t i = 0U; i < size; ++i)
+    {
+        while (false == LL_USART_IsActiveFlag_TXE(USART2))
+        {
+        }
+
+        LL_USART_TransmitData8(USART2, p_data[i]);
+    }
+}
+
 /**
  * @brief  Directly transmit a block of data over UART without using the TX ring buffer.
  * @param  p_data  Pointer to the data to be transmitted.
@@ -201,11 +242,14 @@ void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
         return;
     }
 
-    for (uint16_t i = 0U; i < size; ++i)
+    if (osOK != osMutexAcquire(uart_tx_mutex, osWaitForever))
     {
-        while (false == LL_USART_IsActiveFlag_TXE(USART2));
-        LL_USART_TransmitData8(USART2, p_data[i]);
+        return;
     }
+
+    uart_tx_polling(p_data, size);
+
+    osMutexRelease(uart_tx_mutex);
 }
 
 /**
@@ -215,21 +259,41 @@ void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
  */
 void drv_uart_printf(log_level_t level, const char* format, ...)
 {
-    if (level > gt_log_level)
+    if ((level > gt_log_level) || (NULL == format))
     {
         return;
     }
 
     char buffer[MSG_BUFFER_SIZE];
+
+    const char *color = gp_log_colors[level];
+    const size_t color_len = strlen(color);
+    const size_t reset_len = strlen(LOG_COLOR_RESET);
+
+    if (sizeof(buffer) < (color_len + reset_len + 2U))
+    {
+        return;
+    }
+
+    memcpy(buffer, color, color_len);
+
+    const size_t message_capacity = (sizeof(buffer) - color_len - reset_len);
+
     va_list args;
     va_start(args, format);
-    int len = vsnprintf(buffer, sizeof(buffer), format, args);
+    const int len = vsnprintf(buffer + color_len, message_capacity, format, args);
     va_end(args);
 
-    if (len > 0)
+    if (len <= 0)
     {
-        drv_uart_tx_ring_buffer_push(buffer);
+        return;
     }
+
+    const size_t message_len = ((size_t)len < message_capacity) ? (size_t)len : (message_capacity - 1U);
+    memcpy(buffer + color_len + message_len, LOG_COLOR_RESET, reset_len);
+    buffer[color_len + message_len + reset_len] = '\0';
+
+    drv_uart_tx_ring_buffer_push(buffer);
 }
 
 /**
@@ -284,7 +348,7 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
 
                     for (uint8_t i = 0U; i < current_msg->size; i++)
                     {
-                        drv_uart_printf_direct((uint8_t*)&current_msg->msg[i], 1U);
+                        uart_tx_polling((uint8_t*)&current_msg->msg[i], 1U);
                     }
                 }
                 break;
@@ -317,7 +381,7 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
         case '\r':
         case '\n':
         {
-            drv_uart_printf_direct((uint8_t*)"\r\n", 2U);
+            uart_tx_polling((uint8_t*)"\r\n", 2U);
             current_msg->msg[current_msg->size] = '\0';
 
             gt_uart_rx.head = (gt_uart_rx.head + 1U) % UART_RX_RING_BUFFER_SIZE;
@@ -330,7 +394,7 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
             {
                 current_msg->size--;
                 current_msg->msg[current_msg->size] = '\0';
-                drv_uart_printf_direct((uint8_t*)"\b \b", 3U);
+                uart_tx_polling((uint8_t*)"\b \b", 3U);
             }
             break;
         }
@@ -343,7 +407,7 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
         {
             if (current_msg->size < (MSG_BUFFER_SIZE - 1U))
             {
-                drv_uart_printf_direct(&received_data, 1U);
+                uart_tx_polling(&received_data, 1U);
                 current_msg->msg[current_msg->size++] = received_data;
                 current_msg->msg[current_msg->size] = '\0';
             }

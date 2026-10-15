@@ -23,6 +23,7 @@
 #include "main.h"
 #include "drv_gpio.h"
 #include "drv_uart.h"
+#include "common_def.h"
 
 /* USER CODE END Includes */
 
@@ -36,9 +37,11 @@
 #define TIM1_PWM_DMA_BASE               (DMA2)
 #define TIM1_PWM_DMA_STREAM             (LL_DMA_STREAM_1)
 
+#define TIM2_CAPTURE_RISE               (0U)
 #define TIM2_CAPTURE_RISE_DMA_BASE      (DMA1)
 #define TIM2_CAPTURE_RISE_DMA_STREAM    (LL_DMA_STREAM_6)
 
+#define TIM2_CAPTURE_FALL               (1U)
 #define TIM2_CAPTURE_FALL_DMA_BASE      (DMA1)
 #define TIM2_CAPTURE_FALL_DMA_STREAM    (LL_DMA_STREAM_5)
 
@@ -57,7 +60,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 static volatile bool gb_tim1_pwm_dma_active = false;
-static volatile bool gb_tim2_capture_dma_active = false;
+static volatile bool gb_tim2_capture_dma_active[2] = {false, false};
 
 static uint32_t gn_tim5_capture_ccr_buff[TIM5_CAPTURE_SIZE];
 static volatile bool gb_tim5_capture_dma_active = false;
@@ -85,11 +88,11 @@ void drv_tim_init(void)
     LL_DMA_SetPeriphAddress(TIM1_PWM_DMA_BASE, TIM1_PWM_DMA_STREAM, (uint32_t)(&(TIM1->CCR1)));
 
     /* TIM2: Serialize PWM input */
-    LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_RISE_DMA_BASE);
-    LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_RISE_DMA_BASE);
+    LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_RISE_DMA_BASE);
+    LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_RISE_DMA_BASE);
 
-    LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_FALL_DMA_BASE);
-    LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_FALL_DMA_BASE);
+    LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_FALL_DMA_BASE);
+    LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_FALL_DMA_BASE);
 
     LL_DMA_EnableIT_TC(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
     LL_DMA_EnableIT_TE(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
@@ -146,7 +149,7 @@ bool drv_tim_generate_serial(uint16_t* p_cnt, uint16_t length, uint16_t timeout)
 {
     if ((NULL == p_cnt) || (0U == length) || (0U == timeout))
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid count pointer or length or timeout.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] %s: Invalid count pointer or length or timeout.", __func__);
         return false;
     }
     drv_gpio_serialize_out_enable(true);
@@ -171,7 +174,7 @@ bool drv_tim_generate_serial(uint16_t* p_cnt, uint16_t length, uint16_t timeout)
             LL_DMA_DisableStream(TIM1_PWM_DMA_BASE, TIM1_PWM_DMA_STREAM);
             LL_TIM_DisableCounter(TIM1);
             gb_tim1_pwm_dma_active = false;
-            drv_uart_printf(LOG_LV_WARN, "TIM1 Generate Serial timeout\r\n");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM1 Generate Serial timeout");
             return false;
         }
     }
@@ -198,17 +201,18 @@ bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length,
     LL_DMA_SetMemoryAddress(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM, (uint32_t)(p_rise));
     LL_DMA_SetDataLength(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM, length);
 
-    LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_RISE_DMA_BASE);
-    LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_RISE_DMA_BASE);
+    LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_RISE_DMA_BASE);
+    LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_RISE_DMA_BASE);
 
     LL_DMA_DisableStream(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
     LL_DMA_SetMemoryAddress(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM, (uint32_t)(p_fall));
     LL_DMA_SetDataLength(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM, length);
 
-    LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_FALL_DMA_BASE);
-    LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_FALL_DMA_BASE);
+    LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_FALL_DMA_BASE);
+    LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_FALL_DMA_BASE);
 
-    gb_tim2_capture_dma_active = true;
+    gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] = true;
+    gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL] = true;
 
     uint32_t start_time = HAL_GetTick();
 
@@ -221,15 +225,16 @@ bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length,
     LL_DMA_EnableStream(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
     LL_TIM_EnableCounter(TIM2);
 
-    while (true == gb_tim2_capture_dma_active)
+    while (true == gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] || true == gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL])
     {
         if ((HAL_GetTick() - start_time) > timeout)
         {
             LL_DMA_DisableStream(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
             LL_DMA_DisableStream(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
             LL_TIM_DisableCounter(TIM2);
-            gb_tim2_capture_dma_active = false;
-            drv_uart_printf(LOG_LV_WARN, "TIM2 Capture Serial timeout\r\n");
+            gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] = false;
+            gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL] = false;
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM2 Capture Serial timeout");
             return false;
         }
     }
@@ -257,39 +262,39 @@ void drv_tim_generate_serial_irq_handler(void)
 
 void drv_tim_capture_serial_rise_irq_handler(void)
 {
-    if (true == LL_DMA_IsActiveFlag_TC5(TIM2_CAPTURE_RISE_DMA_BASE))
+    if (true == LL_DMA_IsActiveFlag_TC6(TIM2_CAPTURE_RISE_DMA_BASE))
     {
-        LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_RISE_DMA_BASE);
+        LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_RISE_DMA_BASE);
         LL_DMA_DisableStream(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
         //LL_TIM_DisableCounter(TIM2);
-        //gb_tim2_capture_dma_active = false;
+        gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] = false;
     }
 
-    if (true == LL_DMA_IsActiveFlag_TE5(TIM2_CAPTURE_RISE_DMA_BASE))
+    if (true == LL_DMA_IsActiveFlag_TE6(TIM2_CAPTURE_RISE_DMA_BASE))
     {
-        LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_RISE_DMA_BASE);
+        LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_RISE_DMA_BASE);
         LL_DMA_DisableStream(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
         //LL_TIM_DisableCounter(TIM2);
-        //gb_tim2_capture_dma_active = false;
+        gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] = false;
     }
 }
 
 void drv_tim_capture_serial_fall_irq_handler(void)
 {
-    if (true == LL_DMA_IsActiveFlag_TC6(TIM2_CAPTURE_FALL_DMA_BASE))
+    if (true == LL_DMA_IsActiveFlag_TC5(TIM2_CAPTURE_FALL_DMA_BASE))
     {
-        LL_DMA_ClearFlag_TC6(TIM2_CAPTURE_FALL_DMA_BASE);
+        LL_DMA_ClearFlag_TC5(TIM2_CAPTURE_FALL_DMA_BASE);
         LL_DMA_DisableStream(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
         LL_TIM_DisableCounter(TIM2);
-        gb_tim2_capture_dma_active = false;
+        gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL] = false;
     }
 
-    if (true == LL_DMA_IsActiveFlag_TE6(TIM2_CAPTURE_FALL_DMA_BASE))
+    if (true == LL_DMA_IsActiveFlag_TE5(TIM2_CAPTURE_FALL_DMA_BASE))
     {
-        LL_DMA_ClearFlag_TE6(TIM2_CAPTURE_FALL_DMA_BASE);
+        LL_DMA_ClearFlag_TE5(TIM2_CAPTURE_FALL_DMA_BASE);
         LL_DMA_DisableStream(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
         LL_TIM_DisableCounter(TIM2);
-        gb_tim2_capture_dma_active = false;
+        gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL] = false;
     }
 }
 
@@ -333,7 +338,7 @@ bool mcu_tim_wait_conversion_complete(void)
     {
         if ((HAL_GetTick() - start_tick) > MCU_TIM_TIMEOUT)
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\nMCU TIM timeout!");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] MCU TIM timeout!");
             mcu_tim_set_conversion_enable(false);
             return false;
         }
@@ -360,6 +365,17 @@ uint32_t mcu_tim_get_average_conversion(void)
     return (uint32_t)(tim_period_sum / (TIM5_CAPTURE_SIZE - 1U));
 }
 
+float mcu_tim_conversion_cnt_to_frequency(uint32_t cnt_value)
+{
+    USER_ASSERT(0U != cnt_value);
+
+    const uint32_t tim5_APB1_hz = 90000000U;
+    const uint32_t tim5_prescaler_divisor = (LL_TIM_GetPrescaler(TIM5) + 1U);
+    const float tim5_clock_hz = (float)tim5_APB1_hz / (float)tim5_prescaler_divisor;
+
+    return tim5_clock_hz / (float)cnt_value;
+}
+
 void drv_tim_capture_freq_irq_handler(void)
 {
     if (true == LL_DMA_IsActiveFlag_TC2(TIM5_CAPTURE_FREQ_DMA_BASE))
@@ -372,7 +388,7 @@ void drv_tim_capture_freq_irq_handler(void)
     if (true == LL_DMA_IsActiveFlag_TE2(TIM5_CAPTURE_FREQ_DMA_BASE))
     {
         LL_DMA_ClearFlag_TE2(TIM5_CAPTURE_FREQ_DMA_BASE);
-        drv_uart_printf(LOG_LV_WARN, "\r\nMCU TIM DMA Error!");
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] MCU TIM DMA Error!");
         mcu_tim_set_conversion_enable(false);
         gb_tim5_capture_dma_active = false;
     }

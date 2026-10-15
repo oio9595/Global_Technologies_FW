@@ -50,6 +50,7 @@ extern "C" {
 extern void mcu_adc_set_conversion_enable(bool b_start);
 extern bool mcu_adc_wait_conversion_complete(void);
 extern uint32_t mcu_adc_get_average_conversion(void);
+extern float mcu_adc_conversion_adc_to_mvoltage(uint32_t adc_value);
 extern void mcu_adc_eoc_irq_handler(void);
 /* USER CODE END EFP */
 

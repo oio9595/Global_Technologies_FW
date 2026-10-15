@@ -26,7 +26,7 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-#define MSG_BUFFER_SIZE             (128U)
+#define MSG_BUFFER_SIZE             (256U)
 #define UART_TX_RING_BUFFER_SIZE    (128U) // must be power of 2
 #define UART_RX_RING_BUFFER_SIZE    (8U) // must be power of 2
 /* USER CODE END Private defines */
@@ -64,6 +64,7 @@ typedef enum tag_LOG_LEVEL
 /* Exported functions prototypes ---------------------------------------------*/
 /* USER CODE BEGIN EFP */
 extern void drv_uart_init(void);
+extern void drv_uart_make_mutex(void);
 
 void drv_uart_set_tx_busy(bool is_busy);
 bool drv_uart_is_tx_busy(void);

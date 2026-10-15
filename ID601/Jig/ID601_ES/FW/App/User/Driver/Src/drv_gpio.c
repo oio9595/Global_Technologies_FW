@@ -64,11 +64,14 @@
 void drv_gpio_init(void)
 {
     mcp23017_init();
+
     drv_gpio_id601_vcc(ID601_VCC_OFF);
     drv_gpio_id601_vled(ID601_VLED_OFF);
     drv_gpio_id601_test_relay(ID601_RELAY_DIS);
     drv_gpio_id601_o1_relay(ID601_RELAY_DIS);
     drv_gpio_id601_o2_relay(ID601_RELAY_DIS);
+    drv_gpio_id601_ch_demux(ID601_CH_MAX);
+    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
 
     drv_gpio_ic603_cs(false);
     drv_gpio_ads114s08_dev_all_cs(false);
@@ -362,6 +365,58 @@ bool drv_gpio_id601_ch_demux(uint16_t ch)
     }
     return true;
 #endif
+}
+
+bool drv_gpio_id601_iout_gain(uint16_t gain)
+{
+    static uint32_t last_gain = 0xFFFFFFFF;
+    const uint32_t gain_val = (uint32_t)gain;
+    if (last_gain == gain_val)
+    {
+        return true;
+    }
+
+    last_gain = gain_val;
+    if (ID601_IOUT_GAIN_MAX <= gain_val)
+    {
+        LL_GPIO_ResetOutputPin(LTC_CURRENT_LOW_GPIO_Port, LTC_CURRENT_LOW_Pin);
+        LL_GPIO_ResetOutputPin(LTC_CURRENT_MID_GPIO_Port, LTC_CURRENT_MID_Pin);
+        LL_GPIO_ResetOutputPin(LTC_CURRENT_HIGH_GPIO_Port, LTC_CURRENT_HIGH_Pin);
+        return false;
+    }
+    switch (gain_val)
+    {
+        case ID601_IOUT_GAIN_LOW:
+        {
+            LL_GPIO_SetOutputPin(LTC_CURRENT_LOW_GPIO_Port, LTC_CURRENT_LOW_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_MID_GPIO_Port, LTC_CURRENT_MID_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_HIGH_GPIO_Port, LTC_CURRENT_HIGH_Pin);
+            break;
+        }
+        case ID601_IOUT_GAIN_MID:
+        {
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_LOW_GPIO_Port, LTC_CURRENT_LOW_Pin);
+            LL_GPIO_SetOutputPin(LTC_CURRENT_MID_GPIO_Port, LTC_CURRENT_MID_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_HIGH_GPIO_Port, LTC_CURRENT_HIGH_Pin);
+            break;
+        }
+        case ID601_IOUT_GAIN_HIGH:
+        {
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_LOW_GPIO_Port, LTC_CURRENT_LOW_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_MID_GPIO_Port, LTC_CURRENT_MID_Pin);
+            LL_GPIO_SetOutputPin(LTC_CURRENT_HIGH_GPIO_Port, LTC_CURRENT_HIGH_Pin);
+            break;
+        }
+        default:
+        {
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_LOW_GPIO_Port, LTC_CURRENT_LOW_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_MID_GPIO_Port, LTC_CURRENT_MID_Pin);
+            LL_GPIO_ResetOutputPin(LTC_CURRENT_HIGH_GPIO_Port, LTC_CURRENT_HIGH_Pin);
+            return false;
+        }
+    }
+    drv_tim_delay_ms(POWER_STABLE_MS);
+    return true;
 }
 
 bool drv_gpio_ic603_cs(bool state)

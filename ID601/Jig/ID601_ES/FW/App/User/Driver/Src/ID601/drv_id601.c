@@ -18,13 +18,14 @@
 /* 1. Direct pairing header (Corresponding header for this source file) */
 #include "drv_id601.h"
 /* 2. C standard library headers (Alphabetical order) */
-
+#include <stdio.h>
 /* 3. Project internal / System-related headers */
 #include "main.h"
 #include "drv_timer.h"
 #include "drv_uart.h"
 #include "drv_gpio.h"
 #include "cmsis_os.h"
+#include "common_def.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,18 +89,6 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ID601_ASSERT(cond) \
-    do { \
-        if (!(cond)) \
-        { \
-            static const char msg[] = \
-                "\r\n    ID601 Assertion failed: " #cond; \
-            drv_uart_printf_direct( \
-                (const uint8_t*)msg, \
-                (uint16_t)(sizeof(msg) - 1U)); \
-            while (1) { /* 여기서 멈추거나 리셋 */ } \
-        } \
-    } while (0)
 
 #define ID601_DAISY_LENGTH_MAX              (5U)
 #define ID601_DAISY_LENGTH_INITIAL          (3U)
@@ -254,22 +243,16 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
 #define ID601_EXT_CLKIN                     (0x0000U)
 #define ID601_ADDR_EXT                      (0x0000U)
 
-#define ID601_GAIN_VREF1                    (0x0001U)
-#define ID601_GAIN_VREF2                    (0x0001U)
-
-#define ID601_OFFSET_VREF1                  (0x0001U)
-#define ID601_OFFSET_VREF2                  (0x0001U)
-
-#define ID601_IREF1_MAX                     (0x001FU)
-#define ID601_IREF2_MAX                     (0x001FU)
-#define ID601_LDO_BGR2_CTL_MAX              (0x001FU)
-#define ID601_LDO_CTL_MAX                   (0x000FU)
-#define ID601_LDO_DAC_CTL_MAX               (0x001FU)
-#define ID601_LDO_OSC_CTL_MAX               (0x000FU)
-#define ID601_OFS_TEMP_MAX                  (0x000FU)
-#define ID601_OSC_RCTL_MAX                  (0x001FU)
-#define ID601_GAIN_MAX                      (0x007FU)
-#define ID601_OFFSET_MAX                    (0x01FFU)
+#define ID601_TRIM_REG_IREF1_MAX            (0x001FU)
+#define ID601_TRIM_REG_IREF2_MAX            (0x001FU)
+#define ID601_TRIM_REG_LDO_BGR2_CTL_MAX     (0x001FU)
+#define ID601_TRIM_REG_LDO_CTL_MAX          (0x000FU)
+#define ID601_TRIM_REG_LDO_DAC_CTL_MAX      (0x001FU)
+#define ID601_TRIM_REG_LDO_OSC_CTL_MAX      (0x000FU)
+#define ID601_TRIM_REG_OFS_TEMP_MAX         (0x000FU)
+#define ID601_TRIM_REG_OSC_RCTL_MAX         (0x001FU)
+#define ID601_TRIM_REG_GAIN_MAX             (0x007FU)
+#define ID601_TRIM_REG_OFFSET_MAX           (0x01FFU)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -301,6 +284,7 @@ static id601_crc_func_t gp_id601_crc_func = NULL;
 
 static uint16_t gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_COUNT][ID601_DAISY_LENGTH_MAX];
 static uint16_t gn_id601_mirror_regs[ID601_ADDR_MIRROR_MAX_COUNT][ID601_DAISY_LENGTH_MAX];
+static uint16_t gn_id601_trim_search_mirror_regs[ID601_ADDR_MIRROR_MAX_COUNT];
 static uint16_t gn_id601_fault;
 /* USER CODE END PV */
 
@@ -318,11 +302,14 @@ void drv_id601_init(void)
     gn_id601_serial_bit1_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT1) / ID601_SERIAL_RATIO_SUM);
 
     gn_id601_daisy_length = ID601_DAISY_LENGTH_INITIAL;
+}
 
+void drv_id601_make_mutex(void)
+{
     gh_id601_mutex_id = osMutexNew(&gs_id601_mutex_attr);
     if (NULL == gh_id601_mutex_id)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Failed to create ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to create ID601 mutex.", __func__);
     }
 }
 
@@ -370,7 +357,7 @@ static uint16_t id601_encode_ccr_buffer_from_serial(uint32_t serial, uint16_t* p
 {
     if ((NULL == p_cnt) || (0U == length))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Invalid CCR buffer or length.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid CCR buffer or length.", __func__);
         return 0U;
     }
     uint16_t count = 0U;
@@ -393,7 +380,7 @@ static bool id601_decode_serial_from_ccr_buffer(uint16_t* p_rise, uint16_t* p_fa
 {
     if ((NULL == p_rise) || (NULL == p_fall) || (NULL == p_serial) || (0U == length))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Invalid CCR buffer or length.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid CCR buffer or length.", __func__);
         return false;
     }
     uint32_t rise_cnt_sum = 0U;
@@ -446,7 +433,7 @@ static bool id601_write_command(uint16_t addr, const uint16_t* p_data, id601_crc
 {
     if (p_data == NULL)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid data pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid data pointer.", __func__);
         return false;
     }
 
@@ -508,7 +495,7 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
 {
     if (NULL == p_data)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid data pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid data pointer.", __func__);
         return false;
     }
 
@@ -545,7 +532,7 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
             uint16_t calc_crc = p_crc_func(payload, ID601_READ_RECV_PAYLOAD_BIT_COUNT);
             if (recv_crc != calc_crc)
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
                 return false;
             }
         }
@@ -556,11 +543,11 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
 
         if (NULL != p_crc_func)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Read Recv] [device_index: %u, command: 0x%02X, ID: 0x%02X, data: 0x%03X, crc: 0x%02X]", device_index, command, ID, data, recv_crc);
+            drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] RX: dev=%02u cmd=0x%02X id=0x%02X data=0x%04X crc=0x%02X", (unsigned)(device_index + 1U), (unsigned)command, (unsigned)ID, (unsigned)data, (unsigned)recv_crc);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Read Recv] [device_index: %u, command: 0x%02X, ID: 0x%02X, data: 0x%03X]", device_index, command, ID, data);
+            drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] RX: dev=%02u cmd=0x%02X id=0x%02X data=0x%04X crc=OFF", (unsigned)(device_index + 1U), (unsigned)command, (unsigned)ID, (unsigned)data);
         }
         p_data[device_index] = data;
     }
@@ -625,7 +612,7 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
 {
     if (NULL == p_status)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    (%s)Invalid status pointer.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid status pointer.", __func__);
         return false;
     }
 
@@ -660,7 +647,7 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
         uint16_t calc_crc = p_crc_func(payload, ID601_FAULT_RECV_PAYLOAD_BIT_COUNT);
         if (recv_crc != calc_crc)
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
             return false;
         }
     }
@@ -670,11 +657,11 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
 
     if (NULL != p_crc_func)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Fault Recv] [command: 0x%02X, Fault: 0x%01X, crc: 0x%02X]", command, fault, recv_crc);
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] FAULT RX: cmd=0x%02X fault=0x%04X crc=0x%02X", (unsigned)command, (unsigned)fault, (unsigned)recv_crc);
     }
     else
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601 Fault Recv] [command: 0x%02X, Fault: 0x%01X]", command, fault);
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] FAULT RX: cmd=0x%02X fault=0x%04X crc=OFF", (unsigned)command, (unsigned)fault);
     }
     *p_status = fault;
 
@@ -775,6 +762,8 @@ static bool id601_select_register_bank(const uint16_t bank, id601_crc_func_t p_c
         }
         if (false == id601_write_command(ID601_ADDR_GENERAL_OP_MODE, tx_data, p_crc_func))
         {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to write command.", __func__);
+            id601_unlock();
             return false;
         }
 
@@ -820,12 +809,13 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
 
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
     if (false == id601_select_register_bank(bank, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to select register bank.", __func__);
         id601_unlock();
         return false;
     }
@@ -850,6 +840,7 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
 
     if (false == id601_write_command(addr, tx_data, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to write command.", __func__);
         id601_unlock();
         return false;
     }
@@ -857,11 +848,11 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
         p_id601[device_index] = tx_data[device_index];
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] WRITE: bank=%u dev=%02u addr=0x%02X value=0x%04X", (unsigned)bank, (unsigned)(device_index + 1U), (unsigned)addr, (unsigned)p_id601[device_index]);
     }
 
     id601_unlock();
 
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)Write register success.", __func__);
     return true;
 }
 
@@ -898,22 +889,25 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
 
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
     if (false == id601_select_register_bank(bank, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to select register bank.", __func__);
         id601_unlock();
         return false;
     }
     if (false == id601_read_command(addr, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read command.", __func__);
         id601_unlock();
         return false;
     }
     if (false == id601_read_receive_command(rx_data, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read receive command.", __func__);
         id601_unlock();
         return false;
     }
@@ -921,11 +915,11 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
         p_id601[device_index] = rx_data[device_index];
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] READ:  bank=%u dev=%02u addr=0x%02X value=0x%04X", (unsigned)bank, (unsigned)(device_index + 1U), (unsigned)addr, (unsigned)p_id601[device_index]);
     }
 
     id601_unlock();
 
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)Read register success.", __func__);
     return true;
 }
 
@@ -939,25 +933,29 @@ bool id601_fault_read(id601_crc_func_t p_crc_func)
     uint16_t rx_data = 0U;
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
     if (false == id601_fault_read_command(p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to fault read command.", __func__);
         id601_unlock();
         return false;
     }
     if (false == id601_fault_receive_command(&rx_data, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to fault receive command.", __func__);
         id601_unlock();
         return false;
     }
     gn_id601_fault = rx_data;
 
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: Fault read success.", __func__);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] fault=0x%04X", (unsigned)gn_id601_fault);
+
     id601_unlock();
 
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)fault read success.", __func__);
     return true;
 }
 
@@ -965,19 +963,20 @@ bool id601_sync_gen(id601_crc_func_t p_crc_func)
 {
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
     if (false == id601_sync_gen_command(p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to syncgen command.", __func__);
         id601_unlock();
         return false;
     }
 
     id601_unlock();
 
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)sync gen success.", __func__);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: Sync gen success.", __func__);
     return true;
 }
 
@@ -985,19 +984,20 @@ bool id601_id_gen(id601_crc_func_t p_crc_func)
 {
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
     if (false == id601_id_gen_command(p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to ID gen command.", __func__);
         id601_unlock();
         return false;
     }
 
     id601_unlock();
 
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    (%s)id gen success.", __func__);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: ID gen success.", __func__);
     return true;
 }
 
@@ -1007,7 +1007,7 @@ static bool id601_reset(id601_crc_func_t p_crc_func)
 
     if (false == id601_lock())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    (%s)Failed to acquire ID601 mutex.", __func__);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
         return false;
     }
 
@@ -1018,6 +1018,7 @@ static bool id601_reset(id601_crc_func_t p_crc_func)
 
     if (false == id601_write_command(ID601_ADDR_GENERAL_RESET_ID, reset, p_crc_func))
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to write command.", __func__);
         id601_unlock();
         return false;
     }
@@ -1834,7 +1835,7 @@ static bool id601_read_all(id601_crc_func_t p_crc_func)
     {
         if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, ID601_BROADCAST, id601_addr, p_crc_func))
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    ID601 Failed to read general register 0x%04X\r\n    Read Stoped!!", id601_addr);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read general register 0x%04X", __func__, id601_addr);
             return false;
         }
     }
@@ -1843,7 +1844,7 @@ static bool id601_read_all(id601_crc_func_t p_crc_func)
     {
         if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, ID601_BROADCAST, id601_addr, p_crc_func))
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    ID601 Failed to read mirror register 0x%04X\r\n    Read Stoped!!", id601_addr);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read mirror register 0x%04X", __func__, id601_addr);
             return false;
         }
     }
@@ -1852,36 +1853,59 @@ static bool id601_read_all(id601_crc_func_t p_crc_func)
 
 static bool id601_dump_all(void)
 {
-    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
+    char buffer[MSG_BUFFER_SIZE];
+    int length;
+
+    length = snprintf(buffer, sizeof(buffer), "\r\n    [ID601] REGISTER DUMP\r\n    %-8s %4s %6s %6s", "BANK", "DEV", "ADDR", "VALUE");
+    if ((length > 0) && ((size_t)length < sizeof(buffer)))
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 General Register 0x%04X Dump:", id601_addr);
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
+    }
+
+    for (uint16_t addr = ID601_ADDR_GENERAL_RESET_ID; addr < ID601_ADDR_GENERAL_MAX_COUNT; ++addr)
+    {
+        for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n        Device %u: 0x%04X", device_index, gn_id601_general_regs[id601_addr][device_index]);
+            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X 0x%04X", "GENERAL", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_general_regs[addr][dev]);
+
+            if ((length > 0) && ((size_t)length < sizeof(buffer)))
+            {
+                drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
+            }
         }
     }
 
-    for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_MAX_COUNT ; ++id601_addr)
+    for (uint16_t addr = ID601_ADDR_MIRROR1; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    ID601 Mirror Register 0x%04X Dump:", id601_addr);
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n        Device %u: 0x%04X", device_index, gn_id601_mirror_regs[id601_addr][device_index]);
+            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X 0x%04X", "MIRROR", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_mirror_regs[addr][dev]);
+
+            if ((length > 0) && ((size_t)length < sizeof(buffer)))
+            {
+                drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
+            }
         }
     }
+
     return true;
 }
 
-bool id601_init_analog_test_mode(void)
+bool id601_trim_init_analog_test_mode(void)
 {
     gn_id601_daisy_length = 1U;
 
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
 
     drv_gpio_id601_vcc(ID601_VCC_3V3);
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
-    id601_read_all(gp_id601_crc_func);
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Initial register read failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
     id601_dump_all();
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
@@ -1925,66 +1949,210 @@ bool id601_init_analog_test_mode(void)
             }
         }
     }
-    id601_read_all(gp_id601_crc_func);
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Register read after configuration failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
     id601_dump_all();
+    drv_gpio_id601_vled(ID601_VLED_ON);
     return true;
 }
 
-void id601_trim_init_iref1(void)
+bool id601_trim_init_fll_test_mode(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    gn_id601_daisy_length = 1U;
+
+    USER_ASSERT(1U == gn_id601_daisy_length);
+
+    drv_gpio_id601_vcc(ID601_VCC_3V3);
+    id601_reset(gp_id601_crc_func);
+    id601_id_gen(gp_id601_crc_func);
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Initial register read failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
+    id601_dump_all();
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
+    {
+        switch (id601_addr)
+        {
+            case ID601_ADDR_GENERAL_FAULT_CONTROL:
+            {
+                if (false == id601_write_fault_control(1U, ID601_FT_MODE, ID601_FB_MODE, ID601_O_FB_E, ID601_T_DET_E, ID601_S_DET_E, ID601_O_DET_E, ID601_T_OFF_E, ID601_S_OFF_E, ID601_O_OFF_E))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FLLCNT1:
+            {
+                if (false == id601_write_fllcnt1(1U, ID601_FLL_CNT_1))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_CHOP_EN:
+            {
+                if (false == id601_write_chop_en(1U, ID601_OPEN_MASK_OPT, ID601_CHOP_EN, ID601_CHOP_DRV_EN, ID601_CHOP_OSC_LDO_EN, ID601_CHOP_OSC_EN, ID601_CHOP_DAC_EN, ID601_CHOP_BGR_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_OP_MODE:
+            {
+                if (false == id601_write_op_mode(1U, ID601_TEST_EN, ID601_SW_SEL, ID601_PWMOUT_FULL, ID601_MCLK64_O, ID601_DTEST_MUX_EN, ID601_RD_EN, ID601_EXT_CLKIN, ID601_ADDR_EXT))
+                {
+                    return false;
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Register read after configuration failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
+    id601_dump_all();
+    drv_gpio_id601_vled(ID601_VLED_ON);
+    return true;
+}
+
+bool id601_trim_init_after_efuse(void)
+{
+    gn_id601_daisy_length = 1U;
+
+    USER_ASSERT(1U == gn_id601_daisy_length);
+
+    drv_gpio_id601_vcc(ID601_VCC_3V3);
+    id601_reset(gp_id601_crc_func);
+    id601_id_gen(gp_id601_crc_func);
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Initial register read failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
+    id601_dump_all();
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
+    {
+        switch (id601_addr)
+        {
+            case ID601_ADDR_GENERAL_FAULT_CONTROL:
+            {
+                if (false == id601_write_fault_control(1U, ID601_FT_MODE, ID601_FB_MODE, ID601_O_FB_E, ID601_T_DET_E, ID601_S_DET_E, ID601_O_DET_E, ID601_T_OFF_E, ID601_S_OFF_E, ID601_O_OFF_E))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FLLCNT1:
+            {
+                if (false == id601_write_fllcnt1(1U, ID601_FLL_CNT_1))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_CHOP_EN:
+            {
+                if (false == id601_write_chop_en(1U, ID601_OPEN_MASK_OPT, ID601_CHOP_EN, ID601_CHOP_DRV_EN, ID601_CHOP_OSC_LDO_EN, ID601_CHOP_OSC_EN, ID601_CHOP_DAC_EN, ID601_CHOP_BGR_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_OP_MODE:
+            {
+                if (false == id601_write_op_mode(1U, ID601_TEST_EN, ID601_SW_SEL, ID601_PWMOUT_FULL, ID601_MCLK64_O, ID601_DTEST_MUX_EN, ID601_RD_EN, ID601_EXT_CLKIN, ID601_ADDR_EXT))
+                {
+                    return false;
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+    if (false == id601_read_all(gp_id601_crc_func))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Register read after configuration failed. Powering off ID601.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
+    id601_dump_all();
+    drv_gpio_id601_vled(ID601_VLED_ON);
+    return true;
+}
+
+void id601_trim_setup_iref1(void)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
 }
-void id601_trim_init_iref2(void)
+void id601_trim_setup_iref2(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST);
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
 }
-void id601_trim_init_ldo_det(void)
+void id601_trim_setup_ldo_det(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES);
     drv_gpio_id601_test_relay(ID601_RELAY_DIS);
 }
-void id601_trim_init_ldo_dig(void)
+void id601_trim_setup_ldo_dig(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES);
 }
-void id601_trim_init_ldo_dac(void)
+void id601_trim_setup_ldo_dac(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES);
 }
-void id601_trim_init_ldo_fll(void)
+void id601_trim_setup_ldo_fll(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES);
 }
-void id601_trim_init_ofs_temp(void)
+void id601_trim_setup_ofs_temp(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     // nothing to initialize for offset temperature trim
 }
-void id601_trim_init_ofs_temp_o1(void)
+void id601_trim_setup_ofs_temp_o1(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O1);
     drv_gpio_id601_o1_relay(ID601_RELAY_CON);
     drv_gpio_id601_o2_relay(ID601_RELAY_DIS);
 }
-void id601_trim_init_ofs_temp_o2(void)
+void id601_trim_setup_ofs_temp_o2(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O2);
     drv_gpio_id601_o1_relay(ID601_RELAY_DIS);
     drv_gpio_id601_o2_relay(ID601_RELAY_CON);
 }
-void id601_trim_init_osc_rctl(void)
+void id601_trim_setup_osc_rctl(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
 
     const uint16_t osc_man_en = 1U;
@@ -1992,197 +2160,377 @@ void id601_trim_init_osc_rctl(void)
     const uint16_t osc_fll_man = 8U;
     id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man);
 }
-void id601_trim_init_gain(void)
+void id601_trim_setup_gain(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    const uint16_t gain_max_current_level3 = ID601_MAX_CURRENT_LEVEL_08mA;
-    const uint16_t gain_max_current_level2 = ID601_MAX_CURRENT_LEVEL_08mA;
-    const uint16_t gain_max_current_level1 = ID601_MAX_CURRENT_LEVEL_08mA;
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    const uint16_t gain_max_current_level3 = ID601_TRIM_GAIN_MAX_CURR_LVL;
+    const uint16_t gain_max_current_level2 = ID601_TRIM_GAIN_MAX_CURR_LVL;
+    const uint16_t gain_max_current_level1 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
 }
-void id601_trim_init_gain_vref1(void)
+void id601_trim_setup_gain_vref1(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    id601_write_max_curr_vref1(1U, ID601_GAIN_VREF1);
-    id601_write_max_curr_vref2(1U, ID601_GAIN_VREF1);
-    id601_write_max_curr_vref3(1U, ID601_GAIN_VREF1);
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF1);
+    id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF1);
+    id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF1);
 }
-void id601_trim_init_gain_vref2(void)
+void id601_trim_setup_gain_vref2(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    id601_write_max_curr_vref1(1U, ID601_GAIN_VREF2);
-    id601_write_max_curr_vref2(1U, ID601_GAIN_VREF2);
-    id601_write_max_curr_vref3(1U, ID601_GAIN_VREF2);
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF2);
+    id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF2);
+    id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF2);
 }
-void id601_trim_init_offset(void)
+void id601_trim_setup_offset(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    const uint16_t offset_max_current_level3 = ID601_MAX_CURRENT_LEVEL_08mA;
-    const uint16_t offset_max_current_level2 = ID601_MAX_CURRENT_LEVEL_08mA;
-    const uint16_t offset_max_current_level1 = ID601_MAX_CURRENT_LEVEL_08mA;
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    const uint16_t offset_max_current_level3 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
+    const uint16_t offset_max_current_level2 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
+    const uint16_t offset_max_current_level1 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
     id601_write_max_current_level(1U, offset_max_current_level3, offset_max_current_level2, offset_max_current_level1);
 }
-void id601_trim_init_offset_vref1(void)
+void id601_trim_setup_offset_vref1(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    id601_write_max_curr_vref1(1U, ID601_OFFSET_VREF1);
-    id601_write_max_curr_vref2(1U, ID601_OFFSET_VREF1);
-    id601_write_max_curr_vref3(1U, ID601_OFFSET_VREF1);
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF1);
+    id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF1);
+    id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF1);
 }
-void id601_trim_init_offset_vref2(void)
+void id601_trim_setup_offset_vref2(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-    id601_write_max_curr_vref1(1U, ID601_OFFSET_VREF2);
-    id601_write_max_curr_vref2(1U, ID601_OFFSET_VREF2);
-    id601_write_max_curr_vref3(1U, ID601_OFFSET_VREF2);
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF2);
+    id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF2);
+    id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF2);
 }
-void id601_trim_init_current_chx(uint16_t ch)
+void id601_trim_setup_current_chx(uint16_t ch)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
     uint16_t channel[12] = { 0U };
     channel[ch] = 1U;
     id601_write_channel_enable(1U, channel[0], channel[1], channel[2], channel[3], channel[4], channel[5], channel[6], channel[7], channel[8], channel[9], channel[10], channel[11]);
 }
-
-void id601_trim_write_iref1(uint16_t val)
+void id601_trim_setup_otp_pg_s(void)
 {
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    const uint16_t otp_pg_done = 0U;
+    const uint16_t otp_rd_s = 0U;
+    const uint16_t otp_pg_s = 1U;
+    id601_write_otp_rd_prog(1U, otp_pg_done, otp_rd_s, otp_pg_s);
+}
+bool id601_trim_save_mirror_registers(void)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
 
-    if (val > ID601_IREF1_MAX)
+    for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func))
+        {
+            return false;
+        }
+        gn_id601_trim_search_mirror_regs[addr] = gn_id601_mirror_regs[addr][0];
+    }
+    return true;
+}
+bool id601_trim_compare_mirror_registers(void)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    bool result = true;
+
+    uint16_t mirror_reboot[ID601_ADDR_MIRROR_MAX_COUNT] = { 0U };
+
+    // 1. read mirror registers after power reboot
+    for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
+    {
+        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func))
+        {
+            return false;
+        }
+        mirror_reboot[addr] = gn_id601_mirror_regs[addr][0];
+    }
+
+    // 2. compare mirror registers with the saved ones
+    for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
+    {
+        if (mirror_reboot[addr] != gn_id601_trim_search_mirror_regs[addr])
+        {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] OTP MISMATCH: addr 0x%02X reboot=0x%04X saved=0x%04X", addr, mirror_reboot[addr], gn_id601_trim_search_mirror_regs[addr]);
+            result = false;
+        }
+    }
+    return result;
+}
+
+uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_IREF1_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_IREF1_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r01 = gn_id601_mirror_regs[ID601_ADDR_MIRROR2][0];
-    _r01 = id601_set_field(_r01, ID601_OTP2_IREF_CTL_Msk, ID601_OTP2_IREF_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR2, _r01, gp_id601_crc_func);
-}
-void id601_trim_write_iref2(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_IREF2_MAX)
+    _r01 = id601_set_field(_r01, ID601_OTP2_IREF_CTL_Msk, ID601_OTP2_IREF_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR2, _r01, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_IREF2_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_IREF2_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r02 = gn_id601_mirror_regs[ID601_ADDR_MIRROR3][0];
-    _r02 = id601_set_field(_r02, ID601_OTP3_IREF2_CTL_Msk, ID601_OTP3_IREF2_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR3, _r02, gp_id601_crc_func);
-}
-void id601_trim_write_ldo_det(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_LDO_BGR2_CTL_MAX)
+    _r02 = id601_set_field(_r02, ID601_OTP3_IREF2_CTL_Msk, ID601_OTP3_IREF2_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR3, _r02, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_LDO_BGR2_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_LDO_BGR2_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r03 = gn_id601_mirror_regs[ID601_ADDR_MIRROR4][0];
-    _r03 = id601_set_field(_r03, ID601_OTP4_LDO_BGR2_CTL_Msk, ID601_OTP4_LDO_BGR2_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func);
-}
-void id601_trim_write_ldo_dig(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_LDO_OSC_CTL_MAX)
+    _r03 = id601_set_field(_r03, ID601_OTP4_LDO_BGR2_CTL_Msk, ID601_OTP4_LDO_BGR2_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_ldo_dig(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_LDO_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = (trim_code ^ 0x08U); // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_LDO_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r05 = gn_id601_mirror_regs[ID601_ADDR_MIRROR6][0];
-    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_CTL_Msk, ID601_OTP6_LDO_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func);
-}
-void id601_trim_write_ldo_dac(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_LDO_DAC_CTL_MAX)
+    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_CTL_Msk, ID601_OTP6_LDO_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_ldo_dac(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_LDO_DAC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_LDO_DAC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r04 = gn_id601_mirror_regs[ID601_ADDR_MIRROR5][0];
-    _r04 = id601_set_field(_r04, ID601_OTP5_LDO_DAC_CTL_Msk, ID601_OTP5_LDO_DAC_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func);
-}
-void id601_trim_write_ldo_fll(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_LDO_OSC_CTL_MAX)
+    _r04 = id601_set_field(_r04, ID601_OTP5_LDO_DAC_CTL_Msk, ID601_OTP5_LDO_DAC_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_LDO_OSC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_LDO_OSC_CTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r05 = gn_id601_mirror_regs[ID601_ADDR_MIRROR6][0];
-    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_OSC_CTL_Msk, ID601_OTP6_LDO_OSC_CTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func);
-}
-void id601_trim_write_ofs_temp(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_OFS_TEMP_MAX)
+    _r05 = id601_set_field(_r05, ID601_OTP6_LDO_OSC_CTL_Msk, ID601_OTP6_LDO_OSC_CTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR6, _r05, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_OFS_TEMP_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_OFS_TEMP_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r03 = gn_id601_mirror_regs[ID601_ADDR_MIRROR4][0];
-    _r03 = id601_set_field(_r03, ID601_OTP4_OFS_TEMP_Msk, ID601_OTP4_OFS_TEMP_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func);
-}
-void id601_trim_write_osc_rctl(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_OSC_RCTL_MAX)
+    _r03 = id601_set_field(_r03, ID601_OTP4_OFS_TEMP_Msk, ID601_OTP4_OFS_TEMP_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR4, _r03, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_OSC_RCTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_OSC_RCTL_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
     uint16_t _r04 = gn_id601_mirror_regs[ID601_ADDR_MIRROR5][0];
-    _r04 = id601_set_field(_r04, ID601_OTP5_OSC_RCTL_Msk, ID601_OTP5_OSC_RCTL_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func);
-}
-void id601_trim_write_gain(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_GAIN_MAX)
+    _r04 = id601_set_field(_r04, ID601_OTP5_OSC_RCTL_Msk, ID601_OTP5_OSC_RCTL_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR5, _r04, gp_id601_crc_func))
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_GAIN_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
     }
 
-    uint16_t _r12 = gn_id601_mirror_regs[ID601_ADDR_MIRROR_GAIN_CH01][0];
-    _r12 = id601_set_field(_r12, ID601_GAIN_CH01_GAIN_CH1_Msk, ID601_GAIN_CH01_GAIN_CH1_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR_GAIN_CH01, _r12, gp_id601_crc_func);
-}
-void id601_trim_write_offset(uint16_t val)
-{
-    ID601_ASSERT(1U == gn_id601_daisy_length); // Trim action must be executed only when there is more than one device in the daisy chain
-
-    if (val > ID601_OFFSET_MAX)
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_GAIN_MAX)
     {
-        drv_uart_printf(LOG_LV_WARN, "%s Value out of range: %u\n", __func__, val);
-        ID601_ASSERT(0);
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
     }
 
-    uint16_t _r11 = gn_id601_mirror_regs[ID601_ADDR_MIRROR_OFS_CH01][0];
-    _r11 = id601_set_field(_r11, ID601_OFFSET_CH01_OFS_CH1_Msk, ID601_OFFSET_CH01_OFS_CH1_Pos, val);
-    id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR_OFS_CH01, _r11, gp_id601_crc_func);
+    const uint16_t addr_gain = ID601_ADDR_MIRROR_GAIN_CH01 + ch;
+    uint16_t _r_GAIN = gn_id601_mirror_regs[addr_gain][0];
+    _r_GAIN = id601_set_field(_r_GAIN, ID601_GAIN_CH01_GAIN_CH1_Msk, ID601_GAIN_CH01_GAIN_CH1_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, addr_gain, _r_GAIN, gp_id601_crc_func))
+    {
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gn_id601_daisy_length);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_OFFSET_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = (trim_code >= 256U) ? (trim_code - 256U) : (511U - trim_code); // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_REG_OFFSET_MAX)
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t addr_offset = ID601_ADDR_MIRROR_OFS_CH01 + ch;
+    uint16_t _r_OFFSET = gn_id601_mirror_regs[addr_offset][0];
+    _r_OFFSET = id601_set_field(_r_OFFSET, ID601_OFFSET_CH01_OFS_CH1_Msk, ID601_OFFSET_CH01_OFS_CH1_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, addr_offset, _r_OFFSET, gp_id601_crc_func))
+    {
+        ret = reg_value;
+    }
+    return ret;
 }
 
 /* USER CODE END 0 */

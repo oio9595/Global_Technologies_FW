@@ -70,6 +70,14 @@ typedef enum tag_ID601_CH
     ID601_CH_12,
     ID601_CH_MAX,
 } id601_ch_t;
+
+typedef enum tag_ID601_IOUT_GAIN
+{
+    ID601_IOUT_GAIN_LOW = 0U,
+    ID601_IOUT_GAIN_MID,
+    ID601_IOUT_GAIN_HIGH,
+    ID601_IOUT_GAIN_MAX,
+} id601_iout_gain_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -93,6 +101,7 @@ extern bool drv_gpio_id601_test_relay(uint16_t state);
 extern bool drv_gpio_id601_o1_relay(uint16_t state);
 extern bool drv_gpio_id601_o2_relay(uint16_t state);
 extern bool drv_gpio_id601_ch_demux(uint16_t ch);
+extern bool drv_gpio_id601_iout_gain(uint16_t gain);
 
 extern bool drv_gpio_ic603_cs(bool state);
 extern bool drv_gpio_ads114s08_dev1_cs(bool state);

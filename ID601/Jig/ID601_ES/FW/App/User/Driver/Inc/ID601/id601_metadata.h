@@ -563,101 +563,13 @@ extern "C" {
 #define ID601_OTP6_LDO_CTL_Pos                             (0U)
 #define ID601_OTP6_LDO_CTL_Msk                             (0x00FU)
 
-/* Mirror register 0x06: OFFSET_CH01 */
+/* Mirror register 0x06 ~ 0x11: OFFSET_CH */
 #define ID601_OFFSET_CH01_OFS_CH1_Pos                      (0U)
 #define ID601_OFFSET_CH01_OFS_CH1_Msk                      (0x1FFU)
 
-/* Mirror register 0x07: OFFSET_CH02 */
-#define ID601_OFFSET_CH02_OFS_CH2_Pos                      (0U)
-#define ID601_OFFSET_CH02_OFS_CH2_Msk                      (0x1FFU)
-
-/* Mirror register 0x08: OFFSET_CH03 */
-#define ID601_OFFSET_CH03_OFS_CH3_Pos                      (0U)
-#define ID601_OFFSET_CH03_OFS_CH3_Msk                      (0x1FFU)
-
-/* Mirror register 0x09: OFFSET_CH04 */
-#define ID601_OFFSET_CH04_OFS_CH4_Pos                      (0U)
-#define ID601_OFFSET_CH04_OFS_CH4_Msk                      (0x1FFU)
-
-/* Mirror register 0x0A: OFFSET_CH05 */
-#define ID601_OFFSET_CH05_OFS_CH5_Pos                      (0U)
-#define ID601_OFFSET_CH05_OFS_CH5_Msk                      (0x1FFU)
-
-/* Mirror register 0x0B: OFFSET_CH06 */
-#define ID601_OFFSET_CH06_OFS_CH6_Pos                      (0U)
-#define ID601_OFFSET_CH06_OFS_CH6_Msk                      (0x1FFU)
-
-/* Mirror register 0x0C: OFFSET_CH07 */
-#define ID601_OFFSET_CH07_OFS_CH7_Pos                      (0U)
-#define ID601_OFFSET_CH07_OFS_CH7_Msk                      (0x1FFU)
-
-/* Mirror register 0x0D: OFFSET_CH08 */
-#define ID601_OFFSET_CH08_OFS_CH8_Pos                      (0U)
-#define ID601_OFFSET_CH08_OFS_CH8_Msk                      (0x1FFU)
-
-/* Mirror register 0x0E: OFFSET_CH09 */
-#define ID601_OFFSET_CH09_OFS_CH9_Pos                      (0U)
-#define ID601_OFFSET_CH09_OFS_CH9_Msk                      (0x1FFU)
-
-/* Mirror register 0x0F: OFFSET_CH10 */
-#define ID601_OFFSET_CH10_OFS_CH10_Pos                     (0U)
-#define ID601_OFFSET_CH10_OFS_CH10_Msk                     (0x1FFU)
-
-/* Mirror register 0x10: OFFSET_CH11 */
-#define ID601_OFFSET_CH11_OFS_CH11_Pos                     (0U)
-#define ID601_OFFSET_CH11_OFS_CH11_Msk                     (0x1FFU)
-
-/* Mirror register 0x11: OFFSET_CH12 */
-#define ID601_OFFSET_CH12_OFS_CH12_Pos                     (0U)
-#define ID601_OFFSET_CH12_OFS_CH12_Msk                     (0x1FFU)
-
-/* Mirror register 0x12: GAIN_CH01 */
+/* Mirror register 0x12 ~ 0x1D: GAIN_CH */
 #define ID601_GAIN_CH01_GAIN_CH1_Pos                       (0U)
 #define ID601_GAIN_CH01_GAIN_CH1_Msk                       (0x07FU)
-
-/* Mirror register 0x13: GAIN_CH02 */
-#define ID601_GAIN_CH02_GAIN_CH2_Pos                       (0U)
-#define ID601_GAIN_CH02_GAIN_CH2_Msk                       (0x07FU)
-
-/* Mirror register 0x14: GAIN_CH03 */
-#define ID601_GAIN_CH03_GAIN_CH3_Pos                       (0U)
-#define ID601_GAIN_CH03_GAIN_CH3_Msk                       (0x07FU)
-
-/* Mirror register 0x15: GAIN_CH04 */
-#define ID601_GAIN_CH04_GAIN_CH4_Pos                       (0U)
-#define ID601_GAIN_CH04_GAIN_CH4_Msk                       (0x07FU)
-
-/* Mirror register 0x16: GAIN_CH05 */
-#define ID601_GAIN_CH05_GAIN_CH5_Pos                       (0U)
-#define ID601_GAIN_CH05_GAIN_CH5_Msk                       (0x07FU)
-
-/* Mirror register 0x17: GAIN_CH06 */
-#define ID601_GAIN_CH06_GAIN_CH6_Pos                       (0U)
-#define ID601_GAIN_CH06_GAIN_CH6_Msk                       (0x07FU)
-
-/* Mirror register 0x18: GAIN_CH07 */
-#define ID601_GAIN_CH07_GAIN_CH7_Pos                       (0U)
-#define ID601_GAIN_CH07_GAIN_CH7_Msk                       (0x07FU)
-
-/* Mirror register 0x19: GAIN_CH08 */
-#define ID601_GAIN_CH08_GAIN_CH8_Pos                       (0U)
-#define ID601_GAIN_CH08_GAIN_CH8_Msk                       (0x07FU)
-
-/* Mirror register 0x1A: GAIN_CH09 */
-#define ID601_GAIN_CH09_GAIN_CH9_Pos                       (0U)
-#define ID601_GAIN_CH09_GAIN_CH9_Msk                       (0x07FU)
-
-/* Mirror register 0x1B: GAIN_CH10 */
-#define ID601_GAIN_CH10_GAIN_CH10_Pos                      (0U)
-#define ID601_GAIN_CH10_GAIN_CH10_Msk                      (0x07FU)
-
-/* Mirror register 0x1C: GAIN_CH11 */
-#define ID601_GAIN_CH11_GAIN_CH11_Pos                      (0U)
-#define ID601_GAIN_CH11_GAIN_CH11_Msk                      (0x07FU)
-
-/* Mirror register 0x1D: GAIN_CH12 */
-#define ID601_GAIN_CH12_GAIN_CH12_Pos                      (0U)
-#define ID601_GAIN_CH12_GAIN_CH12_Msk                      (0x07FU)
 
 /* Mirror register 0x1E: VERSION */
 #define ID601_VERSION_VERSION0_Pos                         (0U)

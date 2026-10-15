@@ -31,8 +31,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MCU_ADC_READ_COUNT    (16U)
-#define MCU_ADC_TIMEOUT       (20U)
+#define MCU_ADC_READ_COUNT      (16U)
+#define MCU_ADC_TIMEOUT_MS      (20U)
+
+#define MCU_ADC_VREF            (3300.0f) /* mV */
+#define MCU_ADC_RES             (4096U)
+#define MCU_ADC_MV_PER_COUNT    (MCU_ADC_VREF / (float)MCU_ADC_RES)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -77,9 +81,9 @@ bool mcu_adc_wait_conversion_complete(void)
     uint32_t start_tick = HAL_GetTick();
     while (false == gb_mcu_adc_conversion_done)
     {
-        if ((HAL_GetTick() - start_tick) > MCU_ADC_TIMEOUT)
+        if ((HAL_GetTick() - start_tick) > MCU_ADC_TIMEOUT_MS)
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\nMCU ADC timeout!");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] MCU ADC timeout!!");
             mcu_adc_set_conversion_enable(false);
             return false;
         }
@@ -96,6 +100,11 @@ static uint16_t mcu_adc_read_conversion(void)
 uint32_t mcu_adc_get_average_conversion(void)
 {
     return ((uint32_t)((float)gn_mcu_adc_sum / MCU_ADC_READ_COUNT));
+}
+
+float mcu_adc_conversion_adc_to_mvoltage(uint32_t adc_value)
+{
+    return ((float)adc_value * MCU_ADC_MV_PER_COUNT);
 }
 
 void mcu_adc_eoc_irq_handler(void)
