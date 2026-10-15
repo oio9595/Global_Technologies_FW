@@ -345,7 +345,7 @@ static bool trim_step_initial(thread_data_t *td)
 
     if (false == id601_trim_init_analog_test_mode())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 initialization failed", __func__);
         return trim_error_handler(td);
     }
 
@@ -363,7 +363,7 @@ static bool trim_step_initial(thread_data_t *td)
                 }
                 else
                 {
-                    drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Initial trim write failed, ch=%u code=%u", trim_get_list_name((trim_list_t)i), __func__, (unsigned)j,(unsigned)gt_trim_info[i].trim_code[j]);
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Initial trim write failed, ch=%u code=%u", trim_get_list_name((trim_list_t)i), __func__, (unsigned)j,(unsigned)gt_trim_info[i].trim_code[j]);
                     return trim_error_handler(td);
                 }
             }
@@ -672,7 +672,7 @@ static bool trim_step_get_measured_value(thread_data_t *td)
 
     if (false == conversion_success)
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Conversion failed, powering off", trim_get_list_name(gt_trim_list), __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Conversion failed, powering off", trim_get_list_name(gt_trim_list), __func__);
         return trim_error_handler(td);
     }
     else
@@ -755,7 +755,7 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
 
     if ((now_code > max_code[gt_trim_list]) || (lower_limit > upper_limit) || !isfinite(measured) || !isfinite(target) || !isfinite(lower_limit) || !isfinite(upper_limit) || !isfinite(error) || !isfinite(abs_error))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Invalid trim data, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)now_code);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Invalid trim data, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)now_code);
         return trim_error_handler(td);
     }
 
@@ -773,11 +773,11 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
         {
             if ((now_code != search->best_code) || (trim_info->reg_val[ch] != search->best_reg))
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n%s FAIL: code=%u expected_code=%u reg=0x%04X expected_reg=0x%04X", prefix, (unsigned)now_code, (unsigned)search->best_code, (unsigned)trim_info->reg_val[ch], (unsigned)search->best_reg);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL: code=%u expected_code=%u reg=0x%04X expected_reg=0x%04X", prefix, (unsigned)now_code, (unsigned)search->best_code, (unsigned)trim_info->reg_val[ch], (unsigned)search->best_reg);
             }
             else
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n%s FAIL: measured=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)measured, unit, (double)lower_limit, (double)upper_limit, unit);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL: measured=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)measured, unit, (double)lower_limit, (double)upper_limit, unit);
             }
             return trim_error_handler(td);
         }
@@ -911,7 +911,7 @@ static bool trim_step_start_efuse(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    id601_trim_setup_otp_pg_s();
+    id601_trim_setup_efuse();
     td->tout = T_FUSING_DONE_MS;
 
     #ifdef RTOS_TIME_DEBUG
@@ -965,7 +965,7 @@ static bool trim_step_verify_otp_dump(thread_data_t *td)
 
     if (false == id601_trim_compare_mirror_registers())
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] OTP VERIFY: FAIL");
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] OTP VERIFY: FAIL");
         return trim_error_handler(td);
     }
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] OTP VERIFY: PASS");
@@ -1084,7 +1084,7 @@ bool id601_trim_process(thread_data_t *td)
     const uint32_t step = td->step;
     if ((TRIM_STEP_MAX <= step) || (NULL == gp_trim_step_handlers[step]))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [TRIM] [%s] %s: Invalid trim step=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)step);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Invalid trim step=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)step);
         return false;
     }
 

@@ -163,7 +163,7 @@ extern void id601_trim_setup_offset_vref2(void);
 extern void id601_trim_setup_ofs_temp_o1(void);
 extern void id601_trim_setup_ofs_temp_o2(void);
 extern void id601_trim_setup_current_chx(uint16_t ch);
-extern void id601_trim_setup_otp_pg_s(void);
+extern void id601_trim_setup_efuse(void);
 
 extern bool id601_trim_save_mirror_registers(void);
 extern bool id601_trim_compare_mirror_registers(void);
