@@ -299,7 +299,7 @@ bool drv_spi_transmit_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint16_t 
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -353,7 +353,7 @@ bool drv_spi_receive_dma_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, const uint
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -435,7 +435,7 @@ bool drv_spi_transmit_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, uint16_
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -489,7 +489,7 @@ bool drv_spi_receive_dma_16bit(SPI_TypeDef* SPIx, const uint16_t *p_tx, const ui
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -571,7 +571,7 @@ bool drv_spi_tx_dma_irq_handler(SPI_TypeDef* SPIx)
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -607,7 +607,7 @@ bool drv_spi_rx_dma_irq_handler(SPI_TypeDef* SPIx)
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -639,7 +639,7 @@ bool drv_spi_transmit_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint1
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;
@@ -685,7 +685,7 @@ bool drv_spi_receive_polling_8bit(SPI_TypeDef* SPIx, const uint8_t *p_tx, uint8_
         return false;
     }
 
-    const uint8_t spi_index = (SPIx == SPI1) ? 0U : 1U;
+    const uint8_t spi_index = (SPI1 == SPIx) ? (0U) : (1U);
     if (spi_index >= 2U)
     {
         return false;

@@ -26,12 +26,9 @@
 #include "cmsis_os.h"
 #include "version.h"
 #include "drv_uart.h"
-#include "drv_timer.h" // debug for pwm gen
-#include "drv_spi.h" // debug for spi
-#include "drv_gpio.h" // debug for GPIO control
-#include "drv_id601.h" // debug for ID601
-#include "drv_adc.h" // debug for ADC
-#include "id601_trim.h" // trim for ID601
+#include "drv_gpio.h"
+#include "drv_id601.h"
+#include "common_def.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,22 +42,18 @@ typedef enum tag_CLI_CMD_LIST
 
     CLI_CMD_TRIM_START,
 
-
-    CLI_CMD_DEBUG_SPI8,
-    CLI_CMD_DEBUG_SPI16,
-    CLI_CMD_DEBUG_DELAY,
-    CLI_CMD_DEBUG_ID601,
-    CLI_CMD_DEBUG_TIM_GEN_SER,
-    CLI_CMD_DEBUG_TIM_CAPTURE,
-    CLI_CMD_DEBUG_ADC,
+    CLI_CMD_ID601_POWER,
+    CLI_CMD_ID601_DAISY,
+    CLI_CMD_ID601_WRITE,
+    CLI_CMD_ID601_READ,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
 
 typedef struct tag_CLI_CMD_ENTRY
 {
-    const char      *name;
     cli_cmd_list_t  command;
+    const char      *name;
     const char      *description;
 } cli_cmd_entry_t;
 
@@ -98,20 +91,57 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PV */
 static const cli_cmd_entry_t gt_cli_command[] =
 {
-    /* ======================================================================================================= */
-    /* Command              Command ID                    Description                                          */
-    /* ======================================================================================================= */
-    { "help",               CLI_CMD_HELP,               "Display help information"                              },
-    { "?",                  CLI_CMD_HELP,               "Display help information"                              },
-    { "reset",              CLI_CMD_RESET,              "Reset the system"                                      },
-    { "trim_start",         CLI_CMD_TRIM_START,         "Start the ID601 trim process"                          },
-    { "debug_spi8",         CLI_CMD_DEBUG_SPI8,         "Debug for SPI 8-bit communication"                     },
-    { "debug_spi16",        CLI_CMD_DEBUG_SPI16,        "Debug for SPI 16-bit communication"                    },
-    { "debug_delay",        CLI_CMD_DEBUG_DELAY,        "Debug for delay_us/ms"                                 },
-    { "debug_id601",        CLI_CMD_DEBUG_ID601,        "Debug for ID601 communication"                         },
-    { "debug_tim_gen_ser",  CLI_CMD_DEBUG_TIM_GEN_SER,  "Debug for TIM generate serial"                         },
-    { "debug_tim_capture",  CLI_CMD_DEBUG_TIM_CAPTURE,  "Debug for TIM capture"                                 },
-    { "debug_adc",          CLI_CMD_DEBUG_ADC,          "Debug for ADC"                                         },
+    {
+        CLI_CMD_HELP,
+        "help",
+        "Display available commands and usage"
+    },
+    {
+        CLI_CMD_HELP,
+        "?",
+        "Display available commands and usage"
+    },
+    {
+        CLI_CMD_RESET,
+        "reset",
+        "Reset the MCU"
+    },
+    {
+        CLI_CMD_TRIM_START,
+        "trim_start",
+        "Request the ID601 trim process to start"
+    },
+    {
+        CLI_CMD_ID601_POWER,
+        "id601_power",
+        "id601_power <target> <state>"
+        "\r\n    target 0: VCC  - state 0=OFF, 1=3.3V, 2=5.5V"
+        "\r\n    target 1: VLED - state 0=OFF, 1=ON (voltage set by SW14/SW15)"
+        "\r\n    Invalid state turns the selected power OFF."
+    },
+    {
+        CLI_CMD_ID601_DAISY,
+        "id601_daisy",
+        "id601_daisy [length]"
+        "\r\n    Omit length or enter 0 to display the current length."
+        "\r\n    Enter 1-5 to set the number of connected ID601 devices."
+    },
+    {
+        CLI_CMD_ID601_WRITE,
+        "id601_write",
+        "id601_write <bank> <ic> <addr> <data>"
+        "\r\n    bank: 0=General, 1=Mirror; ic: 1 to daisy length"
+        "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
+        "\r\n    data: 0x000-0xFFF; numbers: decimal or 0x-prefixed hex"
+    },
+    {
+        CLI_CMD_ID601_READ,
+        "id601_read",
+        "id601_read <bank> <ic> <addr>"
+        "\r\n    bank: 0=General, 1=Mirror; ic: 1 to daisy length"
+        "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
+        "\r\n    Display the selected IC register value in decimal."
+    },
 };
 
 static cli_request_t gt_cli_request;
@@ -154,22 +184,56 @@ static void cli_print_banner(void)
 static void cli_help(void)
 {
     uint16_t max_name_len = 0U;
-    uint16_t total_cmds = sizeof(gt_cli_command) / sizeof(gt_cli_command[0]);
+    const uint16_t total_cmds = sizeof(gt_cli_command) / sizeof(gt_cli_command[0]);
 
     for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
-        uint16_t len = (uint16_t)strlen(gt_cli_command[idx].name);
-        if (len > max_name_len)
+        const uint16_t len = (uint16_t)strlen(gt_cli_command[idx].name);
+        if (max_name_len < len)
         {
             max_name_len = len;
         }
     }
 
+    const int description_indent = (int)max_name_len + 5;
+
     drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+
     for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n\"%-*s\" - %s", max_name_len, gt_cli_command[idx].name, gt_cli_command[idx].description);
+        const char *line = gt_cli_command[idx].description;
+        bool first_line = true;
+
+        while ('\0' != *line)
+        {
+            const size_t line_len = strcspn(line, "\r\n");
+
+            if (true == first_line)
+            {
+                drv_uart_printf(LOG_LV_INFO, "\r\n\"%-*s\" - %.*s", (int)max_name_len, gt_cli_command[idx].name, (int)line_len, line);
+                first_line = false;
+            }
+            else
+            {
+                drv_uart_printf(LOG_LV_INFO, "\r\n%*s%.*s", description_indent, "", (int)line_len, line);
+            }
+
+            line += line_len;
+
+            if ('\r' == *line)
+            {
+                ++line;
+            }
+            if ('\n' == *line)
+            {
+                ++line;
+            }
+
+            /* 기존 설명 문자열의 들여쓰기 제거 */
+            line += strspn(line, " \t");
+        }
     }
+
     drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
 }
 
@@ -199,13 +263,13 @@ static void cli_command_parse(msg_buffer_t* p_msg)
     char* p_token[CLI_MAX_TOKENS] = { 0 };
     /* Tokenize the input message to extract the command */
     uint8_t token_cnt = 0U;
-    while ((p_str != NULL) && (token_cnt < CLI_MAX_TOKENS))
+    while ((NULL != p_str) && (token_cnt < CLI_MAX_TOKENS))
     {
         p_token[token_cnt++] = p_str;
         p_str = strtok(NULL, " ");
     }
 
-    if ((token_cnt == 0U) || (p_token[0] == NULL))
+    if ((0U == token_cnt) || (NULL == p_token[0]))
     {
         gt_cli_request.last_command = CLI_CMD_NONE;
         return;
@@ -216,7 +280,7 @@ static void cli_command_parse(msg_buffer_t* p_msg)
 
     for (uint16_t idx = 0U; idx < CMD_LIST_SIZE; ++idx)
     {
-        if (strcmp(p_token[0], gt_cli_command[idx].name) == STR_MATCH)
+        if (STR_MATCH == strcmp(p_token[0], gt_cli_command[idx].name))
         {
             command = gt_cli_command[idx].command;
             break;
@@ -259,141 +323,151 @@ static void cli_command_execute(void)
             osThreadFlagsSet(ID601TrimTaskHandle, TRIM_START_FLAG);
             break;
         }
-        case CLI_CMD_DEBUG_SPI8:
+        case CLI_CMD_ID601_POWER:
         {
-            bool spi_rw_type = (bool)(gt_cli_request.val_1);
-            if (false == spi_rw_type)
-            {
-                uint8_t tx_buffer[3] = { 0x3FU, 0xA5U, 0x78U };
-                uint8_t rx_buffer[3] = { 0U };
+            const uint16_t val1 = (uint16_t)gt_cli_request.val_1;
+            const uint16_t val2 = (uint16_t)gt_cli_request.val_2;
 
-                drv_gpio_ic603_cs(false);
-                if (false == drv_spi_receive_dma_8bit(SPI1, tx_buffer, rx_buffer, 3U, 20U))
+            switch (val1)
+            {
+                case 0U:
                 {
-                    drv_gpio_ic603_cs(true);
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 8-bit read NG...");
+                    if (0U == val2)
+                    {
+                        drv_gpio_id601_vcc(ID601_VCC_OFF);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VCC turned off.");
+                    }
+                    else if (1U == val2)
+                    {
+                        drv_gpio_id601_vcc(ID601_VCC_3V3);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VCC set to 3.3V.");
+                    }
+                    else if (2U == val2)
+                    {
+                        drv_gpio_id601_vcc(ID601_VCC_5V5);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VCC set to 5.5V.");
+                    }
+                    else
+                    {
+                        drv_gpio_id601_vcc(ID601_VCC_OFF);
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %u is invalid, ID601 VCC turned off.", val2);
+                    }
+                    break;
                 }
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit read OK...");
-            }
-            else
-            {
-                uint8_t tx_buffer[3] = { 0x3FU, 0xA5U, 0x78U };
-
-                drv_gpio_ic603_cs(false);
-                if (false == drv_spi_transmit_dma_8bit(SPI1, tx_buffer, 3U, 20U))
+                case 1U:
                 {
-                    drv_gpio_ic603_cs(true);
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 8-bit write NG...");
+                    if (0U == val2)
+                    {
+                        drv_gpio_id601_vled(ID601_VLED_OFF);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VLED turned off.");
+                    }
+                    else if (1U == val2)
+                    {
+                        drv_gpio_id601_vled(ID601_VLED_ON);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VLED turned on. Level depends on SW14, SW15.");
+                    }
+                    else
+                    {
+                        drv_gpio_id601_vled(ID601_VLED_OFF);
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %u is invalid, ID601 VLED turned off.", val2);
+                    }
+                    break;
                 }
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 8-bit write OK...");
-            }
-            break;
-        }
-        case CLI_CMD_DEBUG_SPI16:
-        {
-            bool spi_rw_type = (bool)(gt_cli_request.val_1);
-            if (false == spi_rw_type)
-            {
-                uint16_t tx_buffer[3] = { 0x3F70U, 0x98A5U, 0x718CU };
-                uint16_t rx_buffer[3] = { 0U };
-
-                drv_gpio_ads114s08_dev_all_cs(false);
-                if (false == drv_spi_receive_dma_16bit(SPI2, tx_buffer, rx_buffer, 3U, 20U))
+                default:
                 {
-                    drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 16-bit read NG...");
+                    break;
                 }
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit read OK...");
+            }
+            break;
+        }
+        case CLI_CMD_ID601_DAISY:
+        {
+            const uint16_t daisy = (uint16_t)gt_cli_request.val_1;
+            if (0U == daisy)
+            {
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 daisy chain length is %u.", drv_id601_get_daisy_length());
             }
             else
             {
-                uint16_t tx_buffer[3] = { 0x3F70U, 0x98A5U, 0x718CU };
-
-                drv_gpio_ads114s08_dev_all_cs(false);
-                if (false == drv_spi_transmit_dma_16bit(SPI2, tx_buffer, 3U, 20U))
+                if (true == drv_id601_set_daisy_length(daisy))
                 {
-                    drv_gpio_ads114s08_dev_all_cs(true);
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    SPI 16-bit write NG...");
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 daisy chain length set to %u.", daisy);
                 }
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    SPI 16-bit write OK...");
+                else
+                {
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to set ID601 daisy chain length to %u.", daisy);
+                }
             }
             break;
         }
-        case CLI_CMD_DEBUG_DELAY:
+        case CLI_CMD_ID601_WRITE:
         {
-            bool delay_us_ms = (bool)(gt_cli_request.val_1);
-            if (false == delay_us_ms)
-            {
-                LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_tim_delay_us(10); // Example delay in microseconds
-                LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    Delay 10 us...");
-            }
-            else
-            {
-                LL_GPIO_ResetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_tim_delay_ms(10); // Example delay in milliseconds
-                LL_GPIO_SetOutputPin(IC603_CS_GPIO_Port, IC603_CS_Pin);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    Delay 10 ms...");
-            }
-            break;
-        }
-        case CLI_CMD_DEBUG_ID601:
-        {
-            /*
-            bool serial_rw = (bool)(gt_cli_request.val_1);
-            if (false == serial_rw)
-            {
-                //id601_read(0U, 0U);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ID601 read executed...");
-            }
-            else
-            {
-                //id601_write(0U, 0U);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ID601 write executed...");
-            }
-            */
+            const uint16_t bank = (uint16_t)gt_cli_request.val_1;
+            const uint16_t ic_num = (uint16_t)gt_cli_request.val_2;
+            const uint16_t addr = (uint16_t)gt_cli_request.val_3;
+            const uint16_t data = (uint16_t)gt_cli_request.val_4;
 
-            break;
-        }
-        case CLI_CMD_DEBUG_TIM_GEN_SER:
-        {
-            uint16_t temp[62] = { 0U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U, 119U, 59U,
-                0U };
-            drv_tim_generate_serial((uint16_t*)temp, 62U, 100U);
-            break;
-        }
-        case CLI_CMD_DEBUG_TIM_CAPTURE:
-        {
-            mcu_tim_set_conversion_enable(true);
-            if (true == mcu_tim_wait_conversion_complete())
+            USER_ASSERT(bank < ID601_REGISTER_BANK_COUNT);
+            USER_ASSERT(ic_num > 0U);
+            USER_ASSERT(addr < ID601_ADDR_GENERAL_MAX_COUNT);
+            USER_ASSERT(data < 4096);
+
+            if (0U == drv_id601_get_daisy_length())
             {
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    TIM capture complete. (period: %lu)", mcu_tim_get_average_conversion());
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Daisy chain length is 0, cannot write to ID601.");
+                return;
+            }
+
+            if (false == id601_write_register(bank, ic_num, addr, data, NULL))
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
             else
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    TIM capture timeout.");
+                if (ID601_REGISTER_BANK_GENERAL == bank)
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 General register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, data);
+                }
+                else
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 Mirror register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, data);
+                }
             }
             break;
         }
-        case CLI_CMD_DEBUG_ADC:
+        case CLI_CMD_ID601_READ:
         {
-            mcu_adc_set_conversion_enable(true);
-            if (true == mcu_adc_wait_conversion_complete())
+            const uint16_t bank = (uint16_t)gt_cli_request.val_1;
+            const uint16_t ic_num = (uint16_t)gt_cli_request.val_2;
+            const uint16_t addr = (uint16_t)gt_cli_request.val_3;
+
+            USER_ASSERT(bank < ID601_REGISTER_BANK_COUNT);
+            USER_ASSERT(ic_num > 0U);
+            USER_ASSERT(addr < ID601_ADDR_GENERAL_MAX_COUNT);
+
+            if (0U == drv_id601_get_daisy_length())
             {
-                uint32_t adc_value = mcu_adc_get_average_conversion();
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    ADC conversion complete. %lu", adc_value);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Daisy chain length is 0, cannot read from ID601.");
+                return;
+            }
+
+            uint16_t read_data = 0U;
+            if (false == id601_read_register(bank, ic_num, addr, NULL, &read_data))
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");
             }
             else
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    ADC conversion timeout.");
+                if (ID601_REGISTER_BANK_GENERAL == bank)
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 General register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, read_data);
+                }
+                else
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 Mirror register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, read_data);
+                }
             }
+
             break;
         }
 
@@ -424,7 +498,7 @@ void cli_process(void)
     {
         msg_buffer_t* p_msg = drv_uart_rx_ring_buffer_pop();
 
-        if (p_msg != NULL)
+        if (NULL != p_msg)
         {
             cli_command_parse(p_msg);
             cli_command_execute();

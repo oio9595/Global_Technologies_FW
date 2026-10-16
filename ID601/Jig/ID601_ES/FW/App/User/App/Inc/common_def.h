@@ -48,6 +48,8 @@ extern "C" {
         } \
     } while (0)
 
+#define TRIM_START_FLAG                 (1U << 0U)
+
 #define CONST_MA_to_UA(x)               ((x) * 1000.0f) // Convert milliampere to microampere
 #define CONST_MV_to_V(x)                ((x) / 1000.0f) // Convert millivolts to volts
 

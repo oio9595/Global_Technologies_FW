@@ -34,16 +34,16 @@ extern "C" {
 #define ID601_TRIM_OFFSET_VREF2             (0x012CU)
 #define ID601_TRIM_OFFSET_MAX_CURR_LVL      (ID601_MAX_CURRENT_LEVEL_08mA)
 
-#define ID601_TRIM_CODE_IREF1_MAX         (0x001FU)
-#define ID601_TRIM_CODE_IREF2_MAX         (0x001FU)
-#define ID601_TRIM_CODE_LDO_BGR2_CTL_MAX  (0x001FU)
-#define ID601_TRIM_CODE_LDO_CTL_MAX       (0x000FU)
-#define ID601_TRIM_CODE_LDO_DAC_CTL_MAX   (0x001FU)
-#define ID601_TRIM_CODE_LDO_OSC_CTL_MAX   (0x000FU)
-#define ID601_TRIM_CODE_OFS_TEMP_MAX      (0x000FU)
-#define ID601_TRIM_CODE_OSC_RCTL_MAX      (0x001FU)
-#define ID601_TRIM_CODE_GAIN_MAX          (0x007FU)
-#define ID601_TRIM_CODE_OFFSET_MAX        (0x01FFU)
+#define ID601_TRIM_CODE_IREF1_MAX           (0x001FU)
+#define ID601_TRIM_CODE_IREF2_MAX           (0x001FU)
+#define ID601_TRIM_CODE_LDO_BGR2_CTL_MAX    (0x001FU)
+#define ID601_TRIM_CODE_LDO_CTL_MAX         (0x000FU)
+#define ID601_TRIM_CODE_LDO_DAC_CTL_MAX     (0x001FU)
+#define ID601_TRIM_CODE_LDO_OSC_CTL_MAX     (0x000FU)
+#define ID601_TRIM_CODE_OFS_TEMP_MAX        (0x000FU)
+#define ID601_TRIM_CODE_OSC_RCTL_MAX        (0x001FU)
+#define ID601_TRIM_CODE_GAIN_MAX            (0x007FU)
+#define ID601_TRIM_CODE_OFFSET_MAX          (0x01FFU)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -74,13 +74,15 @@ typedef enum tag_ID601_REGISTER_BANK
 extern void drv_id601_init(void);
 extern void drv_id601_make_mutex(void);
 
+extern bool drv_id601_set_daisy_length(uint16_t daisy_length);
+extern uint16_t drv_id601_get_daisy_length(void);
+
 extern bool id601_write_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, const uint16_t new_value, id601_crc_func_t p_crc_func);
-extern bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func);
+extern bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func, uint16_t* p_single_read_data);
 extern bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func);
 extern bool id601_fault_read(id601_crc_func_t p_crc_func);
 extern bool id601_sync_gen(id601_crc_func_t p_crc_func);
 extern bool id601_id_gen(id601_crc_func_t p_crc_func);
-
 
 extern bool id601_write_reset_id(uint16_t device_select, uint16_t rst, uint16_t vs_rst, uint16_t e_rst, uint16_t lkg_e, uint16_t id);
 extern bool id601_write_ld_control(uint16_t device_select, uint16_t sv_no, uint16_t ld_type, uint16_t delay_ch_en, uint16_t syncmode, uint16_t pwm_res, uint16_t ld_dir, uint16_t ld_mode);
@@ -177,7 +179,6 @@ extern uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code);
-extern uint16_t id601_trim_offset_code_to_reg(uint16_t trim_code);
 extern uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code);
 /* USER CODE END EFP */
 

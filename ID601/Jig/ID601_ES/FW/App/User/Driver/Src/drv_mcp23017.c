@@ -76,7 +76,7 @@ static uint8_t gt_mcp_gpio_state[2];
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
+static HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
 {
     HAL_StatusTypeDef ret = HAL_ERROR;
     uint8_t i2c_tx_buff[2] = { 0U };
@@ -88,12 +88,12 @@ HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
     return ret;
 }
 
-HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
+static HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
 {
     HAL_StatusTypeDef ret = HAL_ERROR;
     uint8_t i2c_tx_buff[2] = { 0U };
 
-    if (p_buff == NULL)
+    if (NULL == p_buff)
     {
         return HAL_ERROR;
     }
@@ -153,7 +153,7 @@ bool mcp23017_set_gpio_state(uint8_t pin, bool state)
         new_state = (uint8_t)(gt_mcp_gpio_state[port] & (uint8_t)~(1U << bit));
     }
 
-    reg = (port == 0U) ? MCP_GPIOA : MCP_GPIOB;
+    reg = (0U == port) ? (MCP_GPIOA) : (MCP_GPIOB);
 
     if (HAL_OK != mcp23017_write(reg, new_state))
     {
@@ -174,14 +174,14 @@ bool mcp23017_get_gpio_state(uint8_t pin, bool* p_state)
     uint8_t reg = 0U;
     uint8_t value = 0U;
 
-    if ((pin >= MCP_GPIO_MAX) || (p_state == NULL))
+    if ((pin >= MCP_GPIO_MAX) || (NULL == p_state))
     {
         return false;
     }
 
     port = pin >> 3U;       /* 0: GPIOA, 1: GPIOB */
     bit  = pin & 0x07U;     /* 각 포트 내 핀 번호: 0~7 */
-    reg  = (port == 0U) ? MCP_GPIOA : MCP_GPIOB;
+    reg  = (0U == port) ? (MCP_GPIOA) : (MCP_GPIOB);
 
     if (HAL_OK != mcp23017_read(reg, &value))
     {

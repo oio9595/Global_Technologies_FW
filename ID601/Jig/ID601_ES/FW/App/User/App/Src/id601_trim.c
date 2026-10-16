@@ -37,6 +37,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef void (*trim_setup_func_t)(void);
+typedef uint16_t (*trim_apply_code_func_t)(uint16_t, uint16_t);
+
 typedef enum tag_TRIM_STEP_T
 {
     TRIM_STEP_NONE = 0U,
@@ -111,12 +114,12 @@ typedef enum tag_TRIM_RANGE_T
 #define REPEAT_SECOND               (true)
 
 //#define RTOS_TIME_DEBUG
-#define T_DEFAULT_MS        (1U)
-#define T_STABLE_MS         (10U)
-#define T_MEASURE_DONE_MS   (100U)
-#define T_RAMP_UP_MS        (10U)
-#define T_FUSING_DONE_MS    (10U)
-#define T_RAMP_DOWN_MS      (10U)
+#define T_DEFAULT_MS                (1U)
+#define T_STABLE_MS                 (10U)
+#define T_MEASURE_DONE_MS           (100U)
+#define T_RAMP_UP_MS                (10U)
+#define T_FUSING_DONE_MS            (10U)
+#define T_RAMP_DOWN_MS              (10U)
 
 #define TRIM_IREF1_TARGET_UA        (10.0f)  // 10uA
 #define TRIM_IREF2_TARGET_UA        (10.0f)  // 10uA
@@ -246,6 +249,20 @@ static const float gf_trim_tolerance[TRIM_LIST_MAX][TRIM_RANGE_MAX] =
     [TRIM_LIST_OFFSET]   = {    TRIM_OFFSET_TARGET_MA,    TRIM_OFFSET_TARGET_MA * (1 - TRIM_OFFSET_TOL_RATIO),      TRIM_OFFSET_TARGET_MA   * (1 + TRIM_OFFSET_TOL_RATIO) },
 };
 
+static const uint16_t gn_trim_code_max[TRIM_LIST_MAX] =
+{
+    [TRIM_LIST_IREF1]    = ID601_TRIM_CODE_IREF1_MAX,
+    [TRIM_LIST_IREF2]    = ID601_TRIM_CODE_IREF2_MAX,
+    [TRIM_LIST_LDO_DET]  = ID601_TRIM_CODE_LDO_BGR2_CTL_MAX,
+    [TRIM_LIST_LDO_DIG]  = ID601_TRIM_CODE_LDO_CTL_MAX,
+    [TRIM_LIST_LDO_DAC]  = ID601_TRIM_CODE_LDO_DAC_CTL_MAX,
+    [TRIM_LIST_LDO_FLL]  = ID601_TRIM_CODE_LDO_OSC_CTL_MAX,
+    [TRIM_LIST_OFS_TEMP] = ID601_TRIM_CODE_OFS_TEMP_MAX,
+    [TRIM_LIST_OSC_RCTL] = ID601_TRIM_CODE_OSC_RCTL_MAX,
+    [TRIM_LIST_GAIN]     = ID601_TRIM_CODE_GAIN_MAX,
+    [TRIM_LIST_OFFSET]   = ID601_TRIM_CODE_OFFSET_MAX,
+};
+
 static const char * const gp_trim_list_name[TRIM_LIST_MAX] =
 {
     [TRIM_LIST_NONE]     = "NONE",
@@ -271,7 +288,7 @@ static bool gb_id601_efuse_burn;
 /* USER CODE BEGIN 0 */
 static const char *trim_get_list_name(trim_list_t list)
 {
-    if ((unsigned)list >= (unsigned)TRIM_LIST_MAX)
+    if ((unsigned)TRIM_LIST_MAX <= (unsigned)list)
     {
         return "INVALID";
     }
@@ -315,7 +332,7 @@ static const char *trim_get_unit(trim_list_t list)
 }
 static void trim_make_prefix(char *buffer, size_t size, trim_list_t list, uint16_t ch)
 {
-    if ((list == TRIM_LIST_GAIN) || (list == TRIM_LIST_OFFSET))
+    if ((TRIM_LIST_GAIN == list) || (TRIM_LIST_OFFSET == list))
     {
         snprintf(buffer, size, "    [TRIM][%s][CH%02u]", trim_get_list_name(list), (unsigned)(ch + 1U));
     }
@@ -351,7 +368,7 @@ static bool trim_step_initial(thread_data_t *td)
 
     for (uint16_t i = TRIM_LIST_IREF1; i < TRIM_LIST_MAX; i++)
     {
-        const uint16_t j_loop = ((i == TRIM_LIST_GAIN) || (i == TRIM_LIST_OFFSET)) ? (12U) : (1U);
+        const uint16_t j_loop = ((TRIM_LIST_GAIN == i) || (TRIM_LIST_OFFSET == i)) ? (12U) : (1U);
         for (uint16_t j = 0U; j < j_loop; ++j)
         {
             if (NULL != gp_trim_apply_code_by_list[i])
@@ -538,9 +555,11 @@ static bool trim_step_get_measured_value(thread_data_t *td)
     USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
     USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
 
-    const uint16_t ch = gt_trim_info[gt_trim_list].ch;
-    USER_ASSERT(ch < (sizeof(gt_trim_info[gt_trim_list].repeat) / sizeof(gt_trim_info[gt_trim_list].repeat[0])));
-    const bool repeat = gt_trim_info[gt_trim_list].repeat[ch];
+    trim_info_t* trim_info = &gt_trim_info[gt_trim_list];
+
+    const uint16_t ch = trim_info->ch;
+    USER_ASSERT(ch < (sizeof(trim_info->repeat) / sizeof(trim_info->repeat[0])));
+    const bool repeat = trim_info->repeat[ch];
 
     bool conversion_success = false;
 
@@ -548,17 +567,6 @@ static bool trim_step_get_measured_value(thread_data_t *td)
     {
         case TRIM_LIST_IREF1:
         case TRIM_LIST_IREF2:
-        {
-            if (true == mcu_adc_wait_conversion_complete())
-            {
-                const uint32_t adc_value = mcu_adc_get_average_conversion();
-                const float voltage_mv = mcu_adc_conversion_adc_to_mvoltage(adc_value);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: MCU ADC=%lu voltage=%.2f mV", trim_get_list_name(gt_trim_list), (unsigned long)adc_value, (double)voltage_mv);
-                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = CONST_MA_to_UA(voltage_mv / HW_ID601_IREF_SENSE_OHM);
-                conversion_success = true;
-            }
-            break;
-        }
         case TRIM_LIST_LDO_DET:
         case TRIM_LIST_LDO_DIG:
         case TRIM_LIST_LDO_DAC:
@@ -569,7 +577,9 @@ static bool trim_step_get_measured_value(thread_data_t *td)
                 const uint32_t adc_value = mcu_adc_get_average_conversion();
                 const float voltage_mv = mcu_adc_conversion_adc_to_mvoltage(adc_value);
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: MCU ADC=%lu voltage=%.2f mV", trim_get_list_name(gt_trim_list), (unsigned long)adc_value, (double)voltage_mv);
-                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = CONST_MV_to_V(voltage_mv);
+
+                const bool is_ref = ((TRIM_LIST_IREF1 == gt_trim_list) || (TRIM_LIST_IREF2 == gt_trim_list)) ? (true) : (false);
+                trim_info->tmp_value[ch][repeat] = (true == is_ref) ? (CONST_MA_to_UA(voltage_mv / HW_ID601_IREF_SENSE_OHM)) : (CONST_MV_to_V(voltage_mv));
                 conversion_success = true;
             }
             break;
@@ -581,7 +591,7 @@ static bool trim_step_get_measured_value(thread_data_t *td)
                 int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_2);
                 const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: ADS ADC=%ld voltage=%.2f mV", trim_get_list_name(gt_trim_list), (long)adc_value, (double)voltage_mv);
-                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = voltage_mv;
+                trim_info->tmp_value[ch][repeat] = voltage_mv;
                 conversion_success = true;
             }
             break;
@@ -593,44 +603,12 @@ static bool trim_step_get_measured_value(thread_data_t *td)
                 const uint32_t cnt_value = mcu_tim_get_average_conversion();
                 const float frequency_hz = mcu_tim_conversion_cnt_to_frequency(cnt_value);
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: Timer CNT=%lu frequency=%.2f Hz", trim_get_list_name(gt_trim_list), (unsigned long)cnt_value, (double)frequency_hz);
-                gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = frequency_hz * HW_ID601_FREQ_DIV_RATIO;
+                trim_info->tmp_value[ch][repeat] = frequency_hz * HW_ID601_FREQ_DIV_RATIO;
                 conversion_success = true;
             }
             break;
         }
         case TRIM_LIST_GAIN:
-        {
-            if (true == ads114s08_wait_conversion_complete())
-            {
-                int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_1);
-                const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: ADS ADC=%ld voltage=%.2f mV", trim_get_list_name(gt_trim_list), (long)adc_value, (double)voltage_mv);
-                switch (gn_id601_iout_gain)
-                {
-                    case ID601_IOUT_GAIN_LOW:
-                    {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_LOW(voltage_mv);
-                        break;
-                    }
-                    case ID601_IOUT_GAIN_MID:
-                    {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_MID(voltage_mv);
-                        break;
-                    }
-                    case ID601_IOUT_GAIN_HIGH:
-                    {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_HIGH(voltage_mv);
-                        break;
-                    }
-                    default:
-                    {
-                        USER_ASSERT(false);
-                    }
-                }
-                conversion_success = true;
-            }
-            break;
-        }
         case TRIM_LIST_OFFSET:
         {
             if (true == ads114s08_wait_conversion_complete())
@@ -642,17 +620,17 @@ static bool trim_step_get_measured_value(thread_data_t *td)
                 {
                     case ID601_IOUT_GAIN_LOW:
                     {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_LOW(voltage_mv);
+                        trim_info->tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_LOW(voltage_mv);
                         break;
                     }
                     case ID601_IOUT_GAIN_MID:
                     {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_MID(voltage_mv);
+                        trim_info->tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_MID(voltage_mv);
                         break;
                     }
                     case ID601_IOUT_GAIN_HIGH:
                     {
-                        gt_trim_info[gt_trim_list].tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_HIGH(voltage_mv);
+                        trim_info->tmp_value[ch][repeat] = HW_ID601_IOUT_MV_TO_MA_HIGH(voltage_mv);
                         break;
                     }
                     default:
@@ -672,7 +650,7 @@ static bool trim_step_get_measured_value(thread_data_t *td)
 
     if (false == conversion_success)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Conversion failed, powering off", trim_get_list_name(gt_trim_list), __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Conversion failed, Trim stop", trim_get_list_name(gt_trim_list), __func__);
         return trim_error_handler(td);
     }
     else
@@ -680,23 +658,23 @@ static bool trim_step_get_measured_value(thread_data_t *td)
         if (REPEAT_FIRST == repeat)
         {
             td->step = TRIM_STEP_SETUP_BY_LIST;
-            gt_trim_info[gt_trim_list].repeat[ch] = REPEAT_SECOND;
+            trim_info->repeat[ch] = REPEAT_SECOND;
         }
         else
         {
             td->step = TRIM_STEP_JUDGE_RANGE_UPDATE_REGISTER;
-            gt_trim_info[gt_trim_list].repeat[ch] = REPEAT_FIRST;
+            trim_info->repeat[ch] = REPEAT_FIRST;
 
-            const float first_val = gt_trim_info[gt_trim_list].tmp_value[ch][REPEAT_FIRST];
-            const float second_val = gt_trim_info[gt_trim_list].tmp_value[ch][REPEAT_SECOND];
+            const float first_val = trim_info->tmp_value[ch][REPEAT_FIRST];
+            const float second_val = trim_info->tmp_value[ch][REPEAT_SECOND];
 
             if ((TRIM_LIST_OFS_TEMP == gt_trim_list) || (TRIM_LIST_GAIN == gt_trim_list))
             {
-                gt_trim_info[gt_trim_list].value[ch] = GET_DELTA(first_val, second_val);
+                trim_info->value[ch] = GET_DELTA(first_val, second_val);
             }
             else
             {
-                gt_trim_info[gt_trim_list].value[ch] = GET_AVERAGE(first_val, second_val);
+                trim_info->value[ch] = GET_AVERAGE(first_val, second_val);
             }
         }
         td->tout = T_DEFAULT_MS;
@@ -716,20 +694,6 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
     USER_ASSERT(0U != td->tout);
     USER_ASSERT(TRIM_LIST_NONE < gt_trim_list);
     USER_ASSERT(TRIM_LIST_MAX > gt_trim_list);
-
-    const uint16_t max_code[TRIM_LIST_MAX] =
-    {
-        [TRIM_LIST_IREF1]    = ID601_TRIM_CODE_IREF1_MAX,
-        [TRIM_LIST_IREF2]    = ID601_TRIM_CODE_IREF2_MAX,
-        [TRIM_LIST_LDO_DET]  = ID601_TRIM_CODE_LDO_BGR2_CTL_MAX,
-        [TRIM_LIST_LDO_DIG]  = ID601_TRIM_CODE_LDO_CTL_MAX,
-        [TRIM_LIST_LDO_DAC]  = ID601_TRIM_CODE_LDO_DAC_CTL_MAX,
-        [TRIM_LIST_LDO_FLL]  = ID601_TRIM_CODE_LDO_OSC_CTL_MAX,
-        [TRIM_LIST_OFS_TEMP] = ID601_TRIM_CODE_OFS_TEMP_MAX,
-        [TRIM_LIST_OSC_RCTL] = ID601_TRIM_CODE_OSC_RCTL_MAX,
-        [TRIM_LIST_GAIN]     = ID601_TRIM_CODE_GAIN_MAX,
-        [TRIM_LIST_OFFSET]   = ID601_TRIM_CODE_OFFSET_MAX,
-    };
 
     trim_info_t *trim_info = &gt_trim_info[gt_trim_list];
 
@@ -753,7 +717,7 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
     trim_make_prefix(prefix, sizeof(prefix), gt_trim_list, ch);
     const char *unit = trim_get_unit(gt_trim_list);
 
-    if ((now_code > max_code[gt_trim_list]) || (lower_limit > upper_limit) || !isfinite(measured) || !isfinite(target) || !isfinite(lower_limit) || !isfinite(upper_limit) || !isfinite(error) || !isfinite(abs_error))
+    if ((now_code > gn_trim_code_max[gt_trim_list]) || (lower_limit > upper_limit) || !isfinite(measured) || !isfinite(target) || !isfinite(lower_limit) || !isfinite(upper_limit) || !isfinite(error) || !isfinite(abs_error))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Invalid trim data, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)now_code);
         return trim_error_handler(td);
@@ -806,7 +770,7 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
         drv_uart_printf(LOG_LV_INFO, "\r\n%s START: target=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)target, unit, (double)lower_limit, (double)upper_limit, unit);
 
         search->low = 0U; // smallest possible code
-        search->high = max_code[gt_trim_list]; // biggest possible code
+        search->high = gn_trim_code_max[gt_trim_list]; // biggest possible code
         search->best_code = now_code; // initial code
         search->best_error = abs_error;
         search->best_reg = trim_info->reg_val[ch];
@@ -992,8 +956,8 @@ static bool trim_step_log_summary(thread_data_t *td)
         const char *list_name = trim_get_list_name((trim_list_t)list);
         const char *unit = trim_get_unit((trim_list_t)list);
 
-        const bool has_channel = (list == TRIM_LIST_GAIN) || (list == TRIM_LIST_OFFSET);
-        const uint8_t max_ch = has_channel ? 12U : 1U;
+        const bool has_channel = ((TRIM_LIST_GAIN == list) || (TRIM_LIST_OFFSET == list)) ? (true) : (false);
+        const uint8_t max_ch = (has_channel) ? (12U) : (1U);
 
         for (uint8_t ch = 0U; ch < max_ch; ++ch)
         {
@@ -1045,18 +1009,14 @@ void id601_trim_clear_parameters(thread_data_t *td)
 
     memset(gt_trim_info, 0, sizeof(gt_trim_info));
 
-    for (uint8_t i = 0U; i < 12U; ++i)
+    for (uint16_t list = TRIM_LIST_IREF1; list < TRIM_LIST_MAX; ++list)
     {
-        gt_trim_info[TRIM_LIST_IREF1].trim_code[i]    = ((       ID601_TRIM_CODE_IREF1_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_IREF2].trim_code[i]    = ((       ID601_TRIM_CODE_IREF2_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_LDO_DET].trim_code[i]  = ((ID601_TRIM_CODE_LDO_BGR2_CTL_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_LDO_DIG].trim_code[i]  = ((     ID601_TRIM_CODE_LDO_CTL_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_LDO_DAC].trim_code[i]  = (( ID601_TRIM_CODE_LDO_DAC_CTL_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_LDO_FLL].trim_code[i]  = (( ID601_TRIM_CODE_LDO_OSC_CTL_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_OFS_TEMP].trim_code[i] = ((    ID601_TRIM_CODE_OFS_TEMP_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_OSC_RCTL].trim_code[i] = ((    ID601_TRIM_CODE_OSC_RCTL_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_GAIN].trim_code[i]     = ((        ID601_TRIM_CODE_GAIN_MAX + 1U) >> 1U);
-        gt_trim_info[TRIM_LIST_OFFSET].trim_code[i]   = ((      ID601_TRIM_CODE_OFFSET_MAX + 1U) >> 1U);
+        const uint16_t channel_max = ((TRIM_LIST_GAIN == list) || (TRIM_LIST_OFFSET == list)) ? (12U) : (1U);
+        const uint16_t initial_code = ((gn_trim_code_max[list] + 1U) >> 1U);
+        for (uint16_t ch = 0U; ch < channel_max; ++ch)
+        {
+            gt_trim_info[list].trim_code[ch] = initial_code;
+        }
     }
 
     td->step = TRIM_STEP_NONE;

@@ -48,20 +48,20 @@ typedef struct tag_RING_BUFFER_RX
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define UART2_TX_DMA_BASE       DMA1
-#define UART2_TX_DMA_STREAM     LL_DMA_STREAM_6
+#define UART2_TX_DMA_BASE           DMA1
+#define UART2_TX_DMA_STREAM         LL_DMA_STREAM_6
 
-#define CLI_KEY_UP              (0x41)
-#define CLI_KEY_DOWN            (0x42)
-#define CLI_KEY_RIGHT           (0x43)
-#define CLI_KEY_LEFT            (0x44)
+#define CLI_KEY_UP                  (0x41)
+#define CLI_KEY_DOWN                (0x42)
+#define CLI_KEY_RIGHT               (0x43)
+#define CLI_KEY_LEFT                (0x44)
 
-#define LOG_COLOR_RESET    "\x1B[0m"
-#define LOG_COLOR_ERROR    "\x1B[31m"
-#define LOG_COLOR_WARN     "\x1B[33m"
-#define LOG_COLOR_INFO     "\x1B[32m"
-#define LOG_COLOR_DEBUG    "\x1B[36m"
-#define LOG_COLOR_TRACE    "\x1B[90m"
+#define LOG_COLOR_RESET             "\x1B[0m"
+#define LOG_COLOR_ERROR             "\x1B[31m"
+#define LOG_COLOR_WARN              "\x1B[33m"
+#define LOG_COLOR_INFO              "\x1B[32m"
+#define LOG_COLOR_DEBUG             "\x1B[36m"
+#define LOG_COLOR_TRACE             "\x1B[90m"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -172,7 +172,7 @@ static void drv_uart_tx_ring_buffer_push(const char* str)
     msg_buffer_t* current_msg = &gt_uart_tx.buffer[gt_uart_tx.head];
     current_msg->size = 0U;
 
-    while (*str != '\0')
+    while ('\0' != *str)
     {
         current_msg->msg[current_msg->size++] = (uint8_t)(*str);
         ++str;
@@ -199,7 +199,7 @@ msg_buffer_t* drv_uart_tx_ring_buffer_pop(void)
  */
 void drv_uart_tx_dma_start(msg_buffer_t* p_msg)
 {
-    if (p_msg == NULL)
+    if (NULL == p_msg)
     {
         return;
     }
@@ -237,7 +237,7 @@ static void uart_tx_polling(const uint8_t* p_data, uint16_t size)
  */
 void drv_uart_printf_direct(const uint8_t* p_data, uint16_t size)
 {
-    if (p_data == NULL || size == 0U)
+    if ((NULL == p_data) || (0U == size))
     {
         return;
     }
@@ -322,16 +322,16 @@ static void drv_uart_rx_ring_buffer_push(uint8_t received_data)
     static uint8_t vt100_state = 0U;
     msg_buffer_t* current_msg = &gt_uart_rx.buffer[gt_uart_rx.head];
 
-    if (vt100_state == 1U)
+    if (1U == vt100_state)
     {
-        if (received_data == '[')
+        if ('[' == received_data)
         {
             vt100_state = 2U;
             return;
         }
         vt100_state = 0U;
     }
-    else if (vt100_state == 2U)
+    else if (2U == vt100_state)
     {
         vt100_state = 0U;
         switch (received_data)

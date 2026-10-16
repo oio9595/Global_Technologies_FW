@@ -29,6 +29,7 @@
 #include "drv_id601.h"
 #include "id601_trim.h"
 #include "drv_ads114s08.h"
+#include "common_def.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

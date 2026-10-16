@@ -28,16 +28,13 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-#define TRIM_START_FLAG (1U << 0)
+
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef struct tag_THREAD_DATA thread_data_t;
 typedef bool (*trim_step_handler_t)(thread_data_t *td);
-
-typedef void (*trim_setup_func_t)(void);
-typedef uint16_t (*trim_apply_code_func_t)(uint16_t, uint16_t);
 
 struct tag_THREAD_DATA
 {

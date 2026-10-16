@@ -290,7 +290,7 @@ static void ads114s08_dump_registers(ads_device_t dev)
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======== ADS114S08 regs value ========");
 
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] ID : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].id));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDEV ID : %s", (gt_ads114s08_regs[dev].id.dev_id == 0x04 ? "ADS114S08" : (gt_ads114s08_regs[dev].id.dev_id == 0x05 ? "ADS114S06" : "UNKNOWN")));
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDEV ID : %s", (0x04 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S08" : (0x05 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S06" : "UNKNOWN")));
 
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] Device Status : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].status));
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tPOR : %u", gt_ads114s08_regs[dev].status.fl_por);

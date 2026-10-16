@@ -68,9 +68,6 @@ typedef enum
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data);
-extern HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff);
-
 extern bool mcp23017_init(void);
 
 extern bool mcp23017_set_gpio_state(uint8_t pin, bool state);
