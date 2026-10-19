@@ -48,20 +48,27 @@ typedef struct tag_RING_BUFFER_RX
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define UART2_TX_DMA_BASE           DMA1
-#define UART2_TX_DMA_STREAM         LL_DMA_STREAM_6
+#define UART2_TX_DMA_BASE       DMA1
+#define UART2_TX_DMA_STREAM     LL_DMA_STREAM_6
 
-#define CLI_KEY_UP                  (0x41)
-#define CLI_KEY_DOWN                (0x42)
-#define CLI_KEY_RIGHT               (0x43)
-#define CLI_KEY_LEFT                (0x44)
+#define CLI_KEY_UP              (0x41)
+#define CLI_KEY_DOWN            (0x42)
+#define CLI_KEY_RIGHT           (0x43)
+#define CLI_KEY_LEFT            (0x44)
 
-#define LOG_COLOR_RESET             "\x1B[0m"
-#define LOG_COLOR_ERROR             "\x1B[31m"
-#define LOG_COLOR_WARN              "\x1B[33m"
-#define LOG_COLOR_INFO              "\x1B[32m"
-#define LOG_COLOR_DEBUG             "\x1B[36m"
-#define LOG_COLOR_TRACE             "\x1B[90m"
+#define LOG_COLOR_RESET         "\x1B[0m"
+#define LOG_COLOR_ERROR         "\x1B[31m"
+#define LOG_COLOR_WARN          "\x1B[33m"
+#define LOG_COLOR_INFO          "\x1B[32m"
+#define LOG_COLOR_DEBUG         "\x1B[36m"
+#define LOG_COLOR_TRACE         "\x1B[90m"
+
+#define LOG_LV_MSG_OFF          "LOG_LV_OFF"
+#define LOG_LV_MSG_ERROR        "LOG_LV_ERROR"
+#define LOG_LV_MSG_WARN         "LOG_LV_WARN"
+#define LOG_LV_MSG_INFO         "LOG_LV_INFO"
+#define LOG_LV_MSG_DEBUG        "LOG_LV_DEBUG"
+#define LOG_LV_MSG_TRACE        "LOG_LV_TRACE"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -88,6 +95,16 @@ static const char* const gp_log_colors[LOG_LV_MAX] =
     [LOG_LV_INFO]  = LOG_COLOR_INFO,
     [LOG_LV_DEBUG] = LOG_COLOR_DEBUG,
     [LOG_LV_TRACE] = LOG_COLOR_TRACE,
+};
+
+static const char* const gp_log_msgs[LOG_LV_MAX] =
+{
+    [LOG_LV_OFF]   = LOG_LV_MSG_OFF,
+    [LOG_LV_ERROR] = LOG_LV_MSG_ERROR,
+    [LOG_LV_WARN]  = LOG_LV_MSG_WARN,
+    [LOG_LV_INFO]  = LOG_LV_MSG_INFO,
+    [LOG_LV_DEBUG] = LOG_LV_MSG_DEBUG,
+    [LOG_LV_TRACE] = LOG_LV_MSG_TRACE,
 };
 /* USER CODE END PV */
 
@@ -117,8 +134,12 @@ void drv_uart_init(void)
     //LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
 
     gt_log_level = LOG_LV_DEBUG;
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] UART initialized successfully.");
 }
-
+const char* drv_uart_get_log_level(void)
+{
+    return gp_log_msgs[gt_log_level];
+}
 void drv_uart_make_mutex(void)
 {
     uart_tx_mutex = osMutexNew(NULL);

@@ -77,6 +77,9 @@ extern void drv_id601_make_mutex(void);
 extern bool drv_id601_set_daisy_length(uint16_t daisy_length);
 extern uint16_t drv_id601_get_daisy_length(void);
 
+extern bool drv_id601_set_crc_func(id601_crc_func_t crc_func);
+extern id601_crc_func_t drv_id601_get_crc_func(void);
+
 extern bool id601_write_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, const uint16_t new_value, id601_crc_func_t p_crc_func);
 extern bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func, uint16_t* p_single_read_data);
 extern bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func);
@@ -142,9 +145,9 @@ extern bool id601_write_otp_rd_prog(uint16_t device_select, uint16_t otp_pg_done
 extern bool id601_write_otp_protect(uint16_t device_select, uint16_t protect_en);
 extern bool id601_write_op_mode(uint16_t device_select, uint16_t test_en, uint16_t sw_sel, uint16_t pwmout_full, uint16_t mclk64_o, uint16_t dtest_mux_en, uint16_t rd_en, uint16_t ext_clkin, uint16_t addr_ext);
 
-extern bool id601_trim_init_analog_test_mode(void);
-extern bool id601_trim_init_fll_test_mode(void);
-extern bool id601_trim_init_after_efuse(void);
+extern bool id601_init_analog_test_mode(void);
+extern bool id601_init_fll_test_mode(void);
+extern bool id601_init_after_efuse_mode(void);
 
 extern void id601_trim_setup_iref1(void);
 extern void id601_trim_setup_iref2(void);

@@ -154,6 +154,7 @@ int main(void)
     drv_tim_init();
     drv_gpio_init();
     drv_id601_init();
+    ads114s08_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -163,7 +164,6 @@ int main(void)
   /* add mutexes, ... */
     drv_id601_make_mutex();
     drv_uart_make_mutex();
-    //ads114s08_init();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */

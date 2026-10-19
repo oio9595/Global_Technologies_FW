@@ -32,16 +32,19 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define POWER_STABLE_MS         (100)  // Delay in milliseconds for VDD ramp-up
-#define RELAY_STABLE_MS         (10)  // Delay in milliseconds for relay stabilization
-#define SPI_CS_SETUP_US         (5U)
+#define VDD_RAMP_UP_MS              (10)  // Delay in milliseconds for VDD ramp-up
+#define VDD_RAMP_DOWN_MS            (50)  // Delay in milliseconds for VDD ramp-down
+#define VLED_RAMP_UP_MS             (10)  // Delay in milliseconds for VLED ramp-up
+#define VLED_RAMP_DOWN_MS           (10)  // Delay in milliseconds for VLED ramp-down
+#define RELAY_STABLE_MS             (10)  // Delay in milliseconds for relay stabilization
+#define SPI_CS_SETUP_US             (5U)
 
-#define ID601_VCC_EN_MCP_PORT   (MCP_GPA0)
-#define ID601_VCC_5V5_MCP_PORT  (MCP_GPA1)
-#define ID601_VLED_CTL_9V       (MCP_GPA2)
-#define ID601_TEST_RELAY        (MCP_GPA3)
-#define ID601_O1_RELAY          (MCP_GPA4)
-#define ID601_O2_RELAY          (MCP_GPA5)
+#define MCP_ID601_VCC_EN_PORT       (MCP_GPA0)
+#define MCP_ID601_VCC_5V5_PORT      (MCP_GPA1)
+#define MCP_ID601_VLED_CTL_PORT     (MCP_GPA2)
+#define MCP_ID601_RELAY_TEST_PORT   (MCP_GPA3)
+#define MCP_ID601_RELAY_O1_PORT     (MCP_GPA4)
+#define MCP_ID601_RELAY_O2_PORT     (MCP_GPA5)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -75,6 +78,8 @@ void drv_gpio_init(void)
 
     drv_gpio_ic603_cs(false);
     drv_gpio_ads114s08_dev_all_cs(false);
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] GPIO initialized successfully.");
 }
 
 bool drv_gpio_id601_vcc(uint16_t state)
@@ -83,30 +88,33 @@ bool drv_gpio_id601_vcc(uint16_t state)
     {
         case ID601_VCC_OFF:
         {
-            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, true);
-            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+            drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
             break;
         }
         case ID601_VCC_3V3:
         {
-            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, false);
-            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+            drv_tim_delay_ms(VDD_RAMP_UP_MS);
             break;
         }
         case ID601_VCC_5V5:
         {
-            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, false);
-            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, true);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, true);
+            drv_tim_delay_ms(VDD_RAMP_UP_MS);
             break;
         }
         default:
         {
-            mcp23017_set_gpio_state(ID601_VCC_EN_MCP_PORT, true);
-            mcp23017_set_gpio_state(ID601_VCC_5V5_MCP_PORT, false);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
+            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+            drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
             return false;
         }
     }
-    drv_tim_delay_ms(POWER_STABLE_MS);
     return true;
 }
 
@@ -116,21 +124,23 @@ bool drv_gpio_id601_vled(uint16_t state)
     {
         case ID601_VLED_OFF:
         {
-            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, true);
+            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, true);
+            drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
             break;
         }
         case ID601_VLED_ON:
         {
-            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, false);
+            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
+            drv_tim_delay_ms(VLED_RAMP_UP_MS);
             break;
         }
         default:
         {
-            mcp23017_set_gpio_state(ID601_VLED_CTL_9V, false);
+            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
+            drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
             return false;
         }
     }
-    drv_tim_delay_ms(POWER_STABLE_MS);
     return true;
 }
 
@@ -140,17 +150,17 @@ bool drv_gpio_id601_test_relay(uint16_t state)
     {
         case ID601_RELAY_DIS:
         {
-            mcp23017_set_gpio_state(ID601_TEST_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
             break;
         }
         case ID601_RELAY_CON:
         {
-            mcp23017_set_gpio_state(ID601_TEST_RELAY, true);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, true);
             break;
         }
         default:
         {
-            mcp23017_set_gpio_state(ID601_TEST_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
             return false;
         }
     }
@@ -164,17 +174,17 @@ bool drv_gpio_id601_o1_relay(uint16_t state)
     {
         case ID601_RELAY_DIS:
         {
-            mcp23017_set_gpio_state(ID601_O1_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
             break;
         }
         case ID601_RELAY_CON:
         {
-            mcp23017_set_gpio_state(ID601_O1_RELAY, true);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, true);
             break;
         }
         default:
         {
-            mcp23017_set_gpio_state(ID601_O1_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
             return false;
         }
     }
@@ -188,17 +198,17 @@ bool drv_gpio_id601_o2_relay(uint16_t state)
     {
         case ID601_RELAY_DIS:
         {
-            mcp23017_set_gpio_state(ID601_O2_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
             break;
         }
         case ID601_RELAY_CON:
         {
-            mcp23017_set_gpio_state(ID601_O2_RELAY, true);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, true);
             break;
         }
         default:
         {
-            mcp23017_set_gpio_state(ID601_O2_RELAY, false);
+            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
             return false;
         }
     }
@@ -253,7 +263,7 @@ bool drv_gpio_id601_ch_demux(uint16_t ch)
     {
         LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
     }
-    drv_tim_delay_ms(POWER_STABLE_MS);
+    drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
 #if 0
     switch (ch)
@@ -415,7 +425,7 @@ bool drv_gpio_id601_iout_gain(uint16_t gain)
             return false;
         }
     }
-    drv_tim_delay_ms(POWER_STABLE_MS);
+    drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
 }
 

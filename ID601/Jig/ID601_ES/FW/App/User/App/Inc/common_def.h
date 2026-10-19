@@ -52,8 +52,10 @@ extern "C" {
 
 #define CONST_MA_to_UA(x)               ((x) * 1000.0f) // Convert milliampere to microampere
 #define CONST_MV_to_V(x)                ((x) / 1000.0f) // Convert millivolts to volts
+#define CONST_Hz_to_MHz(x)              ((x) / 1000000.0f) // Convert hertz to megahertz
 
-#define HW_ID601_FREQ_DIV_RATIO         (128U)
+#define ID601_FREQ_DIV_INTERNAL_RATIO   (64U)
+#define ID601_FREQ_DIV_HW_RATIO         (128U)
 
 #define HW_ID601_IREF_SENSE_OHM         (10000U) // 10kΩ
 

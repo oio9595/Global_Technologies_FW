@@ -62,7 +62,7 @@ extern void drv_tim_capture_serial_fall_irq_handler(void);
 extern void mcu_tim_set_conversion_enable(bool b_start);
 extern bool mcu_tim_wait_conversion_complete(void);
 extern uint32_t mcu_tim_get_average_conversion(void);
-extern float mcu_tim_conversion_cnt_to_frequency(uint32_t cnt_value);
+extern float mcu_tim_conversion_cnt_to_frequency_Hz(uint32_t cnt_value);
 extern void drv_tim_capture_freq_irq_handler(void);
 /* USER CODE END EFP */
 

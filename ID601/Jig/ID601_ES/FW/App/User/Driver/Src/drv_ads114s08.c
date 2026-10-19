@@ -220,41 +220,41 @@ typedef bool (*ads114_spi_cs_fn_t)(bool);
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define USE_DISPLAY_DEVICE_REGS
-#define ADS114S08_SPI_BASE      (SPI2)
+#define ADS114S08_SPI_BASE                  (SPI2)
 
 #define ADS114S08_READ_COUNT                (16U)
 #define ADS114S08_CONVERSION_TIMEOUT_MS     (20U)
 #define ADS114S08_SPI_TIMEOUT_MS            (5U)
 
 /* Commands */
-#define CMD_NOP                 (0x00U)
-#define CMD_WAKEUP              (0x02U) /* or 0x03 */
-#define CMD_POWER_DOWN          (0x04U) /* or 0x05 */
-#define CMD_RESET               (0x06U) /* or 0x07 */
-#define CMD_START               (0x08U) /* or 0x09 */
-#define CMD_STOP                (0x0AU) /* or 0x0B */
-#define CMD_SYOCAL              (0x16U) /* System offset calibration */
-#define CMD_SYGCAL              (0x17U) /* System gain calibration */
-#define CMD_SFOCAL              (0x19U) /* Self offset calibration */
-#define CMD_RDATA               (0x12U) /* or 0x13 */
-#define CMD_RREG                (0x20U) /* Read nnnnn registers starting at address rrrrr */
-#define CMD_WREG                (0x40U) /* Write nnnnn registers starting at address rrrrr */
+#define CMD_NOP                             (0x00U)
+#define CMD_WAKEUP                          (0x02U) /* or 0x03 */
+#define CMD_POWER_DOWN                      (0x04U) /* or 0x05 */
+#define CMD_RESET                           (0x06U) /* or 0x07 */
+#define CMD_START                           (0x08U) /* or 0x09 */
+#define CMD_STOP                            (0x0AU) /* or 0x0B */
+#define CMD_SYOCAL                          (0x16U) /* System offset calibration */
+#define CMD_SYGCAL                          (0x17U) /* System gain calibration */
+#define CMD_SFOCAL                          (0x19U) /* Self offset calibration */
+#define CMD_RDATA                           (0x12U) /* or 0x13 */
+#define CMD_RREG                            (0x20U) /* Read nnnnn registers starting at address rrrrr */
+#define CMD_WREG                            (0x40U) /* Write nnnnn registers starting at address rrrrr */
 
-#define LTC_R_RIN               (2200.0f)
-#define LTC_R_ROUT              (3300.0f)
-#define LTC_R_RS_HIGH           (13.1f)
-#define LTC_R_RS_MID            (75.0f)
-#define LTC_R_RS_LOW            (3900.0f)
+#define LTC_R_RIN                           (2200.0f)
+#define LTC_R_ROUT                          (3300.0f)
+#define LTC_R_RS_HIGH                       (13.0f)
+#define LTC_R_RS_MID                        (75.0f)
+#define LTC_R_RS_LOW                        (3900.0f)
 
-#define ICC_XD_R                (22.0f)
-#define ICC_XC_R                (4.7f)
+#define ICC_XD_R                            (22.0f)
+#define ICC_XC_R                            (4.7f)
 
-#define ADS_ADC_VREF                (5000.0f) /* mV */
-#define ADS_ADC_RES                 (32768U)
-#define ADS_ADC_MV_PER_COUNT        (ADS_ADC_VREF / (float)ADS_ADC_RES)
-#define ADS_ADC_CONV_COEFF_HIGH     (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
-#define ADS_ADC_CONV_COEFF_MID      (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))
-#define ADS_ADC_CONV_COEFF_LOW      (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_LOW * LTC_R_ROUT)))
+#define ADS_ADC_VREF                        (5000.0f) /* mV */
+#define ADS_ADC_RES                         (32768U)
+#define ADS_ADC_MV_PER_COUNT                (ADS_ADC_VREF / (float)ADS_ADC_RES)
+#define ADS_ADC_CONV_COEFF_HIGH             (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_HIGH * LTC_R_ROUT)))
+#define ADS_ADC_CONV_COEFF_MID              (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_MID * LTC_R_ROUT)))
+#define ADS_ADC_CONV_COEFF_LOW              (ADS_ADC_MV_PER_COUNT * (LTC_R_RIN / (LTC_R_RS_LOW * LTC_R_ROUT)))
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -292,16 +292,16 @@ static void ads114s08_dump_registers(ads_device_t dev)
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] ID : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].id));
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDEV ID : %s", (0x04 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S08" : (0x05 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S06" : "UNKNOWN")));
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] Device Status : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].status));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tPOR : %u", gt_ads114s08_regs[dev].status.fl_por);
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tRDY : %u", gt_ads114s08_regs[dev].status.rdy);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ADS] Device Status : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].status));
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    \tPOR : %u", gt_ads114s08_regs[dev].status.fl_por);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    \tRDY : %u", gt_ads114s08_regs[dev].status.rdy);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] Data Rate : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].datarate));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDR : %u", gt_ads114s08_regs[dev].datarate.dr);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ADS] Data Rate : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].datarate));
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    \tDR : %u", gt_ads114s08_regs[dev].datarate.dr);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] SYS : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].sys));
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tSENDSTAT : %u", gt_ads114s08_regs[dev].sys.sendstat);
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tCRC : %u", gt_ads114s08_regs[dev].sys.crc);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [ADS] SYS : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].sys));
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    \tSENDSTAT : %u", gt_ads114s08_regs[dev].sys.sendstat);
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    \tCRC : %u", gt_ads114s08_regs[dev].sys.crc);
 
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======================================");
 }

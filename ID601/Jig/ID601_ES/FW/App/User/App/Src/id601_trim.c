@@ -360,7 +360,7 @@ static bool trim_step_initial(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    if (false == id601_trim_init_analog_test_mode())
+    if (false == id601_init_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 initialization failed", __func__);
         return trim_error_handler(td);
@@ -601,9 +601,9 @@ static bool trim_step_get_measured_value(thread_data_t *td)
             if (true == mcu_tim_wait_conversion_complete())
             {
                 const uint32_t cnt_value = mcu_tim_get_average_conversion();
-                const float frequency_hz = mcu_tim_conversion_cnt_to_frequency(cnt_value);
+                const float frequency_hz = mcu_tim_conversion_cnt_to_frequency_Hz(cnt_value);
                 drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TRIM] [%s] MEASURE: Timer CNT=%lu frequency=%.2f Hz", trim_get_list_name(gt_trim_list), (unsigned long)cnt_value, (double)frequency_hz);
-                trim_info->tmp_value[ch][repeat] = frequency_hz * HW_ID601_FREQ_DIV_RATIO;
+                trim_info->tmp_value[ch][repeat] = CONST_Hz_to_MHz(frequency_hz * ID601_FREQ_DIV_INTERNAL_RATIO * ID601_FREQ_DIV_HW_RATIO);
                 conversion_success = true;
             }
             break;
@@ -908,7 +908,7 @@ static bool trim_step_pwr_reboot(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    if (false == id601_trim_init_after_efuse())
+    if (false == id601_init_after_efuse_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: Failed to initialize after efuse", __func__);
         return trim_error_handler(td);

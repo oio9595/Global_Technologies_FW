@@ -44,8 +44,10 @@ typedef enum tag_CLI_CMD_LIST
 
     CLI_CMD_ID601_POWER,
     CLI_CMD_ID601_DAISY,
+    CLI_CMD_ID601_COMMAND,
     CLI_CMD_ID601_WRITE,
     CLI_CMD_ID601_READ,
+    CLI_CMD_ID601_INIT,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -120,17 +122,24 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "\r\n    Invalid state turns the selected power OFF."
     },
     {
+        CLI_CMD_ID601_COMMAND,
+        "id601_command",
+        "id601_command [command]"
+        "\r\n    command: 0=syncgen, 1=idgen"
+    },
+    {
         CLI_CMD_ID601_DAISY,
         "id601_daisy",
         "id601_daisy [length]"
-        "\r\n    Omit length or enter 0 to display the current length."
+        "\r\n    Leave the \"length\" field empty or enter 0 to display the current length."
         "\r\n    Enter 1-5 to set the number of connected ID601 devices."
     },
     {
         CLI_CMD_ID601_WRITE,
         "id601_write",
         "id601_write <bank> <ic> <addr> <data>"
-        "\r\n    bank: 0=General, 1=Mirror; ic: 1 to daisy length"
+        "\r\n    bank: 0=General, 1=Mirror"
+        "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
         "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
         "\r\n    data: 0x000-0xFFF; numbers: decimal or 0x-prefixed hex"
     },
@@ -138,9 +147,17 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_ID601_READ,
         "id601_read",
         "id601_read <bank> <ic> <addr>"
-        "\r\n    bank: 0=General, 1=Mirror; ic: 1 to daisy length"
+        "\r\n    bank: 0=General, 1=Mirror"
+        "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
         "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
         "\r\n    Display the selected IC register value in decimal."
+    },
+    {
+        CLI_CMD_ID601_INIT,
+        "id601_init",
+        "id601_init <mode>"
+        "\r\n    Leave the \"mode\" field empty or enter 0 to display the possible mode list."
+        "\r\n    mode: 0=display list, 1=Analog Test, 2=FLL Test, 3=After EFUSE"
     },
 };
 
@@ -170,6 +187,7 @@ static void cli_print_banner(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
     drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Version  : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
     drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Git Rev  : %s", FW_GIT_REV);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Log Level: %s", drv_uart_get_log_level());
 
     drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
     drv_uart_printf(LOG_LV_INFO, "\r\n  Type 'help' or '?' to view available CLI commands.");
@@ -400,6 +418,25 @@ static void cli_command_execute(void)
             }
             break;
         }
+        case CLI_CMD_ID601_COMMAND:
+        {
+            const uint16_t command = (uint16_t)gt_cli_request.val_1;
+            if (0U == command)
+            {
+                id601_sync_gen(drv_id601_get_crc_func());
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 syncgen command executed.");
+            }
+            else if (1U == command)
+            {
+                id601_id_gen(drv_id601_get_crc_func());
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 idgen command executed.");
+            }
+            else
+            {
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown ID601 command: %u.", command);
+            }
+            break;
+        }
         case CLI_CMD_ID601_WRITE:
         {
             const uint16_t bank = (uint16_t)gt_cli_request.val_1;
@@ -418,7 +455,7 @@ static void cli_command_execute(void)
                 return;
             }
 
-            if (false == id601_write_register(bank, ic_num, addr, data, NULL))
+            if (false == id601_write_register(bank, ic_num, addr, data, drv_id601_get_crc_func()))
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
@@ -426,11 +463,11 @@ static void cli_command_execute(void)
             {
                 if (ID601_REGISTER_BANK_GENERAL == bank)
                 {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 General register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, data);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 General register. (IC: %u, Addr: %u, Data: %u, 0x%04X )", ic_num, addr, data, data);
                 }
                 else
                 {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 Mirror register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, data);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 Mirror register. (IC: %u, Addr: %u, Data: %u, 0x%04X)", ic_num, addr, data, data);
                 }
             }
             break;
@@ -452,7 +489,7 @@ static void cli_command_execute(void)
             }
 
             uint16_t read_data = 0U;
-            if (false == id601_read_register(bank, ic_num, addr, NULL, &read_data))
+            if (false == id601_read_register(bank, ic_num, addr, drv_id601_get_crc_func(), &read_data))
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");
             }
@@ -460,14 +497,58 @@ static void cli_command_execute(void)
             {
                 if (ID601_REGISTER_BANK_GENERAL == bank)
                 {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 General register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, read_data);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 General register. (IC: %u, Addr: %u, Data: %u, 0x%04X)", ic_num, addr, read_data, read_data);
                 }
                 else
                 {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 Mirror register. (IC: %u, Addr: %u, Data: %u)", ic_num, addr, read_data);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 Mirror register. (IC: %u, Addr: %u, Data: %u, 0x%04X)", ic_num, addr, read_data, read_data);
                 }
             }
+            break;
+        }
+        case CLI_CMD_ID601_INIT:
+        {
+            const uint16_t mode = (uint16_t)gt_cli_request.val_1;
 
+            USER_ASSERT(mode <= 3U); // 1=Analog Test, 2=FLL Test, 3=After EFUSE
+
+            typedef bool (*id601_init_func_t)(void);
+            const id601_init_func_t init_funcs[3] =
+            {
+                id601_init_analog_test_mode,
+                id601_init_fll_test_mode,
+                id601_init_after_efuse_mode
+            };
+
+            if (0U == mode)
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] ID601 mode list: 1=Analog Test, 2=FLL Test, 3=After EFUSE.");
+            }
+            else
+            {
+                switch (mode)
+                {
+                    case 1U:
+                    case 2U:
+                    case 3U:
+                    {
+                        if (true == init_funcs[mode - 1U]())
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully initialized ID601 in mode %u.", mode);
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to initialize ID601 in mode %u.", mode);
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %u mode is invalid.", mode);
+                        break;
+                    }
+                }
+            }
             break;
         }
 

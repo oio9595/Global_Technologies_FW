@@ -117,6 +117,8 @@ void drv_tim_init(void)
 
     LL_DMA_SetPeriphAddress(TIM5_CAPTURE_FREQ_DMA_BASE, TIM5_CAPTURE_FREQ_DMA_STREAM, (uint32_t)(&(TIM5->CCR1)));
     LL_DMA_SetMemoryAddress(TIM5_CAPTURE_FREQ_DMA_BASE, TIM5_CAPTURE_FREQ_DMA_STREAM, (uint32_t)gn_tim5_capture_ccr_buff);
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] Timer initialized successfully.");
 }
 
 /**
@@ -365,7 +367,7 @@ uint32_t mcu_tim_get_average_conversion(void)
     return (uint32_t)(tim_period_sum / (TIM5_CAPTURE_SIZE - 1U));
 }
 
-float mcu_tim_conversion_cnt_to_frequency(uint32_t cnt_value)
+float mcu_tim_conversion_cnt_to_frequency_Hz(uint32_t cnt_value)
 {
     USER_ASSERT(0U != cnt_value);
 

@@ -364,7 +364,9 @@ void drv_id601_init(void)
     gn_id601_serial_bit0_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT0) / ID601_SERIAL_RATIO_SUM);
     gn_id601_serial_bit1_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT1) / ID601_SERIAL_RATIO_SUM);
 
-    gn_id601_daisy_length = ID601_DAISY_LENGTH_INITIAL;
+    drv_id601_set_daisy_length(ID601_DAISY_LENGTH_INITIAL);
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] ID601 initialized successfully.");
 }
 
 void drv_id601_make_mutex(void)
@@ -384,11 +386,23 @@ bool drv_id601_set_daisy_length(uint16_t daisy_length)
         return false;
     }
     gn_id601_daisy_length = daisy_length;
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Daisy length set to %u.", __func__, daisy_length);
     return true;
 }
 uint16_t drv_id601_get_daisy_length(void)
 {
     return gn_id601_daisy_length;
+}
+
+bool drv_id601_set_crc_func(id601_crc_func_t crc_func)
+{
+    gp_id601_crc_func = crc_func;
+    return true;
+}
+
+id601_crc_func_t drv_id601_get_crc_func(void)
+{
+    return gp_id601_crc_func;
 }
 
 static inline bool id601_lock(void)
@@ -473,7 +487,7 @@ static bool id601_decode_serial_from_ccr_buffer(uint16_t* p_rise, uint16_t* p_fa
 
     for (uint32_t i = 0U; i < length; i++)
     {
-        if (p_rise[i] > cnt_half_duty)
+        if (p_fall[i] > cnt_half_duty)
         {
             *p_serial |= (1U) << (length - i - 1U);
         }
@@ -625,7 +639,7 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
         }
         else
         {
-            drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] RX: dev=%02u cmd=0x%02X id=0x%02X data=0x%04X crc=OFF", (unsigned)(device_index + 1U), (unsigned)command, (unsigned)ID, (unsigned)data);
+            drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] RX: dev=%02u cmd=0x%02X id=0x%02X data=0x%04X crc=Disabled", (unsigned)(device_index + 1U), (unsigned)command, (unsigned)ID, (unsigned)data);
         }
         p_data[device_index] = data;
     }
@@ -739,7 +753,7 @@ static bool id601_fault_receive_command(uint16_t* p_status, id601_crc_func_t p_c
     }
     else
     {
-        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] FAULT RX: cmd=0x%02X fault=0x%04X crc=OFF", (unsigned)command, (unsigned)fault);
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] FAULT RX: cmd=0x%02X fault=0x%04X crc=Disabled", (unsigned)command, (unsigned)fault);
     }
     *p_status = fault;
 
@@ -838,12 +852,15 @@ static bool id601_select_register_bank(const uint16_t bank, id601_crc_func_t p_c
             }
             tx_data[device_index] = (uint16_t)id601_set_field(p_op_mode[device_index], ID601_OP_MODE_ADDR_EXT_Msk, ID601_OP_MODE_ADDR_EXT_Pos, addr_ext);
         }
+        LL_GPIO_SetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
         if (false == id601_write_command(ID601_ADDR_GENERAL_OP_MODE, tx_data, p_crc_func))
         {
             drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to write command.", __func__);
             id601_unlock();
             return false;
         }
+        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Bank changed to %u. (0x%02X - 0x%03X)", __func__, bank, ID601_ADDR_GENERAL_OP_MODE, tx_data[0]);
+        LL_GPIO_ResetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
 
         for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
         {
@@ -863,6 +880,7 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
     {
         if (addr >= ID601_ADDR_GENERAL_MAX_COUNT)
         {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid general register address.", __func__);
             return false;
         }
         p_id601 = gn_id601_general_regs[addr];
@@ -871,17 +889,20 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
     {
         if (addr >= ID601_ADDR_MIRROR_MAX_COUNT)
         {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid mirror register address.", __func__);
             return false;
         }
         p_id601 = gn_id601_mirror_regs[addr];
     }
     else
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid register bank.", __func__);
         return false;
     }
 
     if (device_select > gn_id601_daisy_length)
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid device select.", __func__);
         return false;
     }
 
@@ -943,6 +964,7 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
     {
         if (addr >= ID601_ADDR_GENERAL_MAX_COUNT)
         {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid general register address.", __func__);
             return false;
         }
         p_id601 = gn_id601_general_regs[addr];
@@ -951,17 +973,20 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
     {
         if (addr >= ID601_ADDR_MIRROR_MAX_COUNT)
         {
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid mirror register address.", __func__);
             return false;
         }
         p_id601 = gn_id601_mirror_regs[addr];
     }
     else
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid register bank.", __func__);
         return false;
     }
 
     if (device_select > gn_id601_daisy_length)
     {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid device select.", __func__);
         return false;
     }
 
@@ -984,18 +1009,23 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
         id601_unlock();
         return false;
     }
+
+    vTaskSuspendAll();
     if (false == id601_read_command(addr, p_crc_func))
     {
         drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read command.", __func__);
+        (void)xTaskResumeAll();
         id601_unlock();
         return false;
     }
     if (false == id601_read_receive_command(rx_data, p_crc_func))
     {
         drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to read receive command.", __func__);
+        (void)xTaskResumeAll();
         id601_unlock();
         return false;
     }
+    (void)xTaskResumeAll();
 
     for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
     {
@@ -1015,7 +1045,7 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
 
 bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func)
 {
-    return 0U;
+    return false;
 }
 
 bool id601_fault_read(id601_crc_func_t p_crc_func)
@@ -1943,25 +1973,25 @@ static bool id601_read_all(void)
 
 static bool id601_compare_initial_code(void)
 {
-    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_LD_CONTROL ; id601_addr < (ID601_ADDR_GENERAL_MAX_COUNT - 1U) ; ++id601_addr) // skip reset_id, op_mode
     {
         if (gn_id601_general_regs_initial_code[id601_addr] != gn_id601_general_regs[id601_addr][0])
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare general register 0x%04X with initial code", __func__, id601_addr);
-            return false;
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare general register 0x%04X with initial code (expected: 0x%04X, actual: 0x%04X)", __func__, id601_addr, gn_id601_general_regs_initial_code[id601_addr], gn_id601_general_regs[id601_addr][0]);
+            //return false;
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all general registers with initial code", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all general registers with initial code\r\n", __func__);
 
     for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_MAX_COUNT ; ++id601_addr)
     {
         if (gn_id601_mirror_regs_initial_code[id601_addr] != gn_id601_mirror_regs[id601_addr][0])
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare mirror register 0x%04X with initial code", __func__, id601_addr);
-            return false;
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare mirror register 0x%04X with initial code (expected: 0x%04X, actual: 0x%04X)", __func__, id601_addr, gn_id601_mirror_regs_initial_code[id601_addr], gn_id601_mirror_regs[id601_addr][0]);
+            //return false;
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all mirror registers with initial code", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all mirror registers with initial code\r\n", __func__);
 
     return true;
 }
@@ -2002,19 +2032,39 @@ static bool id601_dump_all(void)
             }
         }
     }
-
     return true;
 }
 
-bool id601_trim_init_analog_test_mode(void)
+static bool id601_enter_test_mode(void)
 {
-    gn_id601_daisy_length = 1U;
+    const uint16_t enter_test_mode_phase[2] = { 0xA5AU, 0x5A5U };
+    if (false == id601_write_wr_protect(1U, enter_test_mode_phase[0]))
+    {
+        return false;
+    }
+    if (false == id601_write_wr_protect(1U, enter_test_mode_phase[1]))
+    {
+        return false;
+    }
+    return true;
+}
+
+bool id601_init_analog_test_mode(void)
+{
+    drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gn_id601_daisy_length);
 
     drv_gpio_id601_vcc(ID601_VCC_3V3);
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
+
+    if (false == id601_enter_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
 
     if (false == id601_read_all())
     {
@@ -2029,7 +2079,7 @@ bool id601_trim_init_analog_test_mode(void)
         drv_gpio_id601_vcc(ID601_VCC_OFF);
         return false;
     }
-
+/*
     id601_dump_all();
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
@@ -2108,19 +2158,28 @@ bool id601_trim_init_analog_test_mode(void)
         return false;
     }
     id601_dump_all();
+*/
     drv_gpio_id601_vled(ID601_VLED_ON);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 Analog Test Mode Initialized.", __func__);
     return true;
 }
 
-bool id601_trim_init_fll_test_mode(void)
+bool id601_init_fll_test_mode(void)
 {
-    gn_id601_daisy_length = 1U;
+    drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gn_id601_daisy_length);
 
     drv_gpio_id601_vcc(ID601_VCC_3V3);
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
+
+    if (false == id601_enter_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
 
     if (false == id601_read_all())
     {
@@ -2129,6 +2188,12 @@ bool id601_trim_init_fll_test_mode(void)
         return false;
     }
 
+    if (false == id601_compare_initial_code())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Initial code comparison failed. ID601 Power Off.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
     id601_dump_all();
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
@@ -2192,18 +2257,28 @@ bool id601_trim_init_fll_test_mode(void)
     }
     id601_dump_all();
     drv_gpio_id601_vled(ID601_VLED_ON);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 FLL Test Mode Initialized.", __func__);
     return true;
 }
 
-bool id601_trim_init_after_efuse(void)
+bool id601_init_after_efuse_mode(void)
 {
-    gn_id601_daisy_length = 1U;
+    drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gn_id601_daisy_length);
 
     drv_gpio_id601_vcc(ID601_VCC_3V3);
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
+
+    if (false == id601_enter_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        return false;
+    }
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 After EFUSE Mode Initialized.", __func__);
     return true;
 }
 

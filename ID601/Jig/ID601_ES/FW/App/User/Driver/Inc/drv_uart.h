@@ -64,6 +64,7 @@ typedef enum tag_LOG_LEVEL
 /* Exported functions prototypes ---------------------------------------------*/
 /* USER CODE BEGIN EFP */
 extern void drv_uart_init(void);
+extern const char* drv_uart_get_log_level(void);
 extern void drv_uart_make_mutex(void);
 
 void drv_uart_set_tx_busy(bool is_busy);

@@ -20,7 +20,7 @@
 /* 2. C standard library headers (Alphabetical order) */
 
 /* 3. Project internal / System-related headers */
-
+#include "drv_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,52 +79,59 @@ static uint8_t gt_mcp_gpio_state[2];
 static HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
 {
     HAL_StatusTypeDef ret = HAL_ERROR;
-    uint8_t i2c_tx_buff[2] = { 0U };
-
-    i2c_tx_buff[0] = reg;
-    i2c_tx_buff[1] = data;
+    uint8_t i2c_tx_buff[2] = { reg, data };
 
     ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 2U, I2C_TIMEOUT);
+    if (HAL_OK != ret)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C write failed. (%u)", ret);
+    }
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C write success. (%u)", ret);
     return ret;
 }
 
 static HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
 {
     HAL_StatusTypeDef ret = HAL_ERROR;
-    uint8_t i2c_tx_buff[2] = { 0U };
+    uint8_t i2c_tx_buff[2] = { reg, 0U };
 
     if (NULL == p_buff)
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] Invalid buffer pointer.");
         return HAL_ERROR;
     }
-
-    i2c_tx_buff[0] = reg;
 
     ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 1U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C write failed. (%u)", ret);
         return ret;
     }
 
     ret = HAL_I2C_Master_Receive(&hi2c1, (MCP_I2C_ADDR | I2C_Rx), p_buff, 1U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C read failed. (%u)", ret);
         return ret;
     }
 
-    return HAL_OK;
+    drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C read success. (%u)", ret);
+    return ret;
 }
 
 bool mcp23017_init(void)
 {
-    if (HAL_OK != mcp23017_write(MCP_IODIRA, 0x00))
+    if (HAL_OK != mcp23017_write(MCP_IODIRA, 0x00U))
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCP] Failed to initialize MCP23017 IODIRA.");
         return false;
     }
-    if (HAL_OK != mcp23017_write(MCP_IODIRB, 0x00))
+    if (HAL_OK != mcp23017_write(MCP_IODIRB, 0x00U))
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCP] Failed to initialize MCP23017 IODIRB.");
         return false;
     }
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCP] MCP23017 initialized successfully.");
     return true;
 }
 
@@ -138,11 +145,12 @@ bool mcp23017_set_gpio_state(uint8_t pin, bool state)
 
     if (pin >= MCP_GPIO_MAX)
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] Invalid GPIO pin number.");
         return false;
     }
 
-    port = pin >> 3U;       /* 0: GPIOA, 1: GPIOB */
-    bit  = pin & 0x07U;     /* 각 포트 내 핀 번호: 0~7 */
+    port = (pin >> 3U);       /* 0: GPIOA, 1: GPIOB */
+    bit  = (pin & 0x07U);     /* 각 포트 내 핀 번호: 0~7 */
 
     if (state)
     {
@@ -176,11 +184,12 @@ bool mcp23017_get_gpio_state(uint8_t pin, bool* p_state)
 
     if ((pin >= MCP_GPIO_MAX) || (NULL == p_state))
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] Invalid GPIO pin number or NULL state pointer.");
         return false;
     }
 
-    port = pin >> 3U;       /* 0: GPIOA, 1: GPIOB */
-    bit  = pin & 0x07U;     /* 각 포트 내 핀 번호: 0~7 */
+    port = (pin >> 3U);       /* 0: GPIOA, 1: GPIOB */
+    bit  = (pin & 0x07U);     /* 각 포트 내 핀 번호: 0~7 */
     reg  = (0U == port) ? (MCP_GPIOA) : (MCP_GPIOB);
 
     if (HAL_OK != mcp23017_read(reg, &value))
@@ -189,7 +198,7 @@ bool mcp23017_get_gpio_state(uint8_t pin, bool* p_state)
     }
 
     gt_mcp_gpio_state[port] = value;
-    *p_state = (value & (1U << bit)) ? true : false;
+    *p_state = (value & (1U << bit)) ? (true) : (false);
 
     return true;
 }
