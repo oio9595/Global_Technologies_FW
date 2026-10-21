@@ -101,7 +101,7 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN 0 */
 static void key_func_1(void)
 {
-    static bool operation_state = false;
+    static bool operation_state = true;
     LED_Set_Operation_State((uint8_t)operation_state);
     operation_state = !operation_state;
 }
