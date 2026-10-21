@@ -18,6 +18,8 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 /* 2. Project internal / System-related headers */
 #include "cmsis_os.h"
@@ -49,6 +51,8 @@ extern "C" {
     } while (0)
 
 #define TRIM_START_FLAG                 (1U << 0U)
+#define TEST_START_FLAG                 (1U << 1U)
+#define TEST_VSYNC_FLAG                 (1U << 2U)
 
 #define CONST_MA_to_UA(x)               ((x) * 1000.0f) // Convert milliampere to microampere
 #define CONST_MV_to_V(x)                ((x) / 1000.0f) // Convert millivolts to volts
@@ -59,9 +63,11 @@ extern "C" {
 
 #define HW_ID601_IREF_SENSE_OHM         (10000U) // 10kΩ
 
-#define HW_ID601_IOUT_SENSE_LOW_OHM     (3900U) // 3.9kΩ
-#define HW_ID601_IOUT_SENSE_MID_OHM     (75U)   // 75Ω
-#define HW_ID601_IOUT_SENSE_HIGH_OHM    (25U)   // 25Ω
+#define HW_ID601_IDD_SENSE_OHM          (22U) // 22Ω
+
+#define HW_ID601_IOUT_SENSE_LOW_OHM     (2000U) // 2.0kΩ, ~  1mA
+#define HW_ID601_IOUT_SENSE_MID_OHM     (200U)  // 200Ω,  ~ 10mA
+#define HW_ID601_IOUT_SENSE_HIGH_OHM    (25U)   // 25Ω,   ~ 80mA
 #define HW_ID601_IOUT_INPUT_OHM         (2200U) // 2.2kΩ
 #define HW_ID601_IOUT_OUTPUT_OHM        (3300U) // 3.3kΩ
 
@@ -72,6 +78,15 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct tag_THREAD_DATA thread_data_t;
+typedef bool (*thread_step_handler_t)(thread_data_t *td);
+struct tag_THREAD_DATA
+{
+    uint32_t step;
+    uint32_t tout;
+    thread_step_handler_t func;
+};
+
 typedef void (*void_func_ptr_t)(void);
 /* USER CODE END ET */
 

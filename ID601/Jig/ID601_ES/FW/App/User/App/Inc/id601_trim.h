@@ -23,7 +23,7 @@ extern "C" {
 #include <stdio.h>
 
 /* 2. Project internal / System-related headers */
-
+#include "common_def.h"
 /* USER CODE END Includes */
 
 /* Private defines -----------------------------------------------------------*/
@@ -33,16 +33,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-typedef struct tag_THREAD_DATA thread_data_t;
-typedef bool (*trim_step_handler_t)(thread_data_t *td);
-
-struct tag_THREAD_DATA
-{
-    uint32_t step;
-    uint32_t tout;
-    trim_step_handler_t func;
-};
-
+typedef thread_step_handler_t trim_step_handler_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -58,12 +49,12 @@ struct tag_THREAD_DATA
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
+extern void id601_set_efuse_burn_enable(bool enable);
+extern bool id601_get_efuse_burn_enable(void);
 
-void id601_trim_clear_parameters(thread_data_t *td);
-void id601_trim_start(thread_data_t *td);
-
+extern void id601_trim_clear_parameters(thread_data_t *td);
+extern void id601_trim_start(thread_data_t *td);
 extern bool id601_trim_process(thread_data_t *td);
-
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

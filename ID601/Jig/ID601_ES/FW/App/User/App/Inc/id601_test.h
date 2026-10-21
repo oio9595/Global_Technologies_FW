@@ -18,8 +18,11 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* 1. C standard library headers (Alphabetical order) */
-
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 /* 2. Project internal / System-related headers */
+#include "common_def.h"
 
 /* USER CODE END Includes */
 
@@ -30,7 +33,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef thread_step_handler_t test_step_handler_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -46,7 +49,14 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
+extern void test_set_vref_sweep_enable(bool enable);
+extern void id601_test_clear_parameters(thread_data_t *td);
+extern void id601_test_start(thread_data_t *td);
+extern bool id601_test_process(thread_data_t *td);
 
+extern void id601_test_iout_one_channel_start(uint16_t channel, uint16_t max_curr_lvl, uint16_t vref);
+extern void id601_test_iout_one_channel_stop(void);
+extern void id601_test_iout_one_channel_process(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

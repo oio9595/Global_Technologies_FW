@@ -34,6 +34,12 @@ extern "C" {
 #define ID601_TRIM_OFFSET_VREF2             (0x012CU)
 #define ID601_TRIM_OFFSET_MAX_CURR_LVL      (ID601_MAX_CURRENT_LEVEL_08mA)
 
+#define ID601_VFY_3P_VREF1                  (0x012CU)
+#define ID601_VFY_3P_VREF2                  (0x02BCU)
+#define ID601_VFY_3P_VREF3                  (0x0BB8U)
+
+#define ID601_VFY_SWEEP_VREF                (0x012CU)
+
 #define ID601_TRIM_CODE_IREF1_MAX           (0x001FU)
 #define ID601_TRIM_CODE_IREF2_MAX           (0x001FU)
 #define ID601_TRIM_CODE_LDO_BGR2_CTL_MAX    (0x001FU)
@@ -145,6 +151,10 @@ extern bool id601_write_otp_rd_prog(uint16_t device_select, uint16_t otp_pg_done
 extern bool id601_write_otp_protect(uint16_t device_select, uint16_t protect_en);
 extern bool id601_write_op_mode(uint16_t device_select, uint16_t test_en, uint16_t sw_sel, uint16_t pwmout_full, uint16_t mclk64_o, uint16_t dtest_mux_en, uint16_t rd_en, uint16_t ext_clkin, uint16_t addr_ext);
 
+extern bool id601_dump_registers(void);
+extern bool id601_compare_initial_code(void);
+
+extern bool id601_init_testmode_entry(void);
 extern bool id601_init_analog_test_mode(void);
 extern bool id601_init_fll_test_mode(void);
 extern bool id601_init_after_efuse_mode(void);
@@ -170,8 +180,10 @@ extern void id601_trim_setup_ofs_temp_o2(void);
 extern void id601_trim_setup_current_chx(uint16_t ch);
 extern void id601_trim_setup_efuse(void);
 
-extern bool id601_trim_save_mirror_registers(void);
-extern bool id601_trim_compare_mirror_registers(void);
+extern bool id601_trim_save_search_registers(void);
+extern bool id601_trim_compare_search_registers(void);
+extern bool id601_trim_display_search_registers(void);
+extern bool id601_trim_overwrite_search_registers(void);
 
 extern uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code);
@@ -183,6 +195,29 @@ extern uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code);
+
+extern void id601_test_setup_idds1(void);
+extern void id601_test_setup_iddd1(void);
+extern void id601_test_setup_iref1(void);
+extern void id601_test_setup_iref2(void);
+extern void id601_test_setup_ldo_det(void);
+extern void id601_test_setup_ldo_dig(void);
+extern void id601_test_setup_ldo_dac(void);
+extern void id601_test_setup_ldo_fll(void);
+extern void id601_test_setup_bgr1(void);
+extern void id601_test_setup_bgr2(void);
+extern void id601_test_setup_osc(void);
+extern void id601_test_setup_fll1(void);
+extern void id601_test_setup_fll2(void);
+extern void id601_test_setup_fll3(void);
+extern void id601_test_setup_iout_3p(void);
+extern void id601_test_setup_iout_sweep(void);
+extern void id601_test_setup_iout_vref_sweep(void);
+
+extern void id601_test_setup_iout_3p_x(uint8_t ph);
+
+extern void id601_test_setup_iout_sweep_x(uint8_t ph);
+extern void id601_test_setup_iout_vref_sweep_x(uint16_t vref);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

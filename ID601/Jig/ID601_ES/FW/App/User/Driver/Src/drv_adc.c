@@ -88,7 +88,6 @@ bool mcu_adc_wait_conversion_complete(void)
             return false;
         }
     }
-
     return true;
 }
 

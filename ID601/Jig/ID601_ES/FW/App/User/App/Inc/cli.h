@@ -25,7 +25,7 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-
+#define CLI_PROMPT          "\r\n\r\nID601> "
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/

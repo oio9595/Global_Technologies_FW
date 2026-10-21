@@ -28,6 +28,7 @@
 #include "drv_timer.h"
 #include "drv_id601.h"
 #include "id601_trim.h"
+#include "id601_test.h"
 #include "drv_ads114s08.h"
 #include "common_def.h"
 /* USER CODE END Includes */
@@ -92,6 +93,7 @@ static void MX_TIM5_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM13_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM11_Init(void);
 void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
 void StartID601TrimTask(void *argument);
@@ -147,6 +149,7 @@ int main(void)
   MX_TIM8_Init();
   MX_TIM13_Init();
   MX_I2C1_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
     drv_uart_init();
     cli_init();
@@ -615,6 +618,10 @@ static void MX_TIM1_Init(void)
 
   LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_1);
 
+  /* TIM1 interrupt Init */
+  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+
   /* USER CODE BEGIN TIM1_Init 1 */
 
   /* USER CODE END TIM1_Init 1 */
@@ -1017,6 +1024,42 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * @brief TIM11 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM11_Init(void)
+{
+
+  /* USER CODE BEGIN TIM11_Init 0 */
+
+  /* USER CODE END TIM11_Init 0 */
+
+  LL_TIM_InitTypeDef TIM_InitStruct = {0};
+
+  /* Peripheral clock enable */
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM11);
+
+  /* TIM11 interrupt Init */
+  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+
+  /* USER CODE BEGIN TIM11_Init 1 */
+
+  /* USER CODE END TIM11_Init 1 */
+  TIM_InitStruct.Prescaler = 24;
+  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+  TIM_InitStruct.Autoreload = 59999;
+  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+  LL_TIM_Init(TIM11, &TIM_InitStruct);
+  LL_TIM_DisableARRPreload(TIM11);
+  /* USER CODE BEGIN TIM11_Init 2 */
+
+  /* USER CODE END TIM11_Init 2 */
+
+}
+
+/**
   * @brief TIM13 Initialization Function
   * @param None
   * @retval None
@@ -1319,11 +1362,31 @@ static void MX_GPIO_Init(void)
 void StartID601TestTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+    static thread_data_t td = { 0U };
 
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+      uint32_t flags = osThreadFlagsWait(TEST_START_FLAG, osFlagsWaitAny, osWaitForever);
+
+      if ((int32_t)flags < 0)
+      {
+          /* 플래그 대기 오류 처리 */
+          continue;
+      }
+
+      drv_uart_printf(LOG_LV_INFO, "\r\n    [RTOS] Test Task Started");
+      id601_test_start(&td);
+
+      while (true == id601_test_process(&td))
+      {
+          if (td.tout > 0U)
+          {
+              osDelay(td.tout);
+          }
+      }
+      drv_uart_printf(LOG_LV_INFO, "\r\n    [RTOS] Test Task Finished");
+      drv_uart_printf(LOG_LV_INFO, "%s", CLI_PROMPT);
   }
   /* USER CODE END 5 */
 }
@@ -1369,6 +1432,7 @@ void StartID601TrimTask(void *argument)
           continue;
       }
 
+      drv_uart_printf(LOG_LV_INFO, "\r\n    [RTOS] Trim Task Started");
       id601_trim_start(&td);
 
       while (true == id601_trim_process(&td))
@@ -1378,6 +1442,8 @@ void StartID601TrimTask(void *argument)
               osDelay(td.tout);
           }
       }
+      drv_uart_printf(LOG_LV_INFO, "\r\n    [RTOS] Trim Task Finished");
+      drv_uart_printf(LOG_LV_INFO, "%s", CLI_PROMPT);
   }
   /* USER CODE END StartID601TrimTask */
 }

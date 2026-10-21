@@ -287,7 +287,7 @@ static void ads114s08_dump_registers(ads_device_t dev)
     {
         return;
     }
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======== ADS114S08 regs value ========");
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======== ADS114S08[DEV-#%u] regs value ========", dev);
 
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ADS] ID : 0x%X", *(uint8_t*)(&gt_ads114s08_regs[dev].id));
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    \tDEV ID : %s", (0x04 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S08" : (0x05 == gt_ads114s08_regs[dev].id.dev_id ? "ADS114S06" : "UNKNOWN")));
@@ -303,7 +303,7 @@ static void ads114s08_dump_registers(ads_device_t dev)
     drv_uart_printf(LOG_LV_TRACE, "\r\n    \tSENDSTAT : %u", gt_ads114s08_regs[dev].sys.sendstat);
     drv_uart_printf(LOG_LV_TRACE, "\r\n    \tCRC : %u", gt_ads114s08_regs[dev].sys.crc);
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ======================================");
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    ===============================================");
 }
 #endif
 

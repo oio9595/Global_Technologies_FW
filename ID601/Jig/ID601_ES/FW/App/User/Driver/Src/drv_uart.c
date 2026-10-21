@@ -133,7 +133,7 @@ void drv_uart_init(void)
     //LL_DMA_EnableIT_TE(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM);
     //LL_DMA_SetPeriphAddress(UART2_TX_DMA_BASE, UART2_TX_DMA_STREAM, (uint32_t)&(USART2->DR));
 
-    gt_log_level = LOG_LV_DEBUG;
+    gt_log_level = LOG_LV_INFO;
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] UART initialized successfully.");
 }
 const char* drv_uart_get_log_level(void)

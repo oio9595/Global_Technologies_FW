@@ -23,6 +23,8 @@
 #include "main.h"
 #include "drv_gpio.h"
 #include "drv_uart.h"
+#include "drv_id601.h"
+#include "cmsis_os.h"
 #include "common_def.h"
 
 /* USER CODE END Includes */
@@ -64,6 +66,8 @@ static volatile bool gb_tim2_capture_dma_active[2] = {false, false};
 
 static uint32_t gn_tim5_capture_ccr_buff[TIM5_CAPTURE_SIZE];
 static volatile bool gb_tim5_capture_dma_active = false;
+
+extern osThreadId_t ID601TestTaskHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -390,9 +394,31 @@ void drv_tim_capture_freq_irq_handler(void)
     if (true == LL_DMA_IsActiveFlag_TE2(TIM5_CAPTURE_FREQ_DMA_BASE))
     {
         LL_DMA_ClearFlag_TE2(TIM5_CAPTURE_FREQ_DMA_BASE);
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM5 Capture DMA Error!");
         mcu_tim_set_conversion_enable(false);
         gb_tim5_capture_dma_active = false;
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM5 Capture DMA Error!");
+    }
+}
+
+void drv_tim_test_vsync_start(void)
+{
+    LL_TIM_SetCounter(TIM11, 0U);
+    LL_TIM_EnableIT_UPDATE(TIM11);
+    LL_TIM_EnableCounter(TIM11);
+}
+void drv_tim_test_vsync_stop(void)
+{
+    LL_TIM_DisableCounter(TIM11);
+    LL_TIM_DisableIT_UPDATE(TIM11);
+    LL_TIM_SetCounter(TIM11, 0U);
+}
+void drv_tim_test_vsync_irq_handler(void)
+{
+    if (true == LL_TIM_IsActiveFlag_UPDATE(TIM11))
+    {
+        LL_TIM_ClearFlag_UPDATE(TIM11);
+        //id601_sync_gen(drv_id601_get_crc_func());
+        osThreadFlagsSet(ID601TestTaskHandle, TEST_VSYNC_FLAG);
     }
 }
 /* USER CODE END 0 */
