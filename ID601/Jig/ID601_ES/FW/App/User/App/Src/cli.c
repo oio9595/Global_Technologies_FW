@@ -102,120 +102,103 @@ static const cli_cmd_entry_t gt_cli_command[] =
     {
         CLI_CMD_HELP,
         "help",
-        "Display available commands and usage"
+        "Show commands and usage"
     },
     {
         CLI_CMD_HELP,
         "?",
-        "Display available commands and usage"
+        "Show commands and usage"
     },
     {
         CLI_CMD_RESET,
         "reset",
-        "Reset the MCU"
+        "Reset MCU"
     },
     {
         CLI_CMD_BOARD_TYPE,
         "board_type",
         "board_type <type>"
-        "\r\n    Leave the \"type\" field empty or enter 0 to display the option list and current board type."
-        "\r\n    Enter 1 for GT, 2 for MOBIS to set the board type."
+        "\r\n    0/omitted=list + current, 1=GT, 2=MOBIS"
     },
     {
         CLI_CMD_TRIM_START,
         "trim_start",
-        "Request the ID601 trim process to start"
+        "Start trim"
     },
     {
         CLI_CMD_TRIM_RESULT,
         "trim_result",
-        "Display the ID601 trim process search result"
+        "Show trim search results"
     },
     {
         CLI_CMD_TEST_START,
         "test_start",
         "test_start <option>"
-        "\r\n    Request the ID601 test process to start"
-        "\r\n    Leave the \"option\" field empty or enter 0 to display the option list."
-        "\r\n    option: 0=list, 1=start without VREF sweep, 2=start with VREF sweep"
+        "\r\n    0/omitted=list, 1=test, 2=test + VREF sweep"
     },
     {
         CLI_CMD_TEST_ONE_CHANNEL,
         "test_one_channel",
-        "test_one_channel <option> <channel> <max_curr_lvl> <vref>"
-        "\r\n    Request the ID601 test process for one channel to start"
-        "\r\n    Leave the \"option\" field empty or enter 0 to display the option list."
-        "\r\n    option: 0=list, 1=stop, 2=start"
-        "\r\n    Stop: test_one_channel 1 (no additional arguments required)"
-        "\r\n    Start: test_one_channel 2 <channel> <max_curr_lvl> <vref>"
-        "\r\n    channel: Target channel number (1 ~ 12)"
-        "\r\n    max_curr_lvl: Maximum current level code (0 ~ 15)"
-        "\r\n    vref: Reference register code (0 ~ 4095)"
+        "test_one_channel <option> <ch> <level> <vref>"
+        "\r\n    0/omitted=list, 1=stop, 2=start"
+        "\r\n    Start: 2 <ch:1-12> <level:0-15> <vref:0-4095>"
+        "\r\n    Stop: 1 (no other args)"
     },
     {
         CLI_CMD_ID601_POWER,
         "id601_power",
         "id601_power <target> <state>"
-        "\r\n    Leave the \"target\" field empty or enter 0 to display the option list."
-        "\r\n    target 0: Display this list (no power change)"
-        "\r\n    target 1: VCC  - state 0=OFF, 1=3.3V, 2=5.5V (GT only)"
-        "\r\n    target 2: VLED - state 0=OFF, 1=ON (voltage set by SW14/SW15)"
-        "\r\n    Invalid state turns the selected power OFF."
+        "\r\n    Target: 0/omitted=list, 1=VCC, 2=VLED"
+        "\r\n    VCC: 0=OFF, 1=3.3V, 2=5.5V (GT only)"
+        "\r\n    VLED: 0=OFF, 1=ON (SW14/SW15)"
+        "\r\n    Invalid state turns selected power OFF"
     },
     {
         CLI_CMD_ID601_COMMAND,
         "id601_command",
-        "id601_command [command]"
-        "\r\n    Leave the \"command\" field empty or enter 0 to display the option list."
-        "\r\n    command: 0=list, 1=syncgen, 2=idgen"
+        "id601_command <cmd>"
+        "\r\n    0/omitted=list, 1=SYNCGEN, 2=IDGEN"
     },
     {
         CLI_CMD_ID601_DAISY,
         "id601_daisy",
-        "id601_daisy [length]"
-        "\r\n    Leave the \"length\" field empty or enter 0 to display the option list and current length."
-        "\r\n    Enter 1-5 to set the number of connected ID601 devices."
+        "id601_daisy <length>"
+        "\r\n    0/omitted=list + current, 1-5=set length"
     },
     {
         CLI_CMD_ID601_WRITE,
         "id601_write",
         "id601_write <bank> <ic> <addr> <data>"
-        "\r\n    Leave the \"bank\" field empty or enter 0 to display the option list."
-        "\r\n    bank: 0=list, 1=General, 2=Mirror"
-        "\r\n          Bank switching is handled automatically."
-        "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
-        "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
-        "\r\n    data: 0x000-0xFFF; numbers: decimal or 0x-prefixed hex"
+        "\r\n    Bank: 0/omitted=list, 1=General, 2=Mirror"
+        "\r\n    IC: 1 to daisy length"
+        "\r\n    Addr: General 0x00-0x3F, Mirror 0x00-0x1E"
+        "\r\n    Data: 0x000-0xFFF (decimal or 0x hex)"
     },
     {
         CLI_CMD_ID601_READ,
         "id601_read",
         "id601_read <bank> <ic> <addr>"
-        "\r\n    Leave the \"bank\" field empty or enter 0 to display the option list."
-        "\r\n    bank: 0=list, 1=General, 2=Mirror"
-        "\r\n          Bank switching is handled automatically."
-        "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
-        "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
-        "\r\n    Display the selected IC register value in decimal."
+        "\r\n    Bank: 0/omitted=list, 1=General, 2=Mirror"
+        "\r\n    IC: 1 to daisy length"
+        "\r\n    Addr: General 0x00-0x3F, Mirror 0x00-0x1E"
     },
     {
         CLI_CMD_ID601_DUMP,
         "id601_dump",
-        "Read all registers and display the ID601 register dump"
+        "Read and dump all registers"
     },
     {
         CLI_CMD_ID601_INIT,
         "id601_init",
         "id601_init <mode>"
-        "\r\n    Leave the \"mode\" field empty or enter 0 to display the option list."
-        "\r\n    mode: 0=display list, 1=Testmode Entry, 2=Analog Test, 3=FLL Test, 4=After EFUSE"
+        "\r\n    0/omitted=list, 1=Testmode Entry, 2=Analog Test"
+        "\r\n    3=FLL Test, 4=After EFUSE"
     },
     {
         CLI_CMD_ID601_EFUSE,
         "id601_efuse",
-        "id601_efuse <enable>"
-        "\r\n    Leave the \"enable\" field empty or enter 0 to display the option list."
-        "\r\n    enable: 0=list, 1=disable, 2=enable"
+        "id601_efuse <option>"
+        "\r\n    0/omitted=list, 1=disable burn, 2=enable burn"
     }
 };
 
