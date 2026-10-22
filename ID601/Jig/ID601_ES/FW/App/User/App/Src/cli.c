@@ -41,6 +41,7 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_UNKNOWN,
     CLI_CMD_HELP,
     CLI_CMD_RESET,
+    CLI_CMD_BOARD_TYPE,
 
     CLI_CMD_TRIM_START,
     CLI_CMD_TRIM_RESULT,
@@ -112,6 +113,13 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_RESET,
         "reset",
         "Reset the MCU"
+    },
+    {
+        CLI_CMD_BOARD_TYPE,
+        "board_type",
+        "board_type <type>"
+        "\r\n    Leave the \"type\" field empty or enter 0 to display the current board type."
+        "\r\n    Enter 1 for GT, 2 for MOBIS to set the board type."
     },
     {
         CLI_CMD_TRIM_START,
@@ -220,20 +228,22 @@ extern osThreadId_t ID601TestTaskHandle;
  */
 static void cli_print_banner(void)
 {
-    drv_uart_printf(LOG_LV_INFO, CLI_CLEAR_SCREEN);
+    drv_uart_printf(LOG_LV_INFO , CLI_CLEAR_SCREEN);
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO, "\r\n  %s", "ID601 TEST Board");
-    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO, "\r\n  * Build Date  : %s, %s", __DATE__, __TIME__);
-    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Version  : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
-    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Git Rev  : %s", FW_GIT_REV);
-    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Log Level: %s", drv_uart_get_log_level());
+    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO , "\r\n  %s", "ID601 TEST Board");
+    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO , "\r\n  * Build Date   : %s, %s", __DATE__, __TIME__);
+    drv_uart_printf(LOG_LV_INFO , "\r\n  * FW Version   : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n  * FW Git Rev   : %s", FW_GIT_REV);
+    drv_uart_printf(LOG_LV_INFO , "\r\n  * FW Log Level : %s", drv_uart_get_log_level());
+    drv_uart_printf(LOG_LV_INFO , "\r\n  * Board Type   : %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
+    drv_uart_printf(LOG_LV_INFO , "\r\n  * ID601 Daisy  : %u", drv_id601_get_daisy_length());
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO, "\r\n  Type 'help' or '?' to view available CLI commands.");
-    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO, CLI_PROMPT);
+    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO , "\r\n  Type 'help' or '?' to view available CLI commands.");
+    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO , CLI_PROMPT);
 }
 
 /**
@@ -365,6 +375,28 @@ static inline void cli_cmd_function_reset(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    System resetting...");
     NVIC_SystemReset();
+}
+static inline void cli_cmd_function_board_type(void)
+{
+    const uint32_t type = gt_cli_request.val_1;
+    if (0U == type)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Board Type: %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
+    }
+    else if (1U == type)
+    {
+        drv_gpio_set_board_type(BOARD_TYPE_GT);
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Board Type Set to GT");
+    }
+    else if (2U == type)
+    {
+        drv_gpio_set_board_type(BOARD_TYPE_MOBIS);
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Board Type Set to MOBIS");
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown board type command: %u.", type);
+    }
 }
 static inline void cli_cmd_function_trim_start(void)
 {
@@ -650,6 +682,11 @@ static void cli_command_execute(void)
         case CLI_CMD_RESET:
         {
             cli_cmd_function_reset();
+            break;
+        }
+        case CLI_CMD_BOARD_TYPE:
+        {
+            cli_cmd_function_board_type();
             break;
         }
         case CLI_CMD_TRIM_START:

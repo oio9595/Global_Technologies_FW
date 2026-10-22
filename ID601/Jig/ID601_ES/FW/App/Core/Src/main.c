@@ -152,12 +152,13 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
     drv_uart_init();
-    cli_init();
 
     drv_tim_init();
     drv_gpio_init();
     drv_id601_init();
     ads114s08_init();
+
+    cli_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -1220,7 +1221,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_SetOutputPin(GPIOB, ID601_CH_DEMUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_DEMUX3_Pin|CNT_RST_Pin
-                          |IC603_CS_Pin);
+                          |ID601_VCC_EN_MBD_Pin|IC603_CS_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOA, ADC_CS1_Pin|ID601_CH_DEMUX2_Pin|ADC_CS2_Pin);
@@ -1251,7 +1252,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = ID601_CH_DEMUX4_Pin|VLED_DCDC_EN_Pin|ID601_CH_DEMUX3_Pin|CNT_RST_Pin
-                          |DEBUG2_Pin|IC603_CS_Pin;
+                          |DEBUG2_Pin|ID601_VCC_EN_MBD_Pin|IC603_CS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;

@@ -89,9 +89,6 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ID601_DEBUG_ACTION_ENABLED          (1U)
-#define ID601_DEBUG_EFUSE_ENABLED           (0U)
-
 #define ID601_DAISY_LENGTH_INITIAL          (1U)
 #define ID601_DAISY_LENGTH_MAX              (5U)
 #define ID601_BROADCAST                     (0U)
@@ -2430,30 +2427,6 @@ void id601_trim_setup_gain_vref1(void)
     id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF1);
     id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF1);
     id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF1);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr1 = ID601_ADDR_GENERAL_MAX_CURR_VREF1;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr1, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr1);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr1, read);
-
-        const uint16_t addr2 = ID601_ADDR_GENERAL_MAX_CURR_VREF2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr2, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr2);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr2, read);
-
-        const uint16_t addr3 = ID601_ADDR_GENERAL_MAX_CURR_VREF3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr3, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr3);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr3, read);
-    #endif
 }
 void id601_trim_setup_gain_vref2(void)
 {
@@ -2461,30 +2434,6 @@ void id601_trim_setup_gain_vref2(void)
     id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF2);
     id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF2);
     id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF2);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr1 = ID601_ADDR_GENERAL_MAX_CURR_VREF1;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr1, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr1);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr1, read);
-
-        const uint16_t addr2 = ID601_ADDR_GENERAL_MAX_CURR_VREF2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr2, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr2);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr2, read);
-
-        const uint16_t addr3 = ID601_ADDR_GENERAL_MAX_CURR_VREF3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr3, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr3);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr3, read);
-    #endif
 }
 void id601_trim_setup_offset(void)
 {
@@ -2512,30 +2461,6 @@ void id601_trim_setup_offset_vref1(void)
     id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF1);
     id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF1);
     id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF1);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr1 = ID601_ADDR_GENERAL_MAX_CURR_VREF1;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr1, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr1);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr1, read);
-
-        const uint16_t addr2 = ID601_ADDR_GENERAL_MAX_CURR_VREF2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr2, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr2);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr2, read);
-
-        const uint16_t addr3 = ID601_ADDR_GENERAL_MAX_CURR_VREF3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr3, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr3);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr3, read);
-    #endif
 }
 void id601_trim_setup_offset_vref2(void)
 {
@@ -2543,30 +2468,6 @@ void id601_trim_setup_offset_vref2(void)
     id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF2);
     id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF2);
     id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF2);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr1 = ID601_ADDR_GENERAL_MAX_CURR_VREF1;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr1, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr1);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr1, read);
-
-        const uint16_t addr2 = ID601_ADDR_GENERAL_MAX_CURR_VREF2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr2, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr2);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr2, read);
-
-        const uint16_t addr3 = ID601_ADDR_GENERAL_MAX_CURR_VREF3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr3, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr3);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr3, read);
-    #endif
 }
 
 uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
@@ -2596,17 +2497,6 @@ uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
-
     return ret;
 }
 uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code)
@@ -2636,16 +2526,6 @@ uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code)
@@ -2675,16 +2555,6 @@ uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR4;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_ldo_dig(uint16_t ch, uint16_t trim_code)
@@ -2714,16 +2584,6 @@ uint16_t id601_trim_apply_ldo_dig(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR6;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_ldo_dac(uint16_t ch, uint16_t trim_code)
@@ -2753,16 +2613,6 @@ uint16_t id601_trim_apply_ldo_dac(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR5;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code)
@@ -2792,16 +2642,6 @@ uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR6;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code)
@@ -2831,16 +2671,6 @@ uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR4;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code)
@@ -2870,16 +2700,6 @@ uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_MIRROR5;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code)
@@ -2909,16 +2729,6 @@ uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = addr_gain;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
@@ -2948,16 +2758,6 @@ uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
     {
         ret = reg_value;
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = addr_offset;
-        if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
     return ret;
 }
 void id601_trim_setup_current_chx(uint16_t ch)
@@ -2969,16 +2769,6 @@ void id601_trim_setup_current_chx(uint16_t ch)
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to write channel enable", __func__);
     }
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_GENERAL_CHANNEL_ENABLE;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
 }
 void id601_trim_setup_efuse(void)
 {
@@ -2994,19 +2784,10 @@ void id601_trim_setup_efuse(void)
     const uint16_t _r3F_ADDR_EXT = 0U;
     id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
 
-#if (ID601_DEBUG_EFUSE_ENABLED == 1U)
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: efuse debug, pg_s = 0", __func__);
-    const uint16_t otp_pg_done = 0U;
-    const uint16_t otp_rd_s = 0U;
-    const uint16_t otp_pg_s = 0U;
-    id601_write_otp_rd_prog(1U, otp_pg_done, otp_rd_s, otp_pg_s);
-#else
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: efuse debug, pg_s = 1", __func__);
     const uint16_t otp_pg_done = 0U;
     const uint16_t otp_rd_s = 0U;
     const uint16_t otp_pg_s = 1U;
     id601_write_otp_rd_prog(1U, otp_pg_done, otp_rd_s, otp_pg_s);
-#endif
 }
 bool id601_trim_save_search_registers(void)
 {
@@ -3456,30 +3237,6 @@ void id601_test_setup_iout_3p_x(uint8_t ph)
     id601_write_max_curr_vref1(1U, vref_table[table_idx]);
     id601_write_max_curr_vref2(1U, vref_table[table_idx]);
     id601_write_max_curr_vref3(1U, vref_table[table_idx]);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr1 = ID601_ADDR_GENERAL_MAX_CURR_VREF1;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr1, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr1);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr1, read);
-
-        const uint16_t addr2 = ID601_ADDR_GENERAL_MAX_CURR_VREF2;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr2, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr2);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr2, read);
-
-        const uint16_t addr3 = ID601_ADDR_GENERAL_MAX_CURR_VREF3;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr3, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr3);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr3, read);
-    #endif
 }
 void id601_test_setup_iout_sweep(void)
 {
@@ -3509,16 +3266,6 @@ void id601_test_setup_iout_sweep_x(uint8_t ph)
     const uint16_t gain_max_current_level2 = (ID601_MAX_CURRENT_LEVEL_04mA + ph);
     const uint16_t gain_max_current_level1 = (ID601_MAX_CURRENT_LEVEL_04mA + ph);
     id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
-
-    #if (ID601_DEBUG_ACTION_ENABLED)
-        uint16_t read = 0xFFFFU;
-        const uint16_t addr = ID601_ADDR_GENERAL_MAX_CURR_LEVEL;
-        if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, addr, gp_id601_crc_func, &read))
-        {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to read back register: 0x%02X", __func__, addr);
-        }
-        drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: Read back register: 0x%02X value: 0x%03X", __func__, addr, read);
-    #endif
 }
 void id601_test_setup_iout_vref_sweep(void)
 {

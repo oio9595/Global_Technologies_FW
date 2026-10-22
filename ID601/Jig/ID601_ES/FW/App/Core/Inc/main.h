@@ -157,6 +157,8 @@ void Error_Handler(void);
 #define ID601_SERIAL_IN_GPIO_Port GPIOB
 #define DEBUG2_Pin LL_GPIO_PIN_4
 #define DEBUG2_GPIO_Port GPIOB
+#define ID601_VCC_EN_MBD_Pin LL_GPIO_PIN_5
+#define ID601_VCC_EN_MBD_GPIO_Port GPIOB
 #define IC603_FLLSYNC_Pin LL_GPIO_PIN_6
 #define IC603_FLLSYNC_GPIO_Port GPIOB
 #define IC603_CS_Pin LL_GPIO_PIN_9

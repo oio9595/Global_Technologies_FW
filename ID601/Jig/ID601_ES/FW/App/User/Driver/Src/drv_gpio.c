@@ -23,6 +23,7 @@
 #include "drv_mcp23017.h"
 #include "drv_timer.h"
 #include "drv_uart.h"
+#include "common_def.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,7 +55,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+static uint8_t gb_board_type;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +67,9 @@
 /* USER CODE BEGIN 0 */
 void drv_gpio_init(void)
 {
+    gb_board_type = BOARD_TYPE_GT;
+    USER_ASSERT(gb_board_type == BOARD_TYPE_GT || gb_board_type == BOARD_TYPE_MOBIS);
+
     mcp23017_init();
 
     drv_gpio_id601_vcc(ID601_VCC_OFF);
@@ -82,37 +86,80 @@ void drv_gpio_init(void)
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] GPIO initialized successfully.");
 }
 
+uint8_t drv_gpio_get_board_type(void)
+{
+    return gb_board_type;
+}
+
+void drv_gpio_set_board_type(uint8_t board_type)
+{
+    USER_ASSERT(board_type == BOARD_TYPE_GT || board_type == BOARD_TYPE_MOBIS);
+    gb_board_type = board_type;
+
+    if (BOARD_TYPE_GT == gb_board_type)
+    {
+        mcp23017_init();
+    }
+}
+
 bool drv_gpio_id601_vcc(uint16_t state)
 {
-    switch (state)
+    if (BOARD_TYPE_GT == gb_board_type)
     {
-        case ID601_VCC_OFF:
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
-            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
-            drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
-            break;
+            case ID601_VCC_OFF:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
+                mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+                drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
+                break;
+            }
+            case ID601_VCC_3V3:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
+                mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+                drv_tim_delay_ms(VDD_RAMP_UP_MS);
+                break;
+            }
+            case ID601_VCC_5V5:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
+                mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, true);
+                drv_tim_delay_ms(VDD_RAMP_UP_MS);
+                break;
+            }
+            default:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
+                mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
+                drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
+                return false;
+            }
         }
-        case ID601_VCC_3V3:
+    }
+    else if (BOARD_TYPE_MOBIS == gb_board_type)
+    {
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
-            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
-            drv_tim_delay_ms(VDD_RAMP_UP_MS);
-            break;
-        }
-        case ID601_VCC_5V5:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
-            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, true);
-            drv_tim_delay_ms(VDD_RAMP_UP_MS);
-            break;
-        }
-        default:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, true);
-            mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, false);
-            drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
-            return false;
+            case ID601_VCC_OFF:
+            {
+                LL_GPIO_SetOutputPin(ID601_VCC_EN_MBD_GPIO_Port, ID601_VCC_EN_MBD_Pin);
+                drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
+                break;
+            }
+            case ID601_VCC_3V3:
+            {
+                LL_GPIO_ResetOutputPin(ID601_VCC_EN_MBD_GPIO_Port, ID601_VCC_EN_MBD_Pin);
+                drv_tim_delay_ms(VDD_RAMP_UP_MS);
+                break;
+            }
+            default:
+            {
+                LL_GPIO_SetOutputPin(ID601_VCC_EN_MBD_GPIO_Port, ID601_VCC_EN_MBD_Pin);
+                drv_tim_delay_ms(VDD_RAMP_DOWN_MS);
+                return false;
+            }
         }
     }
     return true;

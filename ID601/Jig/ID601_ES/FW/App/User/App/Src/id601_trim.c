@@ -746,15 +746,15 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
         {
             if ((now_code != search->best_code) || (trim_info->reg_val[ch] != search->best_reg))
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL: code=%u expected_code=%u reg=%3u expected_reg=%3u", prefix, (unsigned)now_code, (unsigned)search->best_code, (unsigned)trim_info->reg_val[ch], (unsigned)search->best_reg);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL:  code=%u expected_code=%u reg=%3u expected_reg=%3u", prefix, (unsigned)now_code, (unsigned)search->best_code, (unsigned)trim_info->reg_val[ch], (unsigned)search->best_reg);
             }
             else
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL: measured=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)measured, unit, (double)lower_limit, (double)upper_limit, unit);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n%s FAIL:  measured=%.3f %s range=[%.3f, %.3f] %s", prefix, (double)measured, unit, (double)lower_limit, (double)upper_limit, unit);
             }
             return trim_error_handler(td);
         }
-        drv_uart_printf(LOG_LV_INFO, "\r\n%s PASS: trials=%u code=%u reg=%3u measured=%.3f %s", prefix, (unsigned)search->attempts, (unsigned)now_code, (unsigned)trim_info->reg_val[ch], (double)measured, unit);
+        drv_uart_printf(LOG_LV_INFO, "\r\n%s PASS:  trials=%u code=%u reg=%3u measured=%.3f %s", prefix, (unsigned)search->attempts, (unsigned)now_code, (unsigned)trim_info->reg_val[ch], (double)measured, unit);
         if ((ch + 1U) < channel_count)
         {
             ++trim_info->ch;
@@ -989,7 +989,7 @@ static bool trim_step_log_summary(thread_data_t *td)
         }
     }
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] COMPLETE: PASS");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] COMPLETE: PASS, eFUSE: %s", (true == gb_id601_efuse_burn) ? ("PG DONE") : ("PG SKIP"));
 
     td->step = TRIM_STEP_PWR_OFF;
     td->tout = T_DEFAULT_MS;

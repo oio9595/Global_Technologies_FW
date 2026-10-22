@@ -27,7 +27,8 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-
+#define BOARD_TYPE_GT               (0)
+#define BOARD_TYPE_MOBIS            (1)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -94,6 +95,8 @@ typedef enum tag_ID601_IOUT_GAIN
 
 /* USER CODE BEGIN EFP */
 extern void drv_gpio_init(void);
+extern uint8_t drv_gpio_get_board_type(void);
+extern void drv_gpio_set_board_type(uint8_t board_type);
 
 extern bool drv_gpio_id601_vcc(uint16_t state);
 extern bool drv_gpio_id601_vled(uint16_t state);

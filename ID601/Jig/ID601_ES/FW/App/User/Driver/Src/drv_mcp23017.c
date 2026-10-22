@@ -131,6 +131,8 @@ bool mcp23017_init(void)
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCP] Failed to initialize MCP23017 IODIRB.");
         return false;
     }
+    mcp23017_set_gpio_state(MCP_GPA0, true);
+    mcp23017_set_gpio_state(MCP_GPA1, false);
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCP] MCP23017 initialized successfully.");
     return true;
 }
