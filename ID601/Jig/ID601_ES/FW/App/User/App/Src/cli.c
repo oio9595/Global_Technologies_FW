@@ -228,22 +228,22 @@ extern osThreadId_t ID601TestTaskHandle;
  */
 static void cli_print_banner(void)
 {
-    drv_uart_printf(LOG_LV_INFO , CLI_CLEAR_SCREEN);
+    drv_uart_printf(LOG_LV_INFO, CLI_CLEAR_SCREEN);
 
-    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO , "\r\n  %s", "ID601 TEST Board");
-    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO , "\r\n  * Build Date   : %s, %s", __DATE__, __TIME__);
-    drv_uart_printf(LOG_LV_INFO , "\r\n  * FW Version   : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n  * FW Git Rev   : %s", FW_GIT_REV);
-    drv_uart_printf(LOG_LV_INFO , "\r\n  * FW Log Level : %s", drv_uart_get_log_level());
-    drv_uart_printf(LOG_LV_INFO , "\r\n  * Board Type   : %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
-    drv_uart_printf(LOG_LV_INFO , "\r\n  * ID601 Daisy  : %u", drv_id601_get_daisy_length());
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  %s", "ID601 TEST Board");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * Build Date   : %s, %s", __DATE__, __TIME__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Version   : v%d.%d.%d", FW_VER_MAJOR, FW_VER_MINOR, FW_VER_BUILD);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Git Rev   : %s", FW_GIT_REV);
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Log Level : %s", drv_uart_get_log_level());
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * Board Type   : %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * ID601 Daisy  : %u", drv_id601_get_daisy_length());
 
-    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO , "\r\n  Type 'help' or '?' to view available CLI commands.");
-    drv_uart_printf(LOG_LV_INFO , "\r\n====================================================");
-    drv_uart_printf(LOG_LV_INFO , CLI_PROMPT);
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, "\r\n  Type 'help' or '?' to view available CLI commands.");
+    drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
+    drv_uart_printf(LOG_LV_INFO, CLI_PROMPT);
 }
 
 /**
