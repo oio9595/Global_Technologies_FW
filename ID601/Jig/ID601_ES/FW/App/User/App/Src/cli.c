@@ -118,7 +118,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_BOARD_TYPE,
         "board_type",
         "board_type <type>"
-        "\r\n    Leave the \"type\" field empty or enter 0 to display the current board type."
+        "\r\n    Leave the \"type\" field empty or enter 0 to display the option list and current board type."
         "\r\n    Enter 1 for GT, 2 for MOBIS to set the board type."
     },
     {
@@ -129,51 +129,59 @@ static const cli_cmd_entry_t gt_cli_command[] =
     {
         CLI_CMD_TRIM_RESULT,
         "trim_result",
-        "Display the ID601 trim process result"
+        "Display the ID601 trim process search result"
     },
     {
         CLI_CMD_TEST_START,
         "test_start",
-        "test_start <sweep>"
-        "Request the ID601 test process to start"
-        "\r\n    sweep: 1=enable, else=skip"
+        "test_start <option>"
+        "\r\n    Request the ID601 test process to start"
+        "\r\n    Leave the \"option\" field empty or enter 0 to display the option list."
+        "\r\n    option: 0=list, 1=start without VREF sweep, 2=start with VREF sweep"
     },
     {
         CLI_CMD_TEST_ONE_CHANNEL,
         "test_one_channel",
         "test_one_channel <option> <channel> <max_curr_lvl> <vref>"
-        "Request the ID601 test process for one channel to start"
-        "\r\n    option: 0=stop, 1=start"
+        "\r\n    Request the ID601 test process for one channel to start"
+        "\r\n    Leave the \"option\" field empty or enter 0 to display the option list."
+        "\r\n    option: 0=list, 1=stop, 2=start"
+        "\r\n    Stop: test_one_channel 1 (no additional arguments required)"
+        "\r\n    Start: test_one_channel 2 <channel> <max_curr_lvl> <vref>"
         "\r\n    channel: Target channel number (1 ~ 12)"
-        "\r\n    max_curr_lvl: Maximum current level"
-        "\r\n    vref: Reference voltage"
+        "\r\n    max_curr_lvl: Maximum current level code (0 ~ 15)"
+        "\r\n    vref: Reference register code (0 ~ 4095)"
     },
     {
         CLI_CMD_ID601_POWER,
         "id601_power",
         "id601_power <target> <state>"
-        "\r\n    target 0: VCC  - state 0=OFF, 1=3.3V, 2=5.5V"
-        "\r\n    target 1: VLED - state 0=OFF, 1=ON (voltage set by SW14/SW15)"
+        "\r\n    Leave the \"target\" field empty or enter 0 to display the option list."
+        "\r\n    target 0: Display this list (no power change)"
+        "\r\n    target 1: VCC  - state 0=OFF, 1=3.3V, 2=5.5V (GT only)"
+        "\r\n    target 2: VLED - state 0=OFF, 1=ON (voltage set by SW14/SW15)"
         "\r\n    Invalid state turns the selected power OFF."
     },
     {
         CLI_CMD_ID601_COMMAND,
         "id601_command",
         "id601_command [command]"
-        "\r\n    command: 0=syncgen, 1=idgen"
+        "\r\n    Leave the \"command\" field empty or enter 0 to display the option list."
+        "\r\n    command: 0=list, 1=syncgen, 2=idgen"
     },
     {
         CLI_CMD_ID601_DAISY,
         "id601_daisy",
         "id601_daisy [length]"
-        "\r\n    Leave the \"length\" field empty or enter 0 to display the current length."
+        "\r\n    Leave the \"length\" field empty or enter 0 to display the option list and current length."
         "\r\n    Enter 1-5 to set the number of connected ID601 devices."
     },
     {
         CLI_CMD_ID601_WRITE,
         "id601_write",
         "id601_write <bank> <ic> <addr> <data>"
-        "\r\n    bank: 0=General, 1=Mirror"
+        "\r\n    Leave the \"bank\" field empty or enter 0 to display the option list."
+        "\r\n    bank: 0=list, 1=General, 2=Mirror"
         "\r\n          Bank switching is handled automatically."
         "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
         "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
@@ -183,7 +191,8 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_ID601_READ,
         "id601_read",
         "id601_read <bank> <ic> <addr>"
-        "\r\n    bank: 0=General, 1=Mirror"
+        "\r\n    Leave the \"bank\" field empty or enter 0 to display the option list."
+        "\r\n    bank: 0=list, 1=General, 2=Mirror"
         "\r\n          Bank switching is handled automatically."
         "\r\n    ic: Target IC number; must not exceed daisy length. 0 is not allowed."
         "\r\n    addr: General 0x00-0x3F, Mirror 0x00-0x1E"
@@ -192,24 +201,26 @@ static const cli_cmd_entry_t gt_cli_command[] =
     {
         CLI_CMD_ID601_DUMP,
         "id601_dump",
-        "Display the ID601 register dump"
+        "Read all registers and display the ID601 register dump"
     },
     {
         CLI_CMD_ID601_INIT,
         "id601_init",
         "id601_init <mode>"
-        "\r\n    Leave the \"mode\" field empty or enter 0 to display the possible mode list."
+        "\r\n    Leave the \"mode\" field empty or enter 0 to display the option list."
         "\r\n    mode: 0=display list, 1=Testmode Entry, 2=Analog Test, 3=FLL Test, 4=After EFUSE"
     },
     {
         CLI_CMD_ID601_EFUSE,
         "id601_efuse",
         "id601_efuse <enable>"
-        "\r\n    enable: 0=disable, 1=enable"
+        "\r\n    Leave the \"enable\" field empty or enter 0 to display the option list."
+        "\r\n    enable: 0=list, 1=disable, 2=enable"
     }
 };
 
 static cli_request_t gt_cli_request;
+static uint8_t gn_cli_argument_count;
 extern osThreadId_t ID601TrimTaskHandle;
 extern osThreadId_t ID601TestTaskHandle;
 /* USER CODE END PV */
@@ -325,6 +336,8 @@ static void cli_command_parse(msg_buffer_t* p_msg)
 {
     gt_cli_request = (cli_request_t){ CLI_CMD_NONE, 0U, 0U, 0U, 0U };
 
+    gn_cli_argument_count = 0U;
+
     char temp[MSG_BUFFER_SIZE] = { 0U };
     memcpy(temp, p_msg->msg, MSG_BUFFER_SIZE);
 
@@ -356,11 +369,28 @@ static void cli_command_parse(msg_buffer_t* p_msg)
         }
     }
 
+    gn_cli_argument_count = (uint8_t)(token_cnt - 1U);
     gt_cli_request.last_command = command;
     if (token_cnt > 1U) gt_cli_request.val_1 = (uint32_t)strtoul(p_token[1], NULL, 0);
     if (token_cnt > 2U) gt_cli_request.val_2 = (uint32_t)strtoul(p_token[2], NULL, 0);
     if (token_cnt > 3U) gt_cli_request.val_3 = (uint32_t)strtoul(p_token[3], NULL, 0);
     if (token_cnt > 4U) gt_cli_request.val_4 = (uint32_t)strtoul(p_token[4], NULL, 0);
+}
+
+/* The first argument is a selector: 0 (or omitted) displays usage only.
+ * Later arguments keep their original units and zero-valued data/state meanings.
+ */
+static void cli_print_command_usage(cli_cmd_list_t command)
+{
+    const uint16_t count = sizeof(gt_cli_command) / sizeof(gt_cli_command[0]);
+    for (uint16_t idx = 0U; idx < count; ++idx)
+    {
+        if (gt_cli_command[idx].command == command)
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] %s", gt_cli_command[idx].description);
+            return;
+        }
+    }
 }
 
 static inline void cli_cmd_function_none(void)
@@ -381,6 +411,7 @@ static inline void cli_cmd_function_board_type(void)
     const uint32_t type = gt_cli_request.val_1;
     if (0U == type)
     {
+        cli_print_command_usage(CLI_CMD_BOARD_TYPE);
         drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Board Type: %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
     }
     else if (1U == type)
@@ -409,12 +440,12 @@ static inline void cli_cmd_function_trim_result(void)
 static inline void cli_cmd_function_test_start(void)
 {
     const uint32_t option = gt_cli_request.val_1;
-    if (option > 1U)
+    if ((0U == option) || (option > 2U))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    Usage: test_start [0|1]");
+        cli_print_command_usage(CLI_CMD_TEST_START);
         return;
     }
-    test_set_vref_sweep_enable(1U == option);
+    test_set_vref_sweep_enable(2U == option);
     osThreadFlagsSet(ID601TestTaskHandle, TEST_START_FLAG);
 }
 static inline void cli_cmd_function_test_one_channel(void)
@@ -424,29 +455,40 @@ static inline void cli_cmd_function_test_one_channel(void)
     const uint32_t max_curr_lvl = gt_cli_request.val_3;
     const uint32_t vref = gt_cli_request.val_4;
 
-    if ((option > 1U) || (channel > ID601_CH_MAX) || (channel < 1U) || (max_curr_lvl > 0x0F) || (vref > 4095))
+    if ((0U == option) || (option > 2U))
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    Usage: test_one_channel <option> <channel> <max_curr_lvl> <vref>");
+        cli_print_command_usage(CLI_CMD_TEST_ONE_CHANNEL);
         return;
     }
-
     if (1U == option)
     {
-        id601_test_iout_one_channel_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
-    }
-    else
-    {
         id601_test_iout_one_channel_stop();
+        return;
     }
+    if ((gn_cli_argument_count != 4U) || (channel < 1U) || (channel > ID601_CH_MAX) ||
+        (max_curr_lvl > 0x0FU) || (vref > 4095U))
+    {
+        cli_print_command_usage(CLI_CMD_TEST_ONE_CHANNEL);
+        return;
+    }
+    id601_test_iout_one_channel_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
 }
 static inline void cli_cmd_function_id601_power(void)
 {
-    const uint16_t val1 = (uint16_t)gt_cli_request.val_1;
-    const uint16_t val2 = (uint16_t)gt_cli_request.val_2;
+    const uint32_t val1 =gt_cli_request.val_1;
+    const uint32_t val2 =gt_cli_request.val_2;
+
+    if ((0U == val1) || (val1 > 2U) || (gn_cli_argument_count != 2U))
+    {
+        cli_print_command_usage(CLI_CMD_ID601_POWER);
+        return;
+    }
+
+    const uint8_t board_type = drv_gpio_get_board_type();
 
     switch (val1)
     {
-        case 0U:
+        case 1U:
         {
             if (0U == val2)
             {
@@ -460,8 +502,16 @@ static inline void cli_cmd_function_id601_power(void)
             }
             else if (2U == val2)
             {
-                drv_gpio_id601_vcc(ID601_VCC_5V5);
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VCC set to 5.5V.");
+                if (BOARD_TYPE_GT == board_type)
+                {
+                    drv_gpio_id601_vcc(ID601_VCC_5V5);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 VCC set to 5.5V.");
+                }
+                else
+                {
+                    drv_gpio_id601_vcc(ID601_VCC_OFF);
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %u is invalid, ID601 VCC turned off.", val2);
+                }
             }
             else
             {
@@ -470,7 +520,7 @@ static inline void cli_cmd_function_id601_power(void)
             }
             break;
         }
-        case 1U:
+        case 2U:
         {
             if (0U == val2)
             {
@@ -497,14 +547,15 @@ static inline void cli_cmd_function_id601_power(void)
 }
 static inline void cli_cmd_function_id601_daisy(void)
 {
-    const uint16_t daisy = (uint16_t)gt_cli_request.val_1;
+    const uint32_t daisy = gt_cli_request.val_1;
     if (0U == daisy)
     {
+        cli_print_command_usage(CLI_CMD_ID601_DAISY);
         drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 daisy chain length is %u.", drv_id601_get_daisy_length());
     }
     else
     {
-        if (true == drv_id601_set_daisy_length(daisy))
+        if ((daisy <= 5U) && (true == drv_id601_set_daisy_length((uint16_t)daisy)))
         {
             drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 daisy chain length set to %u.", daisy);
         }
@@ -516,25 +567,42 @@ static inline void cli_cmd_function_id601_daisy(void)
 }
 static inline void cli_cmd_function_id601_command(void)
 {
-    const uint16_t command = (uint16_t)gt_cli_request.val_1;
-    if (0U == command)
+    const uint32_t command = gt_cli_request.val_1;
+    if (1U == command)
     {
         id601_sync_gen(drv_id601_get_crc_func());
         drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 syncgen command executed.");
     }
-    else if (1U == command)
+    else if (2U == command)
     {
         id601_id_gen(drv_id601_get_crc_func());
         drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 idgen command executed.");
     }
     else
     {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown ID601 command: %u.", command);
+        cli_print_command_usage(CLI_CMD_ID601_COMMAND);
     }
 }
 static inline void cli_cmd_function_id601_write(void)
 {
-    const uint16_t bank = (uint16_t)gt_cli_request.val_1;
+    const uint32_t bank_option = gt_cli_request.val_1;
+    if ((0U == bank_option) || (bank_option > 2U) || (gn_cli_argument_count != 4U))
+    {
+        cli_print_command_usage(CLI_CMD_ID601_WRITE);
+        return;
+    }
+    /* CLI selectors 1/2 map to the driver's existing General/Mirror banks. */
+    const uint16_t bank = (1U == bank_option) ? ID601_REGISTER_BANK_GENERAL : ID601_REGISTER_BANK_MIRROR;
+    if ((gt_cli_request.val_2 < 1U) ||
+        (gt_cli_request.val_2 > drv_id601_get_daisy_length()) ||
+        (gt_cli_request.val_3 >= ((ID601_REGISTER_BANK_GENERAL == bank) ?
+            ID601_ADDR_GENERAL_MAX_COUNT : ID601_ADDR_MIRROR_MAX_COUNT)) ||
+        (gt_cli_request.val_4 > 0xFFFU))
+    {
+        cli_print_command_usage(CLI_CMD_ID601_WRITE);
+        return;
+    }
+
     const uint16_t ic_num = (uint16_t)gt_cli_request.val_2;
     const uint16_t addr = (uint16_t)gt_cli_request.val_3;
     const uint16_t data = (uint16_t)gt_cli_request.val_4;
@@ -568,7 +636,23 @@ static inline void cli_cmd_function_id601_write(void)
 }
 static inline void cli_cmd_function_id601_read(void)
 {
-    const uint16_t bank = (uint16_t)gt_cli_request.val_1;
+    const uint32_t bank_option = gt_cli_request.val_1;
+    if ((0U == bank_option) || (bank_option > 2U) || (gn_cli_argument_count != 3U))
+    {
+        cli_print_command_usage(CLI_CMD_ID601_READ);
+        return;
+    }
+    /* CLI selectors 1/2 map to the driver's existing General/Mirror banks. */
+    const uint16_t bank = (1U == bank_option) ? ID601_REGISTER_BANK_GENERAL : ID601_REGISTER_BANK_MIRROR;
+    if ((gt_cli_request.val_2 < 1U) ||
+        (gt_cli_request.val_2 > drv_id601_get_daisy_length()) ||
+        (gt_cli_request.val_3 >= ((ID601_REGISTER_BANK_GENERAL == bank) ?
+            ID601_ADDR_GENERAL_MAX_COUNT : ID601_ADDR_MIRROR_MAX_COUNT)))
+    {
+        cli_print_command_usage(CLI_CMD_ID601_READ);
+        return;
+    }
+
     const uint16_t ic_num = (uint16_t)gt_cli_request.val_2;
     const uint16_t addr = (uint16_t)gt_cli_request.val_3;
 
@@ -605,9 +689,13 @@ static inline void cli_cmd_function_id601_dump(void)
 }
 static inline void cli_cmd_function_id601_init(void)
 {
-    const uint16_t mode = (uint16_t)gt_cli_request.val_1;
+    const uint32_t mode = gt_cli_request.val_1;
 
-    USER_ASSERT(mode <= 4U); // 1=Testmode Entry, 2=Analog Test, 3=FLL Test, 4=After EFUSE
+    if (mode > 4U)
+    {
+        cli_print_command_usage(CLI_CMD_ID601_INIT);
+        return;
+    }
 
     typedef bool (*id601_init_func_t)(void);
     const id601_init_func_t init_funcs[4] =
@@ -651,13 +739,13 @@ static inline void cli_cmd_function_id601_init(void)
 }
 static inline void cli_cmd_function_id601_efuse(void)
 {
-    const uint16_t enable = (uint16_t)gt_cli_request.val_1;
-    if (enable > 1U)
+    const uint32_t enable = gt_cli_request.val_1;
+    if ((0U == enable) || (enable > 2U))
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid EFUSE enable value: %u", enable);
+        cli_print_command_usage(CLI_CMD_ID601_EFUSE);
         return;
     }
-    id601_set_efuse_burn_enable((bool)enable);
+    id601_set_efuse_burn_enable(2U == enable);
 }
 
 /**
