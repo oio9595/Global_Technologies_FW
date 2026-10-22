@@ -9,6 +9,9 @@
 # IAR local IDE settings
 **/EWARM/settings/
 
+# Automatically generated Git version header
+**/App/User/App/Inc/git_version.h
+
 # ==================================================
 # Compiled files
 # ==================================================
@@ -40,12 +43,6 @@
 # IAR C-STAT / C-RUN generated data
 # Remove this rule if these files need to be shared.
 *.ewt
-
-# ==================================================
-# Automatically generated Git version header
-# Path is relative to this repository's .gitignore.
-# ==================================================
-/ID601/Jig/ID601_ES/FW/App/User/App/Inc/git_version.h
 
 # build_state.json and Release binaries are already
 # excluded by **/EWARM/App/.
