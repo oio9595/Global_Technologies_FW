@@ -1,110 +1,92 @@
-from pathlib import Path
+"""Install in FW/Build; invoke only after successful binary generation.
+
+Requires version.h to include git_version.h. Release builds must use Rebuild All.
+Generated header and build outputs must be ignored by Git.
+"""
+import json
 import re
 import shutil
 import subprocess
+from pathlib import Path
 
-FIRMWARE_FILE_PREFIX = "ID804_FA_Board"
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-VERSION_HEADER = PROJECT_ROOT / "App" / "User" / "App" / "Inc" / "version.h"
-SOURCE_BIN = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "App.bin"
-RELEASE_DIR = PROJECT_ROOT / "App" / "EWARM" / "App" / "Exe" / "Release"
-
-
-def numeric_macro(text, name):
-    match = re.search(
-        rf"^\s*#define\s+{re.escape(name)}\s+(\d+)\s*$",
-        text,
-        re.MULTILINE,
-    )
-
-    if not match:
-        raise RuntimeError(f"{name} is not defined in version.h")
-
-    return match.group(1)
+FW = Path(__file__).resolve().parent.parent
+STATE = FW / "App/EWARM/App/build_state.json"
+HEADER = FW / "App/User/App/Inc/git_version.h"
+VERSION = FW / "App/User/App/Inc/version.h"
+SOURCE = FW / "App/EWARM/App/Exe/App.bin"
+RELEASE = SOURCE.parent / "Release"
+FIRMWARE_FILE_PREFIX = "ID601"
 
 
-def string_macro(text, name):
-    match = re.search(
-        rf'^\s*#define\s+{re.escape(name)}\s+"([^"]+)"\s*$',
-        text,
-        re.MULTILINE,
-    )
-
-    if not match:
-        raise RuntimeError(f'{name} is not defined as a string in version.h')
-
-    return match.group(1)
+def git(*args):
+    return subprocess.run(["git", *args], cwd=FW, check=True,
+                          capture_output=True, text=True).stdout.strip()
 
 
-def ensure_clean_working_tree():
-    try:
-        status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=PROJECT_ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as error:
-        raise RuntimeError(
-            "ERROR: Git was not found. Release image will not be created."
-        ) from error
-    except subprocess.CalledProcessError as error:
-        details = error.stderr.strip()
-        message = (
-            "ERROR: Failed to check Git working tree status. "
-            "Release image will not be created."
-        )
-        if details:
-            message = f"{message}\nGit error: {details}"
-        raise RuntimeError(message) from error
-
-    if status.stdout.strip():
-        revision = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=PROJECT_ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        print("ERROR: Git working tree is dirty. Release image will not be created.")
-        print(f"Git revision: {revision}-dirty")
-        print(status.stdout.strip())
-        raise SystemExit(1)
+def skip(reason):
+    print(f"[RELEASE SKIPPED] {reason}")
+    return 0
 
 
 def main():
-    if not VERSION_HEADER.is_file():
-        raise FileNotFoundError(
-            f"ERROR: version.h file not found: {VERSION_HEADER}"
-        )
+    try:
+        state = json.loads(STATE.read_text(encoding="utf-8"))
+        if not isinstance(state, dict):
+            return skip("Invalid build information.")
+    except (OSError, ValueError):
+        return skip("Missing or invalid build information; run prebuild first.")
+    finally:
+        # One attempt per prebuild; a manual repeat cannot reuse the record.
+        STATE.unlink(missing_ok=True)
 
-    ensure_clean_working_tree()
+    if state.get("git_check_ok") is not True:
+        return skip("Git inspection failed at build start.")
+    if state.get("clean") is not True:
+        return skip("Uncommitted changes existed at build start.")
+    commit = state.get("commit", "")
+    build_id = state.get("build_id", "")
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
+        return skip("Invalid commit information.")
+    if not isinstance(build_id, str) or not re.fullmatch(r"[0-9a-f]{32}", build_id):
+        return skip("Invalid build ID.")
+    try:
+        if git("rev-parse", "HEAD") != commit:
+            return skip("HEAD changed during the build.")
+        if git("status", "--porcelain=v1", "--untracked-files=all"):
+            return skip("Working tree is dirty after the build.")
+        if git("rev-parse", "HEAD") != commit:
+            return skip("HEAD changed during final inspection.")
+    except (OSError, subprocess.SubprocessError) as error:
+        return skip(f"Final Git inspection failed: {error}")
 
-    if not SOURCE_BIN.is_file():
-        raise FileNotFoundError(
-            f"ERROR: Source binary file not found: {SOURCE_BIN}"
-        )
-
-    version_text = VERSION_HEADER.read_text(encoding="utf-8")
-
-    major = numeric_macro(version_text, "FW_VER_MAJOR")
-    minor = numeric_macro(version_text, "FW_VER_MINOR")
-    build = numeric_macro(version_text, "FW_VER_BUILD")
-    git_revision = string_macro(version_text, "FW_GIT_REV")
-
-    version = f"v{major}.{minor}.{build}"
-    filename = f"{FIRMWARE_FILE_PREFIX}_{version}_{git_revision}.bin"
-    destination = RELEASE_DIR / filename
-
-    RELEASE_DIR.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(SOURCE_BIN, destination)
-
-    print(f"Created release image: {destination}")
+    header = HEADER.read_text(encoding="utf-8")
+    expected_revision = commit[:12]
+    if not re.search(r'^#define FW_GIT_REV "' + expected_revision + r'"$', header, re.M):
+        return skip("Generated Git revision does not match this build.")
+    if f'#define FW_BUILD_ID "{build_id}"' not in header:
+        return skip("Generated header belongs to another build.")
+    if not SOURCE.is_file():
+        raise RuntimeError(f"Binary not found: {SOURCE}")
+    text = VERSION.read_text(encoding="utf-8")
+    numbers = []
+    for name in ("FW_VER_MAJOR", "FW_VER_MINOR", "FW_VER_BUILD"):
+        match = re.search(r"^\s*#define\s+" + name + r"\s+(\d+)\s*$", text, re.M)
+        if not match:
+            raise RuntimeError(f"Invalid version macro: {name}")
+        numbers.append(match.group(1))
+    # cli.c prints FW_GIT_REV. Require that revision to exist in the image.
+    if expected_revision.encode("ascii") not in SOURCE.read_bytes():
+        raise RuntimeError("Binary does not contain the expected Git revision; Rebuild All required.")
+    destination = RELEASE / (f'{FIRMWARE_FILE_PREFIX}_v{".".join(numbers)}_{expected_revision}.bin')
+    RELEASE.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(SOURCE, destination)
+    print(f"[RELEASE CREATED] {destination}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except Exception as error:
+        print(f"[ERROR] {error}")
+        raise SystemExit(1)
