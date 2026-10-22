@@ -718,7 +718,10 @@ static bool test_step_log_summary(thread_data_t *td)
 
             if ((n < 0) || ((size_t)n >= sizeof(line)))
             {
-                goto summary_error;
+                started = false;
+                header_done = false;
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                return test_error_handler(td);
             }
 
             size_t used = (size_t)n;
@@ -731,7 +734,10 @@ static bool test_step_log_summary(thread_data_t *td)
                 n = snprintf(line + used, sizeof(line) - used, " %10s", channel);
                 if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
                 {
-                    goto summary_error;
+                    started = false;
+                    header_done = false;
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                    return test_error_handler(td);
                 }
 
                 used += (size_t)n;
@@ -741,7 +747,10 @@ static bool test_step_log_summary(thread_data_t *td)
 
             if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
             {
-                goto summary_error;
+                started = false;
+                header_done = false;
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                return test_error_handler(td);
             }
 
             drv_uart_printf(LOG_LV_INFO, "%s", line);
@@ -752,7 +761,10 @@ static bool test_step_log_summary(thread_data_t *td)
             n = snprintf(line, sizeof(line), "\r\n        %-12s", test_get_list_name((test_list_t)list));
             if ((n < 0) || ((size_t)n >= sizeof(line)))
             {
-                goto summary_error;
+                started = false;
+                header_done = false;
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                return test_error_handler(td);
             }
 
             size_t used = (size_t)n;
@@ -762,7 +774,10 @@ static bool test_step_log_summary(thread_data_t *td)
                 n = snprintf(line + used, sizeof(line) - used, " %10.4f", (double)gt_test_info[list].value[ch][phase]);
                 if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
                 {
-                    goto summary_error;
+                    started = false;
+                    header_done = false;
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                    return test_error_handler(td);
                 }
                 used += (size_t)n;
             }
@@ -770,7 +785,10 @@ static bool test_step_log_summary(thread_data_t *td)
             n = snprintf(line + used, sizeof(line) - used, " %6s", "mA");
             if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
             {
-                goto summary_error;
+                started = false;
+                header_done = false;
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+                return test_error_handler(td);
             }
 
             drv_uart_printf(LOG_LV_INFO, "%s", line);
@@ -857,12 +875,6 @@ static bool test_step_log_summary(thread_data_t *td)
     }
 
     return true;
-
-summary_error:
-    started = false;
-    header_done = false;
-    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-    return test_error_handler(td);
 }
 
 static bool test_step_pwr_off(thread_data_t *td)
