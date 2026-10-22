@@ -1138,11 +1138,11 @@
                         <cmdline>py -3 "$PROJ_DIR$\..\..\Build\prebuild.py"</cmdline>
                         <workingDirectory>$PROJ_DIR$</workingDirectory>
                         <buildSequence>preCompile</buildSequence>
-                        <outputs>
-                            <file>
-                                <name>$BUILD_FILES_DIR$/.prebuild</name>
-                            </file>
-                        </outputs>
+                    </buildAction>
+                    <buildAction>
+                        <cmdline>cmd /c call "$PROJ_DIR$\..\..\Build\run_postbuild.bat"</cmdline>
+                        <workingDirectory>$PROJ_DIR$</workingDirectory>
+                        <buildSequence>postLink</buildSequence>
                     </buildAction>
                 </buildActions>
             </data>
