@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+    {
+        "label": "cppcheck (MISRA + style)",
+        "type": "shell",
+        "command": "cppcheck",
+        "args": [
+            "--enable=warning,style,performance,portability,unusedFunction",
+            "--force",
+            "--inconclusive",
+            "--std=c11",
+            "--inline-suppr",
+            "--template=gcc",
+
+            "--addon=C:/Program Files/Cppcheck/addons/misra.py",
+
+            "-DSTM32F446xx",
+            "-DUSE_HAL_DRIVER",
+            "-DUSE_FULL_LL_DRIVER",
+
+            //"--check-config",
+            //"--quiet",
+
+            // Include 경로 설정 (절대 경로 기준)
+            "-I", "${workspaceFolder}/FW/App/Core/Inc",
+            "-I", "${workspaceFolder}/FW/App/user/Inc",
+            "-I", "${workspaceFolder}/FW/App/Drivers/STM32F4xx_HAL_Driver/Inc",
+            "-I", "${workspaceFolder}/FW/App/Drivers/CMSIS/Device/ST/STM32F4xx/Include",
+            "-I", "${workspaceFolder}/FW/App/Drivers/CMSIS/Include",
+
+            // 예외 파일/폴더 -i 지정
+            "-i", "${workspaceFolder}/FW/App/Drivers",
+            "-i", "${workspaceFolder}/FW/App/Core/Src/stm32f4xx_hal_msp.c",
+            "-i", "${workspaceFolder}/FW/App/Core/Src/system_stm32f4xx.c",
+
+            // 경고 및 오검출 차단 (Suppress)
+            "--suppress=*:*Drivers/*",
+            "--suppress=*:*Middlewares/*",
+            "--suppress=*:*stm32_assert.h",
+            "--suppress=*:*stm32f4xx_hal*",
+            "--suppress=*:*stm32f4xx_ll*",
+            "--suppress=*:*stm32f4xx_hal_msp.c",
+            "--suppress=*:*system_stm32f4xx.c",
+            "--suppress=misra-config",
+
+            // [핵심 변경] "." 대신 검사할 소스 폴더만 명시
+            "${workspaceFolder}/FW/App/Core/Src",
+            "${workspaceFolder}/FW/App/user/Src",
+            "${workspaceFolder}/FW/App/user/drvs",
+            "${workspaceFolder}/FW/App/user/test",
+            "${workspaceFolder}/FW/App/user/trim",
+            "${workspaceFolder}/FW/App/user/app",
+          ],
+          "group": {
+            "kind": "build",
+            "isDefault": true
+          },
+          "presentation": {
+            "reveal": "always",
+            "panel": "shared"
+          },
+          "problemMatcher": []
+    }
+    ]
+}

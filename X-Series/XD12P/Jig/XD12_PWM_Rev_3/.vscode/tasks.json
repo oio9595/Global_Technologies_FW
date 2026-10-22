@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+    {
+        "label": "cppcheck (MISRA + style)",
+        "type": "shell",
+        "command": "cppcheck",
+        "args": [
+        "--enable=warning,style,performance,portability,unusedFunction",
+        "--force",
+        "--inconclusive",
+        "--std=c11",
+        "--inline-suppr",
+
+        "--addon=C:/Program Files/Cppcheck/addons/misra.py",
+
+        "--quiet",
+
+        "-I", "Core/Inc",
+        "-I", "FW/User/Inc",
+        "-I", "Drivers/STM32F4xx_HAL_Driver/Inc",
+        "-I", "Drivers/CMSIS/Device/ST/STM32F4xx/Include",
+        "-I", "Drivers/CMSIS/Include",
+
+        "-i", "Drivers/STM32F4xx_HAL_Driver",
+        "-i", "Drivers/CMSIS",
+        "-i", "Middlewares",
+
+        "-i", "Core/Src/stm32f4xx_hal_msp.c",
+        "-i", "Core/Src/system_stm32f4xx.c",
+
+        "--suppress=*:Drivers/*",
+        "--suppress=*:Middlewares/*",
+
+        "."
+          ],
+          "group": {
+            "kind": "build",
+            "isDefault": true
+          },
+          "presentation": {
+            "reveal": "always",
+            "panel": "shared"
+          },
+          "problemMatcher": []
+    }
+    ]
+}

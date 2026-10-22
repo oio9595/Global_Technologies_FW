@@ -1,0 +1,26 @@
+{
+  "workspace": {
+    "path": "${workspaceFolder}\\FW\\App\\EWARM\\Project.eww"
+  },
+  "workspaces": {
+    "${workspaceFolder}\\FW\\Bootloader\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\FW\\Bootloader\\EWARM\\Bootloader.ewp": "Bootloader"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\FW\\Bootloader\\EWARM\\Bootloader.ewp"
+      }
+    },
+    "${workspaceFolder}\\FW\\App\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\FW\\App\\EWARM\\App.ewp": "App"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\FW\\App\\EWARM\\App.ewp"
+      }
+    }
+  },
+  "workbench": {
+    "path": "C:\\iar\\ewarm-9.70.1"
+  }
+}

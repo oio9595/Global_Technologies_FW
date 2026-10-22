@@ -1,0 +1,22 @@
+{
+  "workspace": {
+    "path": "${workspaceFolder}\\FW\\App\\EWARM\\Project.eww"
+  },
+  "workspaces": {
+    "${workspaceFolder}\\FW\\EWARM\\Project.eww": {
+      "configs": {},
+      "selected": {}
+    },
+    "${workspaceFolder}\\FW\\App\\EWARM\\Project.eww": {
+      "configs": {
+        "${workspaceFolder}\\FW\\App\\EWARM\\App.ewp": "App"
+      },
+      "selected": {
+        "path": "${workspaceFolder}\\FW\\App\\EWARM\\App.ewp"
+      }
+    }
+  },
+  "workbench": {
+    "path": "C:\\iar\\ewarm-9.70.1"
+  }
+}

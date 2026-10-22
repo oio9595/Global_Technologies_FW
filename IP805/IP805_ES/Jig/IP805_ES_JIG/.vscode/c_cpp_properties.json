@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64",
+            "configurationProvider": "iarsystems.iar-build"
+        },
+        {
+            "name": "IAR",
+            "includePath": [
+                "${workspaceFolder}/FW/Core/Inc",
+                "${workspaceFolder}/FW/Drivers/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/FW/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/FW/Drivers/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/FW/Drivers/CMSIS/Include",
+                "${workspaceFolder}/FW/User/Inc"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "USE_FULL_LL_DRIVER",
+                "USE_HAL_DRIVER",
+                "STM32F446xx"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "C:\\Program Files\\IAR Systems\\Embedded Workbench 9.0\\arm\\bin\\iccarm.exe",
+            "cStandard": "c99",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
