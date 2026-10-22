@@ -941,11 +941,11 @@ bool id601_test_process(thread_data_t *td)
     return gp_test_step_handlers[step](td);
 }
 
-void id601_test_iout_one_channel_start(uint16_t channel, uint16_t max_curr_lvl, uint16_t vref)
+void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint16_t vref)
 {
     if (true == gn_id601_iout_monitor_channel)
     {
-        id601_test_iout_one_channel_stop();
+        id601_test_iout_monitor_stop();
     }
 
     gn_id601_test_iout_gain = ID601_IOUT_GAIN_HIGH;
@@ -956,14 +956,14 @@ void id601_test_iout_one_channel_start(uint16_t channel, uint16_t max_curr_lvl, 
     if (false == id601_init_testmode_entry())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 initialization failed", __func__);
-        id601_test_iout_one_channel_stop();
+        id601_test_iout_monitor_stop();
         return;
     }
 
     if (false == id601_init_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 initialization failed", __func__);
-        id601_test_iout_one_channel_stop();
+        id601_test_iout_monitor_stop();
         return;
     }
 
@@ -1000,7 +1000,7 @@ void id601_test_iout_one_channel_start(uint16_t channel, uint16_t max_curr_lvl, 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST]: ID601 Iout One Channel Started. channel=%u, max_curr_lvl=%u, vref=%u", (unsigned)(channel + 1U), (unsigned)max_curr_lvl, (unsigned)vref);
 }
 
-void id601_test_iout_one_channel_stop(void)
+void id601_test_iout_monitor_stop(void)
 {
     drv_gpio_id601_vcc(ID601_VCC_OFF);
     drv_gpio_id601_vled(ID601_VLED_OFF);
@@ -1016,7 +1016,7 @@ void id601_test_iout_one_channel_stop(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST]: ID601 Iout One Channel Stopped.");
 }
 
-void id601_test_iout_one_channel_process(void)
+void id601_test_iout_monitor_process(void)
 {
     if (false == gb_id601_iout_monitor_enable)
     {
@@ -1039,7 +1039,7 @@ void id601_test_iout_one_channel_process(void)
     if (false == ads114s08_wait_conversion_complete())
     {
         /* 오류 시 기존 stop 함수로 출력까지 정리 */
-        id601_test_iout_one_channel_stop();
+        id601_test_iout_monitor_stop();
         return;
     }
 

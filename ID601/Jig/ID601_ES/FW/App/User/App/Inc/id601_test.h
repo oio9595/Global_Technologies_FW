@@ -54,9 +54,9 @@ extern void id601_test_clear_parameters(thread_data_t *td);
 extern void id601_test_start(thread_data_t *td);
 extern bool id601_test_process(thread_data_t *td);
 
-extern void id601_test_iout_one_channel_start(uint16_t channel, uint16_t max_curr_lvl, uint16_t vref);
-extern void id601_test_iout_one_channel_stop(void);
-extern void id601_test_iout_one_channel_process(void);
+extern void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint16_t vref);
+extern void id601_test_iout_monitor_stop(void);
+extern void id601_test_iout_monitor_process(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

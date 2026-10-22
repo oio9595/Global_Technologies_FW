@@ -46,7 +46,7 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_TRIM_START,
     CLI_CMD_TRIM_RESULT,
     CLI_CMD_TEST_START,
-    CLI_CMD_TEST_ONE_CHANNEL,
+    CLI_CMD_TEST_IOUT_MONITOR,
 
     CLI_CMD_ID601_POWER,
     CLI_CMD_ID601_DAISY,
@@ -137,19 +137,19 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "\r\n    0/omitted=list, 1=test, 2=test + VREF sweep"
     },
     {
-        CLI_CMD_TEST_ONE_CHANNEL,
-        "test_one_channel",
-        "test_one_channel <option> <ch> <level> <vref>"
+        CLI_CMD_TEST_IOUT_MONITOR,
+        "test_iout_monitor",
+        "test_iout_monitor <option> <ch> <level> <vref>"
         "\r\n    0/omitted=list, 1=stop, 2=start"
-        "\r\n    Start: 2 <ch:1-12> <level:0-15> <vref:0-4095>"
         "\r\n    Stop: 1 (no other args)"
+        "\r\n    Start: 2 <ch:1-12> <curr_lvl:0-15> <vref:0-4095>"
     },
     {
         CLI_CMD_ID601_POWER,
         "id601_power",
         "id601_power <target> <state>"
         "\r\n    Target: 0/omitted=list, 1=VCC, 2=VLED"
-        "\r\n    VCC: 0=OFF, 1=3.3V, 2=5.5V (GT only)"
+        "\r\n    VCC:  0=OFF, 1=3.3V, 2=5.5V (GT only)"
         "\r\n    VLED: 0=OFF, 1=ON (SW14/SW15)"
         "\r\n    Invalid state turns selected power OFF"
     },
@@ -170,7 +170,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "id601_write",
         "id601_write <bank> <ic> <addr> <data>"
         "\r\n    Bank: 0/omitted=list, 1=General, 2=Mirror"
-        "\r\n    IC: 1 to daisy length"
+        "\r\n    IC: 1 ~ daisy length"
         "\r\n    Addr: General 0x00-0x3F, Mirror 0x00-0x1E"
         "\r\n    Data: 0x000-0xFFF (decimal or 0x hex)"
     },
@@ -179,7 +179,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "id601_read",
         "id601_read <bank> <ic> <addr>"
         "\r\n    Bank: 0/omitted=list, 1=General, 2=Mirror"
-        "\r\n    IC: 1 to daisy length"
+        "\r\n    IC: 1 ~ daisy length"
         "\r\n    Addr: General 0x00-0x3F, Mirror 0x00-0x1E"
     },
     {
@@ -191,8 +191,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_ID601_INIT,
         "id601_init",
         "id601_init <mode>"
-        "\r\n    0/omitted=list, 1=Testmode Entry, 2=Analog Test"
-        "\r\n    3=FLL Test, 4=After EFUSE"
+        "\r\n    0/omitted=list, 1=Testmode Entry, 2=Analog Test, 3=FLL Test"
     },
     {
         CLI_CMD_ID601_EFUSE,
@@ -431,7 +430,7 @@ static inline void cli_cmd_function_test_start(void)
     test_set_vref_sweep_enable(2U == option);
     osThreadFlagsSet(ID601TestTaskHandle, TEST_START_FLAG);
 }
-static inline void cli_cmd_function_test_one_channel(void)
+static inline void cli_cmd_function_test_iout_monitor(void)
 {
     const uint32_t option = gt_cli_request.val_1;
     const uint32_t channel = gt_cli_request.val_2;
@@ -440,21 +439,21 @@ static inline void cli_cmd_function_test_one_channel(void)
 
     if ((0U == option) || (option > 2U))
     {
-        cli_print_command_usage(CLI_CMD_TEST_ONE_CHANNEL);
+        cli_print_command_usage(CLI_CMD_TEST_IOUT_MONITOR);
         return;
     }
     if (1U == option)
     {
-        id601_test_iout_one_channel_stop();
+        id601_test_iout_monitor_stop();
         return;
     }
     if ((gn_cli_argument_count != 4U) || (channel < 1U) || (channel > ID601_CH_MAX) ||
         (max_curr_lvl > 0x0FU) || (vref > 4095U))
     {
-        cli_print_command_usage(CLI_CMD_TEST_ONE_CHANNEL);
+        cli_print_command_usage(CLI_CMD_TEST_IOUT_MONITOR);
         return;
     }
-    id601_test_iout_one_channel_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
+    id601_test_iout_monitor_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
 }
 static inline void cli_cmd_function_id601_power(void)
 {
@@ -609,11 +608,11 @@ static inline void cli_cmd_function_id601_write(void)
     {
         if (ID601_REGISTER_BANK_GENERAL == bank)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 General register. (IC: %u, Addr: %u, Data: %u, 0x%03X )", ic_num, addr, data, data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:%u, Data:%u(0x%03X)", ic_num, addr, data, data);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully wrote to ID601 Mirror register. (IC: %u, Addr: %u, Data: %u, 0x%03X)", ic_num, addr, data, data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [Mirror]: IC:%u, Addr:%u, Data:%u(0x%03X)", ic_num, addr, data, data);
         }
     }
 }
@@ -658,11 +657,11 @@ static inline void cli_cmd_function_id601_read(void)
     {
         if (ID601_REGISTER_BANK_GENERAL == bank)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 General register. (IC: %u, Addr: %u, Data: %u, 0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [General]: IC:%u, Addr:%u, Data:%u(0x%03X)", ic_num, addr, read_data, read_data);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully read from ID601 Mirror register. (IC: %u, Addr: %u, Data: %u, 0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [Mirror]: IC:%u, Addr:%u, Data:%u(0x%03X)", ic_num, addr, read_data, read_data);
         }
     }
 }
@@ -674,24 +673,23 @@ static inline void cli_cmd_function_id601_init(void)
 {
     const uint32_t mode = gt_cli_request.val_1;
 
-    if (mode > 4U)
+    if (mode > 3U)
     {
         cli_print_command_usage(CLI_CMD_ID601_INIT);
         return;
     }
 
     typedef bool (*id601_init_func_t)(void);
-    const id601_init_func_t init_funcs[4] =
+    const id601_init_func_t init_funcs[3] =
     {
         id601_init_testmode_entry,
         id601_init_analog_test_mode,
         id601_init_fll_test_mode,
-        id601_init_after_efuse_mode
     };
 
     if (0U == mode)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 mode list: 1=Testmode Entry, 2=Analog Test, 3=FLL Test, 4=After EFUSE.");
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 mode list: 1=Testmode Entry, 2=Analog Test, 3=FLL Test.");
     }
     else
     {
@@ -700,7 +698,6 @@ static inline void cli_cmd_function_id601_init(void)
             case 1U:
             case 2U:
             case 3U:
-            case 4U:
             {
                 if (true == init_funcs[mode - 1U]())
                 {
@@ -775,9 +772,9 @@ static void cli_command_execute(void)
             cli_cmd_function_test_start();
             break;
         }
-        case CLI_CMD_TEST_ONE_CHANNEL:
+        case CLI_CMD_TEST_IOUT_MONITOR:
         {
-            cli_cmd_function_test_one_channel();
+            cli_cmd_function_test_iout_monitor();
             break;
         }
         case CLI_CMD_ID601_POWER:
@@ -854,6 +851,6 @@ void cli_process(void)
         }
     }
 
-    id601_test_iout_one_channel_process();
+    id601_test_iout_monitor_process();
 }
 /* USER CODE END 0 */
