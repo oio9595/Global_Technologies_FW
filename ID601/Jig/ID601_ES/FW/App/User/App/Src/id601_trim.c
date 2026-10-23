@@ -371,21 +371,21 @@ static bool trim_step_initial(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    if (false == id601_init_testmode_entry())
+    if (false == id601_init_tm_entry_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 testmode entry failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 TM Entry Mode Failed", __func__);
         return trim_error_handler(td);
     }
 
     if (false == id601_compare_initial_code())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Initial code comparison failed.", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 Initial Code Compare Failed.", __func__);
         return false;
     }
 
     if (false == id601_init_analog_test_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 Analog Test Mode Failed", __func__);
         return trim_error_handler(td);
     }
 
@@ -923,7 +923,7 @@ static bool trim_step_pwr_reboot(thread_data_t *td)
 
     if (false == id601_init_after_efuse_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: Failed to initialize after efuse", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 After Efuse Mode Failed", __func__);
         return trim_error_handler(td);
     }
 

@@ -154,7 +154,7 @@ extern bool id601_write_op_mode(uint16_t device_select, uint16_t test_en, uint16
 extern bool id601_dump_registers(void);
 extern bool id601_compare_initial_code(void);
 
-extern bool id601_init_testmode_entry(void);
+extern bool id601_init_tm_entry_mode(void);
 extern bool id601_init_analog_test_mode(void);
 extern bool id601_init_fll_test_mode(void);
 extern bool id601_init_after_efuse_mode(void);

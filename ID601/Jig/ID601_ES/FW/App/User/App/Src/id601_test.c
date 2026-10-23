@@ -965,16 +965,16 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
 
     drv_gpio_id601_vcc(ID601_VCC_3V3);
 
-    if (false == id601_init_testmode_entry())
+    if (false == id601_init_tm_entry_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 TM Entry Mode Failed", __func__);
         id601_test_iout_monitor_stop();
         return;
     }
 
     if (false == id601_init_analog_test_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 Analog Test Mode Failed", __func__);
         id601_test_iout_monitor_stop();
         return;
     }

@@ -390,7 +390,7 @@ bool drv_id601_set_daisy_length(uint16_t daisy_length)
         return false;
     }
     gn_id601_daisy_length = daisy_length;
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Daisy length set to %u.", __func__, daisy_length);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Daisy length set to %u.", daisy_length);
     return true;
 }
 uint16_t drv_id601_get_daisy_length(void)
@@ -2028,8 +2028,7 @@ bool id601_compare_initial_code(void)
             return false;
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all general registers with initial code", __func__);
-
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] General registers match initial values");
     for (uint16_t id601_addr = ID601_ADDR_MIRROR1 ; id601_addr < ID601_ADDR_MIRROR_MAX_COUNT ; ++id601_addr)
     {
         if (gn_id601_mirror_regs_initial_code[id601_addr] != gn_id601_mirror_regs[id601_addr][0])
@@ -2038,7 +2037,7 @@ bool id601_compare_initial_code(void)
             return false;
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: Successfully compared all mirror registers with initial code", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Mirror registers match initial values");
 
     return true;
 }
@@ -2057,7 +2056,7 @@ static bool id601_enter_test_mode(void)
     return true;
 }
 
-bool id601_init_testmode_entry(void)
+bool id601_init_tm_entry_mode(void)
 {
     drv_id601_set_daisy_length(1U);
 
@@ -2080,7 +2079,7 @@ bool id601_init_testmode_entry(void)
         drv_gpio_id601_vcc(ID601_VCC_OFF);
         return false;
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 testmode entry successful", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] TM Entry mode entered");
     return true;
 }
 
@@ -2166,7 +2165,7 @@ bool id601_init_analog_test_mode(void)
             }
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 Analog Test Mode Initialized.", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Analog Test mode entered");
     return true;
 }
 
@@ -2235,7 +2234,7 @@ bool id601_init_fll_test_mode(void)
             }
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 FLL Test Mode Initialized.", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] FLL Test mode entered");
     return true;
 }
 
@@ -2256,7 +2255,7 @@ bool id601_init_after_efuse_mode(void)
         return false;
     }
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: ID601 After EFUSE Mode Initialized.", __func__);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] After EFUSE Mode entered");
     return true;
 }
 
@@ -2980,14 +2979,14 @@ void id601_test_setup_idds1(void)
 }
 void id601_test_setup_iddd1(void)
 {
-    if (false == id601_init_testmode_entry())
+    if (false == id601_init_tm_entry_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 testmode entry failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 TM Entry Mode Failed", __func__);
     }
 
     if (false == id601_init_analog_test_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
     }
 }
 void id601_test_setup_iref1(void)
@@ -3150,7 +3149,11 @@ void id601_test_setup_osc(void)
 void id601_test_setup_fll1(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_init_fll_test_mode();
+    if (false == id601_init_fll_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
+        return;
+    }
 
     const uint64_t tgt_hz = 40000000ULL;
     const uint64_t fllcnt = (tgt_hz / (120U * 2U));
@@ -3168,7 +3171,11 @@ void id601_test_setup_fll1(void)
 void id601_test_setup_fll2(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_init_fll_test_mode();
+    if (false == id601_init_fll_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
+        return;
+    }
 
     const uint64_t tgt_hz = 60000000ULL;
     const uint64_t fllcnt = (tgt_hz / (120U * 2U));
@@ -3186,7 +3193,11 @@ void id601_test_setup_fll2(void)
 void id601_test_setup_fll3(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_init_fll_test_mode();
+    if (false == id601_init_fll_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
+        return;
+    }
 
     const uint64_t tgt_hz = 50000000ULL;
     const uint64_t fllcnt = (tgt_hz / (120U * 2U));
@@ -3207,7 +3218,7 @@ void id601_test_setup_iout_3p(void)
 
     if (false == id601_init_analog_test_mode())
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 initialization failed", __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
     }
 
     id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
