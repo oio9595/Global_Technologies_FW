@@ -967,7 +967,7 @@ static bool trim_step_log_summary(thread_data_t *td)
     USER_ASSERT(0U != td->tout);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] SUMMARY");
-    drv_uart_printf(LOG_LV_INFO, "\r\n        %-10s %4s %5s %5s %10s %4s", "ITEM", "CH", "CODE", "REG", "VALUE", "UNIT");
+    drv_uart_printf(LOG_LV_INFO, "\r\n        %-10s %4s %4s %5s %5s %10s", "ITEM", "UNIT", "CH", "CODE", "REG", "VALUE");
 
     for (uint16_t list = TRIM_LIST_IREF1; list < TRIM_LIST_MAX; ++list)
     {
@@ -985,7 +985,7 @@ static bool trim_step_log_summary(thread_data_t *td)
             {
                 snprintf(channel, sizeof(channel), "%2u", (unsigned)(ch + 1U));
             }
-            drv_uart_printf(LOG_LV_INFO, "\r\n        %-10s %4s %5u %5u %10.3f %4s", list_name, channel, (unsigned)info->trim_code[ch], (unsigned)info->reg_val[ch], (double)info->value[ch], unit);
+            drv_uart_printf(LOG_LV_INFO, "\r\n        %-10s %4s %4s %5u %5u %10.3f", list_name, unit, channel, (unsigned)info->trim_code[ch], (unsigned)info->reg_val[ch], (double)info->value[ch]);
         }
     }
 

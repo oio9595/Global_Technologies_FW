@@ -601,7 +601,7 @@ static inline void cli_cmd_function_test_manual(void)
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, 0x00A);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, 0x00A);
             break;
         }
         case MANUAL_TEST_UVOV_LDO:
@@ -625,24 +625,36 @@ static inline void cli_cmd_function_test_manual(void)
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
             switch (option)
             {
                 case 1U:
                     break;
                 case 2U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00A, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00A, 0x00A);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00A, 0x00A);
                     break;
                 case 3U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x009, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x009, 0x009);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x009, 0x009);
                     break;
                 default:
                     drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid option for UV/OV LDO test.");
@@ -671,24 +683,36 @@ static inline void cli_cmd_function_test_manual(void)
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
             switch (option)
             {
                 case 1U:
                     break;
                 case 2U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00E, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00E, 0x00E);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00E, 0x00E);
                     break;
                 case 3U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00D, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00D, 0x00D);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00D, 0x00D);
                     break;
                 default:
                     drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid option for UV/OV DAC test.");
@@ -717,24 +741,36 @@ static inline void cli_cmd_function_test_manual(void)
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
             }
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
             switch (option)
             {
                 case 1U:
                     break;
                 case 2U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, 0x00C);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, 0x00C);
                     break;
                 case 3U:
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
+                    {
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                    }
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
+
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, 0x00B);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, 0x00B);
                     break;
                 default:
                     drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid option for UV/OV DAC test.");
@@ -902,11 +938,11 @@ static inline void cli_cmd_function_id601_write(void)
     {
         if (ID601_REGISTER_BANK_GENERAL == bank)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", ic_num, addr, data, data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, data, data);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [Mirror]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", ic_num, addr, data, data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [Mirror]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, data, data);
         }
     }
 }
@@ -951,11 +987,11 @@ static inline void cli_cmd_function_id601_read(void)
     {
         if (ID601_REGISTER_BANK_GENERAL == bank)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [General]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [Mirror]: IC:%u, Addr:0x%02X, Data:%u(0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [Mirror]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
         }
     }
 }

@@ -684,7 +684,6 @@ static bool test_step_log_summary(thread_data_t *td)
     static uint16_t list;
     static uint16_t phase;
     static bool started = false;
-    static bool header_done = false;
 
     USER_ASSERT(NULL != td);
     USER_ASSERT(NULL != td->func);
@@ -699,10 +698,9 @@ static bool test_step_log_summary(thread_data_t *td)
     {
         list = TEST_LIST_IDDS1;
         phase = 0U;
-        header_done = false;
         started = true;
 
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] SUMMARY\r\n        %-12s %12s %6s", "ITEM", "VALUE", "UNIT");
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] SUMMARY\r\n        %-12s %6s %12s", "ITEM", "UNIT", "VALUE");
 
         td->step = TEST_STEP_LOG_SUMMARY;
         td->tout = row_delay_ticks;
@@ -712,95 +710,36 @@ static bool test_step_log_summary(thread_data_t *td)
     const bool is_iout = ((TEST_LIST_IOUT_3P == list) || (TEST_LIST_IOUT_SWEEP == list));
     if (is_iout)
     {
-        if (false == header_done)
+        n = snprintf(line, sizeof(line), "\r\n        %-12s %6s", test_get_list_name((test_list_t)list), "mA");
+        if ((n < 0) || ((size_t)n >= sizeof(line)))
         {
-            n = snprintf(line, sizeof(line), "\r\n        %-12s", "ITEM");
-
-            if ((n < 0) || ((size_t)n >= sizeof(line)))
-            {
-                started = false;
-                header_done = false;
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-                return test_error_handler(td);
-            }
-
-            size_t used = (size_t)n;
-
-            for (uint8_t ch = 0U; ch < 12U; ++ch)
-            {
-                char channel[5];
-                snprintf(channel, sizeof(channel), "CH%02u", (unsigned)(ch + 1U));
-
-                n = snprintf(line + used, sizeof(line) - used, " %10s", channel);
-                if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
-                {
-                    started = false;
-                    header_done = false;
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-                    return test_error_handler(td);
-                }
-
-                used += (size_t)n;
-            }
-
-            n = snprintf(line + used, sizeof(line) - used, " %6s", "UNIT");
-
-            if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
-            {
-                started = false;
-                header_done = false;
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-                return test_error_handler(td);
-            }
-
-            drv_uart_printf(LOG_LV_INFO, "%s", line);
-            header_done = true;
+            started = false;
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
+            return test_error_handler(td);
         }
-        else
+
+        size_t used = (size_t)n;
+
+        for (uint8_t ch = 0U; ch < 12U; ++ch)
         {
-            n = snprintf(line, sizeof(line), "\r\n        %-12s", test_get_list_name((test_list_t)list));
-            if ((n < 0) || ((size_t)n >= sizeof(line)))
-            {
-                started = false;
-                header_done = false;
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-                return test_error_handler(td);
-            }
-
-            size_t used = (size_t)n;
-
-            for (uint8_t ch = 0U; ch < 12U; ++ch)
-            {
-                n = snprintf(line + used, sizeof(line) - used, " %10.4f", (double)gt_test_info[list].value[ch][phase]);
-                if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
-                {
-                    started = false;
-                    header_done = false;
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
-                    return test_error_handler(td);
-                }
-                used += (size_t)n;
-            }
-
-            n = snprintf(line + used, sizeof(line) - used, " %6s", "mA");
+            n = snprintf(line + used, sizeof(line) - used, " %12.4f", (double)gt_test_info[list].value[ch][phase]);
             if ((n < 0) || ((size_t)n >= (sizeof(line) - used)))
             {
                 started = false;
-                header_done = false;
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] Summary formatting failed");
                 return test_error_handler(td);
             }
+            used += (size_t)n;
+        }
 
-            drv_uart_printf(LOG_LV_INFO, "%s", line);
+        drv_uart_printf(LOG_LV_INFO, "%s", line);
 
-            const uint8_t max_phase = (TEST_LIST_IOUT_3P == list) ? 3U : 16U;
-            ++phase;
-            if (phase >= max_phase)
-            {
-                phase = 0U;
-                header_done = false;
-                ++list;
-            }
+        const uint8_t max_phase = (TEST_LIST_IOUT_3P == list) ? 3U : 16U;
+        ++phase;
+        if (phase >= max_phase)
+        {
+            phase = 0U;
+            ++list;
         }
     }
     else
@@ -835,14 +774,13 @@ static bool test_step_log_summary(thread_data_t *td)
             }
         }
 
-        drv_uart_printf(LOG_LV_INFO, "\r\n        %-12s %12.4f %6s", test_get_list_name((test_list_t)list), (double)gt_test_info[list].value[0][0], unit);
+        drv_uart_printf(LOG_LV_INFO, "\r\n        %-12s %6s %12.4f", test_get_list_name((test_list_t)list), unit, (double)gt_test_info[list].value[0][0]);
         ++list;
     }
 
     if (list >= TEST_LIST_IOUT_VREF_SWEEP)
     {
         started = false;
-        header_done = false;
 
         drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] MEASUREMENT COMPLETE");
 

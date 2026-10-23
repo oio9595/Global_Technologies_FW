@@ -2996,7 +2996,7 @@ void id601_test_setup_iref1(void)
     const bool already_trimmed = id601_test_check_is_trimmed();
     if (true == already_trimmed)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Already trimmed");
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Already trimmed. Skip overwrite");
     }
     else
     {
