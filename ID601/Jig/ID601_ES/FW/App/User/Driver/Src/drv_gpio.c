@@ -72,6 +72,15 @@ void drv_gpio_init(void)
 
     mcp23017_init();
 
+    drv_gpio_clear_id601();
+
+    drv_gpio_ic603_cs(false);
+    drv_gpio_ads114s08_dev_all_cs(false);
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] GPIO initialized successfully.");
+}
+void drv_gpio_clear_id601(void)
+{
     drv_gpio_id601_vcc(ID601_VCC_OFF);
     drv_gpio_id601_vled(ID601_VLED_OFF);
     drv_gpio_id601_test_relay(ID601_RELAY_DIS);
@@ -79,11 +88,6 @@ void drv_gpio_init(void)
     drv_gpio_id601_o2_relay(ID601_RELAY_DIS);
     drv_gpio_id601_ch_demux(ID601_CH_MAX);
     drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
-
-    drv_gpio_ic603_cs(false);
-    drv_gpio_ads114s08_dev_all_cs(false);
-
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] GPIO initialized successfully.");
 }
 
 uint8_t drv_gpio_get_board_type(void)
@@ -124,6 +128,9 @@ bool drv_gpio_id601_vcc(uint16_t state)
             }
             case ID601_VCC_5V5:
             {
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] Check    R156,   J225");
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] HVS   :   12k, CLOSED");
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] Normal: 4.99k,   OPEN");
                 mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
                 mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, true);
                 drv_tim_delay_ms(VDD_RAMP_UP_MS);

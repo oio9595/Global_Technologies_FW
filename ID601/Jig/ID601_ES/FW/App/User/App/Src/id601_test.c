@@ -276,13 +276,16 @@ static bool test_step_setup_by_list(thread_data_t *td)
         case TEST_LIST_FLL2:
         case TEST_LIST_FLL3:
         {
-            //drv_tim_test_vsync_start();
+            drv_tim_test_vsync_start();
             td->step = TEST_STEP_VSYNC_STOP;
-            //td->tout = T_VSYNC_STOP_MS;
+            td->tout = T_VSYNC_STOP_MS;
             break;
         }
         case TEST_LIST_IOUT_3P:
         {
+            gn_id601_test_iout_gain = TEST_IOUT_VREF_SWEEP_GAIN;
+            drv_gpio_id601_iout_gain(gn_id601_test_iout_gain);
+
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
             id601_trim_setup_current_chx(ch);
@@ -294,6 +297,9 @@ static bool test_step_setup_by_list(thread_data_t *td)
         }
         case TEST_LIST_IOUT_SWEEP:
         {
+            gn_id601_test_iout_gain = TEST_IOUT_VREF_SWEEP_GAIN;
+            drv_gpio_id601_iout_gain(gn_id601_test_iout_gain);
+
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
             id601_trim_setup_current_chx(ch);
@@ -328,29 +334,6 @@ static bool test_step_vsync_stop(thread_data_t *td)
     USER_ASSERT(NULL != td);
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
-
-    const uint32_t vsync_timeout_ticks = (uint32_t)(((uint64_t)20U * osKernelGetTickFreq() + 999U) / 1000U);
-    /* 이전 이벤트 제거 */
-    osThreadFlagsClear(TEST_VSYNC_FLAG);
-
-    drv_tim_test_vsync_start();
-
-    for (uint32_t count = 0U; count < 24U; ++count)
-    {
-        uint32_t flags = osThreadFlagsWait(TEST_VSYNC_FLAG, osFlagsWaitAny, vsync_timeout_ticks);
-
-        if ((flags & osFlagsError) != 0U)
-        {
-            drv_tim_test_vsync_stop();
-            return test_error_handler(td);
-        }
-
-        if (false == id601_sync_gen(drv_id601_get_crc_func()))
-        {
-            drv_tim_test_vsync_stop();
-            return test_error_handler(td);
-        }
-    }
 
     drv_tim_test_vsync_stop();
 
@@ -638,7 +621,7 @@ static bool test_step_get_measured_value(thread_data_t *td)
             {
                 char row[256];
 
-                int n = snprintf(row, sizeof(row), "\r\n    %4u", (unsigned)phase);
+                int n = snprintf(row, sizeof(row), "\r\n        %4u", (unsigned)phase);
                 if ((n < 0) || ((size_t)n >= sizeof(row)))
                 {
                     return test_error_handler(td);
@@ -821,11 +804,9 @@ static bool test_step_pwr_off(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    drv_gpio_id601_vcc(ID601_VCC_OFF);
-    drv_gpio_id601_vled(ID601_VLED_OFF);
-    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
-    drv_gpio_id601_ch_demux(ID601_CH_MAX);
-    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
+    drv_gpio_clear_id601();
+
+    drv_id601_set_hvs_flag(false);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] Power Off");
 
@@ -845,11 +826,7 @@ void id601_test_clear_parameters(thread_data_t *td)
 
     gb_id601_test_vref_sweep = false;
 
-    drv_gpio_id601_vcc(ID601_VCC_OFF);
-    drv_gpio_id601_vled(ID601_VLED_OFF);
-    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
-    drv_gpio_id601_ch_demux(ID601_CH_MAX);
-    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
+    drv_gpio_clear_id601();
 
     gt_test_list = TEST_LIST_NONE;
 
@@ -898,9 +875,7 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
         id601_test_iout_monitor_stop();
     }
 
-    gn_id601_test_iout_gain = ID601_IOUT_GAIN_HIGH;
-    drv_gpio_id601_iout_gain(gn_id601_test_iout_gain);
-
+    drv_gpio_clear_id601();
     drv_gpio_id601_vcc(ID601_VCC_3V3);
 
     if (false == id601_init_tm_entry_mode())
@@ -910,7 +885,7 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
         return;
     }
 
-    if (false == id601_init_analog_test_mode())
+    if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 Analog Test Mode Failed", __func__);
         id601_test_iout_monitor_stop();
@@ -945,6 +920,9 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
     gn_id601_iout_monitor_channel = channel;
     gn_id601_iout_monitor_tick = osKernelGetTickCount();
 
+    gn_id601_test_iout_gain = ID601_IOUT_GAIN_HIGH;
+    drv_gpio_id601_iout_gain(gn_id601_test_iout_gain);
+
     drv_gpio_id601_vled(ID601_VLED_ON);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST]: ID601 Iout One Channel Started. channel=%u, max_curr_lvl=%u, vref=%u", (unsigned)(channel + 1U), (unsigned)max_curr_lvl, (unsigned)vref);
@@ -952,11 +930,7 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
 
 void id601_test_iout_monitor_stop(void)
 {
-    drv_gpio_id601_vcc(ID601_VCC_OFF);
-    drv_gpio_id601_vled(ID601_VLED_OFF);
-    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
-    drv_gpio_id601_ch_demux(ID601_CH_MAX);
-    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
+    drv_gpio_clear_id601();
     ads114s08_set_conversion_enable(ADS_DEV_1, false);
 
     gb_id601_iout_monitor_enable = false;

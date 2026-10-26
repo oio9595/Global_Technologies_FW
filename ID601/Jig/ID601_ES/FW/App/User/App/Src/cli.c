@@ -30,6 +30,7 @@
 #include "drv_id601.h"
 #include "id601_test.h"
 #include "id601_trim.h"
+#include "drv_timer.h"
 #include "common_def.h"
 /* USER CODE END Includes */
 
@@ -44,6 +45,9 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_RESET,
     CLI_CMD_BOARD_TYPE,
 
+    CLI_CMD_VSYNC_NORMAL,
+    CLI_CMD_VSYNC_TEST,
+
     CLI_CMD_TRIM_START,
     CLI_CMD_TRIM_RESULT,
     CLI_CMD_TEST_START,
@@ -57,6 +61,7 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID601_READ,
     CLI_CMD_ID601_DUMP,
     CLI_CMD_ID601_INIT,
+    CLI_CMD_ID601_MODE,
     CLI_CMD_ID601_EFUSE,
 
     CLI_CMD_MAX
@@ -70,6 +75,12 @@ typedef enum tag_MANUAL_TEST_LIST
     MANUAL_TEST_UVOV_LDO,
     MANUAL_TEST_UVOV_DAC,
     MANUAL_TEST_UVOV_OSC,
+    MANUAL_TEST_OPEN_DETECTOR,
+    MANUAL_TEST_FB_DETECTOR,
+    MANUAL_TEST_SHORT_DETECTOR,
+    MANUAL_TEST_FAULT_FLAG,
+    MANUAL_TEST_BIST,
+    MANUAL_TEST_HVS,
 
     MANUAL_TEST_MAX
 } manual_test_list_t;
@@ -138,6 +149,18 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "board_type",
         "board_type <type>"
         "\r\n    0/omitted=list + current, 1=GT, 2=MOBIS"
+    },
+    {
+        CLI_CMD_VSYNC_NORMAL,
+        "vsync",
+        "vsync <type>"
+        "\r\n    0/omitted=list + current, 1=stop, 2=start"
+    },
+    {
+        CLI_CMD_VSYNC_TEST,
+        "vsync_test",
+        "vsync_test <type>"
+        "\r\n    0/omitted=list + current, 1=stop, 2=start"
     },
     {
         CLI_CMD_TRIM_START,
@@ -217,7 +240,13 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_ID601_INIT,
         "id601_init",
         "id601_init <mode>"
-        "\r\n    0/omitted=list, 1=Testmode Entry, 2=Analog Test, 3=FLL Test"
+        "\r\n    0/omitted=list, 1=Testmode Entry, 2=Dimming"
+    },
+    {
+        CLI_CMD_ID601_MODE,
+        "id601_mode",
+        "id601_mode <mode>"
+        "\r\n    0/omitted=list, 1=Analog Test, 2=FLL Test, 3=Dimming Type1, 4=Dimming Type2"
     },
     {
         CLI_CMD_ID601_EFUSE,
@@ -247,6 +276,7 @@ extern osThreadId_t ID601TestTaskHandle;
  */
 static void cli_print_banner(void)
 {
+    const uint16_t id601_daisy = drv_id601_get_daisy_length();
     drv_uart_printf(LOG_LV_INFO, CLI_CLEAR_SCREEN);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
@@ -257,7 +287,7 @@ static void cli_print_banner(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Git Rev   : %s", FW_GIT_REV);
     drv_uart_printf(LOG_LV_INFO, "\r\n  * FW Log Level : %s", drv_uart_get_log_level());
     drv_uart_printf(LOG_LV_INFO, "\r\n  * Board Type   : %s", (BOARD_TYPE_GT == drv_gpio_get_board_type()) ? ("GT") : ("MOBIS"));
-    drv_uart_printf(LOG_LV_INFO, "\r\n  * ID601 Daisy  : %u", drv_id601_get_daisy_length());
+    drv_uart_printf(LOG_LV_INFO, "\r\n  * ID601 Daisy  : %u", id601_daisy);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n====================================================");
     drv_uart_printf(LOG_LV_INFO, "\r\n  Type 'help' or '?' to view available CLI commands.");
@@ -511,6 +541,50 @@ static inline void cli_cmd_function_board_type(void)
         drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown board type command: %u.", type);
     }
 }
+static inline void cli_cmd_function_vsync(void)
+{
+    const uint32_t type = gt_cli_request.val_1;
+    if (0U == type)
+    {
+        cli_print_command_usage(CLI_CMD_VSYNC_NORMAL);
+    }
+    else if (1U == type)
+    {
+        // TIM8 stop
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync stopped");
+    }
+    else if (2U == type)
+    {
+        // TIM8 start
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown vsync command: %u.", type);
+    }
+}
+static inline void cli_cmd_function_vsync_test(void)
+{
+    const uint32_t type = gt_cli_request.val_1;
+    if (0U == type)
+    {
+        cli_print_command_usage(CLI_CMD_VSYNC_TEST);
+    }
+    else if (1U == type)
+    {
+        drv_tim_test_vsync_stop();
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync Test stopped");
+    }
+    else if (2U == type)
+    {
+        drv_tim_test_vsync_start();
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync Test started");
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [CLI] Unknown vsync_test command: %u.", type);
+    }
+}
 static inline void cli_cmd_function_trim_start(void)
 {
     osThreadFlagsSet(ID601TrimTaskHandle, TRIM_START_FLAG);
@@ -558,11 +632,17 @@ static inline void cli_cmd_function_test_iout_monitor(void)
 static inline void cli_cmd_help_test_manual(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Test Manual Help:");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    1: Driving Voltage <ch:1-12>");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    2: UV VDD");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    3: UV/OV LDO <option 1:INIT, 2:UV, 3:OV>");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    4: UV/OV DAC <option 1:INIT, 2:UV, 3:OV>");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    5: UV/OV OSC <option 1:INIT, 2:UV, 3:OV>");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: Driving Voltage <ch:1-12>", MANUAL_TEST_DRIVING_VOLTAGE);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV VDD", MANUAL_TEST_UV_VDD);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV LDO     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV DAC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV OSC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: OPEN DETECTOR, not yet", MANUAL_TEST_OPEN_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: FB DETECTOR, not yet", MANUAL_TEST_FB_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: SHORT DETECTOR, not yet", MANUAL_TEST_SHORT_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: FAULT FLAG, not yet", MANUAL_TEST_FAULT_FLAG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: BIST", MANUAL_TEST_BIST);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: HVS", MANUAL_TEST_HVS);
 }
 static inline void cli_cmd_function_test_manual(void)
 {
@@ -589,11 +669,13 @@ static inline void cli_cmd_function_test_manual(void)
         }
         case MANUAL_TEST_UV_VDD:
         {
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
             if (false == id601_init_tm_entry_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
             }
-            if (false == id601_init_analog_test_mode())
+            if (false == id601_set_analog_test_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
             }
@@ -612,11 +694,13 @@ static inline void cli_cmd_function_test_manual(void)
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] \"test_manual %u %u\" is invalid.", gt_cli_request.val_1, gt_cli_request.val_2);
                 return;
             }
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
             if (false == id601_init_tm_entry_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
             }
-            if (false == id601_init_analog_test_mode())
+            if (false == id601_set_analog_test_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
             }
@@ -670,11 +754,13 @@ static inline void cli_cmd_function_test_manual(void)
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] \"test_manual %u %u\" is invalid.", gt_cli_request.val_1, gt_cli_request.val_2);
                 return;
             }
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
             if (false == id601_init_tm_entry_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
             }
-            if (false == id601_init_analog_test_mode())
+            if (false == id601_set_analog_test_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
             }
@@ -728,11 +814,13 @@ static inline void cli_cmd_function_test_manual(void)
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] \"test_manual %u %u\" is invalid.", gt_cli_request.val_1, gt_cli_request.val_2);
                 return;
             }
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
             if (false == id601_init_tm_entry_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
             }
-            if (false == id601_init_analog_test_mode())
+            if (false == id601_set_analog_test_mode())
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
             }
@@ -753,11 +841,11 @@ static inline void cli_cmd_function_test_manual(void)
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, drv_id601_get_crc_func()))
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, 0x00C);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, 0x00B);
                     break;
                 case 3U:
                     if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
@@ -766,16 +854,88 @@ static inline void cli_cmd_function_test_manual(void)
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, drv_id601_get_crc_func()))
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
                     }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, 0x00B);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, 0x00C);
                     break;
                 default:
                     drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid option for UV/OV DAC test.");
                     return;
             }
+            break;
+        }
+        case MANUAL_TEST_OPEN_DETECTOR:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Not available for Open Detector test.");
+            break;
+        }
+        case MANUAL_TEST_FB_DETECTOR:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Not available for FB Detector test.");
+            break;
+        }
+        case MANUAL_TEST_SHORT_DETECTOR:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Not available for Short Detector test.");
+            break;
+        }
+        case MANUAL_TEST_FAULT_FLAG:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Not available for Fault Flag test.");
+            break;
+        }
+        case MANUAL_TEST_BIST:
+        {
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
+            if (false == id601_init_tm_entry_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
+            }
+            if (false == id601_set_analog_test_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
+            }
+
+            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x000, drv_id601_get_crc_func()))
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+            }
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x000, 0x000);
+
+            LL_GPIO_SetOutputPin(DEBUG1_GPIO_Port, DEBUG1_Pin);
+            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_BIST, 0x800, drv_id601_get_crc_func()))
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+            }
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", 1U, ID601_ADDR_GENERAL_BIST, 0x800, 0x800);
+
+            drv_tim_delay_us(50U);
+
+            uint16_t read_data = 0xFFF;
+            if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_BIST, drv_id601_get_crc_func(), &read_data))
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");
+            }
+            LL_GPIO_ResetOutputPin(DEBUG1_GPIO_Port, DEBUG1_Pin);
+            if (0x02U == read_data)
+            {
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [BIST] Addr:0x%02X, Data:%4u(0x%03X) (O)", ID601_ADDR_GENERAL_BIST, read_data, read_data);
+            }
+            else
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] [BIST] Addr:0x%02X, Data:%4u(0x%03X) (X)", ID601_ADDR_GENERAL_BIST, read_data, read_data);
+            }
+
+            break;
+        }
+        case MANUAL_TEST_HVS:
+        {
+            drv_id601_set_hvs_flag(true);
+            test_set_vref_sweep_enable(false);
+            osThreadFlagsSet(ID601TestTaskHandle, TEST_START_FLAG);
             break;
         }
         default:
@@ -905,12 +1065,11 @@ static inline void cli_cmd_function_id601_write(void)
     }
     /* CLI selectors 1/2 map to the driver's existing General/Mirror banks. */
     const uint16_t bank = (1U == bank_option) ? ID601_REGISTER_BANK_GENERAL : ID601_REGISTER_BANK_MIRROR;
-    if ((gt_cli_request.val_2 < 1U) ||
-        (gt_cli_request.val_2 > drv_id601_get_daisy_length()) ||
-        (gt_cli_request.val_3 >= ((ID601_REGISTER_BANK_GENERAL == bank) ?
-            ID601_ADDR_GENERAL_MAX_COUNT : ID601_ADDR_MIRROR_MAX_COUNT)) ||
+    if ((gt_cli_request.val_2 < 1U) || (gt_cli_request.val_2 > drv_id601_get_daisy_length()) ||
+        (gt_cli_request.val_3 >= ((ID601_REGISTER_BANK_GENERAL == bank) ? (ID601_ADDR_GENERAL_MAX_COUNT) : (ID601_ADDR_MIRROR_MAX_COUNT))) ||
         (gt_cli_request.val_4 > 0xFFFU))
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid arguments for id601_write command.");
         cli_print_command_usage(CLI_CMD_ID601_WRITE);
         return;
     }
@@ -961,6 +1120,7 @@ static inline void cli_cmd_function_id601_read(void)
         (gt_cli_request.val_3 >= ((ID601_REGISTER_BANK_GENERAL == bank) ?
             ID601_ADDR_GENERAL_MAX_COUNT : ID601_ADDR_MIRROR_MAX_COUNT)))
     {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Invalid arguments for id601_read command.");
         cli_print_command_usage(CLI_CMD_ID601_READ);
         return;
     }
@@ -978,7 +1138,7 @@ static inline void cli_cmd_function_id601_read(void)
         return;
     }
 
-    uint16_t read_data = 0U;
+    uint16_t read_data = 0xFFF;
     if (false == id601_read_register(bank, ic_num, addr, drv_id601_get_crc_func(), &read_data))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");
@@ -987,11 +1147,11 @@ static inline void cli_cmd_function_id601_read(void)
     {
         if (ID601_REGISTER_BANK_GENERAL == bank)
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read ] [General]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
         }
         else
         {
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read] [Mirror]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Read ] [Mirror]: IC:%u, Addr:0x%02X, Data:%4u(0x%03X)", ic_num, addr, read_data, read_data);
         }
     }
 }
@@ -1001,25 +1161,77 @@ static inline void cli_cmd_function_id601_dump(void)
 }
 static inline void cli_cmd_function_id601_init(void)
 {
+    const uint32_t max_init = 2U; // tm_entry, dimming
     const uint32_t mode = gt_cli_request.val_1;
 
-    if (mode > 3U)
+    if (mode > max_init)
     {
         cli_print_command_usage(CLI_CMD_ID601_INIT);
         return;
     }
 
     typedef bool (*id601_init_func_t)(void);
-    const id601_init_func_t init_funcs[3] =
+    const id601_init_func_t init_funcs[2] =
     {
         id601_init_tm_entry_mode,
-        id601_init_analog_test_mode,
-        id601_init_fll_test_mode,
+        id601_init_dimming_mode
     };
 
     if (0U == mode)
     {
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] ID601 mode list: 1=TM Entry, 2=Analog Test, 3=FLL Test.");
+        cli_print_command_usage(CLI_CMD_ID601_INIT);
+    }
+    else
+    {
+        drv_gpio_clear_id601();
+        drv_gpio_id601_vcc(ID601_VCC_3V3);
+        switch (mode)
+        {
+            case 1U:
+            case 2U:
+            {
+                if (true == init_funcs[mode - 1U]())
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Initialize OK");
+                }
+                else
+                {
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Initialize Failed (%u)", mode);
+                }
+                break;
+            }
+            default:
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Init %u is invalid.", mode);
+                cli_print_command_usage(CLI_CMD_ID601_INIT);
+                break;
+            }
+        }
+    }
+}
+static inline void cli_cmd_function_id601_mode(void)
+{
+    const uint32_t max_mode = 4U; // analog test, FLL test, Dimming Type1, Dimming Type2
+    const uint32_t mode = gt_cli_request.val_1;
+
+    if (mode > max_mode)
+    {
+        cli_print_command_usage(CLI_CMD_ID601_MODE);
+        return;
+    }
+
+    typedef bool (*id601_mode_func_t)(void);
+    const id601_mode_func_t init_funcs[4] =
+    {
+        id601_set_analog_test_mode,
+        id601_set_fll_test_mode,
+        id601_set_dimming_type1_mode,
+        id601_set_dimming_type2_mode,
+    };
+
+    if (0U == mode)
+    {
+        cli_print_command_usage(CLI_CMD_ID601_MODE);
     }
     else
     {
@@ -1028,20 +1240,22 @@ static inline void cli_cmd_function_id601_init(void)
             case 1U:
             case 2U:
             case 3U:
+            case 4U:
             {
                 if (true == init_funcs[mode - 1U]())
                 {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Successfully initialized ID601 in mode %u.", mode);
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Set Mode OK");
                 }
                 else
                 {
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to initialize ID601 in mode %u.", mode);
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Set Mode Failed (%u)", mode);
                 }
                 break;
             }
             default:
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %u mode is invalid.", mode);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Mode %u is invalid.", mode);
+                cli_print_command_usage(CLI_CMD_ID601_MODE);
                 break;
             }
         }
@@ -1090,6 +1304,16 @@ static void cli_command_execute(void)
         case CLI_CMD_BOARD_TYPE:
         {
             cli_cmd_function_board_type();
+            break;
+        }
+        case CLI_CMD_VSYNC_NORMAL:
+        {
+            cli_cmd_function_vsync();
+            break;
+        }
+        case CLI_CMD_VSYNC_TEST:
+        {
+            cli_cmd_function_vsync_test();
             break;
         }
         case CLI_CMD_TRIM_START:
@@ -1150,6 +1374,11 @@ static void cli_command_execute(void)
         case CLI_CMD_ID601_INIT:
         {
             cli_cmd_function_id601_init();
+            break;
+        }
+        case CLI_CMD_ID601_MODE:
+        {
+            cli_cmd_function_id601_mode();
             break;
         }
         case CLI_CMD_ID601_EFUSE:

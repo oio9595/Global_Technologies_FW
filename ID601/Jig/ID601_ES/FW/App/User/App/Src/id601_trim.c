@@ -371,6 +371,9 @@ static bool trim_step_initial(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
+    drv_gpio_clear_id601();
+    drv_gpio_id601_vcc(ID601_VCC_3V3);
+
     if (false == id601_init_tm_entry_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 TM Entry Mode Failed", __func__);
@@ -383,7 +386,7 @@ static bool trim_step_initial(thread_data_t *td)
         return false;
     }
 
-    if (false == id601_init_analog_test_mode())
+    if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 Analog Test Mode Failed", __func__);
         return trim_error_handler(td);
@@ -921,6 +924,9 @@ static bool trim_step_pwr_reboot(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
+    drv_gpio_clear_id601();
+    drv_gpio_id601_vcc(ID601_VCC_3V3);
+
     if (false == id601_init_after_efuse_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] %s: ID601 After Efuse Mode Failed", __func__);
@@ -1009,11 +1015,7 @@ static bool trim_step_pwr_off(thread_data_t *td)
 
     LL_GPIO_ResetOutputPin(DEBUG2_GPIO_Port, DEBUG2_Pin);
 
-    drv_gpio_id601_vcc(ID601_VCC_OFF);
-    drv_gpio_id601_vled(ID601_VLED_OFF);
-    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
-    drv_gpio_id601_ch_demux(ID601_CH_MAX);
-    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
+    drv_gpio_clear_id601();
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] Power Off");
 
@@ -1031,11 +1033,7 @@ void id601_trim_clear_parameters(thread_data_t *td)
 {
     USER_ASSERT(NULL != td);
 
-    drv_gpio_id601_vcc(ID601_VCC_OFF);
-    drv_gpio_id601_vled(ID601_VLED_OFF);
-    drv_gpio_id601_test_relay(ID601_RELAY_DIS);
-    drv_gpio_id601_ch_demux(ID601_CH_MAX);
-    drv_gpio_id601_iout_gain(ID601_IOUT_GAIN_MAX);
+    drv_gpio_clear_id601();
 
     gt_trim_list = TRIM_LIST_NONE;
 

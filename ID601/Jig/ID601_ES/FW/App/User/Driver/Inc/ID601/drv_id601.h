@@ -83,6 +83,9 @@ extern void drv_id601_make_mutex(void);
 extern bool drv_id601_set_daisy_length(uint16_t daisy_length);
 extern uint16_t drv_id601_get_daisy_length(void);
 
+extern bool drv_id601_set_hvs_flag(bool hvs_flag);
+extern bool drv_id601_get_hvs_flag(void);
+
 extern bool drv_id601_set_crc_func(id601_crc_func_t crc_func);
 extern id601_crc_func_t drv_id601_get_crc_func(void);
 
@@ -155,9 +158,13 @@ extern bool id601_dump_registers(void);
 extern bool id601_compare_initial_code(void);
 
 extern bool id601_init_tm_entry_mode(void);
-extern bool id601_init_analog_test_mode(void);
-extern bool id601_init_fll_test_mode(void);
+extern bool id601_init_dimming_mode(void);
 extern bool id601_init_after_efuse_mode(void);
+
+extern bool id601_set_analog_test_mode(void);
+extern bool id601_set_fll_test_mode(void);
+extern bool id601_set_dimming_type1_mode(void);
+extern bool id601_set_dimming_type2_mode(void);
 
 extern void id601_trim_setup_iref1(void);
 extern void id601_trim_setup_iref2(void);

@@ -67,7 +67,7 @@ static volatile bool gb_tim2_capture_dma_active[2] = {false, false};
 static uint32_t gn_tim5_capture_ccr_buff[TIM5_CAPTURE_SIZE];
 static volatile bool gb_tim5_capture_dma_active = false;
 
-extern osThreadId_t ID601TestTaskHandle;
+extern osThreadId_t VsyncTestTaskHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -417,8 +417,7 @@ void drv_tim_test_vsync_irq_handler(void)
     if (true == LL_TIM_IsActiveFlag_UPDATE(TIM11))
     {
         LL_TIM_ClearFlag_UPDATE(TIM11);
-        //id601_sync_gen(drv_id601_get_crc_func());
-        osThreadFlagsSet(ID601TestTaskHandle, TEST_VSYNC_FLAG);
+        osThreadFlagsSet(VsyncTestTaskHandle, TEST_VSYNC_TEST_FLAG);
     }
 }
 /* USER CODE END 0 */

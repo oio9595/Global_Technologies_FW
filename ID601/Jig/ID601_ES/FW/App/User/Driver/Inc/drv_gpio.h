@@ -95,6 +95,8 @@ typedef enum tag_ID601_IOUT_GAIN
 
 /* USER CODE BEGIN EFP */
 extern void drv_gpio_init(void);
+extern void drv_gpio_clear_id601(void);
+
 extern uint8_t drv_gpio_get_board_type(void);
 extern void drv_gpio_set_board_type(uint8_t board_type);
 

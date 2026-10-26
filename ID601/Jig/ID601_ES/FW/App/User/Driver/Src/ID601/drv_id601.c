@@ -348,6 +348,7 @@ static uint16_t gn_id601_general_regs[ID601_ADDR_GENERAL_MAX_COUNT][ID601_DAISY_
 static uint16_t gn_id601_mirror_regs[ID601_ADDR_MIRROR_MAX_COUNT][ID601_DAISY_LENGTH_MAX];
 static uint16_t gn_id601_trim_search_mirror_regs[ID601_ADDR_MIRROR_MAX_COUNT];
 static uint16_t gn_id601_fault;
+static bool gb_id601_hvs_flag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -390,12 +391,24 @@ bool drv_id601_set_daisy_length(uint16_t daisy_length)
         return false;
     }
     gn_id601_daisy_length = daisy_length;
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Daisy length set to %u.", daisy_length);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Set Daisy length: %u.", daisy_length);
     return true;
 }
 uint16_t drv_id601_get_daisy_length(void)
 {
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get Daisy length: %u.", gn_id601_daisy_length);
     return gn_id601_daisy_length;
+}
+bool drv_id601_set_hvs_flag(bool hvs_flag)
+{
+    gb_id601_hvs_flag = hvs_flag;
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Set HVS flag: %s.", hvs_flag ? "true" : "false");
+    return true;
+}
+bool drv_id601_get_hvs_flag(void)
+{
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get HVS flag: %s.", gb_id601_hvs_flag ? "true" : "false");
+    return gb_id601_hvs_flag;
 }
 
 bool drv_id601_set_crc_func(id601_crc_func_t crc_func)
@@ -1990,7 +2003,7 @@ bool id601_dump_registers(void)
     {
         for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
         {
-            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X 0x%03X", "GENERAL", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_general_regs[addr][dev]);
+            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "GENERAL", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_general_regs[addr][dev]);
 
             if ((length > 0) && ((size_t)length < sizeof(buffer)))
             {
@@ -2003,7 +2016,7 @@ bool id601_dump_registers(void)
     {
         for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
         {
-            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X 0x%03X", "MIRROR", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_mirror_regs[addr][dev]);
+            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "MIRROR", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_mirror_regs[addr][dev]);
 
             if ((length > 0) && ((size_t)length < sizeof(buffer)))
             {
@@ -2024,7 +2037,7 @@ bool id601_compare_initial_code(void)
             {
                 continue; // Skip comparison for test mode, write protect, and op mode registers
             }
-            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare general register 0x%03X with initial code (expected: 0x%03X, actual: 0x%03X)", __func__, id601_addr, gn_id601_general_regs_initial_code[id601_addr], gn_id601_general_regs[id601_addr][0]);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare general register 0x%02X with initial code (expected: 0x%03X, actual: 0x%03X)", __func__, id601_addr, gn_id601_general_regs_initial_code[id601_addr], gn_id601_general_regs[id601_addr][0]);
             return false;
         }
     }
@@ -2033,7 +2046,7 @@ bool id601_compare_initial_code(void)
     {
         if (gn_id601_mirror_regs_initial_code[id601_addr] != gn_id601_mirror_regs[id601_addr][0])
         {
-            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare mirror register 0x%03X with initial code (expected: 0x%03X, actual: 0x%03X)", __func__, id601_addr, gn_id601_mirror_regs_initial_code[id601_addr], gn_id601_mirror_regs[id601_addr][0]);
+            drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to compare mirror register 0x%01X with initial code (expected: 0x%03X, actual: 0x%03X)", __func__, id601_addr, gn_id601_mirror_regs_initial_code[id601_addr], gn_id601_mirror_regs[id601_addr][0]);
             return false;
         }
     }
@@ -2061,29 +2074,61 @@ bool id601_init_tm_entry_mode(void)
     drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gn_id601_daisy_length);
-
-    drv_gpio_id601_vcc(ID601_VCC_3V3);
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
 
     if (false == id601_enter_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
-        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        drv_gpio_clear_id601();
         return false;
     }
 
     if (false == id601_read_all_registers())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Initial register read failed. ID601 Power Off.", __func__);
-        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        drv_gpio_clear_id601();
         return false;
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] TM Entry mode entered");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] TM Entry Init OK");
+    return true;
+}
+bool id601_init_dimming_mode(void)
+{
+    id601_reset(gp_id601_crc_func);
+    id601_id_gen(gp_id601_crc_func);
+
+    if (false == id601_read_all_registers())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Initial register read failed. ID601 Power Off.", __func__);
+        drv_gpio_clear_id601();
+        return false;
+    }
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Dimming Init OK");
     return true;
 }
 
-bool id601_init_analog_test_mode(void)
+bool id601_init_after_efuse_mode(void)
+{
+    drv_id601_set_daisy_length(1U);
+
+    USER_ASSERT(1U == gn_id601_daisy_length);
+
+    id601_reset(gp_id601_crc_func);
+    id601_id_gen(gp_id601_crc_func);
+
+    if (false == id601_enter_test_mode())
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
+        drv_gpio_clear_id601();
+        return false;
+    }
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] After EFUSE Init OK");
+    return true;
+}
+
+bool id601_set_analog_test_mode(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
@@ -2165,11 +2210,11 @@ bool id601_init_analog_test_mode(void)
             }
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Analog Test mode entered");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Analog Test Mode OK");
     return true;
 }
 
-bool id601_init_fll_test_mode(void)
+bool id601_set_fll_test_mode(void)
 {
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
@@ -2234,28 +2279,308 @@ bool id601_init_fll_test_mode(void)
             }
         }
     }
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] FLL Test mode entered");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] FLL Test Mode OK");
     return true;
 }
 
-bool id601_init_after_efuse_mode(void)
+bool id601_set_dimming_type1_mode(void)
 {
-    drv_id601_set_daisy_length(1U);
-
-    USER_ASSERT(1U == gn_id601_daisy_length);
-
-    drv_gpio_id601_vcc(ID601_VCC_3V3);
-    id601_reset(gp_id601_crc_func);
-    id601_id_gen(gp_id601_crc_func);
-
-    if (false == id601_enter_test_mode())
+    const uint16_t daisy = gn_id601_daisy_length;
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Entering test mode failed. ID601 Power Off.", __func__);
-        drv_gpio_id601_vcc(ID601_VCC_OFF);
-        return false;
+        switch (id601_addr)
+        {
+            case ID601_ADDR_GENERAL_LD_CONTROL:
+            {
+                const uint16_t _r01_SV_NO = 32U;
+                const uint16_t _r01_LD_TYPE = 1U;
+                const uint16_t _r01_DELAY_CH_EN = 0U;
+                const uint16_t _r01_SYNCMODE = 0U;
+                const uint16_t _r01_LD_RES = 1U;
+                const uint16_t _r01_LD_DIR = 1U;
+                const uint16_t _r01_LD_MODE = 0U;
+                if (false == id601_write_ld_control(daisy, \
+                    _r01_SV_NO, _r01_LD_TYPE, _r01_DELAY_CH_EN, _r01_SYNCMODE, _r01_LD_RES, _r01_LD_DIR, _r01_LD_MODE))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_LD_SIZE:
+            {
+                const uint16_t _r02_LD_SIZE = 36U;
+                if (false == id601_write_ld_size(daisy, _r02_LD_SIZE))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_PWMCLK_DIV1_2:
+            {
+                const uint16_t _r03_PWMCLK_DIV2 = 14U;
+                const uint16_t _r03_PWMCLK_DIV1 = 35U;
+                if (false == id601_write_pwmclk_div_1_2(daisy, _r03_PWMCLK_DIV2, _r03_PWMCLK_DIV1))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_PWMCLK_DIV2_3:
+            {
+                const uint16_t _r04_PWMCLK_DIV3 = 9U;
+                const uint16_t _r04_PWMCLK_DIV2 = 0U;
+                if (false == id601_write_pwmclk_div_2_3(daisy, _r04_PWMCLK_DIV3, _r04_PWMCLK_DIV2))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_CHANNEL_ENABLE:
+            {
+                const uint16_t _r05_CH12_EN = 1U;
+                const uint16_t _r05_CH11_EN = 1U;
+                const uint16_t _r05_CH10_EN = 1U;
+                const uint16_t _r05_CH09_EN = 1U;
+                const uint16_t _r05_CH08_EN = 1U;
+                const uint16_t _r05_CH07_EN = 1U;
+                const uint16_t _r05_CH06_EN = 1U;
+                const uint16_t _r05_CH05_EN = 1U;
+                const uint16_t _r05_CH04_EN = 1U;
+                const uint16_t _r05_CH03_EN = 1U;
+                const uint16_t _r05_CH02_EN = 1U;
+                const uint16_t _r05_CH01_EN = 1U;
+                if (false == id601_write_channel_enable(daisy, _r05_CH12_EN, _r05_CH11_EN, _r05_CH10_EN, _r05_CH09_EN, _r05_CH08_EN, _r05_CH07_EN, _r05_CH06_EN,\
+                        _r05_CH05_EN, _r05_CH04_EN, _r05_CH03_EN, _r05_CH02_EN, _r05_CH01_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FAULT_CONTROL:
+            {
+                const uint16_t _r06_FT_MODE = 3U;
+                const uint16_t _r06_FB_MODE = 2U;
+                const uint16_t _r06_O_FB_E = 0U;
+                const uint16_t _r06_T_DET_E = 1U;
+                const uint16_t _r06_S_DET_E = 1U;
+                const uint16_t _r06_O_DET_E = 1U;
+                const uint16_t _r06_T_OFF_E = 0U;
+                const uint16_t _r06_S_OFF_E = 0U;
+                const uint16_t _r06_O_OFF_E = 0U;
+                if (false == id601_write_fault_control(daisy, _r06_FT_MODE, _r06_FB_MODE, _r06_O_FB_E, _r06_T_DET_E, _r06_S_DET_E, _r06_O_DET_E, _r06_T_OFF_E, _r06_S_OFF_E, _r06_O_OFF_E))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FB_LEVEL:
+            {
+                const uint16_t _r07_FB3_LEVEL = 0U;
+                const uint16_t _r07_FB2_LEVEL = 0U;
+                const uint16_t _r07_FB1_LEVEL = 0U;
+                if (false == id601_write_fb_level(daisy, _r07_FB3_LEVEL, _r07_FB2_LEVEL, _r07_FB1_LEVEL))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_SHORT_LEVEL:
+            {
+                const uint16_t _r08_SHORT3_LEVEL = 7U;
+                const uint16_t _r08_SHORT2_LEVEL = 7U;
+                const uint16_t _r08_SHORT1_LEVEL = 7U;
+                if (false == id601_write_short_level(daisy, _r08_SHORT3_LEVEL, _r08_SHORT2_LEVEL, _r08_SHORT1_LEVEL))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_MAX_CURR_LEVEL:
+            {
+                const uint16_t _r0D_MAX_CURR_LEVEL3 = 5U;
+                const uint16_t _r0D_MAX_CURR_LEVEL2 = 5U;
+                const uint16_t _r0D_MAX_CURR_LEVEL1 = 5U;
+                if (false == id601_write_max_current_level(daisy, _r0D_MAX_CURR_LEVEL3, _r0D_MAX_CURR_LEVEL2, _r0D_MAX_CURR_LEVEL1))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_MAX_CURR_VREF1:
+            {
+                const uint16_t _r0E_MAX_CURR_VREF1 = 0xFFFU;
+                if (false == id601_write_max_curr_vref1(daisy, _r0E_MAX_CURR_VREF1))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_MAX_CURR_VREF2:
+            {
+                const uint16_t _r0F_MAX_CURR_VREF2 = 0xFFFU;
+                if (false == id601_write_max_curr_vref2(daisy, _r0F_MAX_CURR_VREF2))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_MAX_CURR_VREF3:
+            {
+                const uint16_t _r10_MAX_CURR_VREF3 = 0xFFFU;
+                if (false == id601_write_max_curr_vref3(daisy, _r10_MAX_CURR_VREF3))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_CH_LD_TYPE:
+            {
+                const uint16_t _r11_CH12_LD_TYPE = 0U;
+                const uint16_t _r11_CH11_LD_TYPE = 0U;
+                const uint16_t _r11_CH10_LD_TYPE = 0U;
+                const uint16_t _r11_CH09_LD_TYPE = 0U;
+                const uint16_t _r11_CH08_LD_TYPE = 0U;
+                const uint16_t _r11_CH07_LD_TYPE = 0U;
+                const uint16_t _r11_CH06_LD_TYPE = 0U;
+                const uint16_t _r11_CH05_LD_TYPE = 0U;
+                const uint16_t _r11_CH04_LD_TYPE = 0U;
+                const uint16_t _r11_CH03_LD_TYPE = 0U;
+                const uint16_t _r11_CH02_LD_TYPE = 0U;
+                const uint16_t _r11_CH01_LD_TYPE = 0U;
+                if (false == id601_write_ch_ld_type(daisy, _r11_CH12_LD_TYPE, _r11_CH11_LD_TYPE, _r11_CH10_LD_TYPE, _r11_CH09_LD_TYPE,
+                    _r11_CH08_LD_TYPE, _r11_CH07_LD_TYPE, _r11_CH06_LD_TYPE, _r11_CH05_LD_TYPE,
+                    _r11_CH04_LD_TYPE, _r11_CH03_LD_TYPE, _r11_CH02_LD_TYPE, _r11_CH01_LD_TYPE))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FAULT_CONFIGURATION:
+            {
+                const uint16_t _r18_CRC_EN = 0U;
+                const uint16_t _r18_WD_DIMM_EN = 0U;
+                const uint16_t _r18_WD_TIMECFG = 0U;
+                const uint16_t _r18_WD_EN = 0U;
+                const uint16_t _r18_VS_MISS_DIMM_EN = 0U;
+                const uint16_t _r18_VS_MISS_EN = 0U;
+                const uint16_t _r18_CH_CTRL_MISMATCH_EN = 0U;
+                const uint16_t _r18_VREF_OVUV_OFF_EN = 0U;
+                const uint16_t _r18_VREF_OVUV_EN = 0U;
+                const uint16_t _r18_OSC_LDO_OVUV_EN = 0U;
+                const uint16_t _r18_LDO_OVUV_EN = 0U;
+                if (false == id601_write_fault_configuration(daisy, _r18_CRC_EN, _r18_WD_DIMM_EN, _r18_WD_TIMECFG, _r18_WD_EN,
+                    _r18_VS_MISS_DIMM_EN, _r18_VS_MISS_EN, _r18_CH_CTRL_MISMATCH_EN, _r18_VREF_OVUV_OFF_EN,
+                    _r18_VREF_OVUV_EN, _r18_OSC_LDO_OVUV_EN, _r18_LDO_OVUV_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_SERIAL_CLK_GEN:
+            {
+                const uint16_t _r1C_SCLK_LOW = 12U;
+                const uint16_t _r1C_SCLK_HIGH = 24U;
+                if (false == id601_write_serial_clk_gen(daisy, _r1C_SCLK_LOW, _r1C_SCLK_HIGH))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_SERIAL_LATENCY:
+            {
+                const uint16_t _r1D_SERIAL_LATENCY = 0x080U;
+                if (false == id601_write_serial_latency(daisy, _r1D_SERIAL_LATENCY))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_TIMEOUT:
+            {
+                const uint16_t _r21_TIMEOUT = 0x3FFU;
+                if (false == id601_write_timeout(daisy, _r21_TIMEOUT))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FLLCNT1:
+            {
+                const uint16_t _r22_FLLCNT = 0x27EU;
+                if (false == id601_write_fllcnt1(daisy, _r22_FLLCNT))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_FLLCNT2:
+            {
+                const uint16_t _r23_FLL_EN = 1U;
+                const uint16_t _r23_FLL_RANGE = 2U;
+                const uint16_t _r23_FLLCNT = 0x68U;
+                if (false == id601_write_fllcnt2(daisy, _r23_FLL_EN, _r23_FLL_RANGE, _r23_FLLCNT))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_CHOP_EN:
+            {
+                const uint16_t _r26_OPEN_MASK_OPT = 0U;
+                const uint16_t _r26_CHOP_EN = 1U;
+                const uint16_t _r26_CHOP_DRV_EN = 1U;
+                const uint16_t _r26_CHOP_OSC_LDO_EN = 1U;
+                const uint16_t _r26_CHOP_OSC_EN = 1U;
+                const uint16_t _r26_CHOP_DAC_EN = 1U;
+                const uint16_t _r26_CHOP_BGR_EN = 1U;
+                if (false == id601_write_chop_en(daisy, \
+                    _r26_OPEN_MASK_OPT, _r26_CHOP_EN, _r26_CHOP_DRV_EN, _r26_CHOP_OSC_LDO_EN, _r26_CHOP_OSC_EN, _r26_CHOP_DAC_EN, _r26_CHOP_BGR_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_VREF_FIX2:
+            {
+                const uint16_t _r2D_VREF_FIX2 = 1U;
+                    if (false == id601_write_vref_fix2(daisy, _r2D_VREF_FIX2))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_VREF_FIX3:
+            {
+                const uint16_t _r2E_VREF_FIX3 = 2U;
+                    if (false == id601_write_vref_fix3(daisy, _r2E_VREF_FIX3))
+                {
+                    return false;
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
     }
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Dimming Type1 Mode OK");
+    return true;
+}
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] After EFUSE Mode entered");
+bool id601_set_dimming_type2_mode(void)
+{
+    for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
+    {
+        switch (id601_addr)
+        {
+            default:
+            {
+                break;
+            }
+        }
+    }
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Dimming Type2 Mode OK");
     return true;
 }
 
@@ -2975,6 +3300,11 @@ static bool id601_test_check_is_trimmed(void)
 }
 void id601_test_setup_idds1(void)
 {
+    if (true == gb_id601_hvs_flag)
+    {
+        drv_gpio_id601_vcc(ID601_VCC_5V5);
+        drv_tim_delay_ms(490U); // total 500ms (10ms @ drv_gpio_id601_vcc function)
+    }
     drv_gpio_id601_vcc(ID601_VCC_3V3);
 }
 void id601_test_setup_iddd1(void)
@@ -2984,7 +3314,7 @@ void id601_test_setup_iddd1(void)
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 TM Entry Mode Failed", __func__);
     }
 
-    if (false == id601_init_analog_test_mode())
+    if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
     }
@@ -3149,7 +3479,7 @@ void id601_test_setup_osc(void)
 void id601_test_setup_fll1(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    if (false == id601_init_fll_test_mode())
+    if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
         return;
@@ -3171,7 +3501,7 @@ void id601_test_setup_fll1(void)
 void id601_test_setup_fll2(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    if (false == id601_init_fll_test_mode())
+    if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
         return;
@@ -3193,7 +3523,7 @@ void id601_test_setup_fll2(void)
 void id601_test_setup_fll3(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
-    if (false == id601_init_fll_test_mode())
+    if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
         return;
@@ -3216,7 +3546,7 @@ void id601_test_setup_iout_3p(void)
 {
     USER_ASSERT(1U == gn_id601_daisy_length);
 
-    if (false == id601_init_analog_test_mode())
+    if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
     }

@@ -73,6 +73,20 @@ const osThreadAttr_t ID601TrimTask_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for VsyncTask */
+osThreadId_t VsyncTaskHandle;
+const osThreadAttr_t VsyncTask_attributes = {
+  .name = "VsyncTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for VsyncTestTask */
+osThreadId_t VsyncTestTaskHandle;
+const osThreadAttr_t VsyncTestTask_attributes = {
+  .name = "VsyncTestTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -97,6 +111,8 @@ static void MX_TIM11_Init(void);
 void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
 void StartID601TrimTask(void *argument);
+void StartVsyncTask(void *argument);
+void StartVsyncTestTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -191,6 +207,12 @@ int main(void)
 
   /* creation of ID601TrimTask */
   ID601TrimTaskHandle = osThreadNew(StartID601TrimTask, NULL, &ID601TrimTask_attributes);
+
+  /* creation of VsyncTask */
+  VsyncTaskHandle = osThreadNew(StartVsyncTask, NULL, &VsyncTask_attributes);
+
+  /* creation of VsyncTestTask */
+  VsyncTestTaskHandle = osThreadNew(StartVsyncTestTask, NULL, &VsyncTestTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1447,6 +1469,53 @@ void StartID601TrimTask(void *argument)
       drv_uart_printf(LOG_LV_INFO, "%s", CLI_PROMPT);
   }
   /* USER CODE END StartID601TrimTask */
+}
+
+/* USER CODE BEGIN Header_StartVsyncTask */
+/**
+* @brief Function implementing the VsyncTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartVsyncTask */
+void StartVsyncTask(void *argument)
+{
+  /* USER CODE BEGIN StartVsyncTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartVsyncTask */
+}
+
+/* USER CODE BEGIN Header_StartVsyncTestTask */
+/**
+* @brief Function implementing the VsyncTestTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartVsyncTestTask */
+void StartVsyncTestTask(void *argument)
+{
+  /* USER CODE BEGIN StartVsyncTestTask */
+  /* Infinite loop */
+  for(;;)
+  {
+      uint32_t flags = osThreadFlagsWait(TEST_VSYNC_TEST_FLAG, osFlagsWaitAny, osWaitForever);
+
+      if ((int32_t)flags < 0)
+      {
+          /* 플래그 대기 오류 처리 */
+          continue;
+      }
+
+      if (false == id601_sync_gen(drv_id601_get_crc_func()))
+      {
+          drv_uart_printf(LOG_LV_ERROR, "\r\n    [RTOS] Vsync Test Failed");
+      }
+  }
+  /* USER CODE END StartVsyncTestTask */
 }
 
 /**

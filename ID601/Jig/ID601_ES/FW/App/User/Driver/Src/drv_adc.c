@@ -22,6 +22,7 @@
 /* 3. Project internal / System-related headers */
 #include "main.h"
 #include "drv_uart.h"
+#include "drv_timer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -67,6 +68,7 @@ void mcu_adc_set_conversion_enable(bool b_start)
         gn_mcu_conversion_count = MCU_ADC_READ_COUNT;
         LL_ADC_EnableIT_EOCS(ADC1);
         LL_ADC_Enable(ADC1);
+        drv_tim_delay_us(5);
         LL_ADC_REG_StartConversionSWStart(ADC1);
     }
     else
