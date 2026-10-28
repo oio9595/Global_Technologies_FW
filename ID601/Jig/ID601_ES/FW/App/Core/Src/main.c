@@ -80,13 +80,6 @@ const osThreadAttr_t VsyncTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for VsyncTestTask */
-osThreadId_t VsyncTestTaskHandle;
-const osThreadAttr_t VsyncTestTask_attributes = {
-  .name = "VsyncTestTask",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityLow,
-};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -112,7 +105,6 @@ void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
 void StartID601TrimTask(void *argument);
 void StartVsyncTask(void *argument);
-void StartVsyncTestTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -210,9 +202,6 @@ int main(void)
 
   /* creation of VsyncTask */
   VsyncTaskHandle = osThreadNew(StartVsyncTask, NULL, &VsyncTask_attributes);
-
-  /* creation of VsyncTestTask */
-  VsyncTestTaskHandle = osThreadNew(StartVsyncTestTask, NULL, &VsyncTestTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -642,7 +631,7 @@ static void MX_TIM1_Init(void)
   LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_1);
 
   /* TIM1 interrupt Init */
-  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),6, 0));
   NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
 
   /* USER CODE BEGIN TIM1_Init 1 */
@@ -821,6 +810,7 @@ static void MX_TIM3_Init(void)
   LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH1);
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
@@ -993,7 +983,7 @@ static void MX_TIM8_Init(void)
   /* TIM8 interrupt Init */
   NVIC_SetPriority(TIM8_BRK_TIM12_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn);
-  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),6, 0));
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
   NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),4, 0));
   NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
@@ -1001,15 +991,16 @@ static void MX_TIM8_Init(void)
   /* USER CODE BEGIN TIM8_Init 1 */
 
   /* USER CODE END TIM8_Init 1 */
-  TIM_InitStruct.Prescaler = 24;
+  TIM_InitStruct.Prescaler = 49;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
   TIM_InitStruct.Autoreload = 59999;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   TIM_InitStruct.RepetitionCounter = 0;
   LL_TIM_Init(TIM8, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM8);
+  LL_TIM_EnableARRPreload(TIM8);
   LL_TIM_SetClockSource(TIM8, LL_TIM_CLOCKSOURCE_INTERNAL);
-  TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_FROZEN;
+  LL_TIM_OC_EnablePreload(TIM8, LL_TIM_CHANNEL_CH2);
+  TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.CompareValue = 0;
@@ -1020,14 +1011,14 @@ static void MX_TIM8_Init(void)
   LL_TIM_OC_Init(TIM8, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
   LL_TIM_OC_DisableFast(TIM8, LL_TIM_CHANNEL_CH2);
   LL_TIM_SetTriggerOutput(TIM8, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM8);
+  LL_TIM_EnableMasterSlaveMode(TIM8);
   TIM_BDTRInitStruct.OSSRState = LL_TIM_OSSR_DISABLE;
   TIM_BDTRInitStruct.OSSIState = LL_TIM_OSSI_DISABLE;
   TIM_BDTRInitStruct.LockLevel = LL_TIM_LOCKLEVEL_OFF;
   TIM_BDTRInitStruct.DeadTime = 0;
   TIM_BDTRInitStruct.BreakState = LL_TIM_BREAK_DISABLE;
   TIM_BDTRInitStruct.BreakPolarity = LL_TIM_BREAK_POLARITY_HIGH;
-  TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
+  TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_ENABLE;
   LL_TIM_BDTR_Init(TIM8, &TIM_BDTRInitStruct);
   /* USER CODE BEGIN TIM8_Init 2 */
 
@@ -1064,7 +1055,7 @@ static void MX_TIM11_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM11);
 
   /* TIM11 interrupt Init */
-  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),6, 0));
   NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
 
   /* USER CODE BEGIN TIM11_Init 1 */
@@ -1100,7 +1091,7 @@ static void MX_TIM13_Init(void)
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM13);
 
   /* TIM13 interrupt Init */
-  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+  NVIC_SetPriority(TIM8_UP_TIM13_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),6, 0));
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
 
   /* USER CODE BEGIN TIM13_Init 1 */
@@ -1484,25 +1475,7 @@ void StartVsyncTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
-  }
-  /* USER CODE END StartVsyncTask */
-}
-
-/* USER CODE BEGIN Header_StartVsyncTestTask */
-/**
-* @brief Function implementing the VsyncTestTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartVsyncTestTask */
-void StartVsyncTestTask(void *argument)
-{
-  /* USER CODE BEGIN StartVsyncTestTask */
-  /* Infinite loop */
-  for(;;)
-  {
-      uint32_t flags = osThreadFlagsWait(TEST_VSYNC_TEST_FLAG, osFlagsWaitAny, osWaitForever);
+      uint32_t flags = osThreadFlagsWait(VSYNC_DIMMING_FLAG, osFlagsWaitAny, osWaitForever);
 
       if ((int32_t)flags < 0)
       {
@@ -1510,12 +1483,9 @@ void StartVsyncTestTask(void *argument)
           continue;
       }
 
-      if (false == id601_sync_gen(drv_id601_get_crc_func()))
-      {
-          drv_uart_printf(LOG_LV_ERROR, "\r\n    [RTOS] Vsync Test Failed");
-      }
+      id601_vsync_dimming_task();
   }
-  /* USER CODE END StartVsyncTestTask */
+  /* USER CODE END StartVsyncTask */
 }
 
 /**

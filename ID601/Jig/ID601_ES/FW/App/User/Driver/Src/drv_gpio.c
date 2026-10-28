@@ -128,9 +128,8 @@ bool drv_gpio_id601_vcc(uint16_t state)
             }
             case ID601_VCC_5V5:
             {
-                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] Check    R156,   J225");
-                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] HVS   :   12k, CLOSED");
-                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] Normal: 4.99k,   OPEN");
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] HVS   : J225=CLOSED");
+                drv_uart_printf(LOG_LV_WARN, "\r\n    [GPIO] Normal: J225=OPEN");
                 mcp23017_set_gpio_state(MCP_ID601_VCC_EN_PORT, false);
                 mcp23017_set_gpio_state(MCP_ID601_VCC_5V5_PORT, true);
                 drv_tim_delay_ms(VDD_RAMP_UP_MS);

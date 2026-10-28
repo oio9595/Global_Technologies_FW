@@ -37,7 +37,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef void (*trim_setup_func_t)(void);
+typedef bool (*trim_setup_func_t)(void);
 typedef uint16_t (*trim_apply_code_func_t)(uint16_t, uint16_t);
 
 typedef enum tag_TRIM_STEP_T
@@ -439,7 +439,10 @@ static bool trim_step_setup_by_list(thread_data_t *td)
     USER_ASSERT(ch < (sizeof(gt_trim_info[gt_trim_list].repeat) / sizeof(gt_trim_info[gt_trim_list].repeat[0])));
     const bool repeat = gt_trim_info[gt_trim_list].repeat[ch];
 
-    gp_trim_setup_by_list[gt_trim_list]();
+    if (false == gp_trim_setup_by_list[gt_trim_list]())
+    {
+        return trim_error_handler(td);
+    }
 
     switch (gt_trim_list)
     {
@@ -456,11 +459,17 @@ static bool trim_step_setup_by_list(thread_data_t *td)
         {
             if (false == repeat)
             {
-                id601_trim_setup_ofs_temp_o1();
+                if (false == id601_trim_setup_ofs_temp_o1())
+                {
+                    return trim_error_handler(td);
+                }
             }
             else
             {
-                id601_trim_setup_ofs_temp_o2();
+                if (false == id601_trim_setup_ofs_temp_o2())
+                {
+                    return trim_error_handler(td);
+                }
             }
             break;
         }
@@ -473,10 +482,13 @@ static bool trim_step_setup_by_list(thread_data_t *td)
         {
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
-            id601_trim_setup_current_chx(ch);
+            if (false == id601_trim_setup_current_chx(ch))
+            {
+                return trim_error_handler(td);
+            }
             ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
 
-            void_func_ptr_t fp_init = NULL;
+            trim_setup_func_t fp_init = NULL;
             if (TRIM_LIST_GAIN == gt_trim_list)
             {
                 fp_init = (false == repeat) ? (id601_trim_setup_gain_vref1) : (id601_trim_setup_gain_vref2);
@@ -490,7 +502,10 @@ static bool trim_step_setup_by_list(thread_data_t *td)
             {
                 USER_ASSERT(false);
             }
-            fp_init();
+            if (false == fp_init())
+            {
+                return trim_error_handler(td);
+            }
             break;
         }
         default:
@@ -662,7 +677,7 @@ static bool trim_step_get_measured_value(thread_data_t *td)
 
     if (false == conversion_success)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Conversion failed, Trim stop", trim_get_list_name(gt_trim_list), __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Conversion failed. Trimming stopped", trim_get_list_name(gt_trim_list), __func__);
         return trim_error_handler(td);
     }
     else
@@ -890,7 +905,10 @@ static bool trim_step_start_efuse(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    id601_trim_setup_efuse();
+    if (false == id601_trim_setup_efuse())
+    {
+        return trim_error_handler(td);
+    }
     td->step = TRIM_STEP_END_EFUSE;
     td->tout = T_FUSING_DONE_MS;
 
@@ -995,7 +1013,7 @@ static bool trim_step_log_summary(thread_data_t *td)
         }
     }
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] COMPLETE: PASS, eFUSE: %s", (true == gb_id601_efuse_burn) ? ("PG DONE") : ("PG SKIP"));
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] COMPLETE: PASS, eFUSE programming: %s", (true == gb_id601_efuse_burn) ? ("COMPLETE") : ("SKIPPED"));
 
     td->step = TRIM_STEP_PWR_OFF;
     td->tout = T_DEFAULT_MS;

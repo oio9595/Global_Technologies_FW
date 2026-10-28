@@ -52,6 +52,24 @@
 
 #define TIM5_CAPTURE_SIZE               (256U)
 #define MCU_TIM_TIMEOUT                 (1000U)
+
+#define TIM3_FREQ                       (90000000UL) // 90MHz
+#define TIM8_FREQ                       (180000000UL / 50U) // 180MHz
+
+#define SVSYNC_PHASE_RED                (1U)
+#define SVSYNC_PHASE_GREEN              (2U)
+#define SVSYNC_PHASE_BLUE               (0U)
+
+#define SVSYNC_VSYNC_MASK_H_US          (4U)
+#define SVSYNC_VSYNC_MASK_L_US          (4U)
+#define SVSYNC_GATING_TIME_US           (10U)
+#define SVSYNC_CYCLE                    (3U)
+#define SVSYNC_SIZE                     (SV_NO)
+#define SVSYNC_TOTAL_CYCLE              (SVSYNC_CYCLE * SVSYNC_SIZE)
+
+#define SVSYNC_RED_FREQ                 (3840U)
+#define SVSYNC_GREEN_FREQ               (6400U)
+#define SVSYNC_BLUE_FREQ                (9600U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -67,7 +85,10 @@ static volatile bool gb_tim2_capture_dma_active[2] = {false, false};
 static uint32_t gn_tim5_capture_ccr_buff[TIM5_CAPTURE_SIZE];
 static volatile bool gb_tim5_capture_dma_active = false;
 
+extern osThreadId_t VsyncTaskHandle;
 extern osThreadId_t VsyncTestTaskHandle;
+
+static uint16_t gn_svsync_count = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -344,7 +365,7 @@ bool mcu_tim_wait_conversion_complete(void)
     {
         if ((HAL_GetTick() - start_tick) > MCU_TIM_TIMEOUT)
         {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM5 Capture Frequency timeout!");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM5 Capture Frequency timed out");
             mcu_tim_set_conversion_enable(false);
             return false;
         }
@@ -417,7 +438,102 @@ void drv_tim_test_vsync_irq_handler(void)
     if (true == LL_TIM_IsActiveFlag_UPDATE(TIM11))
     {
         LL_TIM_ClearFlag_UPDATE(TIM11);
-        osThreadFlagsSet(VsyncTestTaskHandle, TEST_VSYNC_TEST_FLAG);
+        id601_sync_gen_wo_mutex(drv_id601_get_crc_func());
+    }
+}
+
+static void drv_tim_svsync_start(void)
+{
+    LL_TIM_SetCounter(TIM3, 0);
+    LL_TIM_ClearFlag_UPDATE(TIM3);
+    LL_TIM_SetAutoReload(TIM3, (CONST_Hz_to_MHz(TIM3_FREQ) * (SVSYNC_VSYNC_MASK_H_US + SVSYNC_VSYNC_MASK_L_US) - 1U));
+    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+    LL_TIM_EnableIT_UPDATE(TIM3);
+    LL_TIM_OC_SetCompareCH1(TIM3, (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_VSYNC_MASK_H_US));
+    LL_TIM_EnableCounter(TIM3);
+
+    gn_svsync_count = 0U;
+}
+static void drv_tim_svsync_stop(void)
+{
+    LL_TIM_OC_SetCompareCH1(TIM3, 0U);
+    LL_TIM_DisableCounter(TIM3);
+    LL_TIM_DisableIT_UPDATE(TIM3);
+
+    gn_svsync_count = 0U;
+}
+void drv_tim_svsync_irq_handler(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM3);
+    uint32_t period = 0U;
+    uint32_t CompareValue = 0U;
+
+    ++gn_svsync_count;
+
+    uint32_t phase = (gn_svsync_count % SVSYNC_CYCLE);
+
+    switch(phase)
+    {
+        case SVSYNC_PHASE_RED:
+        {
+            period = ((TIM3_FREQ / SVSYNC_RED_FREQ) - 1U);
+            CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
+            break;
+        }
+        case SVSYNC_PHASE_GREEN:
+        {
+            period = ((TIM3_FREQ / SVSYNC_GREEN_FREQ) - 1U);
+            CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
+            break;
+        }
+        case SVSYNC_PHASE_BLUE:
+        {
+            period = ((TIM3_FREQ / SVSYNC_BLUE_FREQ) - 1U);
+            CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
+            break;
+        }
+        default:
+        {
+            USER_ASSERT(false);
+            break;
+        }
+    }
+
+    LL_TIM_SetAutoReload(TIM3, period);
+    LL_TIM_OC_SetCompareCH1(TIM3, CompareValue);
+
+    if ((SVSYNC_TOTAL_CYCLE) == gn_svsync_count)
+    {
+        drv_tim_delay_us(SVSYNC_GATING_TIME_US + 2U); //SVSYNC_GATING_TIME_US + margin
+        drv_tim_svsync_stop();
+    }
+}
+
+void drv_tim_vsync_start(void)
+{
+    LL_TIM_SetCounter(TIM8, 0U);
+    LL_TIM_OC_SetCompareCH2(TIM8, (CONST_Hz_to_MHz(TIM8_FREQ) * 10U)); // 10us
+    LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
+    LL_TIM_ClearFlag_UPDATE(TIM8);
+    LL_TIM_EnableIT_UPDATE(TIM8);
+    LL_TIM_EnableCounter(TIM8);
+}
+void drv_tim_vsync_stop(void)
+{
+    LL_TIM_DisableCounter(TIM8);
+    LL_TIM_DisableIT_UPDATE(TIM8);
+    LL_TIM_ClearFlag_UPDATE(TIM8);
+    LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
+    LL_TIM_SetCounter(TIM8, 0U);
+}
+void drv_tim_vsync_irq_handler(void)
+{
+    if (true == LL_TIM_IsActiveFlag_UPDATE(TIM8))
+    {
+        LL_TIM_ClearFlag_UPDATE(TIM8);
+        id601_sync_gen_wo_mutex(drv_id601_get_crc_func());
+        drv_tim_svsync_start();
+        osThreadFlagsSet(VsyncTaskHandle, VSYNC_DIMMING_FLAG);
     }
 }
 /* USER CODE END 0 */

@@ -26,6 +26,7 @@
 #include "drv_gpio.h"
 #include "cmsis_os.h"
 #include "common_def.h"
+#include "id601_dimming.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -85,14 +86,22 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
     ID601_MAX_CURRENT_LEVEL_60mA = 0x0EU,  // 0x0E
     ID601_MAX_CURRENT_LEVEL_64mA = 0x0FU,  // 0x0F
 } id601_max_current_level_t;
+
+typedef struct tag_ID601_LD_INFO
+{
+    uint16_t daisy;
+    uint16_t ch_size;
+    uint16_t led_per_ch;
+} id601_ld_info_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define ID601_DAISY_LENGTH_INITIAL          (1U)
-#define ID601_DAISY_LENGTH_MAX              (5U)
+#define ID601_CH_SIZE_INITIAL               (12U)
+#define ID601_LED_PER_CH_INITIAL            (3U)
+
 #define ID601_BROADCAST                     (0U)
-#define ID601_CHANNEL_SIZE                  (12U)
 
 #define ID601_SERIAL_TIMEOUT_MS             (100U)
 
@@ -153,22 +162,14 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
 
 /********************** ID601 LD Trans 12bit Frame **********************/
 /* [Command field:4][LD:12 * CHANNEL] */
-#define ID601_LD_12B_PAYLOAD_BIT_COUNT      (4U + 12U * ID601_CHANNEL_SIZE)
-#define ID601_LD_12B_SERIAL_BIT_COUNT       (ID601_LD_12B_PAYLOAD_BIT_COUNT + ID601_CRC8_BIT_COUNT)
-
+#define ID601_LD_12B_PAYLOAD_BIT_COUNT      (12U)
+#define ID601_LD_12B_SERIAL_BIT_COUNT       ((4U + ID601_LD_12B_PAYLOAD_BIT_COUNT * ID601_CHANNEL_SIZE) * ID601_DAISY_LENGTH_MAX)
 #define ID601_LD_12B_COMMAND                (0x0FU)
-#define ID601_LD_12B_COMMAND_Pos            (12U * ID601_CHANNEL_SIZE)
-#define ID601_LD_12B_COMMAND_Msk            (0x000FU << ID601_LD_12B_COMMAND_Pos)
-
 /********************** ID601 LD Trans 14bit Frame **********************/
 /* [Command field:4][LD:14 * CHANNEL] */
-#define ID601_LD_14B_PAYLOAD_BIT_COUNT      (4U + 14U * ID601_CHANNEL_SIZE)
-#define ID601_LD_14B_SERIAL_BIT_COUNT       (ID601_LD_14B_PAYLOAD_BIT_COUNT + ID601_CRC8_BIT_COUNT)
-
+#define ID601_LD_14B_PAYLOAD_BIT_COUNT      (14U)
+#define ID601_LD_14B_SERIAL_BIT_COUNT       ((4U + ID601_LD_14B_PAYLOAD_BIT_COUNT * ID601_CHANNEL_SIZE) * ID601_DAISY_LENGTH_MAX)
 #define ID601_LD_14B_COMMAND                (0x0FU)
-#define ID601_LD_14B_COMMAND_Pos            (14U * ID601_CHANNEL_SIZE)
-#define ID601_LD_14B_COMMAND_Msk            (0x000FU << ID601_LD_14B_COMMAND_Pos)
-
 /********************** ID601 Fault Read Frame **********************/
 /* [Command field:4] */
 #define ID601_FAULT_READ_PAYLOAD_BIT_COUNT  (4U)
@@ -208,8 +209,10 @@ typedef enum tag_ID601_MAX_CURRENT_LEVEL
 #define ID601_IDGEN_COMMAND_Pos             (0U)
 #define ID601_IDGEN_COMMAND_Msk             (0x000FU << ID601_IDGEN_COMMAND_Pos)
 
-#define ID601_TX_CCR_BUFFER_CAPACITY        (ID601_DAISY_LENGTH_MAX * ID601_LD_14B_SERIAL_BIT_COUNT)
-#define ID601_RX_CCR_BUFFER_CAPACITY        (ID601_DAISY_LENGTH_MAX * ID601_READ_RECV_SERIAL_BIT_COUNT)
+#define BUFFER_MARGIN                       (2U)
+#define ID601_SYNCGEN_CCR_BUFFER_CAPACITY   (ID601_DAISY_LENGTH_MAX * ID601_SYNCGEN_SERIAL_BIT_COUNT * BUFFER_MARGIN)
+#define ID601_TX_CCR_BUFFER_CAPACITY        (ID601_DAISY_LENGTH_MAX * ID601_LD_14B_SERIAL_BIT_COUNT * BUFFER_MARGIN)
+#define ID601_RX_CCR_BUFFER_CAPACITY        (ID601_DAISY_LENGTH_MAX * ID601_READ_RECV_SERIAL_BIT_COUNT * BUFFER_MARGIN)
 
 #define ID601_DELAY_RESET_MS                (1U)
 
@@ -245,10 +248,13 @@ static uint16_t gn_id601_tx_ccr_buffer[ID601_TX_CCR_BUFFER_CAPACITY] = { 0U };
 static uint16_t gn_id601_rx_ccr_rise_buffer[ID601_RX_CCR_BUFFER_CAPACITY] = { 0U };
 static uint16_t gn_id601_rx_ccr_fall_buffer[ID601_RX_CCR_BUFFER_CAPACITY] = { 0U };
 
+static uint16_t gn_id601_syncgen_ccr_buffer[ID601_SYNCGEN_CCR_BUFFER_CAPACITY] = { 0U };
+static uint16_t gn_id601_syncgen_crc_ccr_buffer[ID601_SYNCGEN_CCR_BUFFER_CAPACITY] = { 0U };
+
 static uint16_t gn_id601_serial_bit0_ccr;
 static uint16_t gn_id601_serial_bit1_ccr;
 
-static uint16_t gn_id601_daisy_length;
+static id601_ld_info_t gt_id601_ld_info;
 
 static id601_crc_func_t gp_id601_crc_func = NULL;
 
@@ -353,7 +359,9 @@ static bool gb_id601_hvs_flag;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+static uint8_t id601_calculate_crc(uint32_t data, uint16_t size);
+static uint16_t id601_encode_ccr_buffer_from_serial(uint32_t serial, uint16_t* p_cnt, uint16_t length);
+static inline uint32_t id601_build_sync_gen_payload(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -364,14 +372,45 @@ void drv_id601_init(void)
     gn_id601_serial_bit0_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT0) / ID601_SERIAL_RATIO_SUM);
     gn_id601_serial_bit1_ccr = ((tim1_period * ID601_SERIAL_RATIO_BIT1) / ID601_SERIAL_RATIO_SUM);
 
-    drv_id601_set_daisy_length(ID601_DAISY_LENGTH_INITIAL);
-
     for (uint16_t i = 0U; i < ID601_ADDR_MIRROR_MAX_COUNT; ++i)
     {
         gn_id601_trim_search_mirror_regs[i] = gn_id601_mirror_regs_initial_code[i];
     }
 
-    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] ID601 initialized successfully.");
+    // Initialize syncgen CCR buffer
+    uint16_t s_ccr_count = 0U;
+    gn_id601_syncgen_ccr_buffer[s_ccr_count++] = 0U; // initialize the buffer before use
+
+    for (uint16_t device_index = 0U; device_index < ID601_DAISY_LENGTH_MAX; ++device_index)
+    {
+        uint32_t payload = id601_build_sync_gen_payload();
+        uint16_t frame_length = ID601_SYNCGEN_PAYLOAD_BIT_COUNT;
+        s_ccr_count += id601_encode_ccr_buffer_from_serial(payload, (gn_id601_syncgen_ccr_buffer + s_ccr_count), frame_length);
+    }
+
+    gn_id601_syncgen_ccr_buffer[s_ccr_count++] = 0U; // initialize the buffer before use
+
+    // Initialize syncgen + CRC CCR buffer
+    uint16_t tx_ccr_count = 0U;
+    gn_id601_syncgen_crc_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
+
+    for (uint16_t device_index = 0U; device_index < ID601_DAISY_LENGTH_MAX; ++device_index)
+    {
+        uint32_t payload = id601_build_sync_gen_payload();
+        uint16_t frame_length = ID601_SYNCGEN_PAYLOAD_BIT_COUNT;
+        const uint8_t crc = id601_calculate_crc(payload, frame_length);
+        payload = ((payload << ID601_CRC8_BIT_COUNT) | (uint32_t)crc);
+        frame_length += ID601_CRC8_BIT_COUNT;
+        tx_ccr_count += id601_encode_ccr_buffer_from_serial(payload, (gn_id601_syncgen_crc_ccr_buffer + tx_ccr_count), frame_length);
+    }
+
+    gn_id601_syncgen_crc_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
+
+    gt_id601_ld_info.daisy = ID601_DAISY_LENGTH_INITIAL;
+    gt_id601_ld_info.ch_size = ID601_CH_SIZE_INITIAL;
+    gt_id601_ld_info.led_per_ch = ID601_LED_PER_CH_INITIAL;
+
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [MCU] ID601 initialized successfully.");
 }
 
 void drv_id601_make_mutex(void)
@@ -390,15 +429,51 @@ bool drv_id601_set_daisy_length(uint16_t daisy_length)
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid daisy length.", __func__);
         return false;
     }
-    gn_id601_daisy_length = daisy_length;
+    gt_id601_ld_info.daisy = daisy_length;
     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Set Daisy length: %u.", daisy_length);
     return true;
 }
 uint16_t drv_id601_get_daisy_length(void)
 {
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get Daisy length: %u.", gn_id601_daisy_length);
-    return gn_id601_daisy_length;
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get Daisy length: %u.", gt_id601_ld_info.daisy);
+    return gt_id601_ld_info.daisy;
 }
+
+bool drv_id601_set_ch_size(uint16_t ch_size)
+{
+    if (ch_size > ID601_CH_SIZE_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid channel size.", __func__);
+        return false;
+    }
+    gt_id601_ld_info.ch_size = ch_size;
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Set Channel size: %u.", ch_size);
+    return true;
+}
+uint16_t drv_id601_get_ch_size(void)
+{
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get Channel size: %u.", gt_id601_ld_info.ch_size);
+    return gt_id601_ld_info.ch_size;
+}
+
+bool drv_id601_set_led_per_ch(uint16_t led_per_ch)
+{
+    if (led_per_ch > ID601_LED_PER_CH_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid LED per channel.", __func__);
+        return false;
+    }
+    gt_id601_ld_info.led_per_ch = led_per_ch;
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Set LED per channel: %u.", led_per_ch);
+    return true;
+}
+uint16_t drv_id601_get_led_per_ch(void)
+{
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Get LED per channel: %u.", gt_id601_ld_info.led_per_ch);
+    return gt_id601_ld_info.led_per_ch;
+}
+
+
 bool drv_id601_set_hvs_flag(bool hvs_flag)
 {
     gb_id601_hvs_flag = hvs_flag;
@@ -549,7 +624,9 @@ static bool id601_write_command(uint16_t addr, const uint16_t* p_data, id601_crc
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         uint32_t payload = id601_build_write_payload(addr, p_data[device_index]);
         uint16_t frame_length = ID601_WRITE_PAYLOAD_BIT_COUNT;
@@ -581,7 +658,9 @@ static bool id601_read_command(uint16_t addr, id601_crc_func_t p_crc_func)
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         uint32_t payload = id601_build_read_payload(addr);
         uint16_t frame_length = ID601_READ_PAYLOAD_BIT_COUNT;
@@ -614,7 +693,9 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
         frame_length += ID601_CRC8_BIT_COUNT;
     }
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         uint16_t* p_rise = &gn_id601_rx_ccr_rise_buffer[device_index * frame_length];
         uint16_t* p_fall = &gn_id601_rx_ccr_fall_buffer[device_index * frame_length];
@@ -664,26 +745,74 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
     return true;
 }
 
-static inline uint32_t id601_build_ld_12B_transfer_payload(uint16_t* p_data)
+static bool id601_ld_12B_transfer_command(uint16_t* p_data)
 {
-    return 0U;
+    if (NULL == p_data)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid data pointer.", __func__);
+        return false;
+    }
+
+    uint16_t tx_ccr_count = 0U;
+    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
+
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+    const uint16_t ch_size = gt_id601_ld_info.ch_size;
+    const uint16_t led_per_ch = gt_id601_ld_info.led_per_ch;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
+    {
+        // build frame for LD 12B command
+        tx_ccr_count += id601_encode_ccr_buffer_from_serial(ID601_LD_12B_COMMAND, (gn_id601_tx_ccr_buffer + tx_ccr_count), 4U);
+        for (uint16_t ch = 0U; ch < ch_size; ++ch)
+        {
+            for (uint16_t led = 0U; led < led_per_ch; ++led)
+            {
+                uint32_t payload = p_data[device_index * ch_size * led_per_ch + ch * led_per_ch + led];
+                uint16_t frame_length = ID601_LD_12B_PAYLOAD_BIT_COUNT;
+                tx_ccr_count += id601_encode_ccr_buffer_from_serial(payload, (gn_id601_tx_ccr_buffer + tx_ccr_count), frame_length);
+            }
+        }
+    }
+
+    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
+
+    return drv_tim_generate_serial((uint16_t*)gn_id601_tx_ccr_buffer, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
 }
 
-static bool id601_ld_12B_transfer_command(uint16_t* p_data, id601_crc_func_t p_crc_func)
+static bool id601_ld_14B_transfer_command(uint16_t* p_data)
 {
-    id601_build_ld_12B_transfer_payload(/*p_data*/NULL);
-    return false;
-}
+    if (NULL == p_data)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Invalid data pointer.", __func__);
+        return false;
+    }
 
-static inline uint32_t id601_build_ld_14B_transfer_payload(uint16_t* p_data)
-{
-    return 0U;
-}
+    uint16_t tx_ccr_count = 0U;
+    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-static bool id601_ld_14B_transfer_command(uint16_t* p_data, id601_crc_func_t p_crc_func)
-{
-    id601_build_ld_14B_transfer_payload(/*p_data*/NULL);
-    return false;
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+    const uint16_t ch_size = gt_id601_ld_info.ch_size;
+    const uint16_t led_per_ch = gt_id601_ld_info.led_per_ch;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
+    {
+        // build frame for LD 14B command
+        tx_ccr_count += id601_encode_ccr_buffer_from_serial(ID601_LD_14B_COMMAND, (gn_id601_tx_ccr_buffer + tx_ccr_count), 4U);
+        for (uint16_t ch = 0U; ch < ch_size; ++ch)
+        {
+            for (uint16_t led = 0U; led < led_per_ch; ++led)
+            {
+                uint32_t payload = p_data[device_index * ch_size * led_per_ch + ch * led_per_ch + led];
+                uint16_t frame_length = ID601_LD_14B_PAYLOAD_BIT_COUNT;
+                tx_ccr_count += id601_encode_ccr_buffer_from_serial(payload, (gn_id601_tx_ccr_buffer + tx_ccr_count), frame_length);
+            }
+        }
+    }
+
+    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
+
+    return drv_tim_generate_serial((uint16_t*)gn_id601_tx_ccr_buffer, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
 }
 
 static inline uint32_t id601_build_fault_read_payload(void)
@@ -698,7 +827,9 @@ static bool id601_fault_read_command(id601_crc_func_t p_crc_func)
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         uint32_t payload = id601_build_fault_read_payload();
         uint16_t frame_length = ID601_FAULT_READ_PAYLOAD_BIT_COUNT;
@@ -786,26 +917,28 @@ static inline uint32_t id601_build_sync_gen_payload(void)
 
 static bool id601_sync_gen_command(id601_crc_func_t p_crc_func)
 {
+    uint16_t* p_tx_ccr = NULL;
     uint16_t tx_ccr_count = 0U;
-    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    const uint16_t length_wo_crc = ID601_SYNCGEN_PAYLOAD_BIT_COUNT * daisy_length; // payload length
+    const uint16_t length_w_crc = ID601_SYNCGEN_SERIAL_BIT_COUNT * daisy_length; // payload length
+
+    if (NULL == p_crc_func)
     {
-        uint32_t payload = id601_build_sync_gen_payload();
-        uint16_t frame_length = ID601_SYNCGEN_PAYLOAD_BIT_COUNT;
-
-        if (NULL != p_crc_func)
-        {
-            const uint8_t crc = p_crc_func(payload, frame_length);
-            payload = ((payload << ID601_CRC8_BIT_COUNT) | (uint32_t)crc);
-            frame_length += ID601_CRC8_BIT_COUNT;
-        }
-        tx_ccr_count += id601_encode_ccr_buffer_from_serial(payload, (gn_id601_tx_ccr_buffer + tx_ccr_count), frame_length);
+        p_tx_ccr = gn_id601_syncgen_ccr_buffer;
+        tx_ccr_count = (1U + length_wo_crc); // Head dummy + payload
     }
+    else
+    {
+        p_tx_ccr = gn_id601_syncgen_crc_ccr_buffer;
+        tx_ccr_count = (1U + length_w_crc); // Head dummy + payload
+    }
+    p_tx_ccr[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
-
-    return drv_tim_generate_serial((uint16_t*)gn_id601_tx_ccr_buffer, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
+    return drv_tim_generate_serial(p_tx_ccr, tx_ccr_count, ID601_SERIAL_TIMEOUT_MS);
 }
 
 static inline uint32_t id601_build_id_gen_payload(void)
@@ -820,7 +953,9 @@ static bool id601_id_gen_command(id601_crc_func_t p_crc_func)
     uint16_t tx_ccr_count = 0U;
     gn_id601_tx_ccr_buffer[tx_ccr_count++] = 0U; // initialize the buffer before use
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         uint32_t payload = id601_build_id_gen_payload();
         uint16_t frame_length = ID601_IDGEN_PAYLOAD_BIT_COUNT;
@@ -845,14 +980,16 @@ static bool id601_select_register_bank(const uint16_t bank, id601_crc_func_t p_c
     uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
     uint16_t* p_op_mode = gn_id601_general_regs[ID601_ADDR_GENERAL_OP_MODE];
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         tx_data[device_index] = p_op_mode[device_index];
     }
 
     if (bank != prev_id601_bank)
     {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
         {
             uint16_t addr_ext = 0U;
             if (ID601_REGISTER_BANK_GENERAL == bank)
@@ -877,7 +1014,7 @@ static bool id601_select_register_bank(const uint16_t bank, id601_crc_func_t p_c
         }
         drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: Bank changed to %u. (0x%02X - 0x%03X)", __func__, bank, ID601_ADDR_GENERAL_OP_MODE, tx_data[0]);
 
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
         {
             p_op_mode[device_index] = tx_data[device_index];
         }
@@ -890,6 +1027,8 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
 {
     uint16_t* p_id601 = NULL;
     uint16_t tx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
+
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
 
     if (ID601_REGISTER_BANK_GENERAL == bank)
     {
@@ -915,7 +1054,7 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
         return false;
     }
 
-    if (device_select > gn_id601_daisy_length)
+    if (device_select > daisy_length)
     {
         drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid device select.", __func__);
         return false;
@@ -934,14 +1073,14 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
         return false;
     }
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         tx_data[device_index] = p_id601[device_index];
     }
 
     if (ID601_BROADCAST == device_select)
     {
-        for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+        for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
         {
             tx_data[device_index] = new_value;
         }
@@ -959,7 +1098,7 @@ bool id601_write_register(const uint16_t bank, const uint16_t device_select, con
         return false;
     }
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         p_id601[device_index] = tx_data[device_index];
         drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] WRITE: bank=%u dev=%02u addr=0x%02X value=0x%03X", (unsigned)bank, (unsigned)(device_index + 1U), (unsigned)addr, (unsigned)p_id601[device_index]);
@@ -974,6 +1113,8 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
 {
     uint16_t* p_id601 = NULL;
     uint16_t rx_data[ID601_DAISY_LENGTH_MAX] = { 0U };
+
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
 
     if (ID601_REGISTER_BANK_GENERAL == bank)
     {
@@ -999,7 +1140,7 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
         return false;
     }
 
-    if (device_select > gn_id601_daisy_length)
+    if (device_select > daisy_length)
     {
         drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Invalid device select.", __func__);
         return false;
@@ -1042,7 +1183,7 @@ bool id601_read_register(const uint16_t bank, const uint16_t device_select, cons
     }
     (void)xTaskResumeAll();
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         p_id601[device_index] = rx_data[device_index];
         drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] READ:  bank=%u dev=%02u addr=0x%02X value=0x%03X", (unsigned)bank, (unsigned)(device_index + 1U), (unsigned)addr, (unsigned)p_id601[device_index]);
@@ -1096,21 +1237,16 @@ bool id601_fault_read(id601_crc_func_t p_crc_func)
 
 bool id601_sync_gen(id601_crc_func_t p_crc_func)
 {
-    if (false == id601_lock())
-    {
-        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to acquire ID601 mutex.", __func__);
-        return false;
-    }
+    return id601_sync_gen_command(p_crc_func);
+}
 
+bool id601_sync_gen_wo_mutex(id601_crc_func_t p_crc_func)
+{
     if (false == id601_sync_gen_command(p_crc_func))
     {
         drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to syncgen command.", __func__);
-        id601_unlock();
         return false;
     }
-
-    id601_unlock();
-
     drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: Sync gen success.", __func__);
     return true;
 }
@@ -1146,7 +1282,9 @@ static bool id601_reset(id601_crc_func_t p_crc_func)
         return false;
     }
 
-    for (uint16_t device_index = 0U; device_index < gn_id601_daisy_length; ++device_index)
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
         reset[device_index] = id601_set_field(reset[device_index], ID601_RESET_ID_RST_Msk, ID601_RESET_ID_RST_Pos, 1U);
     }
@@ -1993,6 +2131,8 @@ bool id601_dump_registers(void)
 
     id601_read_all_registers();
 
+    const uint16_t daisy_length = gt_id601_ld_info.daisy;
+
     length = snprintf(buffer, sizeof(buffer), "\r\n    [ID601] REGISTER DUMP\r\n    %-8s %4s %6s %6s", "BANK", "DEV", "ADDR", "VALUE");
     if ((length > 0) && ((size_t)length < sizeof(buffer)))
     {
@@ -2001,7 +2141,7 @@ bool id601_dump_registers(void)
 
     for (uint16_t addr = ID601_ADDR_GENERAL_RESET_ID; addr < ID601_ADDR_GENERAL_MAX_COUNT; ++addr)
     {
-        for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
+        for (uint16_t dev = 0U; dev < daisy_length; ++dev)
         {
             length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "GENERAL", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_general_regs[addr][dev]);
 
@@ -2014,7 +2154,7 @@ bool id601_dump_registers(void)
 
     for (uint16_t addr = ID601_ADDR_MIRROR1; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
     {
-        for (uint16_t dev = 0U; dev < gn_id601_daisy_length; ++dev)
+        for (uint16_t dev = 0U; dev < daisy_length; ++dev)
         {
             length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "MIRROR", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_mirror_regs[addr][dev]);
 
@@ -2073,7 +2213,8 @@ bool id601_init_tm_entry_mode(void)
 {
     drv_id601_set_daisy_length(1U);
 
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
 
@@ -2112,7 +2253,7 @@ bool id601_init_after_efuse_mode(void)
 {
     drv_id601_set_daisy_length(1U);
 
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     id601_reset(gp_id601_crc_func);
     id601_id_gen(gp_id601_crc_func);
@@ -2130,7 +2271,7 @@ bool id601_init_after_efuse_mode(void)
 
 bool id601_set_analog_test_mode(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
         switch (id601_addr)
@@ -2285,14 +2426,15 @@ bool id601_set_fll_test_mode(void)
 
 bool id601_set_dimming_type1_mode(void)
 {
-    const uint16_t daisy = gn_id601_daisy_length;
+    const uint16_t daisy = ID601_BROADCAST;
+
     for (uint16_t id601_addr = ID601_ADDR_GENERAL_RESET_ID ; id601_addr < ID601_ADDR_GENERAL_MAX_COUNT ; ++id601_addr)
     {
         switch (id601_addr)
         {
             case ID601_ADDR_GENERAL_LD_CONTROL:
             {
-                const uint16_t _r01_SV_NO = 32U;
+                const uint16_t _r01_SV_NO = SV_NO;
                 const uint16_t _r01_LD_TYPE = 1U;
                 const uint16_t _r01_DELAY_CH_EN = 0U;
                 const uint16_t _r01_SYNCMODE = 0U;
@@ -2317,8 +2459,8 @@ bool id601_set_dimming_type1_mode(void)
             }
             case ID601_ADDR_GENERAL_PWMCLK_DIV1_2:
             {
-                const uint16_t _r03_PWMCLK_DIV2 = 14U;
-                const uint16_t _r03_PWMCLK_DIV1 = 35U;
+                const uint16_t _r03_PWMCLK_DIV2 = 13U;
+                const uint16_t _r03_PWMCLK_DIV1 = 22U;
                 if (false == id601_write_pwmclk_div_1_2(daisy, _r03_PWMCLK_DIV2, _r03_PWMCLK_DIV1))
                 {
                     return false;
@@ -2327,7 +2469,7 @@ bool id601_set_dimming_type1_mode(void)
             }
             case ID601_ADDR_GENERAL_PWMCLK_DIV2_3:
             {
-                const uint16_t _r04_PWMCLK_DIV3 = 9U;
+                const uint16_t _r04_PWMCLK_DIV3 = 8U;
                 const uint16_t _r04_PWMCLK_DIV2 = 0U;
                 if (false == id601_write_pwmclk_div_2_3(daisy, _r04_PWMCLK_DIV3, _r04_PWMCLK_DIV2))
                 {
@@ -2495,6 +2637,16 @@ bool id601_set_dimming_type1_mode(void)
                 }
                 break;
             }
+            case ID601_ADDR_GENERAL_SV_MASK:
+            {
+                const uint16_t _r1F_SV_MASK_EN = 1U;
+                const uint16_t _r1F_SV_MASK = 217U;
+                if (false == id601_write_sv_mask(daisy, _r1F_SV_MASK_EN, _r1F_SV_MASK))
+                {
+                    return false;
+                }
+                break;
+            }
             case ID601_ADDR_GENERAL_TIMEOUT:
             {
                 const uint16_t _r21_TIMEOUT = 0x3FFU;
@@ -2535,6 +2687,17 @@ bool id601_set_dimming_type1_mode(void)
                 const uint16_t _r26_CHOP_BGR_EN = 1U;
                 if (false == id601_write_chop_en(daisy, \
                     _r26_OPEN_MASK_OPT, _r26_CHOP_EN, _r26_CHOP_DRV_EN, _r26_CHOP_OSC_LDO_EN, _r26_CHOP_OSC_EN, _r26_CHOP_DAC_EN, _r26_CHOP_BGR_EN))
+                {
+                    return false;
+                }
+                break;
+            }
+            case ID601_ADDR_GENERAL_OSC_FLL_MAN2:
+            {
+                const uint16_t _r29_OSC_MAN_EN = 0U;
+                const uint16_t _r29_OSC_FLL_ERR_RANGE = 0U;
+                const uint16_t _r29_OSC_FLL_MAN = 8U;
+                if (false == id601_write_osc_fll_man2(daisy, _r29_OSC_MAN_EN, _r29_OSC_FLL_ERR_RANGE, _r29_OSC_FLL_MAN))
                 {
                     return false;
                 }
@@ -2584,10 +2747,14 @@ bool id601_set_dimming_type2_mode(void)
     return true;
 }
 
-void id601_trim_setup_iref1(void)
+bool id601_trim_setup_iref1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2597,14 +2764,23 @@ void id601_trim_setup_iref1(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
+    return true;
 }
-void id601_trim_setup_iref2(void)
+bool id601_trim_setup_iref2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2614,14 +2790,23 @@ void id601_trim_setup_iref2(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
+    return true;
 }
-void id601_trim_setup_ldo_det(void)
+bool id601_trim_setup_ldo_det(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2631,14 +2816,23 @@ void id601_trim_setup_ldo_det(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_DIS);
+    return true;
 }
-void id601_trim_setup_ldo_dig(void)
+bool id601_trim_setup_ldo_dig(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2648,12 +2842,21 @@ void id601_trim_setup_ldo_dig(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_ldo_dac(void)
+bool id601_trim_setup_ldo_dac(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2663,12 +2866,21 @@ void id601_trim_setup_ldo_dac(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_ldo_fll(void)
+bool id601_trim_setup_ldo_fll(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2678,11 +2890,16 @@ void id601_trim_setup_ldo_fll(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_ofs_temp(void)
+bool id601_trim_setup_ofs_temp(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     // id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O1);
 
     const uint16_t _r3F_TEST_EN = 1U;
@@ -2693,22 +2910,41 @@ void id601_trim_setup_ofs_temp(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_ofs_temp_o1(void)
+bool id601_trim_setup_ofs_temp_o1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O1);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_ofs_temp_o2(void)
+bool id601_trim_setup_ofs_temp_o2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O2);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_TEST_VREF2_ZTC_O2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_osc_rctl(void)
+bool id601_trim_setup_osc_rctl(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2718,17 +2954,30 @@ void id601_trim_setup_osc_rctl(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t osc_man_en = 1U;
     const uint16_t osc_fll_err_range = 0U;
     const uint16_t osc_fll_man = 8U;
-    id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man);
+    if (false == id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OSC_FLL_MAN2.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_gain(void)
+bool id601_trim_setup_gain(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2738,31 +2987,70 @@ void id601_trim_setup_gain(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t gain_max_current_level3 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level2 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level1 = ID601_TRIM_GAIN_MAX_CURR_LVL;
-    id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
+    if (false == id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURRENT_LEVEL.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_gain_vref1(void)
+bool id601_trim_setup_gain_vref1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF1);
-    id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF1);
-    id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF1);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_gain_vref2(void)
+bool id601_trim_setup_gain_vref2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF2);
-    id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF2);
-    id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF2);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_max_curr_vref1(1U, ID601_TRIM_GAIN_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, ID601_TRIM_GAIN_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, ID601_TRIM_GAIN_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_offset(void)
+bool id601_trim_setup_offset(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -2772,31 +3060,106 @@ void id601_trim_setup_offset(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t offset_max_current_level3 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
     const uint16_t offset_max_current_level2 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
     const uint16_t offset_max_current_level1 = ID601_TRIM_OFFSET_MAX_CURR_LVL;
-    id601_write_max_current_level(1U, offset_max_current_level3, offset_max_current_level2, offset_max_current_level1);
+    if (false == id601_write_max_current_level(1U, offset_max_current_level3, offset_max_current_level2, offset_max_current_level1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURRENT_LEVEL.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_offset_vref1(void)
+bool id601_trim_setup_offset_vref1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF1);
-    id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF1);
-    id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF1);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_trim_setup_offset_vref2(void)
+bool id601_trim_setup_offset_vref2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF2);
-    id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF2);
-    id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF2);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_max_curr_vref1(1U, ID601_TRIM_OFFSET_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, ID601_TRIM_OFFSET_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, ID601_TRIM_OFFSET_VREF2))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
+}
+bool id601_trim_setup_current_chx(uint16_t ch)
+{
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    uint16_t channel[12] = { 0U };
+    channel[ch] = 1U;
+    if (false == id601_write_channel_enable(1U, channel[11], channel[10], channel[9], channel[8], channel[7], channel[6], channel[5], channel[4], channel[3], channel[2], channel[1], channel[0]))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write CHANNEL_ENABLE.", __func__);
+        return false;
+    }
+    return true;
+}
+bool id601_trim_setup_efuse(void)
+{
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+
+    const uint16_t _r3F_TEST_EN = 1U;
+    const uint16_t _r3F_SW_SEL = 0U;
+    const uint16_t _r3F_PWMOUT_FULL = 0U;
+    const uint16_t _r3F_MCLK64_O = 0U;
+    const uint16_t _r3F_DTEST_MUX_EN = 0U;
+    const uint16_t _r3F_RD_EN = 1U;
+    const uint16_t _r3F_EXT_CLKIN = 0U;
+    const uint16_t _r3F_ADDR_EXT = 0U;
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+
+    const uint16_t otp_pg_done = 0U;
+    const uint16_t otp_rd_s = 0U;
+    const uint16_t otp_pg_s = 1U;
+    if (false == id601_write_otp_rd_prog(1U, otp_pg_done, otp_rd_s, otp_pg_s))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OTP_RD_PROG.", __func__);
+        return false;
+    }
+    return true;
 }
 
 uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2825,7 +3188,7 @@ uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2854,7 +3217,7 @@ uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2883,7 +3246,7 @@ uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_ldo_dig(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2912,7 +3275,7 @@ uint16_t id601_trim_apply_ldo_dig(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_ldo_dac(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2941,7 +3304,7 @@ uint16_t id601_trim_apply_ldo_dac(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2970,7 +3333,7 @@ uint16_t id601_trim_apply_ldo_fll(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -2999,7 +3362,7 @@ uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     (void)(ch);
     uint16_t ret = 0xFFFFU;
 
@@ -3028,7 +3391,7 @@ uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     uint16_t ret = 0xFFFFU;
 
     if (trim_code > ID601_TRIM_CODE_GAIN_MAX)
@@ -3057,7 +3420,7 @@ uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code)
 }
 uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     uint16_t ret = 0xFFFFU;
 
     if (trim_code > ID601_TRIM_CODE_OFFSET_MAX)
@@ -3084,38 +3447,9 @@ uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
     }
     return ret;
 }
-void id601_trim_setup_current_chx(uint16_t ch)
-{
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    uint16_t channel[12] = { 0U };
-    channel[ch] = 1U;
-    if (false == id601_write_channel_enable(1U, channel[11], channel[10], channel[9], channel[8], channel[7], channel[6], channel[5], channel[4], channel[3], channel[2], channel[1], channel[0]))
-    {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Failed to write channel enable", __func__);
-    }
-}
-void id601_trim_setup_efuse(void)
-{
-    USER_ASSERT(1U == gn_id601_daisy_length);
-
-    const uint16_t _r3F_TEST_EN = 1U;
-    const uint16_t _r3F_SW_SEL = 0U;
-    const uint16_t _r3F_PWMOUT_FULL = 0U;
-    const uint16_t _r3F_MCLK64_O = 0U;
-    const uint16_t _r3F_DTEST_MUX_EN = 0U;
-    const uint16_t _r3F_RD_EN = 1U;
-    const uint16_t _r3F_EXT_CLKIN = 0U;
-    const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
-
-    const uint16_t otp_pg_done = 0U;
-    const uint16_t otp_rd_s = 0U;
-    const uint16_t otp_pg_s = 1U;
-    id601_write_otp_rd_prog(1U, otp_pg_done, otp_rd_s, otp_pg_s);
-}
 bool id601_trim_save_search_registers(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
     {
@@ -3215,7 +3549,7 @@ bool id601_trim_calculate_otp_checksum(uint8_t *checksum)
 
 bool id601_trim_compare_search_registers(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     bool result = true;
 
     uint8_t expect_checksum = 0U;
@@ -3263,7 +3597,7 @@ bool id601_trim_compare_search_registers(void)
 }
 bool id601_trim_display_search_registers(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
     {
@@ -3273,7 +3607,7 @@ bool id601_trim_display_search_registers(void)
 }
 bool id601_trim_overwrite_search_registers(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Overwrite Mirror register");
     for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
@@ -3298,30 +3632,36 @@ static bool id601_test_check_is_trimmed(void)
 
     return ((_r3D & 0x0800U) != 0U);
 }
-void id601_test_setup_idds1(void)
+bool id601_test_setup_idds1(void)
 {
     if (true == gb_id601_hvs_flag)
     {
         drv_gpio_id601_vcc(ID601_VCC_5V5);
         drv_tim_delay_ms(490U); // total 500ms (10ms @ drv_gpio_id601_vcc function)
+        drv_gpio_id601_vcc(ID601_VCC_OFF);
+        drv_tim_delay_ms(4990U); // total 500ms (10ms @ drv_gpio_id601_vcc function)
     }
     drv_gpio_id601_vcc(ID601_VCC_3V3);
+    return true;
 }
-void id601_test_setup_iddd1(void)
+bool id601_test_setup_iddd1(void)
 {
     if (false == id601_init_tm_entry_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 TM Entry Mode Failed", __func__);
+        return false;
     }
 
     if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
+        return false;
     }
+    return true;
 }
-void id601_test_setup_iref1(void)
+bool id601_test_setup_iref1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     const bool already_trimmed = id601_test_check_is_trimmed();
     if (true == already_trimmed)
@@ -3333,7 +3673,11 @@ void id601_test_setup_iref1(void)
         id601_trim_overwrite_search_registers();
     }
 
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3343,14 +3687,23 @@ void id601_test_setup_iref1(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
+    return true;
 }
-void id601_test_setup_iref2(void)
+bool id601_test_setup_iref2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF2_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3360,14 +3713,23 @@ void id601_test_setup_iref2(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_CON);
+    return true;
 }
-void id601_test_setup_ldo_det(void)
+bool id601_test_setup_ldo_det(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF1P5_BGR2_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3377,14 +3739,23 @@ void id601_test_setup_ldo_det(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     drv_gpio_id601_test_relay(ID601_RELAY_DIS);
+    return true;
 }
-void id601_test_setup_ldo_dig(void)
+bool id601_test_setup_ldo_dig(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DIG_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3394,12 +3765,21 @@ void id601_test_setup_ldo_dig(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_ldo_dac(void)
+bool id601_test_setup_ldo_dac(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_DAC_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3409,12 +3789,21 @@ void id601_test_setup_ldo_dac(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_ldo_fll(void)
+bool id601_test_setup_ldo_fll(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VDD1P5_FLL_RES))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3424,12 +3813,21 @@ void id601_test_setup_ldo_fll(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_bgr1(void)
+bool id601_test_setup_bgr1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3439,12 +3837,21 @@ void id601_test_setup_bgr1(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_bgr2(void)
+bool id601_test_setup_bgr2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF2_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF2_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3454,12 +3861,21 @@ void id601_test_setup_bgr2(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_osc(void)
+bool id601_test_setup_osc(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3469,20 +3885,29 @@ void id601_test_setup_osc(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t osc_man_en = 1U;
     const uint16_t osc_fll_err_range = 0U;
     const uint16_t osc_fll_man = 8U;
-    id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man);
+    if (false == id601_write_osc_fll_man2(1U, osc_man_en, osc_fll_err_range, osc_fll_man))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OSC_FLL_MAN2.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_fll1(void)
+bool id601_test_setup_fll1(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
-        return;
+        return false;
     }
 
     const uint64_t tgt_hz = 40000000ULL;
@@ -3491,20 +3916,29 @@ void id601_test_setup_fll1(void)
     const uint16_t fll_msb = (uint16_t)((fllcnt >> 12U) & 0x0FFFU);
 
     const uint16_t fllcnt1 = fll_lsb;
-    id601_write_fllcnt1(1U, fllcnt1);
+    if (false == id601_write_fllcnt1(1U, fllcnt1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT1.", __func__);
+        return false;
+    }
 
     const uint16_t fllcnt2_en = 0x1U;
     const uint16_t fllcnt2_rng = 0x2U;
     const uint16_t fllcnt2_cnt = fll_msb;
-    id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt);
+    if (false == id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT2.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_fll2(void)
+bool id601_test_setup_fll2(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
-        return;
+        return false;
     }
 
     const uint64_t tgt_hz = 60000000ULL;
@@ -3513,20 +3947,29 @@ void id601_test_setup_fll2(void)
     const uint16_t fll_msb = (uint16_t)((fllcnt >> 12U) & 0x0FFFU);
 
     const uint16_t fllcnt1 = fll_lsb;
-    id601_write_fllcnt1(1U, fllcnt1);
+    if (false == id601_write_fllcnt1(1U, fllcnt1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT1.", __func__);
+        return false;
+    }
 
     const uint16_t fllcnt2_en = 0x1U;
     const uint16_t fllcnt2_rng = 0x2U;
     const uint16_t fllcnt2_cnt = fll_msb;
-    id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt);
+    if (false == id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT2.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_fll3(void)
+bool id601_test_setup_fll3(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     if (false == id601_set_fll_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 FLL Test Mode Failed", __func__);
-        return;
+        return false;
     }
 
     const uint64_t tgt_hz = 50000000ULL;
@@ -3535,23 +3978,37 @@ void id601_test_setup_fll3(void)
     const uint16_t fll_msb = (uint16_t)((fllcnt >> 12U) & 0x0FFFU);
 
     const uint16_t fllcnt1 = fll_lsb;
-    id601_write_fllcnt1(1U, fllcnt1);
+    if (false == id601_write_fllcnt1(1U, fllcnt1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT1.", __func__);
+        return false;
+    }
 
     const uint16_t fllcnt2_en = 0x1U;
     const uint16_t fllcnt2_rng = 0x2U;
     const uint16_t fllcnt2_cnt = fll_msb;
-    id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt);
+    if (false == id601_write_fllcnt2(1U, fllcnt2_en, fllcnt2_rng, fllcnt2_cnt))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write FLLCNT2.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_3p(void)
+bool id601_test_setup_iout_3p(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
 
     if (false == id601_set_analog_test_mode())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
+        return false;
     }
 
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3561,28 +4018,54 @@ void id601_test_setup_iout_3p(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t gain_max_current_level3 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level2 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level1 = ID601_TRIM_GAIN_MAX_CURR_LVL;
-    id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
+    if (false == id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURRENT_LEVEL.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_3p_x(uint8_t ph)
+bool id601_test_setup_iout_3p_x(uint8_t ph)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     USER_ASSERT(ph < 3);
 
     const uint16_t vref_table[3] = {ID601_VFY_3P_VREF1, ID601_VFY_3P_VREF2, ID601_VFY_3P_VREF3};
     const uint8_t table_idx = ph;
-    id601_write_max_curr_vref1(1U, vref_table[table_idx]);
-    id601_write_max_curr_vref2(1U, vref_table[table_idx]);
-    id601_write_max_curr_vref3(1U, vref_table[table_idx]);
+    if (false == id601_write_max_curr_vref1(1U, vref_table[table_idx]))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, vref_table[table_idx]))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, vref_table[table_idx]))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_sweep(void)
+bool id601_test_setup_iout_sweep(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3592,26 +4075,52 @@ void id601_test_setup_iout_sweep(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
-    id601_write_max_curr_vref1(1U, ID601_VFY_SWEEP_VREF);
-    id601_write_max_curr_vref2(1U, ID601_VFY_SWEEP_VREF);
-    id601_write_max_curr_vref3(1U, ID601_VFY_SWEEP_VREF);
+    if (false == id601_write_max_curr_vref1(1U, ID601_VFY_SWEEP_VREF))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, ID601_VFY_SWEEP_VREF))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, ID601_VFY_SWEEP_VREF))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_sweep_x(uint8_t ph)
+bool id601_test_setup_iout_sweep_x(uint8_t ph)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     USER_ASSERT(ph <= ID601_MAX_CURRENT_LEVEL_64mA);
 
     const uint16_t gain_max_current_level3 = (ID601_MAX_CURRENT_LEVEL_04mA + ph);
     const uint16_t gain_max_current_level2 = (ID601_MAX_CURRENT_LEVEL_04mA + ph);
     const uint16_t gain_max_current_level1 = (ID601_MAX_CURRENT_LEVEL_04mA + ph);
-    id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
+    if (false == id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURRENT_LEVEL.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_vref_sweep(void)
+bool id601_test_setup_iout_vref_sweep(void)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
-    id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_IREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
 
     const uint16_t _r3F_TEST_EN = 1U;
     const uint16_t _r3F_SW_SEL = 1U;
@@ -3621,21 +4130,48 @@ void id601_test_setup_iout_vref_sweep(void)
     const uint16_t _r3F_RD_EN = 1U;
     const uint16_t _r3F_EXT_CLKIN = 0U;
     const uint16_t _r3F_ADDR_EXT = 0U;
-    id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT);
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
 
     const uint16_t gain_max_current_level3 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level2 = ID601_TRIM_GAIN_MAX_CURR_LVL;
     const uint16_t gain_max_current_level1 = ID601_TRIM_GAIN_MAX_CURR_LVL;
-    id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1);
+    if (false == id601_write_max_current_level(1U, gain_max_current_level3, gain_max_current_level2, gain_max_current_level1))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURRENT_LEVEL.", __func__);
+        return false;
+    }
+    return true;
 }
-void id601_test_setup_iout_vref_sweep_x(uint16_t vref)
+bool id601_test_setup_iout_vref_sweep_x(uint16_t vref)
 {
-    USER_ASSERT(1U == gn_id601_daisy_length);
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
     USER_ASSERT(vref <= 4095);
 
-    id601_write_max_curr_vref1(1U, vref);
-    id601_write_max_curr_vref2(1U, vref);
-    id601_write_max_curr_vref3(1U, vref);
+    if (false == id601_write_max_curr_vref1(1U, vref))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF1.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref2(1U, vref))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF2.", __func__);
+        return false;
+    }
+    if (false == id601_write_max_curr_vref3(1U, vref))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write MAX_CURR_VREF3.", __func__);
+        return false;
+    }
+    return true;
+}
+
+void id601_vsync_dimming_task(void)
+{
+    id601_ld_14B_transfer_command(id601_get_ld_buffer());
 }
 
 /* USER CODE END 0 */

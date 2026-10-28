@@ -86,7 +86,10 @@ static HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C write failed. (%u)", ret);
     }
-    drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C write success. (%u)", ret);
+    else
+    {
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C write success. (%u)", ret);
+    }
     return ret;
 }
 

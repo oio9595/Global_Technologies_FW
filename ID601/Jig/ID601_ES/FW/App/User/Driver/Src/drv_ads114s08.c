@@ -408,7 +408,7 @@ bool ads114s08_wait_conversion_complete(void)
     {
         if ((HAL_GetTick() - start_tick) > ADS114S08_CONVERSION_TIMEOUT_MS)
         {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ADS] ADS114S08 timeout!!\r\n    All ADS Devices stopped.");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [ADS] ADC conversion timed out.\r\n    All ADS Devices stopped.");
             ads114s08_set_conversion_enable(ADS_DEV_1, false);
             ads114s08_set_conversion_enable(ADS_DEV_2, false);
             return false;

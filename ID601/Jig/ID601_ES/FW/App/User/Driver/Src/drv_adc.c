@@ -85,7 +85,7 @@ bool mcu_adc_wait_conversion_complete(void)
     {
         if ((HAL_GetTick() - start_tick) > MCU_ADC_TIMEOUT_MS)
         {
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] ADC timeout!!");
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] ADC conversion timed out.");
             mcu_adc_set_conversion_enable(false);
             return false;
         }

@@ -83,6 +83,12 @@ extern void drv_id601_make_mutex(void);
 extern bool drv_id601_set_daisy_length(uint16_t daisy_length);
 extern uint16_t drv_id601_get_daisy_length(void);
 
+extern bool drv_id601_set_ch_size(uint16_t ch_size);
+extern uint16_t drv_id601_get_ch_size(void);
+
+extern bool drv_id601_set_led_per_ch(uint16_t led_per_ch);
+extern uint16_t drv_id601_get_led_per_ch(void);
+
 extern bool drv_id601_set_hvs_flag(bool hvs_flag);
 extern bool drv_id601_get_hvs_flag(void);
 
@@ -94,6 +100,7 @@ extern bool id601_read_register(const uint16_t bank, const uint16_t device_selec
 extern bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func);
 extern bool id601_fault_read(id601_crc_func_t p_crc_func);
 extern bool id601_sync_gen(id601_crc_func_t p_crc_func);
+extern bool id601_sync_gen_wo_mutex(id601_crc_func_t p_crc_func);
 extern bool id601_id_gen(id601_crc_func_t p_crc_func);
 
 extern bool id601_write_reset_id(uint16_t device_select, uint16_t rst, uint16_t vs_rst, uint16_t e_rst, uint16_t lkg_e, uint16_t id);
@@ -166,26 +173,26 @@ extern bool id601_set_fll_test_mode(void);
 extern bool id601_set_dimming_type1_mode(void);
 extern bool id601_set_dimming_type2_mode(void);
 
-extern void id601_trim_setup_iref1(void);
-extern void id601_trim_setup_iref2(void);
-extern void id601_trim_setup_ldo_det(void);
-extern void id601_trim_setup_ldo_dig(void);
-extern void id601_trim_setup_ldo_dac(void);
-extern void id601_trim_setup_ldo_fll(void);
-extern void id601_trim_setup_ofs_temp(void);
-extern void id601_trim_setup_osc_rctl(void);
-extern void id601_trim_setup_gain(void);
-extern void id601_trim_setup_offset(void);
+extern bool id601_trim_setup_iref1(void);
+extern bool id601_trim_setup_iref2(void);
+extern bool id601_trim_setup_ldo_det(void);
+extern bool id601_trim_setup_ldo_dig(void);
+extern bool id601_trim_setup_ldo_dac(void);
+extern bool id601_trim_setup_ldo_fll(void);
+extern bool id601_trim_setup_ofs_temp(void);
+extern bool id601_trim_setup_osc_rctl(void);
+extern bool id601_trim_setup_gain(void);
+extern bool id601_trim_setup_offset(void);
 
-extern void id601_trim_setup_gain_vref1(void);
-extern void id601_trim_setup_gain_vref2(void);
-extern void id601_trim_setup_offset_vref1(void);
-extern void id601_trim_setup_offset_vref2(void);
+extern bool id601_trim_setup_ofs_temp_o1(void);
+extern bool id601_trim_setup_ofs_temp_o2(void);
 
-extern void id601_trim_setup_ofs_temp_o1(void);
-extern void id601_trim_setup_ofs_temp_o2(void);
-extern void id601_trim_setup_current_chx(uint16_t ch);
-extern void id601_trim_setup_efuse(void);
+extern bool id601_trim_setup_gain_vref1(void);
+extern bool id601_trim_setup_gain_vref2(void);
+extern bool id601_trim_setup_offset_vref1(void);
+extern bool id601_trim_setup_offset_vref2(void);
+extern bool id601_trim_setup_current_chx(uint16_t ch);
+extern bool id601_trim_setup_efuse(void);
 
 extern bool id601_trim_save_search_registers(void);
 extern bool id601_trim_compare_search_registers(void);
@@ -203,28 +210,29 @@ extern uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code);
 
-extern void id601_test_setup_idds1(void);
-extern void id601_test_setup_iddd1(void);
-extern void id601_test_setup_iref1(void);
-extern void id601_test_setup_iref2(void);
-extern void id601_test_setup_ldo_det(void);
-extern void id601_test_setup_ldo_dig(void);
-extern void id601_test_setup_ldo_dac(void);
-extern void id601_test_setup_ldo_fll(void);
-extern void id601_test_setup_bgr1(void);
-extern void id601_test_setup_bgr2(void);
-extern void id601_test_setup_osc(void);
-extern void id601_test_setup_fll1(void);
-extern void id601_test_setup_fll2(void);
-extern void id601_test_setup_fll3(void);
-extern void id601_test_setup_iout_3p(void);
-extern void id601_test_setup_iout_sweep(void);
-extern void id601_test_setup_iout_vref_sweep(void);
+extern bool id601_test_setup_idds1(void);
+extern bool id601_test_setup_iddd1(void);
+extern bool id601_test_setup_iref1(void);
+extern bool id601_test_setup_iref2(void);
+extern bool id601_test_setup_ldo_det(void);
+extern bool id601_test_setup_ldo_dig(void);
+extern bool id601_test_setup_ldo_dac(void);
+extern bool id601_test_setup_ldo_fll(void);
+extern bool id601_test_setup_bgr1(void);
+extern bool id601_test_setup_bgr2(void);
+extern bool id601_test_setup_osc(void);
+extern bool id601_test_setup_fll1(void);
+extern bool id601_test_setup_fll2(void);
+extern bool id601_test_setup_fll3(void);
+extern bool id601_test_setup_iout_3p(void);
+extern bool id601_test_setup_iout_sweep(void);
+extern bool id601_test_setup_iout_vref_sweep(void);
 
-extern void id601_test_setup_iout_3p_x(uint8_t ph);
+extern bool id601_test_setup_iout_3p_x(uint8_t ph);
+extern bool id601_test_setup_iout_sweep_x(uint8_t ph);
+extern bool id601_test_setup_iout_vref_sweep_x(uint16_t vref);
 
-extern void id601_test_setup_iout_sweep_x(uint8_t ph);
-extern void id601_test_setup_iout_vref_sweep_x(uint16_t vref);
+extern void id601_vsync_dimming_task(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

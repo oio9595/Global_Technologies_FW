@@ -269,7 +269,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-
+    drv_tim_svsync_irq_handler();
   /* USER CODE END TIM3_IRQn 0 */
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
@@ -342,7 +342,7 @@ void TIM8_BRK_TIM12_IRQHandler(void)
 void TIM8_UP_TIM13_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
-
+    drv_tim_vsync_irq_handler();
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
 

@@ -37,7 +37,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef void (*test_setup_func_t)(void);
+typedef bool (*test_setup_func_t)(void);
 
 typedef enum tag_TEST_STEP_T
 {
@@ -246,13 +246,17 @@ static bool test_step_setup_by_list(thread_data_t *td)
     const uint16_t ch = gt_test_info[gt_test_list].ch;
     const uint16_t phase = gt_test_info[gt_test_list].test_phase;
 
-    gp_test_setup_by_list[gt_test_list]();
+    if (false == gp_test_setup_by_list[gt_test_list]())
+    {
+        return test_error_handler(td);
+    }
 
     switch (gt_test_list)
     {
         case TEST_LIST_IDDS1:
         case TEST_LIST_IDDD1:
         {
+            LL_GPIO_SetOutputPin(DEBUG1_GPIO_Port, DEBUG1_Pin);
             ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN02_ID601_ICC_P, ADS_DEV1_AIN03_ID601_ICC_N);
             td->step = TEST_STEP_START_MEASURE;
             td->tout = T_STABLE_MS;
@@ -288,9 +292,15 @@ static bool test_step_setup_by_list(thread_data_t *td)
 
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
-            id601_trim_setup_current_chx(ch);
+            if (false == id601_trim_setup_current_chx(ch))
+            {
+                return test_error_handler(td);
+            }
             ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
-            id601_test_setup_iout_3p_x(phase);
+            if (false == id601_test_setup_iout_3p_x(phase))
+            {
+                return test_error_handler(td);
+            }
             td->step = TEST_STEP_START_MEASURE;
             td->tout = T_STABLE_MS;
             break;
@@ -302,9 +312,15 @@ static bool test_step_setup_by_list(thread_data_t *td)
 
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
-            id601_trim_setup_current_chx(ch);
+            if (false == id601_trim_setup_current_chx(ch))
+            {
+                return test_error_handler(td);
+            }
             ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
-            id601_test_setup_iout_sweep_x(phase);
+            if (false == id601_test_setup_iout_sweep_x(phase))
+            {
+                return test_error_handler(td);
+            }
             td->step = TEST_STEP_START_MEASURE;
             td->tout = T_STABLE_MS;
             break;
@@ -313,9 +329,15 @@ static bool test_step_setup_by_list(thread_data_t *td)
         {
             drv_gpio_id601_vled(ID601_VLED_ON);
             drv_gpio_id601_ch_demux(ch);
-            id601_trim_setup_current_chx(ch);
+            if (false == id601_trim_setup_current_chx(ch))
+            {
+                return test_error_handler(td);
+            }
             ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
-            id601_test_setup_iout_vref_sweep_x(phase);
+            if (false == id601_test_setup_iout_vref_sweep_x(phase))
+            {
+                return test_error_handler(td);
+            }
             td->step = TEST_STEP_START_MEASURE;
             td->tout = T_STABLE_MS;
             break;
@@ -477,7 +499,7 @@ static bool test_step_get_measured_value(thread_data_t *td)
             {
                 int32_t adc_value = ads114s08_get_average_conversion(ADS_DEV_1);
                 const float voltage_mv = ads114s08_conversion_adc_to_mvoltage(adc_value);
-                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TEST] [%s] [CH%2u] [PH%u] MEASURE: ADS ADC=%ld voltage=%.2f mV", test_get_list_name(gt_test_list), ch, phase, (long)adc_value, (double)voltage_mv);
+                drv_uart_printf(LOG_LV_DEBUG, "\r\n    [TEST] [%s] [CH%02u] [PH%u] MEASURE: ADS ADC=%ld voltage=%.2f mV", test_get_list_name(gt_test_list), (ch + 1U), phase, (long)adc_value, (double)voltage_mv);
                 switch (gn_id601_test_iout_gain)
                 {
                     case ID601_IOUT_GAIN_LOW:
@@ -549,7 +571,7 @@ static bool test_step_get_measured_value(thread_data_t *td)
 
     if (false == conversion_success)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] [%s] %s: Conversion failed, Test stop", test_get_list_name(gt_test_list), __func__);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] [%s] %s: Conversion failed. Testing stopped", test_get_list_name(gt_test_list), __func__);
         return test_error_handler(td);
     }
     else
@@ -806,7 +828,10 @@ static bool test_step_pwr_off(thread_data_t *td)
 
     drv_gpio_clear_id601();
 
-    drv_id601_set_hvs_flag(false);
+    if (true == drv_id601_get_hvs_flag())
+    {
+        drv_id601_set_hvs_flag(false);
+    }
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] Power Off");
 
@@ -893,7 +918,12 @@ void id601_test_iout_monitor_start(uint16_t channel, uint16_t max_curr_lvl, uint
     }
 
     drv_gpio_id601_ch_demux(channel);
-    id601_trim_setup_current_chx(channel);
+    if (false == id601_trim_setup_current_chx(channel))
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TEST] %s: ID601 Trim Setup Current Channel Failed", __func__);
+        id601_test_iout_monitor_stop();
+        return;
+    }
     ads114s08_set_input_mux(ADS_DEV_1, ADS_DEV1_AIN00_ID601_IOUT, ADS_INPUT_N_GND);
 
     const uint16_t _r3F_TEST_EN = 1U;

@@ -68,6 +68,12 @@ extern void drv_tim_capture_freq_irq_handler(void);
 extern void drv_tim_test_vsync_start(void);
 extern void drv_tim_test_vsync_stop(void);
 extern void drv_tim_test_vsync_irq_handler(void);
+
+extern void drv_tim_vsync_start(void);
+extern void drv_tim_vsync_stop(void);
+extern void drv_tim_vsync_irq_handler(void);
+
+extern void drv_tim_svsync_irq_handler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

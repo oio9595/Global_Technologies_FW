@@ -52,7 +52,7 @@ extern "C" {
 
 #define TRIM_START_FLAG                 (1U << 0U)
 #define TEST_START_FLAG                 (1U << 1U)
-#define TEST_VSYNC_TEST_FLAG                 (1U << 2U)
+#define VSYNC_DIMMING_FLAG              (1U << 2U)
 
 #define CONST_MA_to_UA(x)               ((x) * 1000.0f) // Convert milliampere to microampere
 #define CONST_MV_to_V(x)                ((x) / 1000.0f) // Convert millivolts to volts
@@ -74,6 +74,13 @@ extern "C" {
 #define HW_ID601_IOUT_MV_TO_MA_LOW(x)   (((float)(x) * (float)HW_ID601_IOUT_INPUT_OHM) / ((float)HW_ID601_IOUT_OUTPUT_OHM * (float)HW_ID601_IOUT_SENSE_LOW_OHM))
 #define HW_ID601_IOUT_MV_TO_MA_MID(x)   (((float)(x) * (float)HW_ID601_IOUT_INPUT_OHM) / ((float)HW_ID601_IOUT_OUTPUT_OHM * (float)HW_ID601_IOUT_SENSE_MID_OHM))
 #define HW_ID601_IOUT_MV_TO_MA_HIGH(x)  (((float)(x) * (float)HW_ID601_IOUT_INPUT_OHM) / ((float)HW_ID601_IOUT_OUTPUT_OHM * (float)HW_ID601_IOUT_SENSE_HIGH_OHM))
+
+#define ID601_DAISY_LENGTH_MAX          (5U)
+#define ID601_CH_SIZE_MAX               (12U)
+#define ID601_LED_PER_CH_MAX            (3U) // type-1
+
+#define SV_NO                           (32U)
+#define ID601_CHANNEL_SIZE              (12U)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -86,8 +93,6 @@ struct tag_THREAD_DATA
     uint32_t tout;
     thread_step_handler_t func;
 };
-
-typedef void (*void_func_ptr_t)(void);
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
