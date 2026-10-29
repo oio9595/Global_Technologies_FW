@@ -289,8 +289,8 @@ static const cli_cmd_entry_t gt_cli_command[] =
     {
         CLI_CMD_LD_BUFF,
         "ld_buff",
-        "ld_buff <daisy> <ch> <led> <value>"
-        "\r\n    Daisy: 1 ~ daisy length"
+        "ld_buff <ic> <ch> <led> <value>"
+        "\r\n    IC: 1 ~ daisy length"
         "\r\n    Ch: 1 ~ channel size"
         "\r\n    Led: 1 ~ led per channel"
         "\r\n    Value: 0x000-0xFFFF (decimal or 0x hex, depending on pwm_res)"
