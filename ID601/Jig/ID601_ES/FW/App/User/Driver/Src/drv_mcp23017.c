@@ -84,11 +84,11 @@ static HAL_StatusTypeDef mcp23017_write(uint8_t reg, uint8_t data)
     ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 2U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C write failed. (%u)", ret);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C Write Failed. (%u)", ret);
     }
     else
     {
-        drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C write success. (%u)", ret);
+        drv_uart_printf(LOG_LV_TRACE, "\r\n    [MCU] I2C Write Complete. (%u)", ret);
     }
     return ret;
 }
@@ -107,7 +107,7 @@ static HAL_StatusTypeDef mcp23017_read(uint8_t reg, uint8_t* p_buff)
     ret = HAL_I2C_Master_Transmit(&hi2c1, (MCP_I2C_ADDR | I2C_Tx), i2c_tx_buff, 1U, I2C_TIMEOUT);
     if (HAL_OK != ret)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C write failed. (%u)", ret);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] I2C Write Failed. (%u)", ret);
         return ret;
     }
 

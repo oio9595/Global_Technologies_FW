@@ -173,25 +173,28 @@ bool drv_gpio_id601_vcc(uint16_t state)
 
 bool drv_gpio_id601_vled(uint16_t state)
 {
-    switch (state)
+    if (BOARD_TYPE_GT == gb_board_type)
     {
-        case ID601_VLED_OFF:
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, true);
-            drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
-            break;
-        }
-        case ID601_VLED_ON:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
-            drv_tim_delay_ms(VLED_RAMP_UP_MS);
-            break;
-        }
-        default:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
-            drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
-            return false;
+            case ID601_VLED_OFF:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, true);
+                drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
+                break;
+            }
+            case ID601_VLED_ON:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
+                drv_tim_delay_ms(VLED_RAMP_UP_MS);
+                break;
+            }
+            default:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_VLED_CTL_PORT, false);
+                drv_tim_delay_ms(VLED_RAMP_DOWN_MS);
+                return false;
+            }
         }
     }
     return true;
@@ -199,73 +202,82 @@ bool drv_gpio_id601_vled(uint16_t state)
 
 bool drv_gpio_id601_test_relay(uint16_t state)
 {
-    switch (state)
+    if (BOARD_TYPE_GT == gb_board_type)
     {
-        case ID601_RELAY_DIS:
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
-            break;
+            case ID601_RELAY_DIS:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
+                break;
+            }
+            case ID601_RELAY_CON:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, true);
+                break;
+            }
+            default:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
+                return false;
+            }
         }
-        case ID601_RELAY_CON:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, true);
-            break;
-        }
-        default:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_TEST_PORT, false);
-            return false;
-        }
+        drv_tim_delay_ms(RELAY_STABLE_MS);
     }
-    drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
 }
 
 bool drv_gpio_id601_o1_relay(uint16_t state)
 {
-    switch (state)
+    if (BOARD_TYPE_GT == gb_board_type)
     {
-        case ID601_RELAY_DIS:
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
-            break;
+            case ID601_RELAY_DIS:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
+                break;
+            }
+            case ID601_RELAY_CON:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, true);
+                break;
+            }
+            default:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
+                return false;
+            }
         }
-        case ID601_RELAY_CON:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, true);
-            break;
-        }
-        default:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O1_PORT, false);
-            return false;
-        }
+        drv_tim_delay_ms(RELAY_STABLE_MS);
     }
-    drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
 }
 
 bool drv_gpio_id601_o2_relay(uint16_t state)
 {
-    switch (state)
+    if (BOARD_TYPE_GT == gb_board_type)
     {
-        case ID601_RELAY_DIS:
+        switch (state)
         {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
-            break;
+            case ID601_RELAY_DIS:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
+                break;
+            }
+            case ID601_RELAY_CON:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, true);
+                break;
+            }
+            default:
+            {
+                mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
+                return false;
+            }
         }
-        case ID601_RELAY_CON:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, true);
-            break;
-        }
-        default:
-        {
-            mcp23017_set_gpio_state(MCP_ID601_RELAY_O2_PORT, false);
-            return false;
-        }
+        drv_tim_delay_ms(RELAY_STABLE_MS);
     }
-    drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
 }
 
@@ -318,116 +330,6 @@ bool drv_gpio_id601_ch_demux(uint16_t ch)
     }
     drv_tim_delay_ms(RELAY_STABLE_MS);
     return true;
-#if 0
-    switch (ch)
-    {
-        case ID601_CH_01:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_02:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_03:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_04:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_05:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_06:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_07:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_08:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_09:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_10:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_11:
-        {
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        case ID601_CH_12:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_ResetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            break;
-        }
-        default:
-        {
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX1_GPIO_Port, ID601_CH_DEMUX1_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX2_GPIO_Port, ID601_CH_DEMUX2_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX3_GPIO_Port, ID601_CH_DEMUX3_Pin);
-            LL_GPIO_SetOutputPin(ID601_CH_DEMUX4_GPIO_Port, ID601_CH_DEMUX4_Pin);
-            return false;
-        }
-    }
-    return true;
-#endif
 }
 
 bool drv_gpio_id601_iout_gain(uint16_t gain)

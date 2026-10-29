@@ -26,6 +26,7 @@
 #include "drv_id601.h"
 #include "cmsis_os.h"
 #include "common_def.h"
+#include "id601_dimming.h"
 
 /* USER CODE END Includes */
 
@@ -51,10 +52,10 @@
 #define TIM5_CAPTURE_FREQ_DMA_STREAM    (LL_DMA_STREAM_2)
 
 #define TIM5_CAPTURE_SIZE               (256U)
-#define MCU_TIM_TIMEOUT                 (1000U)
+#define TIM5_CAPTURE_TIMEOUT            (1000U)
 
 #define TIM3_FREQ                       (90000000UL) // 90MHz
-#define TIM8_FREQ                       (180000000UL / 50U) // 180MHz
+#define TIM8_FREQ                       (180000000UL / 50U) // 3.6MHz
 
 #define SVSYNC_PHASE_RED                (1U)
 #define SVSYNC_PHASE_GREEN              (2U)
@@ -64,7 +65,7 @@
 #define SVSYNC_VSYNC_MASK_L_US          (4U)
 #define SVSYNC_GATING_TIME_US           (10U)
 #define SVSYNC_CYCLE                    (3U)
-#define SVSYNC_SIZE                     (SV_NO)
+#define SVSYNC_SIZE                     (ID601_SV_NO)
 #define SVSYNC_TOTAL_CYCLE              (SVSYNC_CYCLE * SVSYNC_SIZE)
 
 #define SVSYNC_RED_FREQ                 (3840U)
@@ -363,7 +364,7 @@ bool mcu_tim_wait_conversion_complete(void)
     uint32_t start_tick = HAL_GetTick();
     while (true == gb_tim5_capture_dma_active)
     {
-        if ((HAL_GetTick() - start_tick) > MCU_TIM_TIMEOUT)
+        if ((HAL_GetTick() - start_tick) > TIM5_CAPTURE_TIMEOUT)
         {
             drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM5 Capture Frequency timed out");
             mcu_tim_set_conversion_enable(false);

@@ -575,7 +575,6 @@ extern "C" {
 #define ID601_VERSION_VERSION0_Pos                         (0U)
 #define ID601_VERSION_VERSION0_Msk                         (0x0FFU << ID601_VERSION_VERSION0_Pos)
 
-
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/

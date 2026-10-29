@@ -67,6 +67,9 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID601_EFUSE,
 
     CLI_CMD_LD_BUFF,
+    CLI_CMD_LD_CONFIG_FAULT_READ_ENABLE,
+    CLI_CMD_LD_CONFIG_LD_TRANS_ENABLE,
+    CLI_CMD_LD_CONFIG_PWM_RES,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -191,7 +194,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_TRIM_MANUAL,
         "trim_manual",
         "trim_manual <test>"
-        "Configure manual trim setup"
+        "\r\n    Configure manual trim setup"
         "\r\n    0/omitted=list"
         "\r\n    for more details, use \"trim_manual\" CLI command"
     },
@@ -218,6 +221,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_TEST_MANUAL,
         "test_manual",
         "test_manual <test>"
+        "\r\n    Configure manual test setup"
         "\r\n    0/omitted=list"
         "\r\n    for more details, use \"test_manual\" CLI command"
     },
@@ -231,16 +235,16 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "\r\n    Invalid state turns selected power OFF"
     },
     {
-        CLI_CMD_ID601_COMMAND,
-        "id601_command",
-        "id601_command <cmd>"
-        "\r\n    0/omitted=list, 1=SYNCGEN, 2=IDGEN"
-    },
-    {
         CLI_CMD_ID601_DAISY,
         "id601_daisy",
         "id601_daisy <length>"
         "\r\n    0/omitted=list + current, 1-5=set length"
+    },
+    {
+        CLI_CMD_ID601_COMMAND,
+        "id601_command",
+        "id601_command <cmd>"
+        "\r\n    0/omitted=list, 1=SYNCGEN, 2=IDGEN"
     },
     {
         CLI_CMD_ID601_WRITE,
@@ -289,7 +293,29 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "\r\n    Daisy: 1 ~ daisy length"
         "\r\n    Ch: 1 ~ channel size"
         "\r\n    Led: 1 ~ led per channel"
-        "\r\n    Value: 0x000-0xFFF (decimal or 0x hex)"
+        "\r\n    Value: 0x000-0xFFFF (decimal or 0x hex, depending on pwm_res)"
+    },
+    {
+        CLI_CMD_LD_CONFIG_FAULT_READ_ENABLE,
+        "ld_config_fault_read_enable",
+        "ld_config_fault_read_enable <enable>"
+        "\r\n    Configure the fault read enable for vsync task"
+        "\r\n    0/omitted=list, 1=disable, 2=enable"
+    },
+    {
+        CLI_CMD_LD_CONFIG_LD_TRANS_ENABLE,
+        "ld_config_ld_trans_enable",
+        "ld_config_ld_trans_enable <enable>"
+        "\r\n    Configure the LD transfer enable for vsync task"
+        "\r\n    0/omitted=list, 1=disable, 2=enable"
+    },
+    {
+        CLI_CMD_LD_CONFIG_PWM_RES,
+        "ld_config_pwm_res",
+        "ld_config_pwm_res <res>"
+        "\r\n    Configure the PWM resolution for the LD buffer"
+        "\r\n    Possible when ID601 is not initiated"
+        "\r\n    0/omitted=list, 1=12bit, 2=14bit"
     }
 };
 
@@ -358,6 +384,11 @@ static void cli_help(void)
 
     for (uint16_t idx = 0U; idx < total_cmds; ++idx)
     {
+        if (0U < idx)
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n");
+        }
+
         const char *line = gt_cli_command[idx].description;
         bool first_line = true;
 
@@ -640,24 +671,63 @@ static inline void cli_cmd_function_trim_result(void)
 static inline void cli_cmd_help_trim_manual(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Trim Manual Help:");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: IREF1", MANUAL_TRIM_IREF1);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: IREF2", MANUAL_TRIM_IREF2);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: LDO_DET", MANUAL_TRIM_LDO_DET);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: LDO_DIG", MANUAL_TRIM_LDO_DIG);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: LDO_DAC", MANUAL_TRIM_LDO_DAC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: LDO_FLL", MANUAL_TRIM_LDO_FLL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: OFS_TEMP <option 1:V1, 2:V2>", MANUAL_TRIM_OFS_TEMP);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: OSC_RCTL", MANUAL_TRIM_OSC_RCTL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: GAIN <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: OFFSET <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: IREF1", MANUAL_TRIM_IREF1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: IREF2", MANUAL_TRIM_IREF2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: LDO_DET", MANUAL_TRIM_LDO_DET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: LDO_DIG", MANUAL_TRIM_LDO_DIG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: LDO_DAC", MANUAL_TRIM_LDO_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: LDO_FLL", MANUAL_TRIM_LDO_FLL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: OFS_TEMP <option 1:V1, 2:V2>", MANUAL_TRIM_OFS_TEMP);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: OSC_RCTL", MANUAL_TRIM_OSC_RCTL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: GAIN <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: OFFSET <option 1:P3, 2:P4> <ch:1-12>", MANUAL_TRIM_OFFSET);
 }
 static inline void cli_cmd_function_trim_manual(void)
 {
     const uint32_t test = gt_cli_request.val_1;
+    const uint32_t option = gt_cli_request.val_2;
+    const uint32_t ch = gt_cli_request.val_3;
+    bool param_valid = false;
 
     if ((0U == test))
     {
         cli_cmd_help_trim_manual();
+        return;
+    }
+
+    switch (test)
+    {
+        case MANUAL_TRIM_IREF1:
+        case MANUAL_TRIM_IREF2:
+        case MANUAL_TRIM_LDO_DET:
+        case MANUAL_TRIM_LDO_DIG:
+        case MANUAL_TRIM_LDO_DAC:
+        case MANUAL_TRIM_LDO_FLL:
+        case MANUAL_TRIM_OSC_RCTL:
+        {
+            param_valid = (1U == gn_cli_argument_count);
+            break;
+        }
+        case MANUAL_TRIM_OFS_TEMP:
+        {
+            param_valid = ((2U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U));
+            break;
+        }
+        case MANUAL_TRIM_GAIN:
+        case MANUAL_TRIM_OFFSET:
+        {
+            param_valid = ((3U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U) && (ch >= 1U) && (ch <= ID601_CH_MAX));
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    if (false == param_valid)
+    {
+        cli_print_invalid_input();
         return;
     }
 
@@ -837,33 +907,35 @@ static inline void cli_cmd_function_test_iout_monitor(void)
         cli_print_invalid_input();
         return;
     }
-    if (1U == option)
-    {
-        id601_test_iout_monitor_stop();
-        return;
-    }
     if ((gn_cli_argument_count != 4U) || (channel < 1U) || (channel > ID601_CH_MAX) ||
         (max_curr_lvl > 0x0FU) || (vref > 4095U))
     {
         cli_print_invalid_input();
         return;
     }
-    id601_test_iout_monitor_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
+    if (1U == option)
+    {
+        id601_test_iout_monitor_stop();
+    }
+    else
+    {
+        id601_test_iout_monitor_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
+    }
 }
 static inline void cli_cmd_help_test_manual(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Test Manual Help:");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: Driving Voltage <ch:1-12>", MANUAL_TEST_DRIVING_VOLTAGE);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV VDD", MANUAL_TEST_UV_VDD);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV LDO     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV DAC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: UV/OV OSC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: OPEN DETECTOR, not yet", MANUAL_TEST_OPEN_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: FB DETECTOR, not yet", MANUAL_TEST_FB_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: SHORT DETECTOR, not yet", MANUAL_TEST_SHORT_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: FAULT FLAG, not yet", MANUAL_TEST_FAULT_FLAG);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: BIST", MANUAL_TEST_BIST);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %u: HVS", MANUAL_TEST_HVS);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: Driving Voltage <ch:1-12>", MANUAL_TEST_DRIVING_VOLTAGE);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: UV VDD", MANUAL_TEST_UV_VDD);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: UV/OV LDO     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: UV/OV DAC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: UV/OV OSC     <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: OPEN DETECTOR, not yet", MANUAL_TEST_OPEN_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: FB DETECTOR, not yet", MANUAL_TEST_FB_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: SHORT DETECTOR, not yet", MANUAL_TEST_SHORT_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: FAULT FLAG, not yet", MANUAL_TEST_FAULT_FLAG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: BIST", MANUAL_TEST_BIST);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %02u: HVS", MANUAL_TEST_HVS);
 }
 static inline void cli_cmd_function_test_manual(void)
 {
@@ -1577,18 +1649,104 @@ static inline void cli_cmd_function_ld_buff(void)
     const uint16_t daisy_length = drv_id601_get_daisy_length();
     const uint16_t ch_size = drv_id601_get_ch_size();
     const uint16_t led_per_ch = drv_id601_get_led_per_ch();
+    const uint16_t ld_size_max = id601_get_ld_size_max();
 
     if ((0U == daisy) || (0U == ch) || (0U == led))
     {
         cli_print_command_usage(CLI_CMD_LD_BUFF);
         return;
     }
-    if (daisy > daisy_length || ch > ch_size || led > led_per_ch)
+    if (daisy > daisy_length || ch > ch_size || led > led_per_ch || value > ld_size_max)
     {
         cli_print_invalid_input();
         return;
     }
     id601_set_ld_buffer(daisy - 1U, ch - 1U, led - 1U, (uint16_t)value);
+}
+static inline void cli_cmd_function_ld_config_fault_read_enable(void)
+{
+    const uint32_t enable = gt_cli_request.val_1;
+    const bool is_enable = (2U == enable);
+    if (0U == enable)
+    {
+        cli_print_command_usage(CLI_CMD_LD_CONFIG_FAULT_READ_ENABLE);
+        return;
+    }
+    if (enable > 2U)
+    {
+        cli_print_invalid_input();
+        return;
+    }
+    if (true ==is_enable)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Fault Read Enabled");
+        id601_config_fault_read(true);
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Fault Read Disabled");
+        id601_config_fault_read(false);
+    }
+}
+static inline void cli_cmd_function_ld_config_ld_trans_enable(void)
+{
+    const uint32_t enable = gt_cli_request.val_1;
+    const bool is_enable = (2U == enable);
+    if (0U == enable)
+    {
+        cli_print_command_usage(CLI_CMD_LD_CONFIG_LD_TRANS_ENABLE);
+        return;
+    }
+    if (enable > 2U)
+    {
+        cli_print_invalid_input();
+        return;
+    }
+    if (true == is_enable)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Transfer Enabled");
+        id601_config_ld_transfer(true);
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Transfer Disabled");
+        id601_config_ld_transfer(false);
+    }
+}
+static inline void cli_cmd_function_ld_config_pwm_res(void)
+{
+    const uint32_t pwm_res = gt_cli_request.val_1;
+
+    if (0U == pwm_res)
+    {
+        cli_print_command_usage(CLI_CMD_LD_CONFIG_PWM_RES);
+        return;
+    }
+    if (pwm_res > 2U)
+    {
+        cli_print_invalid_input();
+        return;
+    }
+    id601_ld_control_reg_t config =
+    {
+        .sv_no = ID601_SV_NO,
+        .ld_type = ID601_LD_TYPE_DEFAULT,
+        .delay_ch_en = ID601_DELAY_CH_EN_DEFAULT,
+        .syncmode = ID601_SYNCMODE_DEFAULT,
+        .pwm_res = ID601_PWM_RES_DEFAULT,
+        .ld_dir = ID601_LD_DIR_DEFAULT,
+        .ld_mode = ID601_LD_MODE_DEFAULT
+    };
+    config.pwm_res = (uint8_t)(pwm_res - 1U);
+    if (0U == config.pwm_res)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Set PWM RES to 12bit");
+    }
+    if (1U == config.pwm_res)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Set PWM RES to 14bit");
+    }
+    id601_config_ld_control(&config);
 }
 
 /**
@@ -1713,6 +1871,21 @@ static void cli_command_execute(void)
         case CLI_CMD_LD_BUFF:
         {
             cli_cmd_function_ld_buff();
+            break;
+        }
+        case CLI_CMD_LD_CONFIG_FAULT_READ_ENABLE:
+        {
+            cli_cmd_function_ld_config_fault_read_enable();
+            break;
+        }
+        case CLI_CMD_LD_CONFIG_LD_TRANS_ENABLE:
+        {
+            cli_cmd_function_ld_config_ld_trans_enable();
+            break;
+        }
+        case CLI_CMD_LD_CONFIG_PWM_RES:
+        {
+            cli_cmd_function_ld_config_pwm_res();
             break;
         }
         default:

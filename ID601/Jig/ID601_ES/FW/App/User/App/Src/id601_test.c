@@ -705,7 +705,7 @@ static bool test_step_log_summary(thread_data_t *td)
         phase = 0U;
         started = true;
 
-        drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] SUMMARY\r\n        %-12s %6s %12s", "ITEM", "UNIT", "VALUE");
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [TEST] [LOG]\r\n        %-12s %6s %12s", "ITEM", "UNIT", "VALUE");
 
         td->step = TEST_STEP_LOG_SUMMARY;
         td->tout = row_delay_ticks;

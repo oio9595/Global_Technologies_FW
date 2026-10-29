@@ -29,6 +29,7 @@
 #include "drv_id601.h"
 #include "id601_trim.h"
 #include "id601_test.h"
+#include "id601_dimming.h"
 #include "drv_ads114s08.h"
 #include "common_def.h"
 /* USER CODE END Includes */
@@ -1472,6 +1473,7 @@ void StartID601TrimTask(void *argument)
 void StartVsyncTask(void *argument)
 {
   /* USER CODE BEGIN StartVsyncTask */
+    id601_dimming_init();
   /* Infinite loop */
   for(;;)
   {

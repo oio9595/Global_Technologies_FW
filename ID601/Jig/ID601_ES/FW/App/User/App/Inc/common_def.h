@@ -77,10 +77,7 @@ extern "C" {
 
 #define ID601_DAISY_LENGTH_MAX          (5U)
 #define ID601_CH_SIZE_MAX               (12U)
-#define ID601_LED_PER_CH_MAX            (3U) // type-1
-
-#define SV_NO                           (32U)
-#define ID601_CHANNEL_SIZE              (12U)
+#define ID601_LED_PER_CH_MAX            (3U)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/

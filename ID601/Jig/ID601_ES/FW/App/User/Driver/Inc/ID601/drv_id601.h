@@ -40,6 +40,8 @@ extern "C" {
 
 #define ID601_VFY_SWEEP_VREF                (0x012CU)
 
+#define ID601_VFY_MAX_CURR_LVL              (ID601_MAX_CURRENT_LEVEL_08mA)
+
 #define ID601_TRIM_CODE_IREF1_MAX           (0x001FU)
 #define ID601_TRIM_CODE_IREF2_MAX           (0x001FU)
 #define ID601_TRIM_CODE_LDO_BGR2_CTL_MAX    (0x001FU)
@@ -97,7 +99,7 @@ extern id601_crc_func_t drv_id601_get_crc_func(void);
 
 extern bool id601_write_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, const uint16_t new_value, id601_crc_func_t p_crc_func);
 extern bool id601_read_register(const uint16_t bank, const uint16_t device_select, const uint16_t addr, id601_crc_func_t p_crc_func, uint16_t* p_single_read_data);
-extern bool id601_ld_transfer(uint16_t* p_buff, id601_crc_func_t p_crc_func);
+extern bool id601_ld_transfer(const uint16_t* p_data);
 extern bool id601_fault_read(id601_crc_func_t p_crc_func);
 extern bool id601_sync_gen(id601_crc_func_t p_crc_func);
 extern bool id601_sync_gen_wo_mutex(id601_crc_func_t p_crc_func);
@@ -231,8 +233,6 @@ extern bool id601_test_setup_iout_vref_sweep(void);
 extern bool id601_test_setup_iout_3p_x(uint8_t ph);
 extern bool id601_test_setup_iout_sweep_x(uint8_t ph);
 extern bool id601_test_setup_iout_vref_sweep_x(uint16_t vref);
-
-extern void id601_vsync_dimming_task(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

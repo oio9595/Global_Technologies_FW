@@ -406,7 +406,7 @@ static bool trim_step_initial(thread_data_t *td)
                 }
                 else
                 {
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Initial trim write failed, ch=%u code=%u", trim_get_list_name((trim_list_t)i), __func__, (unsigned)j,(unsigned)gt_trim_info[i].trim_code[j]);
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Initial trim Write Failed, ch=%u code=%u", trim_get_list_name((trim_list_t)i), __func__, (unsigned)j,(unsigned)gt_trim_info[i].trim_code[j]);
                     return trim_error_handler(td);
                 }
             }
@@ -847,7 +847,7 @@ static bool trim_step_judge_range_update_register(thread_data_t *td)
 
     if (UINT16_MAX == reg_val)
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Trim register write failed, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)next_code);
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [TRIM] [%s] %s: Trim register Write Failed, ch=%u code=%u", trim_get_list_name(gt_trim_list), __func__, (unsigned)ch, (unsigned)next_code);
         return trim_error_handler(td);
     }
 
@@ -990,7 +990,7 @@ static bool trim_step_log_summary(thread_data_t *td)
     USER_ASSERT(NULL != td->func);
     USER_ASSERT(0U != td->tout);
 
-    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] SUMMARY");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [TRIM] [LOG]");
     drv_uart_printf(LOG_LV_INFO, "\r\n        %-10s %4s %4s %5s %5s %10s", "ITEM", "UNIT", "CH", "CODE", "REG", "VALUE");
 
     for (uint16_t list = TRIM_LIST_IREF1; list < TRIM_LIST_MAX; ++list)
