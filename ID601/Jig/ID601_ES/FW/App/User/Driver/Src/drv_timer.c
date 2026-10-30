@@ -65,7 +65,7 @@
 #define SVSYNC_VSYNC_MASK_L_US          (4U)
 #define SVSYNC_GATING_TIME_US           (10U)
 #define SVSYNC_CYCLE                    (3U)
-#define SVSYNC_SIZE                     (ID601_SV_NO)
+#define SVSYNC_SIZE                     (ID601_SV_NO_DEFAULT)
 #define SVSYNC_TOTAL_CYCLE              (SVSYNC_CYCLE * SVSYNC_SIZE)
 
 #define SVSYNC_RED_FREQ                 (3840U)
@@ -521,6 +521,7 @@ void drv_tim_vsync_start(void)
 }
 void drv_tim_vsync_stop(void)
 {
+    drv_tim_svsync_stop();
     LL_TIM_DisableCounter(TIM8);
     LL_TIM_DisableIT_UPDATE(TIM8);
     LL_TIM_ClearFlag_UPDATE(TIM8);

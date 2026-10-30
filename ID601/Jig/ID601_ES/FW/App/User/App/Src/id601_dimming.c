@@ -61,7 +61,7 @@ void id601_dimming_init(void)
     gb_id601_fault_read_enabled = true;
     gb_id601_ld_transfer_enabled = true;
 
-    gt_id601_ld_control.sv_no = ID601_SV_NO;
+    gt_id601_ld_control.sv_no = ID601_SV_NO_DEFAULT;
     gt_id601_ld_control.ld_type = ID601_LD_TYPE_DEFAULT;
     gt_id601_ld_control.delay_ch_en = ID601_DELAY_CH_EN_DEFAULT;
     gt_id601_ld_control.syncmode = ID601_SYNCMODE_DEFAULT;

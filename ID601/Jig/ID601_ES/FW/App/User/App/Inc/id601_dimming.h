@@ -29,7 +29,7 @@ extern "C" {
 #define ID601_LD_SIZE_MAX_12BIT         (4095U)
 #define ID601_LD_SIZE_MAX_14BIT         (16383U)
 
-#define ID601_SV_NO                     (32U)
+#define ID601_SV_NO_DEFAULT             (32U)
 #define ID601_LD_TYPE_DEFAULT           (1U)
 #define ID601_DELAY_CH_EN_DEFAULT       (0U)
 #define ID601_SYNCMODE_DEFAULT          (0U)

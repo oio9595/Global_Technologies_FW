@@ -2308,6 +2308,8 @@ bool id601_init_tm_entry_mode(void)
 }
 bool id601_init_dimming_mode(void)
 {
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Daisy Length: %u", drv_id601_get_daisy_length());
+
     if (false == id601_reset(gp_id601_crc_func))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Reset failed. ID601 Power Off.", __func__);
