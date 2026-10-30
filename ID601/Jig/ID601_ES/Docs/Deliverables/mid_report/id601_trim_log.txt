@@ -1,0 +1,432 @@
+====================================================
+  ID601 TEST Board
+====================================================
+  * Build Date   : Oct 29 2026, 17:15:29
+  * FW Version   : v1.0.3
+  * FW Git Rev   : 2e0d77c8b141-dirty
+  * FW Log Level : LOG_LV_INFO
+  * Board Type   : GT
+  * ID601 Daisy  : 1
+====================================================
+  Type 'help' or '?' to view available CLI commands.
+====================================================
+
+ID601> id601_efuse 2
+
+    [TRIM] id601_set_efuse_burn_enable: EFUSE burn enabled
+
+ID601> trim_start
+
+
+ID601> 
+    [RTOS] Trim Task Started
+    [ID601] Set Daisy length: 1.
+    [ID601] Test mode initialization complete.
+    [ID601] General registers match initial values
+    [ID601] Mirror registers match initial values
+    [ID601] Analog test mode configuration complete.
+
+    [TRIM] [IREF1   ] START: target=10.000 uA range=[9.700, 10.300] uA
+    [TRIM] [IREF1   ] TRIAL: n=1 code=16 measured=11.199 uA error=+1.199 uA
+    [TRIM] [IREF1   ] TRIAL: n=2 code=7 measured=8.661 uA error=-1.339 uA
+    [TRIM] [IREF1   ] TRIAL: n=3 code=11 measured=9.668 uA error=-0.332 uA
+    [TRIM] [IREF1   ] TRIAL: n=4 code=13 measured=10.272 uA error=+0.272 uA
+    [TRIM] [IREF1   ] TRIAL: n=5 code=12 measured=9.950 uA error=-0.050 uA
+    [TRIM] [IREF1   ] PASS:  trials=5 code=12 reg= 12 measured=9.990 uA
+
+    [TRIM] [IREF2   ] START: target=10.000 uA range=[9.700, 10.300] uA
+    [TRIM] [IREF2   ] TRIAL: n=1 code=16 measured=10.192 uA error=+0.192 uA
+    [TRIM] [IREF2   ] TRIAL: n=2 code=7 measured=7.936 uA error=-2.064 uA
+    [TRIM] [IREF2   ] TRIAL: n=3 code=11 measured=8.782 uA error=-1.218 uA
+    [TRIM] [IREF2   ] TRIAL: n=4 code=13 measured=9.265 uA error=-0.735 uA
+    [TRIM] [IREF2   ] TRIAL: n=5 code=14 measured=9.668 uA error=-0.332 uA
+    [TRIM] [IREF2   ] TRIAL: n=6 code=15 measured=9.910 uA error=-0.090 uA
+    [TRIM] [IREF2   ] PASS:  trials=6 code=15 reg= 15 measured=9.910 uA
+
+    [TRIM] [LDO_DET ] START: target=1.500 V range=[1.455, 1.545] V
+    [TRIM] [LDO_DET ] TRIAL: n=1 code=16 measured=1.409 V error=-0.091 V
+    [TRIM] [LDO_DET ] TRIAL: n=2 code=24 measured=1.522 V error=+0.022 V
+    [TRIM] [LDO_DET ] TRIAL: n=3 code=20 measured=1.467 V error=-0.033 V
+    [TRIM] [LDO_DET ] TRIAL: n=4 code=22 measured=1.495 V error=-0.005 V
+    [TRIM] [LDO_DET ] TRIAL: n=5 code=23 measured=1.509 V error=+0.009 V
+    [TRIM] [LDO_DET ] PASS:  trials=5 code=22 reg= 22 measured=1.495 V
+
+    [TRIM] [LDO_DIG ] START: target=1.500 V range=[1.455, 1.545] V
+    [TRIM] [LDO_DIG ] TRIAL: n=1 code=8 measured=1.555 V error=+0.055 V
+    [TRIM] [LDO_DIG ] TRIAL: n=2 code=3 measured=1.382 V error=-0.118 V
+    [TRIM] [LDO_DIG ] TRIAL: n=3 code=5 measured=1.450 V error=-0.050 V
+    [TRIM] [LDO_DIG ] TRIAL: n=4 code=6 measured=1.483 V error=-0.017 V
+    [TRIM] [LDO_DIG ] TRIAL: n=5 code=7 measured=1.515 V error=+0.015 V
+    [TRIM] [LDO_DIG ] PASS:  trials=5 code=7 reg= 15 measured=1.515 V
+
+    [TRIM] [LDO_DAC ] START: target=1.500 V range=[1.455, 1.545] V
+    [TRIM] [LDO_DAC ] TRIAL: n=1 code=16 measured=1.502 V error=+0.002 V
+    [TRIM] [LDO_DAC ] TRIAL: n=2 code=7 measured=1.364 V error=-0.136 V
+    [TRIM] [LDO_DAC ] TRIAL: n=3 code=11 measured=1.424 V error=-0.076 V
+    [TRIM] [LDO_DAC ] TRIAL: n=4 code=13 measured=1.455 V error=-0.045 V
+    [TRIM] [LDO_DAC ] TRIAL: n=5 code=14 measured=1.471 V error=-0.029 V
+    [TRIM] [LDO_DAC ] TRIAL: n=6 code=15 measured=1.485 V error=-0.015 V
+    [TRIM] [LDO_DAC ] PASS:  trials=6 code=16 reg= 16 measured=1.503 V
+
+    [TRIM] [LDO_FLL ] START: target=1.500 V range=[1.455, 1.545] V
+    [TRIM] [LDO_FLL ] TRIAL: n=1 code=8 measured=1.504 V error=+0.004 V
+    [TRIM] [LDO_FLL ] TRIAL: n=2 code=3 measured=1.340 V error=-0.160 V
+    [TRIM] [LDO_FLL ] TRIAL: n=3 code=5 measured=1.406 V error=-0.094 V
+    [TRIM] [LDO_FLL ] TRIAL: n=4 code=6 measured=1.437 V error=-0.063 V
+    [TRIM] [LDO_FLL ] TRIAL: n=5 code=7 measured=1.467 V error=-0.033 V
+    [TRIM] [LDO_FLL ] PASS:  trials=5 code=8 reg=  8 measured=1.503 V
+
+    [TRIM] [OFS_TEMP] START: target=0.209 V range=[0.203, 0.216] V
+    [TRIM] [OFS_TEMP] TRIAL: n=1 code=8 measured=0.271 V error=+0.061 V
+    [TRIM] [OFS_TEMP] TRIAL: n=2 code=3 measured=0.238 V error=+0.028 V
+    [TRIM] [OFS_TEMP] TRIAL: n=3 code=1 measured=0.222 V error=+0.012 V
+    [TRIM] [OFS_TEMP] TRIAL: n=4 code=0 measured=0.216 V error=+0.007 V
+    [TRIM] [OFS_TEMP] PASS:  trials=4 code=0 reg=  0 measured=0.215 V
+
+    [TRIM] [OSC_RCTL] START: target=51.000 MHz range=[49.470, 52.530] MHz
+    [TRIM] [OSC_RCTL] TRIAL: n=1 code=16 measured=45.697 MHz error=-5.303 MHz
+    [TRIM] [OSC_RCTL] TRIAL: n=2 code=24 measured=67.597 MHz error=+16.597 MHz
+    [TRIM] [OSC_RCTL] TRIAL: n=3 code=20 measured=55.302 MHz error=+4.302 MHz
+    [TRIM] [OSC_RCTL] TRIAL: n=4 code=18 measured=50.278 MHz error=-0.722 MHz
+    [TRIM] [OSC_RCTL] TRIAL: n=5 code=19 measured=52.689 MHz error=+1.689 MHz
+    [TRIM] [OSC_RCTL] PASS:  trials=5 code=18 reg= 18 measured=50.278 MHz
+
+    [TRIM] [GAIN    ] [CH01] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=1 code=64 measured=2.106 mA error=+0.152 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=2 code=31 measured=1.744 mA error=-0.210 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=3 code=47 measured=1.903 mA error=-0.050 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=4 code=55 measured=1.995 mA error=+0.042 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=5 code=51 measured=1.949 mA error=-0.005 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=6 code=53 measured=1.972 mA error=+0.018 mA
+    [TRIM] [GAIN    ] [CH01] TRIAL: n=7 code=52 measured=1.961 mA error=+0.007 mA
+    [TRIM] [GAIN    ] [CH01] PASS:  trials=7 code=51 reg= 51 measured=1.950 mA
+
+    [TRIM] [GAIN    ] [CH02] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=1 code=64 measured=2.102 mA error=+0.149 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=2 code=31 measured=1.742 mA error=-0.212 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=3 code=47 measured=1.902 mA error=-0.051 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=4 code=55 measured=1.993 mA error=+0.039 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=5 code=51 measured=1.947 mA error=-0.007 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=6 code=53 measured=1.969 mA error=+0.016 mA
+    [TRIM] [GAIN    ] [CH02] TRIAL: n=7 code=52 measured=1.958 mA error=+0.005 mA
+    [TRIM] [GAIN    ] [CH02] PASS:  trials=7 code=52 reg= 52 measured=1.958 mA
+
+    [TRIM] [GAIN    ] [CH03] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=1 code=64 measured=2.097 mA error=+0.143 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=2 code=31 measured=1.734 mA error=-0.220 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=3 code=47 measured=1.894 mA error=-0.059 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=4 code=55 measured=1.985 mA error=+0.031 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=5 code=51 measured=1.940 mA error=-0.014 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=6 code=53 measured=1.962 mA error=+0.008 mA
+    [TRIM] [GAIN    ] [CH03] TRIAL: n=7 code=52 measured=1.951 mA error=-0.003 mA
+    [TRIM] [GAIN    ] [CH03] PASS:  trials=7 code=52 reg= 52 measured=1.952 mA
+
+    [TRIM] [GAIN    ] [CH04] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=1 code=64 measured=2.100 mA error=+0.147 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=2 code=31 measured=1.742 mA error=-0.212 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=3 code=47 measured=1.901 mA error=-0.053 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=4 code=55 measured=1.992 mA error=+0.039 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=5 code=51 measured=1.947 mA error=-0.007 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=6 code=53 measured=1.968 mA error=+0.015 mA
+    [TRIM] [GAIN    ] [CH04] TRIAL: n=7 code=52 measured=1.957 mA error=+0.004 mA
+    [TRIM] [GAIN    ] [CH04] PASS:  trials=7 code=52 reg= 52 measured=1.958 mA
+
+    [TRIM] [GAIN    ] [CH05] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=1 code=64 measured=2.096 mA error=+0.142 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=2 code=31 measured=1.733 mA error=-0.220 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=3 code=47 measured=1.891 mA error=-0.063 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=4 code=55 measured=1.983 mA error=+0.030 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=5 code=51 measured=1.938 mA error=-0.015 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=6 code=53 measured=1.960 mA error=+0.006 mA
+    [TRIM] [GAIN    ] [CH05] TRIAL: n=7 code=52 measured=1.949 mA error=-0.005 mA
+    [TRIM] [GAIN    ] [CH05] PASS:  trials=7 code=52 reg= 52 measured=1.949 mA
+
+    [TRIM] [GAIN    ] [CH06] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=1 code=64 measured=2.106 mA error=+0.152 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=2 code=31 measured=1.744 mA error=-0.210 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=3 code=47 measured=1.904 mA error=-0.049 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=4 code=55 measured=1.996 mA error=+0.042 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=5 code=51 measured=1.951 mA error=-0.003 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=6 code=53 measured=1.973 mA error=+0.019 mA
+    [TRIM] [GAIN    ] [CH06] TRIAL: n=7 code=52 measured=1.962 mA error=+0.008 mA
+    [TRIM] [GAIN    ] [CH06] PASS:  trials=7 code=51 reg= 51 measured=1.951 mA
+
+    [TRIM] [GAIN    ] [CH07] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=1 code=64 measured=2.114 mA error=+0.160 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=2 code=31 measured=1.752 mA error=-0.202 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=3 code=47 measured=1.908 mA error=-0.045 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=4 code=55 measured=2.000 mA error=+0.047 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=5 code=51 measured=1.954 mA error=+0.001 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=6 code=49 measured=1.932 mA error=-0.021 mA
+    [TRIM] [GAIN    ] [CH07] TRIAL: n=7 code=50 measured=1.942 mA error=-0.011 mA
+    [TRIM] [GAIN    ] [CH07] PASS:  trials=7 code=51 reg= 51 measured=1.954 mA
+
+    [TRIM] [GAIN    ] [CH08] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=1 code=64 measured=2.100 mA error=+0.147 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=2 code=31 measured=1.738 mA error=-0.216 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=3 code=47 measured=1.900 mA error=-0.053 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=4 code=55 measured=1.991 mA error=+0.037 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=5 code=51 measured=1.944 mA error=-0.010 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=6 code=53 measured=1.966 mA error=+0.013 mA
+    [TRIM] [GAIN    ] [CH08] TRIAL: n=7 code=52 measured=1.955 mA error=+0.002 mA
+    [TRIM] [GAIN    ] [CH08] PASS:  trials=7 code=52 reg= 52 measured=1.955 mA
+
+    [TRIM] [GAIN    ] [CH09] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=1 code=64 measured=2.109 mA error=+0.155 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=2 code=31 measured=1.748 mA error=-0.206 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=3 code=47 measured=1.908 mA error=-0.046 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=4 code=55 measured=2.000 mA error=+0.046 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=5 code=51 measured=1.953 mA error=-0.000 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=6 code=53 measured=1.977 mA error=+0.023 mA
+    [TRIM] [GAIN    ] [CH09] TRIAL: n=7 code=52 measured=1.965 mA error=+0.012 mA
+    [TRIM] [GAIN    ] [CH09] PASS:  trials=7 code=51 reg= 51 measured=1.953 mA
+
+    [TRIM] [GAIN    ] [CH10] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=1 code=64 measured=2.105 mA error=+0.152 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=2 code=31 measured=1.745 mA error=-0.209 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=3 code=47 measured=1.905 mA error=-0.049 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=4 code=55 measured=1.996 mA error=+0.042 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=5 code=51 measured=1.950 mA error=-0.004 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=6 code=53 measured=1.972 mA error=+0.019 mA
+    [TRIM] [GAIN    ] [CH10] TRIAL: n=7 code=52 measured=1.960 mA error=+0.007 mA
+    [TRIM] [GAIN    ] [CH10] PASS:  trials=7 code=51 reg= 51 measured=1.949 mA
+
+    [TRIM] [GAIN    ] [CH11] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=1 code=64 measured=2.116 mA error=+0.163 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=2 code=31 measured=1.751 mA error=-0.202 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=3 code=47 measured=1.911 mA error=-0.043 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=4 code=55 measured=2.003 mA error=+0.049 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=5 code=51 measured=1.957 mA error=+0.004 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=6 code=49 measured=1.936 mA error=-0.018 mA
+    [TRIM] [GAIN    ] [CH11] TRIAL: n=7 code=50 measured=1.946 mA error=-0.008 mA
+    [TRIM] [GAIN    ] [CH11] PASS:  trials=7 code=51 reg= 51 measured=1.958 mA
+
+    [TRIM] [GAIN    ] [CH12] START: target=1.954 mA range=[1.895, 2.012] mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=1 code=64 measured=2.121 mA error=+0.167 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=2 code=31 measured=1.758 mA error=-0.196 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=3 code=47 measured=1.920 mA error=-0.034 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=4 code=55 measured=2.012 mA error=+0.059 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=5 code=51 measured=1.966 mA error=+0.012 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=6 code=49 measured=1.944 mA error=-0.009 mA
+    [TRIM] [GAIN    ] [CH12] TRIAL: n=7 code=50 measured=1.955 mA error=+0.001 mA
+    [TRIM] [GAIN    ] [CH12] PASS:  trials=7 code=50 reg= 50 measured=1.954 mA
+
+    [TRIM] [OFFSET  ] [CH01] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=1 code=256 measured=0.490 mA error=+0.002 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=2 code=127 measured=0.240 mA error=-0.248 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=3 code=191 measured=0.366 mA error=-0.123 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=4 code=223 measured=0.428 mA error=-0.060 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=5 code=239 measured=0.460 mA error=-0.029 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=6 code=247 measured=0.475 mA error=-0.014 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=7 code=251 measured=0.483 mA error=-0.005 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=8 code=253 measured=0.487 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH01] TRIAL: n=9 code=254 measured=0.489 mA error=+0.000 mA
+    [TRIM] [OFFSET  ] [CH01] PASS:  trials=9 code=254 reg=257 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH02] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=1 code=256 measured=0.480 mA error=-0.009 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=2 code=384 measured=0.730 mA error=+0.242 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=3 code=320 measured=0.605 mA error=+0.116 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=4 code=288 measured=0.542 mA error=+0.054 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=5 code=272 measured=0.511 mA error=+0.023 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=6 code=264 measured=0.495 mA error=+0.007 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=7 code=260 measured=0.487 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=8 code=262 measured=0.491 mA error=+0.003 mA
+    [TRIM] [OFFSET  ] [CH02] TRIAL: n=9 code=261 measured=0.489 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH02] PASS:  trials=9 code=261 reg=  5 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH03] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=1 code=256 measured=0.547 mA error=+0.058 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=2 code=127 measured=0.299 mA error=-0.190 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=3 code=191 measured=0.422 mA error=-0.066 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=4 code=223 measured=0.484 mA error=-0.004 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=5 code=239 measured=0.516 mA error=+0.027 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=6 code=231 measured=0.498 mA error=+0.010 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=7 code=227 measured=0.491 mA error=+0.003 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=8 code=225 measured=0.488 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH03] TRIAL: n=9 code=226 measured=0.488 mA error=-0.000 mA
+    [TRIM] [OFFSET  ] [CH03] PASS:  trials=9 code=226 reg=285 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH04] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=1 code=256 measured=0.444 mA error=-0.045 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=2 code=384 measured=0.694 mA error=+0.205 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=3 code=320 measured=0.568 mA error=+0.080 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=4 code=288 measured=0.505 mA error=+0.017 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=5 code=272 measured=0.474 mA error=-0.014 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=6 code=280 measured=0.490 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=7 code=276 measured=0.481 mA error=-0.007 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=8 code=278 measured=0.486 mA error=-0.002 mA
+    [TRIM] [OFFSET  ] [CH04] TRIAL: n=9 code=279 measured=0.488 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH04] PASS:  trials=9 code=279 reg= 23 measured=0.488 mA
+
+    [TRIM] [OFFSET  ] [CH05] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=1 code=256 measured=0.496 mA error=+0.007 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=2 code=127 measured=0.245 mA error=-0.244 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=3 code=191 measured=0.370 mA error=-0.118 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=4 code=223 measured=0.433 mA error=-0.056 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=5 code=239 measured=0.464 mA error=-0.025 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=6 code=247 measured=0.479 mA error=-0.010 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=7 code=251 measured=0.488 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=8 code=253 measured=0.493 mA error=+0.004 mA
+    [TRIM] [OFFSET  ] [CH05] TRIAL: n=9 code=252 measured=0.491 mA error=+0.002 mA
+    [TRIM] [OFFSET  ] [CH05] PASS:  trials=9 code=251 reg=260 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH06] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=1 code=256 measured=0.470 mA error=-0.018 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=2 code=384 measured=0.720 mA error=+0.232 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=3 code=320 measured=0.595 mA error=+0.107 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=4 code=288 measured=0.533 mA error=+0.044 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=5 code=272 measured=0.502 mA error=+0.013 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=6 code=264 measured=0.486 mA error=-0.003 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=7 code=268 measured=0.494 mA error=+0.006 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=8 code=266 measured=0.490 mA error=+0.002 mA
+    [TRIM] [OFFSET  ] [CH06] TRIAL: n=9 code=265 measured=0.488 mA error=-0.000 mA
+    [TRIM] [OFFSET  ] [CH06] PASS:  trials=9 code=265 reg=  9 measured=0.488 mA
+
+    [TRIM] [OFFSET  ] [CH07] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=1 code=256 measured=0.509 mA error=+0.021 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=2 code=127 measured=0.258 mA error=-0.230 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=3 code=191 measured=0.384 mA error=-0.104 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=4 code=223 measured=0.447 mA error=-0.041 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=5 code=239 measured=0.478 mA error=-0.010 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=6 code=247 measured=0.493 mA error=+0.005 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=7 code=243 measured=0.485 mA error=-0.003 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=8 code=245 measured=0.490 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH07] TRIAL: n=9 code=244 measured=0.488 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH07] PASS:  trials=9 code=244 reg=267 measured=0.488 mA
+
+    [TRIM] [OFFSET  ] [CH08] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=1 code=256 measured=0.500 mA error=+0.012 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=2 code=127 measured=0.249 mA error=-0.240 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=3 code=191 measured=0.375 mA error=-0.113 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=4 code=223 measured=0.437 mA error=-0.051 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=5 code=239 measured=0.469 mA error=-0.019 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=6 code=247 measured=0.485 mA error=-0.004 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=7 code=251 measured=0.494 mA error=+0.005 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=8 code=249 measured=0.489 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH08] TRIAL: n=9 code=248 measured=0.488 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH08] PASS:  trials=9 code=248 reg=263 measured=0.487 mA
+
+    [TRIM] [OFFSET  ] [CH09] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=1 code=256 measured=0.497 mA error=+0.008 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=2 code=127 measured=0.247 mA error=-0.241 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=3 code=191 measured=0.372 mA error=-0.116 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=4 code=223 measured=0.434 mA error=-0.054 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=5 code=239 measured=0.465 mA error=-0.023 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=6 code=247 measured=0.480 mA error=-0.008 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=7 code=251 measured=0.489 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=8 code=249 measured=0.485 mA error=-0.003 mA
+    [TRIM] [OFFSET  ] [CH09] TRIAL: n=9 code=250 measured=0.487 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH09] PASS:  trials=9 code=251 reg=260 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH10] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=1 code=256 measured=0.479 mA error=-0.010 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=2 code=384 measured=0.728 mA error=+0.240 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=3 code=320 measured=0.604 mA error=+0.116 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=4 code=288 measured=0.541 mA error=+0.053 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=5 code=272 measured=0.510 mA error=+0.022 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=6 code=264 measured=0.494 mA error=+0.006 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=7 code=260 measured=0.486 mA error=-0.002 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=8 code=262 measured=0.490 mA error=+0.002 mA
+    [TRIM] [OFFSET  ] [CH10] TRIAL: n=9 code=261 measured=0.488 mA error=-0.000 mA
+    [TRIM] [OFFSET  ] [CH10] PASS:  trials=9 code=261 reg=  5 measured=0.488 mA
+
+    [TRIM] [OFFSET  ] [CH11] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=1 code=256 measured=0.495 mA error=+0.007 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=2 code=127 measured=0.244 mA error=-0.244 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=3 code=191 measured=0.370 mA error=-0.119 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=4 code=223 measured=0.433 mA error=-0.056 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=5 code=239 measured=0.464 mA error=-0.025 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=6 code=247 measured=0.479 mA error=-0.009 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=7 code=251 measured=0.487 mA error=-0.001 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=8 code=253 measured=0.491 mA error=+0.003 mA
+    [TRIM] [OFFSET  ] [CH11] TRIAL: n=9 code=252 measured=0.489 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH11] PASS:  trials=9 code=252 reg=259 measured=0.489 mA
+
+    [TRIM] [OFFSET  ] [CH12] START: target=0.488 mA range=[0.474, 0.503] mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=1 code=256 measured=0.502 mA error=+0.013 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=2 code=127 measured=0.251 mA error=-0.237 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=3 code=191 measured=0.377 mA error=-0.112 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=4 code=223 measured=0.439 mA error=-0.049 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=5 code=239 measured=0.470 mA error=-0.018 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=6 code=247 measured=0.486 mA error=-0.003 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=7 code=251 measured=0.494 mA error=+0.006 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=8 code=249 measured=0.490 mA error=+0.001 mA
+    [TRIM] [OFFSET  ] [CH12] TRIAL: n=9 code=248 measured=0.488 mA error=-0.000 mA
+    [TRIM] [OFFSET  ] [CH12] PASS:  trials=9 code=248 reg=263 measured=0.488 mA
+    [TRIM] [OTP]: BURNING
+    [GPIO] HVS   : J225=CLOSED
+    [GPIO] Normal: J225=OPEN
+    [ID601] Set Daisy length: 1.
+    [ID601] Post-eFuse initialization complete.
+    [ID601] OTP MATCH:    addr 0x00 reboot=0x063 saved=0x063
+    [ID601] OTP MATCH:    addr 0x01 reboot=0x190 saved=0x190
+    [ID601] OTP MATCH:    addr 0x02 reboot=0x1F0 saved=0x1F0
+    [ID601] OTP MATCH:    addr 0x03 reboot=0x016 saved=0x016
+    [ID601] OTP MATCH:    addr 0x04 reboot=0x812 saved=0x812
+    [ID601] OTP MATCH:    addr 0x05 reboot=0x08F saved=0x08F
+    [ID601] OTP MATCH:    addr 0x06 reboot=0x101 saved=0x101
+    [ID601] OTP MATCH:    addr 0x07 reboot=0x005 saved=0x005
+    [ID601] OTP MATCH:    addr 0x08 reboot=0x11D saved=0x11D
+    [ID601] OTP MATCH:    addr 0x09 reboot=0x017 saved=0x017
+    [ID601] OTP MATCH:    addr 0x0A reboot=0x104 saved=0x104
+    [ID601] OTP MATCH:    addr 0x0B reboot=0x009 saved=0x009
+    [ID601] OTP MATCH:    addr 0x0C reboot=0x10B saved=0x10B
+    [ID601] OTP MATCH:    addr 0x0D reboot=0x107 saved=0x107
+    [ID601] OTP MATCH:    addr 0x0E reboot=0x104 saved=0x104
+    [ID601] OTP MATCH:    addr 0x0F reboot=0x005 saved=0x005
+    [ID601] OTP MATCH:    addr 0x10 reboot=0x103 saved=0x103
+    [ID601] OTP MATCH:    addr 0x11 reboot=0x107 saved=0x107
+    [ID601] OTP MATCH:    addr 0x12 reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x13 reboot=0x034 saved=0x034
+    [ID601] OTP MATCH:    addr 0x14 reboot=0x034 saved=0x034
+    [ID601] OTP MATCH:    addr 0x15 reboot=0x034 saved=0x034
+    [ID601] OTP MATCH:    addr 0x16 reboot=0x034 saved=0x034
+    [ID601] OTP MATCH:    addr 0x17 reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x18 reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x19 reboot=0x034 saved=0x034
+    [ID601] OTP MATCH:    addr 0x1A reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x1B reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x1C reboot=0x033 saved=0x033
+    [ID601] OTP MATCH:    addr 0x1D reboot=0x032 saved=0x032
+    [ID601] OTP MATCH:    addr 0x1E reboot=0x000 saved=0x000
+    [TRIM] [OTP VERIFY]: PASS
+    [TRIM] [LOG]
+        ITEM       UNIT   CH  CODE   REG      VALUE
+        IREF1        uA    -    12    12      9.990
+        IREF2        uA    -    15    15      9.910
+        LDO_DET       V    -    22    22      1.495
+        LDO_DIG       V    -     7    15      1.515
+        LDO_DAC       V    -    16    16      1.503
+        LDO_FLL       V    -     8     8      1.503
+        OFS_TEMP      V    -     0     0      0.215
+        OSC_RCTL    MHz    -    18    18     50.278
+        GAIN         mA    1    51    51      1.950
+        GAIN         mA    2    52    52      1.958
+        GAIN         mA    3    52    52      1.952
+        GAIN         mA    4    52    52      1.958
+        GAIN         mA    5    52    52      1.949
+        GAIN         mA    6    51    51      1.951
+        GAIN         mA    7    51    51      1.954
+        GAIN         mA    8    52    52      1.955
+        GAIN         mA    9    51    51      1.953
+        GAIN         mA   10    51    51      1.949
+        GAIN         mA   11    51    51      1.958
+        GAIN         mA   12    50    50      1.954
+        OFFSET       mA    1   254   257      0.489
+        OFFSET       mA    2   261     5      0.489
+        OFFSET       mA    3   226   285      0.489
+        OFFSET       mA    4   279    23      0.488
+        OFFSET       mA    5   251   260      0.489
+        OFFSET       mA    6   265     9      0.488
+        OFFSET       mA    7   244   267      0.488
+        OFFSET       mA    8   248   263      0.487
+        OFFSET       mA    9   251   260      0.489
+        OFFSET       mA   10   261     5      0.488
+        OFFSET       mA   11   252   259      0.489
+        OFFSET       mA   12   248   263      0.488
+    [TRIM] COMPLETE: PASS, eFUSE programming: COMPLETE
+    [TRIM] Power Off
+    [RTOS] Trim Task Finished
+
+ID601> 
