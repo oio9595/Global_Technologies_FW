@@ -52,6 +52,7 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_TRIM_START,
     CLI_CMD_TRIM_RESULT,
     CLI_CMD_TRIM_MANUAL,
+    CLI_CMD_TRIM_MANUAL_WRITE,
     CLI_CMD_TEST_START,
     CLI_CMD_TEST_IOUT_MONITOR,
     CLI_CMD_TEST_MANUAL,
@@ -87,6 +88,7 @@ typedef enum tag_MANUAL_TRIM_LIST
     MANUAL_TRIM_OSC_RCTL,
     MANUAL_TRIM_GAIN,
     MANUAL_TRIM_OFFSET,
+    MANUAL_TRIM_BGR2,
     MANUAL_TRIM_MAX
 } manual_trim_list_t;
 
@@ -195,9 +197,15 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_TRIM_MANUAL,
         "trim_manual",
         "trim_manual <test>"
-        "\r\n    Configure manual trim setup"
         "\r\n    0/omitted=list"
         "\r\n    for more details, use \"trim_manual\" CLI command"
+    },
+    {
+        CLI_CMD_TRIM_MANUAL_WRITE,
+        "trim_manual_write",
+        "trim_manual_write <test>"
+        "\r\n    0/omitted=list"
+        "\r\n    for more details, use \"trim_manual_write\" CLI command"
     },
     {
         CLI_CMD_TRIM_RESULT,
@@ -681,8 +689,9 @@ static inline void cli_cmd_help_trim_manual(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL", MANUAL_TRIM_LDO_FLL);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <option 1:V1, 2:V2>", MANUAL_TRIM_OFS_TEMP);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL", MANUAL_TRIM_OSC_RCTL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET <option 1:P3, 2:P4> <ch:1-12>", MANUAL_TRIM_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <option 1:P3, 2:P4> <ch:1-12>", MANUAL_TRIM_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2", MANUAL_TRIM_BGR2);
 }
 static inline void cli_cmd_function_trim_manual(void)
 {
@@ -721,6 +730,11 @@ static inline void cli_cmd_function_trim_manual(void)
             param_valid = ((3U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U) && (ch >= 1U) && (ch <= ID601_CH_MAX));
             break;
         }
+        case MANUAL_TRIM_BGR2:
+        {
+            param_valid = (1U == gn_cli_argument_count);
+            break;
+        }
         default:
         {
             break;
@@ -745,7 +759,7 @@ static inline void cli_cmd_function_trim_manual(void)
     if (false == id601_compare_initial_code())
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Initial Code Compare Failed.", __func__);
-        return;
+        //return;
     }
 
     if (false == id601_set_analog_test_mode())
@@ -759,44 +773,53 @@ static inline void cli_cmd_function_trim_manual(void)
         case MANUAL_TRIM_IREF1:
         {
             id601_trim_setup_iref1();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF1 Setup");
             break;
         }
         case MANUAL_TRIM_IREF2:
         {
             id601_trim_setup_iref2();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF2 Setup");
             break;
         }
         case MANUAL_TRIM_LDO_DET:
         {
             id601_trim_setup_ldo_det();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DET Setup");
             break;
         }
         case MANUAL_TRIM_LDO_DIG:
         {
             id601_trim_setup_ldo_dig();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DIG Setup");
             break;
         }
         case MANUAL_TRIM_LDO_DAC:
         {
             id601_trim_setup_ldo_dac();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DAC Setup");
             break;
         }
         case MANUAL_TRIM_LDO_FLL:
         {
             id601_trim_setup_ldo_fll();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_FLL Setup");
             break;
         }
         case MANUAL_TRIM_OFS_TEMP:
         {
             const uint32_t option = gt_cli_request.val_2;
             id601_trim_setup_ofs_temp();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP Setup");
             if (1U == option)
             {
                 id601_trim_setup_ofs_temp_o1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP V1 Setup");
             }
             else if (2U == option)
             {
                 id601_trim_setup_ofs_temp_o2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP V2 Setup");
             }
             else
             {
@@ -807,6 +830,7 @@ static inline void cli_cmd_function_trim_manual(void)
         case MANUAL_TRIM_OSC_RCTL:
         {
             id601_trim_setup_osc_rctl();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OSC_RCTL Setup");
             break;
         }
         case MANUAL_TRIM_GAIN:
@@ -815,14 +839,17 @@ static inline void cli_cmd_function_trim_manual(void)
             const uint32_t ch = gt_cli_request.val_3;
 
             id601_trim_setup_gain();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN Setup");
 
             if (1U == option)
             {
                 id601_trim_setup_gain_vref1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN VREF1 Setup");
             }
             else if (2U == option)
             {
                 id601_trim_setup_gain_vref2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN VREF2 Setup");
             }
             else
             {
@@ -845,13 +872,16 @@ static inline void cli_cmd_function_trim_manual(void)
             const uint32_t option = gt_cli_request.val_2;
             const uint32_t ch = gt_cli_request.val_3;
             id601_trim_setup_offset();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET Setup");
             if (1U == option)
             {
                 id601_trim_setup_offset_vref1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET VREF1 Setup");
             }
             else if (2U == option)
             {
                 id601_trim_setup_offset_vref2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET VREF2 Setup");
             }
             else
             {
@@ -867,6 +897,139 @@ static inline void cli_cmd_function_trim_manual(void)
             {
                 cli_print_invalid_input();
             }
+            break;
+        }
+        case MANUAL_TRIM_BGR2:
+        {
+            id601_test_setup_bgr2();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR2 Setup");
+            break;
+        }
+        default:
+        {
+            cli_print_invalid_input();
+            return;
+        }
+    }
+}
+static inline void cli_cmd_help_trim_manual_write(void)
+{
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Trim Manual Write Help:");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF1    <dummy>   <val>", MANUAL_TRIM_IREF1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF2    <dummy>   <val>", MANUAL_TRIM_IREF2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DET  <dummy>   <val>", MANUAL_TRIM_LDO_DET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DIG  <dummy>   <val>", MANUAL_TRIM_LDO_DIG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DAC  <dummy>   <val>", MANUAL_TRIM_LDO_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL  <dummy>   <val>", MANUAL_TRIM_LDO_FLL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <dummy>   <val>", MANUAL_TRIM_OFS_TEMP);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL <dummy>   <val>", MANUAL_TRIM_OSC_RCTL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <ch:1-12> <val>", MANUAL_TRIM_GAIN);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <ch:1-12> <val>", MANUAL_TRIM_OFFSET);
+}
+static inline void cli_cmd_function_trim_manual_write(void)
+{
+    const uint32_t test = gt_cli_request.val_1;
+    const uint32_t ch = gt_cli_request.val_2;
+    const uint32_t val = gt_cli_request.val_3;
+    bool param_valid = false;
+
+    if ((0U == test))
+    {
+        cli_cmd_help_trim_manual_write();
+        return;
+    }
+
+    switch (test)
+    {
+        case MANUAL_TRIM_IREF1:
+        case MANUAL_TRIM_IREF2:
+        case MANUAL_TRIM_LDO_DET:
+        case MANUAL_TRIM_LDO_DIG:
+        case MANUAL_TRIM_LDO_DAC:
+        case MANUAL_TRIM_LDO_FLL:
+        case MANUAL_TRIM_OSC_RCTL:
+        case MANUAL_TRIM_OFS_TEMP:
+            param_valid = ((3U == gn_cli_argument_count) && (ch == 0U));
+            break;
+        case MANUAL_TRIM_GAIN:
+        case MANUAL_TRIM_OFFSET:
+        {
+            param_valid = ((3U == gn_cli_argument_count) && (ch >= 1U) && (ch <= ID601_CH_MAX));
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    if (false == param_valid)
+    {
+        cli_print_invalid_input();
+        return;
+    }
+
+    uint16_t reg = 0xFFFFU;
+    switch (test)
+    {
+        case MANUAL_TRIM_IREF1:
+        {
+            reg = id601_trim_apply_iref1(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF1, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_IREF2:
+        {
+            reg = id601_trim_apply_iref2(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF2, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_LDO_DET:
+        {
+            reg = id601_trim_apply_ldo_det(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DET, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_LDO_DIG:
+        {
+            reg = id601_trim_apply_ldo_dig(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DIG, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_LDO_DAC:
+        {
+            reg = id601_trim_apply_ldo_dac(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DAC, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_LDO_FLL:
+        {
+            reg = id601_trim_apply_ldo_fll(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_FLL, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_OFS_TEMP:
+        {
+            reg = id601_trim_apply_ofs_temp(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_OSC_RCTL:
+        {
+            reg = id601_trim_apply_osc_rctl(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OSC_RCTL, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_GAIN:
+        {
+            reg = id601_trim_apply_gain((uint16_t)(ch - 1U), (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN, Ch:%u, Data:%4u(0x%03X)", ch, reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_OFFSET:
+        {
+            reg = id601_trim_apply_offset((uint16_t)(ch - 1U), (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET, Ch:%u, Data:%4u(0x%03X)", ch, reg, reg);
             break;
         }
         default:
@@ -2082,6 +2245,11 @@ static void cli_command_execute(void)
         case CLI_CMD_TRIM_MANUAL:
         {
             cli_cmd_function_trim_manual();
+            break;
+        }
+        case CLI_CMD_TRIM_MANUAL_WRITE:
+        {
+            cli_cmd_function_trim_manual_write();
             break;
         }
         case CLI_CMD_TEST_START:
