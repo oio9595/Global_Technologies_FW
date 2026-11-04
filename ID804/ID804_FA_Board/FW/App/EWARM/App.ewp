@@ -1135,14 +1135,14 @@
             <data>
                 <buildActions>
                     <buildAction>
-                        <cmdline>py "$PROJ_DIR$\..\..\Build\prebuild.py"</cmdline>
+                        <cmdline>py -3 "$PROJ_DIR$\..\..\Build\prebuild.py"</cmdline>
                         <workingDirectory>$PROJ_DIR$</workingDirectory>
                         <buildSequence>preCompile</buildSequence>
-                        <outputs>
-                            <file>
-                                <name>$BUILD_FILES_DIR$/.prebuild</name>
-                            </file>
-                        </outputs>
+                    </buildAction>
+                    <buildAction>
+                        <cmdline>py -3 "$PROJ_DIR$\..\..\Build\postbuild.py"</cmdline>
+                        <workingDirectory>$PROJ_DIR$</workingDirectory>
+                        <buildSequence>postLink</buildSequence>
                     </buildAction>
                 </buildActions>
             </data>
