@@ -2275,14 +2275,14 @@ bool id601_init_tm_entry_mode(void)
     drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gt_id601_ld_info.daisy);
-
+#if 0
     if (false == id601_reset(gp_id601_crc_func))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Reset failed. ID601 Power Off.", __func__);
         drv_gpio_clear_id601();
         return false;
     }
-
+#endif
     if (false == id601_id_gen(gp_id601_crc_func))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID generation failed. ID601 Power Off.", __func__);
