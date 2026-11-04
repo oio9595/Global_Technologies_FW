@@ -59,12 +59,20 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID804_GOACTIVE,
     CLI_CMD_ID804_GODEEPSLEEP,
 
-    CLI_CMD_ID804_V_TEMP_SEN,
-    CLI_CMD_ID804_V_BGR,
-    CLI_CMD_ID804_1V5_LDO,
-    CLI_CMD_ID804_OSC,
-    CLI_CMD_ID804_ADC_GAIN,
-    CLI_CMD_ID804_ADC_TEMP,
+    CLI_CMD_ID804_TEST_IIH_IIL,
+    CLI_CMD_ID804_TEST_V_TEMP_SEN,
+    CLI_CMD_ID804_TEST_V_BGR,
+    CLI_CMD_ID804_TEST_1V5_LDO,
+    CLI_CMD_ID804_TEST_OSC,
+    CLI_CMD_ID804_TEST_ADC_GAIN,
+    CLI_CMD_ID804_TEST_ADC_TEMP,
+    CLI_CMD_ID804_TEST_DRIVER_R,
+    CLI_CMD_ID804_TEST_DRIVER_G,
+    CLI_CMD_ID804_TEST_DRIVER_B,
+
+    CLI_CMD_ID804_TEST_DEEPSLEEP,
+    CLI_CMD_ID804_TEST_SLEEP,
+    CLI_CMD_ID804_TEST_ACTIVE,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -111,37 +119,46 @@ typedef struct tag_CLI_REQUEST
 static const cli_cmd_entry_t gt_cli_command[] =
 {
     /* ========================================================================================================= */
-    /* Command              Command ID                    Description                                              */
+    /* Command              Command ID                      Description                                          */
     /* ========================================================================================================= */
-    { "help",               CLI_CMD_HELP,               "Display help information"                                                                  },
-    { "?",                  CLI_CMD_HELP,               "Display help information"                                                                  },
-    { "reset",              CLI_CMD_RESET,              "Reset the system"                                                                          },
+    { "help",               CLI_CMD_HELP,                   "Display help information"                                                                  },
+    { "?",                  CLI_CMD_HELP,                   "Display help information"                                                                  },
+    { "reset",              CLI_CMD_RESET,                  "Reset the system"                                                                          },
 
-    { "id804_vdd",          CLI_CMD_ID804_VDD,          "Control ID804 VDD <0: OFF, 1: 5V, 2: 5.5V>"                                                },
-    { "id804_vled",         CLI_CMD_ID804_VLED,         "Control ID804 VLED <0: OFF, 1: ON>"                                                        },
-    { "id804_tm0",          CLI_CMD_ID804_TM0,          "Control ID804 TM0 <0: GND, 1: VDD>"                                                        },
-    { "id804_sio1",         CLI_CMD_ID804_SIO1,         "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>"    },
-    { "id804_sio2",         CLI_CMD_ID804_SIO2,         "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>"    },
+    { "id804_vdd",          CLI_CMD_ID804_VDD,              "Control ID804 VDD <0: OFF, 1: 5V, 2: 5.5V>"                                                },
+    { "id804_vled",         CLI_CMD_ID804_VLED,             "Control ID804 VLED <0: OFF, 1: ON>"                                                        },
+    { "id804_tm0",          CLI_CMD_ID804_TM0,              "Control ID804 TM0 <0: GND, 1: VDD>"                                                        },
+    { "id804_sio1",         CLI_CMD_ID804_SIO1,             "Control ID804 SIO1 interface <1: MCU, 2: CAN, 3: LVDS, 4: I2C> <1: ENABLE, 0: DISABLE>"    },
+    { "id804_sio2",         CLI_CMD_ID804_SIO2,             "Control ID804 SIO2 interface <1: MCU, 2: CAN, 3: LVDS, 4: EOL> <1: ENABLE, 0: DISABLE>"    },
 
-    { "id804_boot_single",  CLI_CMD_ID804_BOOT_SINGLE,  "ID804 boot process <0: MCU,  1: I2C>"                                                      },
-    { "id804_boot_forward", CLI_CMD_ID804_BOOT_FORWARD, "ID804 boot process <0: LVDS, 1: CAN>"                                                      },
-    { "id804_boot_backward",CLI_CMD_ID804_BOOT_BACKWARD,"ID804 boot process <0: LVDS, 1: CAN>"                                                      },
+    { "id804_boot_single",  CLI_CMD_ID804_BOOT_SINGLE,      "ID804 boot process <0: MCU,  1: I2C>"                                                      },
+    { "id804_boot_forward", CLI_CMD_ID804_BOOT_FORWARD,     "ID804 boot process <0: LVDS, 1: CAN>"                                                      },
+    { "id804_boot_backward",CLI_CMD_ID804_BOOT_BACKWARD,    "ID804 boot process <0: LVDS, 1: CAN>"                                                      },
 
-    { "id804_reset",        CLI_CMD_ID804_RESET,        "ID804 Reset <Dev Addr>"                                                                    },
-    { "id804_initbidir",    CLI_CMD_ID804_INITBIDIR,    "ID804 Initbidir <Dev Addr>"                                                                },
-    { "id804_clrerror",     CLI_CMD_ID804_CLRERROR,     "ID804 Clear Error <Dev Addr>"                                                              },
-    { "id804_gosleep",      CLI_CMD_ID804_GOSLEEP,      "ID804 Go Sleep <Dev Addr>"                                                                 },
-    { "id804_goactive",     CLI_CMD_ID804_GOACTIVE,     "ID804 Go Active <Dev Addr>"                                                                },
-    { "id804_godeepsleep",  CLI_CMD_ID804_GODEEPSLEEP,  "ID804 Go Deep Sleep <Dev Addr>"                                                            },
+    { "id804_reset",        CLI_CMD_ID804_RESET,            "ID804 Reset <Dev Addr>"                                                                    },
+    { "id804_initbidir",    CLI_CMD_ID804_INITBIDIR,        "ID804 Initbidir <Dev Addr>"                                                                },
+    { "id804_clrerror",     CLI_CMD_ID804_CLRERROR,         "ID804 Clear Error <Dev Addr>"                                                              },
+    { "id804_gosleep",      CLI_CMD_ID804_GOSLEEP,          "ID804 Go Sleep <Dev Addr>"                                                                 },
+    { "id804_goactive",     CLI_CMD_ID804_GOACTIVE,         "ID804 Go Active <Dev Addr>"                                                                },
+    { "id804_godeepsleep",  CLI_CMD_ID804_GODEEPSLEEP,      "ID804 Go Deep Sleep <Dev Addr>"                                                            },
 
-    { "id804_me",           CLI_CMD_ID804_ME,           "ID804 ME interface <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>"            },
-    { "id804_i2c",          CLI_CMD_ID804_I2C,          "ID804 I2C interface <0: WRITE, 1: READ> <Address> <Data: only for WRITE>"                  },
-    { "bgr_test",           CLI_CMD_ID804_V_TEMP_SEN,   "ID804 V_TEMP_SEN Test"                                                                     },
-    { "bgr_r1_r2_test",     CLI_CMD_ID804_V_BGR,        "ID804 V_BGR Test"                                                                          },
-    { "1p5_ldo_test",       CLI_CMD_ID804_1V5_LDO,      "ID804 1V5 LDO Test"                                                                        },
-    { "osc_test",           CLI_CMD_ID804_OSC,          "ID804 OSC Test"                                                                            },
-    { "adc_gain_test",      CLI_CMD_ID804_ADC_GAIN,     "ID804 ADC Gain Test"                                                                       },
-    { "adc_temp_test",      CLI_CMD_ID804_ADC_TEMP,     "ID804 ADC Temp Test"                                                                       },
+    { "id804_me",           CLI_CMD_ID804_ME,               "ID804 ME interface <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>"            },
+    { "id804_i2c",          CLI_CMD_ID804_I2C,              "ID804 I2C interface <0: WRITE, 1: READ> <Address> <Data: only for WRITE>"                  },
+
+    { "iih_iil_test",       CLI_CMD_ID804_TEST_IIH_IIL,     "ID804 IIH IIL Test"                                                                        },
+    { "bgr_test",           CLI_CMD_ID804_TEST_V_TEMP_SEN,  "ID804 V_TEMP_SEN Test"                                                                     },
+    { "bgr_r1_r2_test",     CLI_CMD_ID804_TEST_V_BGR,       "ID804 V_BGR Test"                                                                          },
+    { "1p5_ldo_test",       CLI_CMD_ID804_TEST_1V5_LDO,     "ID804 1V5 LDO Test"                                                                        },
+    { "osc_test",           CLI_CMD_ID804_TEST_OSC,         "ID804 OSC Test"                                                                            },
+    { "adc_gain_test",      CLI_CMD_ID804_TEST_ADC_GAIN,    "ID804 ADC Gain Test"                                                                       },
+    { "adc_temp_test",      CLI_CMD_ID804_TEST_ADC_TEMP,    "ID804 ADC Temp Test"                                                                       },
+    { "driver_r_test",      CLI_CMD_ID804_TEST_DRIVER_R,    "ID804 Driver R Test"                                                                       },
+    { "driver_g_test",      CLI_CMD_ID804_TEST_DRIVER_G,    "ID804 Driver G Test"                                                                       },
+    { "driver_b_test",      CLI_CMD_ID804_TEST_DRIVER_B,    "ID804 Driver B Test"                                                                       },
+
+    { "deep_sleep_test",    CLI_CMD_ID804_TEST_DEEPSLEEP,   "ID804 Deep Sleep Test"                                                                     },
+    { "sleep_test",         CLI_CMD_ID804_TEST_SLEEP,       "ID804 Sleep Test"                                                                          },
+    { "active_test",        CLI_CMD_ID804_TEST_ACTIVE,      "ID804 Active Test"                                                                         },
 };
 
 static cli_request_t gt_cli_request;
@@ -567,7 +584,22 @@ static void cli_command_execute(void)
             }
             break;
         }
-        case CLI_CMD_ID804_V_TEMP_SEN:
+        case CLI_CMD_ID804_TEST_IIH_IIL:
+        {
+            drv_gpio_id804_vcc(ID804_VCC_5V0);
+            drv_uart_printf("\r\n    ID804 VDD set to 5V.");
+
+            drv_gpio_id804_vled(ID804_VLED_ON);
+            drv_uart_printf("\r\n    ID804 VLED turned ON.");
+
+            drv_gpio_id804_sio1_lvds(ID804_IO_CON);
+            drv_uart_printf("\r\n    ID804 SIO1 LVDS set to ENABLE.");
+
+            drv_gpio_id804_sio2_lvds(ID804_IO_CON);
+            drv_uart_printf("\r\n    ID804 SIO2 LVDS set to ENABLE.");
+            break;
+        }
+        case CLI_CMD_ID804_TEST_V_TEMP_SEN:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -585,7 +617,7 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             break;
         }
-        case CLI_CMD_ID804_V_BGR:
+        case CLI_CMD_ID804_TEST_V_BGR:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -603,7 +635,7 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             break;
         }
-        case CLI_CMD_ID804_1V5_LDO:
+        case CLI_CMD_ID804_TEST_1V5_LDO:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -621,7 +653,7 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             break;
         }
-        case CLI_CMD_ID804_OSC:
+        case CLI_CMD_ID804_TEST_OSC:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -639,7 +671,7 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             break;
         }
-        case CLI_CMD_ID804_ADC_GAIN:
+        case CLI_CMD_ID804_TEST_ADC_GAIN:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -657,7 +689,7 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             break;
         }
-        case CLI_CMD_ID804_ADC_TEMP:
+        case CLI_CMD_ID804_TEST_ADC_TEMP:
         {
             id804_boot_i2c();
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
@@ -677,6 +709,198 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
             float temp = (30 + ((float)data - 440) / 4.4f);
             drv_uart_printf("\r\n    [ID804] [Temp] %.3f\r\n", (double)temp);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_DRIVER_R:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            drv_gpio_id804_vled(ID804_VLED_OFF);
+            drv_uart_printf("\r\n    ID804 VLED turned OFF.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE3U;
+            data = 0xA5AU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xF1U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x0FU;
+            data = 0xE93U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x804U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x20U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x21U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_DRIVER_G:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            drv_gpio_id804_vled(ID804_VLED_OFF);
+            drv_uart_printf("\r\n    ID804 VLED turned OFF.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE3U;
+            data = 0xA5AU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xF2U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x0FU;
+            data = 0xE93U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x802U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x20U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x21U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_DRIVER_B:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            drv_gpio_id804_vled(ID804_VLED_OFF);
+            drv_uart_printf("\r\n    ID804 VLED turned OFF.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE3U;
+            data = 0xA5AU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xF3U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x0FU;
+            data = 0xE93U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x801U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x20U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x21U;
+            data = 0xFFFU;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_DEEPSLEEP:
+        {
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint32_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            comm_result = id804_write(0U, ID804_CMD_GODEEPSLEEP, 0U);
+            cli_print_id804_comm_result(comm_result, 0U, ID804_CMD_GODEEPSLEEP, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_SLEEP:
+        {
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint32_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            comm_result = id804_write(0U, ID804_CMD_GOSLEEP, 0U);
+            cli_print_id804_comm_result(comm_result, 0U, ID804_CMD_GOSLEEP, 0U);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_ACTIVE:
+        {
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint32_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            comm_result = id804_write(0U, ID804_CMD_GOACTIVE, 0U);
+            cli_print_id804_comm_result(comm_result, 0U, ID804_CMD_GOACTIVE, 0U);
             break;
         }
         case CLI_CMD_HELP:
