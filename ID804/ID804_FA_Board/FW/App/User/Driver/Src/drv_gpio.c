@@ -412,7 +412,7 @@ bool drv_gpio_id804_sio2_can(id804_io_state_t state)
         }
         case ID804_IO_CON:
         {
-            drv_uart_printf("\r\n    You should check J26 (1st-ID804 device EOL/CAN)");
+            drv_uart_printf("\r\n    You should check J26 (1st-ID804 device EOL(PD)/CAN(PU))");
             LL_GPIO_SetOutputPin(SIO2_CAN_GPIO_Port, SIO2_CAN_Pin);
             result = true;
             break;

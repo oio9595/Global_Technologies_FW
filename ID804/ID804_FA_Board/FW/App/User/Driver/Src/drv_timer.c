@@ -62,7 +62,10 @@ void drv_timer_delay_us(uint32_t us)
 
 void drv_timer_delay_ms(uint32_t ms)
 {
-    drv_timer_delay_us(ms * 1000U);
+    for (uint32_t i = 0; i < ms; i++)
+    {
+        drv_timer_delay_us(1000U);
+    }
 }
 
 /* USER CODE END 0 */

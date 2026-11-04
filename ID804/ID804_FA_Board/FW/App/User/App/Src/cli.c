@@ -28,6 +28,7 @@
 #include "drv_spi.h"
 #include "drv_i2c.h"
 #include "drv_gpio.h"
+#include "drv_timer.h"
 #include "drv_id804.h"
 #include "id804_metadata.h"
 /* USER CODE END Includes */
@@ -57,6 +58,13 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID804_GOSLEEP,
     CLI_CMD_ID804_GOACTIVE,
     CLI_CMD_ID804_GODEEPSLEEP,
+
+    CLI_CMD_ID804_V_TEMP_SEN,
+    CLI_CMD_ID804_V_BGR,
+    CLI_CMD_ID804_1V5_LDO,
+    CLI_CMD_ID804_OSC,
+    CLI_CMD_ID804_ADC_GAIN,
+    CLI_CMD_ID804_ADC_TEMP,
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
@@ -128,6 +136,12 @@ static const cli_cmd_entry_t gt_cli_command[] =
 
     { "id804_me",           CLI_CMD_ID804_ME,           "ID804 ME interface <0: WRITE, 1: READ> <Dev Addr> <CMD> <Data: only for WRITE>"            },
     { "id804_i2c",          CLI_CMD_ID804_I2C,          "ID804 I2C interface <0: WRITE, 1: READ> <Address> <Data: only for WRITE>"                  },
+    { "bgr_test",           CLI_CMD_ID804_V_TEMP_SEN,   "ID804 V_TEMP_SEN Test"                                                                     },
+    { "bgr_r1_r2_test",     CLI_CMD_ID804_V_BGR,        "ID804 V_BGR Test"                                                                          },
+    { "1p5_ldo_test",       CLI_CMD_ID804_1V5_LDO,      "ID804 1V5 LDO Test"                                                                        },
+    { "osc_test",           CLI_CMD_ID804_OSC,          "ID804 OSC Test"                                                                            },
+    { "adc_gain_test",      CLI_CMD_ID804_ADC_GAIN,     "ID804 ADC Gain Test"                                                                       },
+    { "adc_temp_test",      CLI_CMD_ID804_ADC_TEMP,     "ID804 ADC Temp Test"                                                                       },
 };
 
 static cli_request_t gt_cli_request;
@@ -551,6 +565,118 @@ static void cli_command_execute(void)
             {
                 drv_uart_printf("\r\n    ID804 I2C communication not recognized.");
             }
+            break;
+        }
+        case CLI_CMD_ID804_V_TEMP_SEN:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x808U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_V_BGR:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x818U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_1V5_LDO:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x820U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_OSC:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0xC00U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_ADC_GAIN:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x810U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            break;
+        }
+        case CLI_CMD_ID804_ADC_TEMP:
+        {
+            id804_boot_i2c();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint32_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            drv_timer_delay_ms(1000U);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0x03U;
+            data = 0x000U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            float temp = (30 + ((float)data - 440) / 4.4f);
+            drv_uart_printf("\r\n    [ID804] [Temp] %.3f\r\n", (double)temp);
             break;
         }
         case CLI_CMD_HELP:
