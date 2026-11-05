@@ -152,18 +152,6 @@ typedef enum tag_TRIM_RANGE_T
 #define TRIM_OSC_RCTL_TOL_RATIO     (3.0f / 100.0f)
 #define TRIM_GAIN_TOL_RATIO         (3.0f / 100.0f)
 #define TRIM_OFFSET_TOL_RATIO       (3.0f / 100.0f)
-
-// remove below if not used
-#define TRIM_IREF1_INIT_MOVE        (4U)
-#define TRIM_IREF2_INIT_MOVE        (4U)
-#define TRIM_LDO_DET_INIT_MOVE      (4U)
-#define TRIM_LDO_DIG_INIT_MOVE      (4U)
-#define TRIM_LDO_DAC_INIT_MOVE      (4U)
-#define TRIM_LDO_FLL_INIT_MOVE      (4U)
-#define TRIM_OFS_TEMP_INIT_MOVE     (4U)
-#define TRIM_OSC_RCTL_INIT_MOVE     (4U)
-#define TRIM_GAIN_INIT_MOVE         (4U)
-#define TRIM_OFFSET_INIT_MOVE       (4U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
