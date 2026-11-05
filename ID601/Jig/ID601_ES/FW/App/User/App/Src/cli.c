@@ -1095,9 +1095,18 @@ static inline void cli_cmd_help_test_manual(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV LDO      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV DAC      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV OSC      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OPEN DETECTOR  <option 1:VREF, 2:LEVEL, 3:HYS, 4:Function> <ch:1-12>", MANUAL_TEST_OPEN_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FB DETECTOR    <option 1:LEVEL, 2:HYS> <fbx:1-3> <ch:1-12> <fb lvl:0-7>", MANUAL_TEST_FB_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: SHORT DETECTOR <option 1:VREF, 2:LEVEL, 3:HYS, 4:Function> <ch:1-12> <st lvl:0-7>", MANUAL_TEST_SHORT_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OPEN DETECTOR  <option> <ch>", MANUAL_TEST_OPEN_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FB DETECTOR    <option> <ch> <fbx> <fb_lvl>", MANUAL_TEST_FB_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:LEVEL, 2:HYS");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        fbx: 1-3");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        fb_lvl: 0-7");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: SHORT DETECTOR <option> <ch> <sh_lvl>", MANUAL_TEST_SHORT_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                        sh_lvl: 0-7");
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FAULT FLAG     <fbx:1-3> ", MANUAL_TEST_FAULT_FLAG);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BIST", MANUAL_TEST_BIST);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: HVS", MANUAL_TEST_HVS);
@@ -1379,105 +1388,75 @@ static inline void cli_cmd_function_test_manual(void)
         }
         case MANUAL_TEST_OPEN_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2;
+            const uint32_t option = gt_cli_request.val_2; // VREF, LEVEL, HYS, FUNCTION
+            const uint32_t ch = gt_cli_request.val_3;
             if (option < 1U || option > 4U)
             {
                 cli_print_invalid_input();
+                return;
+            }
+            if (option > 1U)
+            {
+                if (ch < 1U || ch > ID601_CH_MAX)
+                {
+                    cli_print_invalid_input();
+                    return;
+                }
+            }
+            drv_tim_vsync_stop();
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
+            if (false == id601_init_tm_entry_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
                 return;
             }
             switch (option)
             {
                 case 1U:
                 {
-                    drv_gpio_clear_id601();
-                    drv_gpio_id601_vcc(ID601_VCC_3V3);
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                        return;
-                    }
-
                     if (false == id601_set_analog_test_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
                         return;
                     }
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x844, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL };
+                    const uint16_t setting_data[3] = { 0x844, 0x019, 0x03C };
+                    for (uint16_t i = 0; i < 3U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x844, 0x844);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x019, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x019, 0x019);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
                     break;
                 }
                 case 2U:
                 case 3U:
                 {
-                    const uint32_t ch = gt_cli_request.val_3;
-                    if (ch < 1U || ch > ID601_CH_MAX)
-                    {
-                        cli_print_invalid_input();
-                        return;
-                    }
-                    drv_tim_vsync_stop();
-                    drv_gpio_clear_id601();
-                    drv_gpio_id601_vcc(ID601_VCC_3V3);
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Mode Init Failed", __func__);
-                        return;
-                    }
                     if (false == id601_set_dimming_type1_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
                         return;
                     }
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x044, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x044, 0x044);
-                    }
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
+                    const uint16_t setting_data[3] = { 0x044, 0x03C, (1U << (ch - 1U)) };
+                    for (uint16_t i = 0; i < 3U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
 
                     for (uint16_t ch = 0; ch < 12; ++ch)
@@ -1494,50 +1473,24 @@ static inline void cli_cmd_function_test_manual(void)
                 }
                 case 4U:
                 {
-                    const uint32_t ch = gt_cli_request.val_3;
-                    if (ch < 1U || ch > ID601_CH_MAX)
-                    {
-                        cli_print_invalid_input();
-                        return;
-                    }
-                    drv_tim_vsync_stop();
-                    drv_gpio_clear_id601();
-                    drv_gpio_id601_vcc(ID601_VCC_3V3);
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Mode Init Failed", __func__);
-                        return;
-                    }
                     if (false == id601_set_dimming_type1_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
                         return;
                     }
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x044, drv_id601_get_crc_func()))
+                    const uint16_t ch_enable_data = (1U << (ch - 1U));
+                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
+                    const uint16_t setting_data[3] = { 0x044, 0x03D, ch_enable_data };
+                    for (uint16_t i = 0; i < 3U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x044, 0x044);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03D, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03D, 0x03D);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
 
                     for (uint16_t ch = 0; ch < 12; ++ch)
@@ -1560,16 +1513,11 @@ static inline void cli_cmd_function_test_manual(void)
         }
         case MANUAL_TEST_FB_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2;
-            const uint32_t fbx = gt_cli_request.val_3;
-            const uint32_t ch = gt_cli_request.val_4;
-            const uint32_t fb_lvl = gt_cli_request.val_5;
+            const uint32_t option = gt_cli_request.val_2; // LEVEL, HYS
+            const uint32_t ch = gt_cli_request.val_3; // 1-12
+            const uint32_t fbx = gt_cli_request.val_4; // 1-3
+            const uint32_t fb_lvl = gt_cli_request.val_5; // 0-7
             if (option < 1U || option > 2U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (fbx < 1U || fbx > 3)
             {
                 cli_print_invalid_input();
                 return;
@@ -1579,135 +1527,72 @@ static inline void cli_cmd_function_test_manual(void)
                 cli_print_invalid_input();
                 return;
             }
+            if (fbx < 1U || fbx > 3)
+            {
+                cli_print_invalid_input();
+                return;
+            }
+            if (fb_lvl > 7U)
+            {
+                cli_print_invalid_input();
+                return;
+            }
+            drv_tim_vsync_stop();
+            drv_gpio_clear_id601();
+            drv_gpio_id601_vcc(ID601_VCC_3V3);
+            if (false == id601_init_tm_entry_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
+                return;
+            }
+            if (false == id601_set_analog_test_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
+                return;
+            }
             switch (option)
             {
                 case 1U:
                 {
-                    drv_gpio_clear_id601();
-                    drv_gpio_id601_vcc(ID601_VCC_3V3);
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                        return;
-                    }
-
-                    if (false == id601_set_analog_test_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                        return;
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x844, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x844, 0x844);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-                    }
-
                     const uint16_t fb_level_data = ((fb_lvl << 6U) | (fb_lvl << 3U) | (fb_lvl << 0U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FB_LEVEL, fb_level_data, drv_id601_get_crc_func()))
+                    const uint16_t ch_enable_data = (1U << (ch - 1U));
+                    const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
+                    const uint16_t setting_data[5] = { 0x844, ch_enable_data, 0x03C, fb_level_data, (0x015U + fbx) };
+                    for (uint16_t i = 0; i < 5U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FB_LEVEL, fb_level_data, fb_level_data);
-                    }
-
-                    const uint16_t test_ana_en_data = (0x16U + fbx - 1U);
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
                     break;
                 }
                 case 2U:
                 {
-                    drv_tim_vsync_stop();
-                    drv_gpio_clear_id601();
-                    drv_gpio_id601_vcc(ID601_VCC_3V3);
-                    if (false == id601_init_tm_entry_mode())
+                    if (false == id601_set_dimming_type1_mode())
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
+                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
                         return;
                     }
-
-                    if (false == id601_set_analog_test_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                        return;
-                    }
-
                     const uint32_t op_mode_data = (0x804 | (fbx << 6U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, op_mode_data, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, op_mode_data, op_mode_data);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-                    }
-
+                    const uint16_t ch_enable_data = (1U << (ch - 1U));
                     const uint16_t fb_level_data = ((fb_lvl << 6U) | (fb_lvl << 3U) | (fb_lvl << 0U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FB_LEVEL, fb_level_data, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
+                    const uint16_t setting_data[5] = { op_mode_data, ch_enable_data, 0x03C, fb_level_data, (0x015U + fbx) };
+                    for (uint16_t i = 0; i < 5U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FB_LEVEL, fb_level_data, fb_level_data);
-                    }
-
-                    const uint16_t test_ana_en_data = (0x16U + fbx - 1U);
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, test_ana_en_data, test_ana_en_data);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
 
                     for (uint16_t ch = 0; ch < 12; ++ch)
@@ -1730,126 +1615,84 @@ static inline void cli_cmd_function_test_manual(void)
         }
         case MANUAL_TEST_SHORT_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2;
-            const uint32_t ch = gt_cli_request.val_3;
-            const uint32_t short_lvl = gt_cli_request.val_4;
+            const uint32_t option = gt_cli_request.val_2; // VREF, LEVEL, HYS, FUNCTION
+            const uint32_t ch = gt_cli_request.val_3; // 1-12
+            const uint32_t short_lvl = gt_cli_request.val_4; // 0-7
             if (option < 1U || option > 4U)
             {
                 cli_print_invalid_input();
                 return;
             }
+            if (option > 1U)
+            {
+                if (ch < 1U || ch > ID601_CH_MAX)
+                {
+                    cli_print_invalid_input();
+                    return;
+                }
+                if (short_lvl > 7U)
+                {
+                    cli_print_invalid_input();
+                    return;
+                }
+            }
             drv_tim_vsync_stop();
             drv_gpio_clear_id601();
             drv_gpio_id601_vcc(ID601_VCC_3V3);
+            if (false == id601_init_tm_entry_mode())
+            {
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
+                return;
+            }
             switch (option)
             {
                 case 1U:
                 {
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                        return;
-                    }
-
                     if (false == id601_set_analog_test_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
                         return;
                     }
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x844, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x844, 0x844);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x01A, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x01A, 0x01A);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-                    }
-
                     const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_SHORT_LEVEL };
+                    const uint16_t setting_data[4] = { 0x844U, 0x01AU, 0x03CU, short_level_data };
+                    for (uint16_t i = 0; i < 4U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, short_level_data);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
                     break;
                 }
                 case 2U:
                 case 3U:
                 {
-                    if (ch < 1U || ch > ID601_CH_MAX)
-                    {
-                        cli_print_invalid_input();
-                        return;
-                    }
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                        return;
-                    }
-
                     if (false == id601_set_dimming_type1_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
                         return;
                     }
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x044, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x044, 0x044);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-                    }
-
+                    const uint16_t ch_enable_data = (1U << (ch - 1U));
                     const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
+                    const uint16_t setting_data[4] = { 0x044U, 0x03CU, ch_enable_data, short_level_data };
+                    for (uint16_t i = 0; i < 4U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, short_level_data);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
 
                     for (uint16_t ch = 0; ch < 12; ++ch)
@@ -1866,58 +1709,26 @@ static inline void cli_cmd_function_test_manual(void)
                 }
                 case 4U:
                 {
-                    if (ch < 1U || ch > ID601_CH_MAX)
-                    {
-                        cli_print_invalid_input();
-                        return;
-                    }
-                    if (false == id601_init_tm_entry_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                        return;
-                    }
-
                     if (false == id601_set_dimming_type1_mode())
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
                         return;
                     }
 
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x044, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x044, 0x044);
-                    }
-
-                    if (false == id601_trim_setup_current_chx(ch - 1U))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, (1U << (ch-1U)), (1U << (ch-1U)));
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03E, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03E, 0x03E);
-                    }
-
+                    const uint16_t ch_enable_data = (1U << (ch - 1U));
                     const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, drv_id601_get_crc_func()))
+                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
+                    const uint16_t setting_data[4] = { 0x044U, 0x03EU, ch_enable_data, short_level_data };
+                    for (uint16_t i = 0; i < 4U; i++)
                     {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_SHORT_LEVEL, short_level_data, short_level_data);
+                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                        {
+                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                        }
+                        else
+                        {
+                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                        }
                     }
 
                     for (uint16_t ch = 0; ch < 12; ++ch)
@@ -1941,7 +1752,13 @@ static inline void cli_cmd_function_test_manual(void)
         }
         case MANUAL_TEST_FAULT_FLAG:
         {
-            const uint32_t fbx = gt_cli_request.val_2;
+            const uint32_t option = gt_cli_request.val_2; // INIT, OPEN, FB, SHORT
+            const uint32_t fbx = gt_cli_request.val_3;
+            if (option < 1U || option > 4U)
+            {
+                cli_print_invalid_input();
+                return;
+            }
             if (fbx < 1U || fbx > 3U)
             {
                 cli_print_invalid_input();
@@ -1955,47 +1772,25 @@ static inline void cli_cmd_function_test_manual(void)
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
                 return;
             }
-            if (false == id601_set_analog_test_mode())
+            if (false == id601_set_dimming_type1_mode())
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
+                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
                 return;
             }
 
             const uint32_t op_mode_data = (0x824 | (fbx << 6U));
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, op_mode_data, drv_id601_get_crc_func()))
+            const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL };
+            const uint16_t setting_data[4] = { op_mode_data, 0xFFFU, 0x03CU, 0x16DU };
+            for (uint16_t i = 0; i < 4U; i++)
             {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, op_mode_data, op_mode_data);
-            }
-
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_CHANNEL_ENABLE, 0xFFF, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_CHANNEL_ENABLE, 0xFFF, 0xFFF);
-            }
-
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x03C, 0x03C);
-            }
-
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FB_LEVEL, 0x16D, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FB_LEVEL, 0x16D, 0x16D);
+                if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
+                {
+                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
+                }
+                else
+                {
+                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
+                }
             }
 
             for (uint16_t ch = 0; ch < 12; ++ch)

@@ -2638,9 +2638,9 @@ bool id601_set_dimming_type1_mode(void)
             }
             case ID601_ADDR_GENERAL_SHORT_LEVEL:
             {
-                const uint16_t _r08_SHORT3_LEVEL = 7U;
-                const uint16_t _r08_SHORT2_LEVEL = 7U;
-                const uint16_t _r08_SHORT1_LEVEL = 7U;
+                const uint16_t _r08_SHORT3_LEVEL = 0U;
+                const uint16_t _r08_SHORT2_LEVEL = 0U;
+                const uint16_t _r08_SHORT1_LEVEL = 0U;
                 if (false == id601_write_short_level(daisy, _r08_SHORT3_LEVEL, _r08_SHORT2_LEVEL, _r08_SHORT1_LEVEL))
                 {
                     ret = false;
