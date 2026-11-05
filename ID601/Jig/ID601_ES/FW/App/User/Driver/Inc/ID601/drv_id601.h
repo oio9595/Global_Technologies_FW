@@ -52,6 +52,8 @@ extern "C" {
 #define ID601_TRIM_CODE_OSC_RCTL_MAX        (0x001FU)
 #define ID601_TRIM_CODE_GAIN_MAX            (0x007FU)
 #define ID601_TRIM_CODE_OFFSET_MAX          (0x01FFU)
+#define ID601_TRIM_CODE_BGR1_TC_MAX         (0x001FU)
+#define ID601_TRIM_CODE_BGR2_TC_MAX         (0x001FU)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -211,6 +213,9 @@ extern uint16_t id601_trim_apply_ofs_temp(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_osc_rctl(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code);
+
+extern uint16_t id601_trim_apply_bgr1_tc(uint16_t ch, uint16_t trim_code);
+extern uint16_t id601_trim_apply_bgr2_tc(uint16_t ch, uint16_t trim_code);
 
 extern bool id601_test_setup_idds1(void);
 extern bool id601_test_setup_iddd1(void);

@@ -88,6 +88,7 @@ typedef enum tag_MANUAL_TRIM_LIST
     MANUAL_TRIM_OSC_RCTL,
     MANUAL_TRIM_GAIN,
     MANUAL_TRIM_OFFSET,
+    MANUAL_TRIM_BGR1,
     MANUAL_TRIM_BGR2,
     MANUAL_TRIM_MAX
 } manual_trim_list_t;
@@ -691,6 +692,7 @@ static inline void cli_cmd_help_trim_manual(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL", MANUAL_TRIM_OSC_RCTL);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <option 1:P3, 2:P4> <ch:1-12>", MANUAL_TRIM_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1", MANUAL_TRIM_BGR1);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2", MANUAL_TRIM_BGR2);
 }
 static inline void cli_cmd_function_trim_manual(void)
@@ -728,6 +730,11 @@ static inline void cli_cmd_function_trim_manual(void)
         case MANUAL_TRIM_OFFSET:
         {
             param_valid = ((3U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U) && (ch >= 1U) && (ch <= ID601_CH_MAX));
+            break;
+        }
+        case MANUAL_TRIM_BGR1:
+        {
+            param_valid = (1U == gn_cli_argument_count);
             break;
         }
         case MANUAL_TRIM_BGR2:
@@ -899,6 +906,12 @@ static inline void cli_cmd_function_trim_manual(void)
             }
             break;
         }
+        case MANUAL_TRIM_BGR1:
+        {
+            id601_test_setup_bgr1();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR1 Setup");
+            break;
+        }
         case MANUAL_TRIM_BGR2:
         {
             id601_test_setup_bgr2();
@@ -925,6 +938,8 @@ static inline void cli_cmd_help_trim_manual_write(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL <dummy>   <val>", MANUAL_TRIM_OSC_RCTL);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <ch:1-12> <val>", MANUAL_TRIM_GAIN);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <ch:1-12> <val>", MANUAL_TRIM_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1     <dummy>   <val>", MANUAL_TRIM_BGR1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2     <dummy>   <val>", MANUAL_TRIM_BGR2);
 }
 static inline void cli_cmd_function_trim_manual_write(void)
 {
@@ -949,6 +964,8 @@ static inline void cli_cmd_function_trim_manual_write(void)
         case MANUAL_TRIM_LDO_FLL:
         case MANUAL_TRIM_OSC_RCTL:
         case MANUAL_TRIM_OFS_TEMP:
+        case MANUAL_TRIM_BGR1:
+        case MANUAL_TRIM_BGR2:
             param_valid = ((3U == gn_cli_argument_count) && (ch == 0U));
             break;
         case MANUAL_TRIM_GAIN:
@@ -1030,6 +1047,18 @@ static inline void cli_cmd_function_trim_manual_write(void)
         {
             reg = id601_trim_apply_offset((uint16_t)(ch - 1U), (uint16_t)val);
             drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET, Ch:%u, Data:%4u(0x%03X)", ch, reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_BGR1:
+        {
+            reg = id601_trim_apply_bgr1_tc(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR1, Data:%4u(0x%03X)", reg, reg);
+            break;
+        }
+        case MANUAL_TRIM_BGR2:
+        {
+            reg = id601_trim_apply_bgr2_tc(0U, (uint16_t)val);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR2, Data:%4u(0x%03X)", reg, reg);
             break;
         }
         default:

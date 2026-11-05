@@ -2275,14 +2275,14 @@ bool id601_init_tm_entry_mode(void)
     drv_id601_set_daisy_length(1U);
 
     USER_ASSERT(1U == gt_id601_ld_info.daisy);
-
+#if 0
     if (false == id601_reset(gp_id601_crc_func))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: Reset failed. ID601 Power Off.", __func__);
         drv_gpio_clear_id601();
         return false;
     }
-
+#endif
     if (false == id601_id_gen(gp_id601_crc_func))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID generation failed. ID601 Power Off.", __func__);
@@ -3558,6 +3558,64 @@ uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code)
     uint16_t _r_OFFSET = gn_id601_mirror_regs[addr_offset][0];
     _r_OFFSET = id601_set_field(_r_OFFSET, ID601_OFFSET_CH01_OFS_CH1_Msk, ID601_OFFSET_CH01_OFS_CH1_Pos, reg_value);
     if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, addr_offset, _r_OFFSET, gp_id601_crc_func))
+    {
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_bgr1_tc(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_BGR1_TC_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_CODE_BGR1_TC_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
+    }
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: trim_code: %u, reg_value: %u", __func__, trim_code, reg_value);
+
+    uint16_t _r01 = gn_id601_mirror_regs[ID601_ADDR_MIRROR2][0];
+    _r01 = id601_set_field(_r01, ID601_OTP2_BGR_TC_Msk, ID601_OTP2_BGR_TC_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR2, _r01, gp_id601_crc_func))
+    {
+        ret = reg_value;
+    }
+    return ret;
+}
+uint16_t id601_trim_apply_bgr2_tc(uint16_t ch, uint16_t trim_code)
+{
+    USER_ASSERT(1U == gt_id601_ld_info.daisy);
+    (void)(ch);
+    uint16_t ret = 0xFFFFU;
+
+    if (trim_code > ID601_TRIM_CODE_BGR2_TC_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: trim_code out of range: %u", __func__, trim_code);
+        USER_ASSERT(0);
+    }
+
+    const uint16_t reg_value = trim_code; // refer to ID601_Test_Doc.xlsx
+    if (reg_value > ID601_TRIM_CODE_BGR2_TC_MAX)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: reg_value out of range: %u", __func__, reg_value);
+        USER_ASSERT(0);
+    }
+
+    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [ID601] %s: trim_code: %u, reg_value: %u", __func__, trim_code, reg_value);
+
+    uint16_t _r02 = gn_id601_mirror_regs[ID601_ADDR_MIRROR3][0];
+    _r02 = id601_set_field(_r02, ID601_OTP3_BGR2_TC_Msk, ID601_OTP3_BGR2_TC_Pos, reg_value);
+    if (true == id601_write_register(ID601_REGISTER_BANK_MIRROR, 1U, ID601_ADDR_MIRROR3, _r02, gp_id601_crc_func))
     {
         ret = reg_value;
     }
