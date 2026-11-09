@@ -61,6 +61,8 @@ void drv_gpio_init(void)
 
 void drv_gpio_id804_boot_i2c(void)
 {
+    drv_gpio_buffer_output_enable();
+
     drv_gpio_id804_tm0_to_GND();
     drv_gpio_id804_tm1_to_GND();
 
@@ -80,6 +82,8 @@ void drv_gpio_id804_boot_i2c(void)
 
 void drv_gpio_id804_boot_mcu(void)
 {
+    drv_gpio_buffer_output_enable();
+
     drv_gpio_id804_tm0_to_GND();
     drv_gpio_id804_tm1_to_GND();
 
@@ -95,6 +99,8 @@ void drv_gpio_id804_boot_mcu(void)
 
 void drv_gpio_id804_boot_lvds(id804_comm_direction_t direction)
 {
+    drv_gpio_buffer_output_enable();
+
     drv_gpio_id804_tm0_to_GND();
     drv_gpio_id804_tm1_to_GND();
 
@@ -108,7 +114,7 @@ void drv_gpio_id804_boot_lvds(id804_comm_direction_t direction)
         drv_gpio_id804_sio1_lvds(ID804_IO_CON);
         drv_gpio_id804_sio2_mcu(ID804_IO_CON);
     }
-    drv_uart_printf("\r\n    You should check J25 (2nd-ID804 device EOL/CAN)");
+    drv_uart_printf("\r\n    You should check J25 (2nd-ID804 device EOL(PD)/CAN(PU))");
 
     drv_gpio_id804_vcc(ID804_VCC_5V0);
 
@@ -119,6 +125,8 @@ void drv_gpio_id804_boot_lvds(id804_comm_direction_t direction)
 
 void drv_gpio_id804_boot_can(id804_comm_direction_t direction)
 {
+    drv_gpio_buffer_output_enable();
+
     drv_gpio_id804_tm0_to_GND();
     drv_gpio_id804_tm1_to_GND();
 
@@ -132,7 +140,7 @@ void drv_gpio_id804_boot_can(id804_comm_direction_t direction)
         drv_gpio_id804_sio1_can(ID804_IO_CON);
         drv_gpio_id804_sio2_mcu(ID804_IO_CON);
     }
-    drv_uart_printf("\r\n    You should check J25 (2nd-ID804 device EOL/CAN)");
+    drv_uart_printf("\r\n    You should check J25 (2nd-ID804 device EOL(PD)/CAN(PU))");
 
     drv_gpio_id804_2nd_comm_mode(true);
 
@@ -148,7 +156,10 @@ bool drv_gpio_id804_io_clear(void)
     drv_gpio_id804_vcc(ID804_VCC_OFF);
     drv_gpio_id804_vled(ID804_VLED_OFF);
 
+    drv_gpio_buffer_output_enable();
+
     drv_gpio_id804_tm0_to_GND();
+    drv_gpio_id804_tm1_to_GND();
 
     drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
     drv_gpio_id804_sio1_mcu(ID804_IO_DIS);
@@ -230,6 +241,16 @@ bool drv_gpio_id804_vled(id804_vled_state_t state)
         }
     }
     return result;
+}
+bool drv_gpio_buffer_output_enable(void)
+{
+    LL_GPIO_ResetOutputPin(BUFFER_OE_GPIO_Port, BUFFER_OE_Pin);
+    return true;
+}
+bool drv_gpio_buffer_output_disable(void)
+{
+    LL_GPIO_SetOutputPin(BUFFER_OE_GPIO_Port, BUFFER_OE_Pin);
+    return true;
 }
 
 bool drv_gpio_id804_tm0_to_GND(void)
@@ -469,7 +490,7 @@ bool drv_gpio_id804_sio2_eol(id804_io_state_t state)
         }
         case ID804_IO_CON:
         {
-            drv_uart_printf("\r\n    You should check J26 (1st-ID804 device EOL/CAN)");
+            drv_uart_printf("\r\n    You should check J26 (1st-ID804 device EOL(PD)/CAN(PU))");
             LL_GPIO_SetOutputPin(SIO2_CAN_GPIO_Port, SIO2_CAN_Pin);
             result = true;
             break;

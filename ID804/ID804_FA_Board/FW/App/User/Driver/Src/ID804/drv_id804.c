@@ -31,8 +31,8 @@
 /* USER CODE BEGIN PTD */
 typedef struct tag_ID804_COMM_OPS
 {
-    id804_comm_result_t (*read_func)(uint16_t dev_addr, uint8_t target, uint32_t* p_data);
-    id804_comm_result_t (*write_func)(uint16_t dev_addr, uint8_t target, uint32_t data);
+    id804_comm_result_t (*read_func)(uint16_t dev_addr, uint8_t target, uint64_t* p_data);
+    id804_comm_result_t (*write_func)(uint16_t dev_addr, uint8_t target, uint64_t data);
 } id804_comm_ops_t;
 /* USER CODE END PTD */
 
@@ -145,7 +145,7 @@ id804_comm_mode_t id804_get_comm_mode(void)
  * @param p_data Pointer to store the read data.
  * @return The result of the communication operation.
  */
-id804_comm_result_t id804_read(uint16_t dev_addr, uint8_t target, uint32_t* p_data)
+id804_comm_result_t id804_read(uint16_t dev_addr, uint8_t target, uint64_t* p_data)
 {
     return gp_id804_comm_ops->read_func(dev_addr, target, p_data);
 }
@@ -157,7 +157,7 @@ id804_comm_result_t id804_read(uint16_t dev_addr, uint8_t target, uint32_t* p_da
  * @param data The data to write.
  * @return The result of the communication operation.
  */
-id804_comm_result_t id804_write(uint16_t dev_addr, uint8_t target, uint32_t data)
+id804_comm_result_t id804_write(uint16_t dev_addr, uint8_t target, uint64_t data)
 {
     return gp_id804_comm_ops->write_func(dev_addr, target, data);
 }

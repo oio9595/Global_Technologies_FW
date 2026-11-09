@@ -64,7 +64,7 @@ static inline bool id804_is_valid_address(uint8_t reg_addr)
     return (is_valid_reg || is_valid_otp);
 }
 
-id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint32_t data)
+id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint64_t data)
 {
     (void)dev_addr;
     if (false == id804_is_valid_address(reg_addr))
@@ -80,7 +80,7 @@ id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uin
     return ID804_COMM_WRITE_OK;
 }
 
-id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint32_t* p_data)
+id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint64_t* p_data)
 {
     (void)dev_addr;
 

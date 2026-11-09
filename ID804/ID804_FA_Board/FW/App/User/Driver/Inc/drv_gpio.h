@@ -86,6 +86,9 @@ extern bool drv_gpio_id804_vled(id804_vled_state_t state);
 
 extern bool drv_gpio_id804_io_clear(void);
 
+extern bool drv_gpio_buffer_output_enable(void);
+extern bool drv_gpio_buffer_output_disable(void);
+
 extern bool drv_gpio_id804_tm0_to_GND(void);
 extern bool drv_gpio_id804_tm0_to_VDD(void);
 

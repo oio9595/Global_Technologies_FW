@@ -590,8 +590,8 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|SIO2_MCU_Pin|I2C_SIO1P_UP_Pin
-                          |DEBUG_Pin|DEBUG2_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, SIO2_LVDS_Pin|MCU_TM1_Pin|SIO2_MCU_Pin|BUFFER_OE_Pin
+                          |I2C_SIO1P_UP_Pin|DEBUG_Pin|DEBUG2_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOA, CAN_ID804_Pin|MCU_TM0_Pin|SIO1_MCU_Pin|ID804_VCC_5V5_Pin
@@ -634,7 +634,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_1|LL_GPIO_PIN_4|LL_GPIO_PIN_6|LL_GPIO_PIN_7
-                          |LL_GPIO_PIN_8|LL_GPIO_PIN_11;
+                          |LL_GPIO_PIN_11;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -671,12 +671,12 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = DEBUG2_Pin;
+  GPIO_InitStruct.Pin = BUFFER_OE_Pin|DEBUG2_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(DEBUG2_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_2;

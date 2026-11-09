@@ -361,7 +361,7 @@ static uint16_t id804_build_frame_0bit(uint8_t dev_addr, uint8_t cmd, uint8_t *p
  * @param crc_func Function pointer to the CRC calculation function.
  * @return The length of the constructed frame, or 0 if the command is invalid.
  */
-static bool id804_build_frame_by_cmd(uint8_t dev_addr, id804_cmd_list_t cmd, uint32_t raw_data, uint8_t *p_out_buf, id804_crc_func_t crc_func, uint16_t* frame_size)
+static bool id804_build_frame_by_cmd(uint8_t dev_addr, id804_cmd_list_t cmd, uint64_t raw_data, uint8_t *p_out_buf, id804_crc_func_t crc_func, uint16_t* frame_size)
 {
     const id804_cmd_info_t *p_info = id804_get_cmd_info(cmd);
 
@@ -657,7 +657,7 @@ uint16_t id804_manchester_encode_buffer(const uint8_t *p_src, uint16_t src_len, 
  * @param cmd The command to send.
  * @param data The data associated with the command.
  */
-id804_comm_result_t id804_write_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t data)
+id804_comm_result_t id804_write_via_me(uint16_t dev_addr, uint8_t cmd, uint64_t data)
 {
     uint8_t raw_packet[ID804_FRAME_BUF_SIZE] = { 0U };
     uint8_t spi_tx_buffer[ID804_SPI_TX_BUF_SIZE] = { 0U };
@@ -693,7 +693,7 @@ id804_comm_result_t id804_write_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t 
  * @param p_data Pointer to store the received data.
  * @return The result of the communication attempt.
  */
-id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* p_data)
+id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint64_t* p_data)
 {
     uint8_t raw_packet[ID804_FRAME_BUF_SIZE] = { 0U };
 
@@ -719,7 +719,10 @@ id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* 
 
     spi_tx_len = id804_manchester_encode_buffer(raw_packet, frame_size[ID804_FRAME_TX_IDX], spi_tx_buffer);
 
-    id804_daisy_length = id804_get_daisy_length();
+    if (ID805_BC_DEV_ADDR == dev_addr)
+    {
+        id804_daisy_length = id804_get_daisy_length();
+    }
     spi_rx_len = frame_size[ID804_FRAME_RX_IDX];
 
     if (false == drv_spi_transmit_dma(spi_tx_buffer, spi_tx_len))
@@ -739,10 +742,15 @@ id804_comm_result_t id804_read_via_me(uint16_t dev_addr, uint8_t cmd, uint32_t* 
 
     for (uint16_t idx = 0; idx < id804_daisy_length; ++idx)
     {
-        if (false == id804_spi_parse_rx_packet(spi_rx_buffer + (idx * spi_rx_len), spi_rx_len))
+        uint16_t idx_start = idx * spi_rx_len;
+        if (false == id804_spi_parse_rx_packet(spi_rx_buffer + idx_start, spi_rx_len))
         {
             drv_uart_printf("\r\n    SPI Fail at Parse");
             return ID804_COMM_ERR_SPI;
+        }
+        for (uint16_t i = 0; i < spi_rx_len; ++i)
+        {
+            *p_data = *p_data << 8U | spi_rx_buffer[idx_start + i];
         }
     }
 

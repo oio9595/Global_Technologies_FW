@@ -46,8 +46,8 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
-extern id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint32_t data);
-extern id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint32_t* p_data);
+extern id804_comm_result_t id804_write_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint64_t data);
+extern id804_comm_result_t id804_read_via_i2c(uint16_t dev_addr, uint8_t reg_addr, uint64_t* p_data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

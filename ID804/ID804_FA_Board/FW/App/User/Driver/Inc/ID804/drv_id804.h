@@ -72,8 +72,8 @@ extern bool id804_boot_can(id804_comm_direction_t direction);
 extern void id804_set_comm_mode(id804_comm_mode_t mode);
 extern id804_comm_mode_t id804_get_comm_mode(void);
 
-extern id804_comm_result_t id804_read(uint16_t dev_addr, uint8_t target, uint32_t* p_data);
-extern id804_comm_result_t id804_write(uint16_t dev_addr, uint8_t target, uint32_t data);
+extern id804_comm_result_t id804_read(uint16_t dev_addr, uint8_t target, uint64_t* p_data);
+extern id804_comm_result_t id804_write(uint16_t dev_addr, uint8_t target, uint64_t data);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

@@ -100,6 +100,8 @@ void Error_Handler(void);
 #define SIO1_CAN_GPIO_Port GPIOB
 #define SIO2_CAN_Pin LL_GPIO_PIN_15
 #define SIO2_CAN_GPIO_Port GPIOB
+#define BUFFER_OE_Pin LL_GPIO_PIN_8
+#define BUFFER_OE_GPIO_Port GPIOC
 #define I2C_SIO1P_UP_Pin LL_GPIO_PIN_9
 #define I2C_SIO1P_UP_GPIO_Port GPIOC
 #define SIO1_MCU_Pin LL_GPIO_PIN_8
