@@ -69,6 +69,12 @@ extern bool id804_boot_me(void);
 extern bool id804_boot_lvds(id804_comm_direction_t direction);
 extern bool id804_boot_can(id804_comm_direction_t direction);
 
+extern bool id804_boot_test_sio1_se(void);
+extern bool id804_boot_test_sio2_se(void);
+
+extern bool id804_boot_test_sio1_lvds(void);
+extern bool id804_boot_test_sio2_lvds(void);
+
 extern void id804_set_comm_mode(id804_comm_mode_t mode);
 extern id804_comm_mode_t id804_get_comm_mode(void);
 

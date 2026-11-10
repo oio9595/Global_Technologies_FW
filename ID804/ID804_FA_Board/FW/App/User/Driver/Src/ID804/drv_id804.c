@@ -23,7 +23,7 @@
 /* 3. Project internal / System-related headers */
 #include "drv_id804_i2c.h"
 #include "drv_id804_manchester.h"
-
+#include "drv_timer.h"
 #include "drv_gpio.h"
 /* USER CODE END Includes */
 
@@ -117,6 +117,116 @@ bool id804_boot_can(id804_comm_direction_t direction)
     drv_gpio_id804_boot_can(direction);
     id804_set_comm_mode(ID804_COMM_MODE_ME);
     gp_id804_comm_ops = &gp_id804_comm_ops_me;
+    return true;
+}
+
+bool id804_boot_test_sio1_se(void)
+{
+    drv_gpio_id804_io_clear();
+
+    drv_gpio_buffer_output_enable();
+
+    drv_gpio_id804_tm0_to_GND();
+    drv_gpio_id804_tm1_to_GND();
+
+    drv_gpio_id804_sio1_i2c(ID804_IO_CON);
+    drv_gpio_id804_sio2_can(ID804_IO_CON);
+
+    drv_gpio_id804_vcc(ID804_VCC_5V0);
+    drv_gpio_id804_vled(ID804_VLED_ON);
+
+    drv_timer_delay_ms(DELAY_POWER_UP_MS);
+
+    drv_gpio_id804_tm0_to_VDD();
+
+    drv_gpio_id804_sio2_can(ID804_IO_DIS);
+
+    id804_set_comm_mode(ID804_COMM_MODE_I2C);
+    gp_id804_comm_ops = &gp_id804_comm_ops_i2c;
+    return true;
+}
+
+bool id804_boot_test_sio2_se(void)
+{
+    drv_gpio_id804_io_clear();
+
+    drv_gpio_buffer_output_enable();
+
+    drv_gpio_id804_tm0_to_GND();
+    drv_gpio_id804_tm1_to_GND();
+
+    drv_gpio_id804_sio1_i2c(ID804_IO_CON);
+    drv_gpio_id804_sio2_can(ID804_IO_CON);
+
+    drv_gpio_id804_vcc(ID804_VCC_5V0);
+    drv_gpio_id804_vled(ID804_VLED_ON);
+
+    drv_timer_delay_ms(DELAY_POWER_UP_MS);
+
+    drv_gpio_id804_tm0_to_VDD();
+
+    drv_gpio_id804_sio2_can(ID804_IO_DIS);
+
+    id804_set_comm_mode(ID804_COMM_MODE_I2C);
+    gp_id804_comm_ops = &gp_id804_comm_ops_i2c;
+    return true;
+}
+
+bool id804_boot_test_sio1_lvds(void)
+{
+    drv_gpio_id804_io_clear();
+
+    drv_gpio_buffer_output_enable();
+
+    drv_gpio_id804_tm0_to_GND();
+    drv_gpio_id804_tm1_to_GND();
+
+    drv_gpio_id804_sio1_lvds(ID804_IO_CON);
+    drv_gpio_id804_sio2_lvds(ID804_IO_CON);
+
+    drv_gpio_id804_vcc(ID804_VCC_5V0);
+    drv_gpio_id804_vled(ID804_VLED_ON);
+
+    drv_timer_delay_ms(DELAY_POWER_UP_MS);
+
+    drv_gpio_id804_tm0_to_VDD();
+
+    drv_gpio_id804_sio1_lvds(ID804_IO_DIS);
+    drv_gpio_id804_sio2_lvds(ID804_IO_DIS);
+
+    drv_gpio_id804_sio1_i2c(ID804_IO_CON);
+
+    id804_set_comm_mode(ID804_COMM_MODE_I2C);
+    gp_id804_comm_ops = &gp_id804_comm_ops_i2c;
+    return true;
+}
+
+bool id804_boot_test_sio2_lvds(void)
+{
+    drv_gpio_id804_io_clear();
+
+    drv_gpio_buffer_output_enable();
+
+    drv_gpio_id804_tm0_to_GND();
+    drv_gpio_id804_tm1_to_GND();
+
+    drv_gpio_id804_sio1_lvds(ID804_IO_CON);
+    drv_gpio_id804_sio2_lvds(ID804_IO_CON);
+
+    drv_gpio_id804_vcc(ID804_VCC_5V0);
+    drv_gpio_id804_vled(ID804_VLED_ON);
+
+    drv_timer_delay_ms(DELAY_POWER_UP_MS);
+
+    drv_gpio_id804_tm0_to_VDD();
+
+    drv_gpio_id804_sio1_lvds(ID804_IO_DIS);
+    drv_gpio_id804_sio2_lvds(ID804_IO_DIS);
+
+    drv_gpio_id804_sio1_i2c(ID804_IO_CON);
+
+    id804_set_comm_mode(ID804_COMM_MODE_I2C);
+    gp_id804_comm_ops = &gp_id804_comm_ops_i2c;
     return true;
 }
 

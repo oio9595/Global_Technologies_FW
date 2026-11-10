@@ -1028,6 +1028,7 @@ static void cli_command_execute(void)
         case CLI_CMD_ID804_TEST_B_OPEN:
         {
             id804_boot_i2c();
+            drv_gpio_id804_vled(ID804_VLED_OFF);
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
 
             uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
@@ -1059,6 +1060,7 @@ static void cli_command_execute(void)
         case CLI_CMD_ID804_TEST_B_SHORT:
         {
             id804_boot_i2c();
+            drv_gpio_id804_vled(ID804_VLED_OFF);
             drv_uart_printf("\r\n    ID804 boot with \"SINGLE I2C\" executed.");
 
             uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
@@ -1087,32 +1089,108 @@ static void cli_command_execute(void)
         }
         case CLI_CMD_ID804_TEST_SIO1_SE:
         {
-            drv_uart_printf("\r\n    SIO1_SE: Not Yet.");
+            id804_boot_test_sio1_se();
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint64_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x880U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x8b8U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
+            drv_gpio_id804_tm1_to_VDD();
             break;
         }
         case CLI_CMD_ID804_TEST_SIO2_SE:
         {
-            drv_uart_printf("\r\n    SIO2_SE: Not Yet.");
+            id804_boot_test_sio2_se();
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint64_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x980U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x9b8U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
+            drv_gpio_id804_tm1_to_VDD();
             break;
         }
         case CLI_CMD_ID804_TEST_SIO1_LVDS_PD_RES:
-        {
-            drv_uart_printf("\r\n    SIO1_LVDS_PD_RES: Not Yet.");
-            break;
-        }
         case CLI_CMD_ID804_TEST_SIO1_LVDS_TX:
         {
-            drv_uart_printf("\r\n    SIO1_LVDS_TX: Not Yet.");
+            id804_boot_test_sio1_lvds();
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint64_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x840U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x878U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
+            drv_gpio_id804_tm1_to_VDD();
             break;
         }
         case CLI_CMD_ID804_TEST_SIO2_LVDS_PD_RES:
-        {
-            drv_uart_printf("\r\n    SIO2_LVDS_PD_RES: Not Yet.");
-            break;
-        }
         case CLI_CMD_ID804_TEST_SIO2_LVDS_TX:
         {
-            drv_uart_printf("\r\n    SIO2_LVDS_TX: Not Yet.");
+            id804_boot_test_sio2_lvds();
+
+            uint16_t dev_addr = ID804_DEV_ADDR_DUMMY;
+            uint16_t target = 0xE0U;
+            uint64_t data = 0x800U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x940U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            dev_addr = ID804_DEV_ADDR_DUMMY;
+            target = 0xE0U;
+            data = 0x978U;
+            comm_result = id804_write(dev_addr, target, data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+
+            drv_gpio_id804_sio1_i2c(ID804_IO_DIS);
+            drv_gpio_id804_tm1_to_VDD();
             break;
         }
         case CLI_CMD_HELP:
