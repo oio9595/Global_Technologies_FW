@@ -70,7 +70,10 @@ void drv_gpio_init(void)
     gb_board_type = BOARD_TYPE_MOBIS;
     USER_ASSERT(gb_board_type == BOARD_TYPE_GT || gb_board_type == BOARD_TYPE_MOBIS);
 
-    mcp23017_init();
+    if (BOARD_TYPE_GT == gb_board_type)
+    {
+        mcp23017_init();
+    }
 
     drv_gpio_clear_id601();
 
