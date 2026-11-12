@@ -97,7 +97,7 @@ typedef struct tag_ID601_LD_INFO
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ID601_DAISY_LENGTH_INITIAL          (1U)
+#define ID601_DAISY_LENGTH_INITIAL          (5U)
 #define ID601_CH_SIZE_INITIAL               (12U)
 #define ID601_LED_PER_CH_INITIAL            (3U)
 
@@ -694,15 +694,15 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
     }
 
     const uint16_t daisy_length = gt_id601_ld_info.daisy;
+    uint16_t* p_rise = gn_id601_rx_ccr_rise_buffer;
+    uint16_t* p_fall = gn_id601_rx_ccr_fall_buffer;
+    if (false == drv_tim_capture_serial(p_rise, p_fall, frame_length * daisy_length, ID601_SERIAL_TIMEOUT_MS))
+    {
+        return false;
+    }
 
     for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
     {
-        uint16_t* p_rise = &gn_id601_rx_ccr_rise_buffer[device_index * frame_length];
-        uint16_t* p_fall = &gn_id601_rx_ccr_fall_buffer[device_index * frame_length];
-        if (false == drv_tim_capture_serial(p_rise, p_fall, frame_length, ID601_SERIAL_TIMEOUT_MS))
-        {
-            return false;
-        }
         uint32_t serial_data = 0U;
         if (false == id601_decode_serial_from_ccr_buffer(p_rise, p_fall, &serial_data, frame_length))
         {
@@ -744,6 +744,8 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
             drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] RX: dev=%02u cmd=0x%02X id=0x%02X data=0x%03X crc=Disabled", (unsigned)(device_index + 1U), (unsigned)command, (unsigned)ID, (unsigned)data);
         }
         p_data[device_index] = data;
+        p_rise += frame_length;
+        p_fall += frame_length;
     }
 
     return true;
@@ -2189,44 +2191,44 @@ static bool id601_read_all_registers(void)
 
 bool id601_dump_registers(void)
 {
+    drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Test mode entry is not guaranteed.", __func__);
     char buffer[MSG_BUFFER_SIZE];
-    int length;
-
-    id601_read_all_registers();
+    (void)id601_read_all_registers();
 
     const uint16_t daisy_length = gt_id601_ld_info.daisy;
-
-    length = snprintf(buffer, sizeof(buffer), "\r\n    [ID601] REGISTER DUMP\r\n    %-8s %4s %6s %6s", "BANK", "DEV", "ADDR", "VALUE");
-    if ((length > 0) && ((size_t)length < sizeof(buffer)))
+    const struct
     {
-        drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
+        const char *name;
+        uint16_t first_addr;
+        uint16_t end_addr;
+        const uint16_t (*regs)[ID601_DAISY_LENGTH_MAX];
+    } banks[] =
+    {
+        { "GENERAL", ID601_ADDR_GENERAL_RESET_ID, ID601_ADDR_GENERAL_MAX_COUNT, gn_id601_general_regs },
+        { "MIRROR", ID601_ADDR_MIRROR1, ID601_ADDR_MIRROR_MAX_COUNT, gn_id601_mirror_regs },
+    };
+
+    size_t length = (size_t)snprintf(buffer, sizeof(buffer), "\r\n    [ID601] REGISTER DUMP\r\n    %-8s %4s", "BANK", "ADDR");
+
+    for (uint16_t dev = 0U; dev < daisy_length; ++dev)
+    {
+        length += (size_t)snprintf(buffer + length, sizeof(buffer) - length, " | DEV #%-2u", (unsigned)(dev + 1U));
     }
+    drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
 
-    for (uint16_t addr = ID601_ADDR_GENERAL_RESET_ID; addr < ID601_ADDR_GENERAL_MAX_COUNT; ++addr)
+    for (size_t bank = 0U; bank < sizeof(banks) / sizeof(banks[0]); ++bank)
     {
-        for (uint16_t dev = 0U; dev < daisy_length; ++dev)
+        for (uint16_t addr = banks[bank].first_addr; addr < banks[bank].end_addr; ++addr)
         {
-            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "GENERAL", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_general_regs[addr][dev]);
-
-            if ((length > 0) && ((size_t)length < sizeof(buffer)))
+            length = (size_t)snprintf(buffer, sizeof(buffer), "\r\n    %-8s 0x%02X", banks[bank].name, (unsigned)addr);
+            for (uint16_t dev = 0U; dev < daisy_length; ++dev)
             {
-                drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
+                length += (size_t)snprintf(buffer + length, sizeof(buffer) - length, " |   0x%03X", (unsigned)banks[bank].regs[addr][dev]);
             }
+            drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
         }
     }
 
-    for (uint16_t addr = ID601_ADDR_MIRROR1; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
-    {
-        for (uint16_t dev = 0U; dev < daisy_length; ++dev)
-        {
-            length = snprintf(buffer, sizeof(buffer), "\r\n    %-8s   %02u   0x%02X  0x%03X", "MIRROR", (unsigned)(dev + 1U), (unsigned)addr, (unsigned)gn_id601_mirror_regs[addr][dev]);
-
-            if ((length > 0) && ((size_t)length < sizeof(buffer)))
-            {
-                drv_uart_printf_direct((const uint8_t *)buffer, (uint16_t)length);
-            }
-        }
-    }
     return true;
 }
 
@@ -2605,8 +2607,8 @@ bool id601_set_dimming_type1_mode(void)
             }
             case ID601_ADDR_GENERAL_PWMCLK_DIV1_2:
             {
-                const uint16_t _r03_PWMCLK_DIV2 = 13U;
-                const uint16_t _r03_PWMCLK_DIV1 = 22U;
+                const uint16_t _r03_PWMCLK_DIV2 = 15U;
+                const uint16_t _r03_PWMCLK_DIV1 = 30U;
                 if (false == id601_write_pwmclk_div_1_2(daisy, _r03_PWMCLK_DIV2, _r03_PWMCLK_DIV1))
                 {
                     ret = false;
