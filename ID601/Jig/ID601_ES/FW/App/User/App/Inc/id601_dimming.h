@@ -31,13 +31,6 @@ extern "C" {
 
 #define ID601_SV_NO_DEFAULT             (32U)
 #define ID601_LD_TYPE_DEFAULT           (1U)
-#if (0U == ID601_LD_TYPE_DEFAULT)
-    #define SVSYNC_CYCLE_DEFAULT        (2U)
-#elif (1U == ID601_LD_TYPE_DEFAULT)
-    #define SVSYNC_CYCLE_DEFAULT        (3U)
-#else
-    #error "Invalid ID601_LD_TYPE_DEFAULT value. Must be 0 or 1."
-#endif
 #define ID601_DELAY_CH_EN_DEFAULT       (0U)
 #define ID601_SYNCMODE_DEFAULT          (0U)
 #define ID601_PWM_RES_DEFAULT           (1U)
@@ -68,7 +61,7 @@ extern "C" {
 extern void id601_dimming_init(void);
 
 extern void id601_config_ld_control(id601_ld_control_reg_t const* p_config);
-extern id601_ld_control_reg_t* id601_get_ld_control(void);
+extern id601_ld_control_reg_t const* id601_get_ld_control(void);
 
 extern void id601_config_fault_read(bool enable);
 extern bool id601_get_fault_read_enabled(void);

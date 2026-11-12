@@ -79,7 +79,7 @@ void id601_config_ld_control(id601_ld_control_reg_t const* p_config)
 
     gt_id601_ld_control = *p_config;
 }
-id601_ld_control_reg_t* id601_get_ld_control(void)
+id601_ld_control_reg_t const* id601_get_ld_control(void)
 {
     return &gt_id601_ld_control;
 }

@@ -43,7 +43,6 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_UNKNOWN,
     CLI_CMD_HELP,
     CLI_CMD_JIG_HELP,
-    CLI_CMD_LOG_LV,
     CLI_CMD_RESET,
     CLI_CMD_BOARD_TYPE,
 
@@ -67,7 +66,6 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID601_INIT,
     CLI_CMD_ID601_MODE,
     CLI_CMD_ID601_EFUSE,
-    CLI_CMD_ID601_CRC,
 
     CLI_CMD_LD_BUFF,
     CLI_CMD_LD_CONFIG_FAULT_READ_ENABLE,
@@ -167,12 +165,6 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_JIG_HELP,
         "jig",
         "HW description"
-    },
-    {
-        CLI_CMD_LOG_LV,
-        "log_lv",
-        "log_lv <level>"
-        "\r\n    0/omitted=list, 1=OFF, 2=ERROR, 3=WARN, 4=INFO, 5=DEBUG, 6=TRACE"
     },
     {
         CLI_CMD_RESET,
@@ -303,12 +295,6 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "id601_efuse",
         "id601_efuse <option>"
         "\r\n    0/omitted=list, 1=disable burn, 2=enable burn"
-    },
-    {
-        CLI_CMD_ID601_CRC,
-        "id601_crc",
-        "id601_crc <option>"
-        "\r\n    0/omitted=list, 1=disable CRC, 2=enable CRC"
     },
     {
         CLI_CMD_LD_BUFF,
@@ -612,25 +598,6 @@ static inline void cli_cmd_function_jig_help(void)
 
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Jig Power Path:");
     drv_uart_printf(LOG_LV_INFO, "\r\n        ID601_VCC -- VR11 -- R88 -- [J78] -- ID601_VCC_2\r\n");
-}
-static inline void cli_cmd_function_log_lv(void)
-{
-    const uint32_t level = gt_cli_request.val_1;
-    if (0U == level)
-    {
-        cli_print_command_usage(CLI_CMD_LOG_LV);
-    }
-    else
-    {
-        if (level > LOG_LV_MAX)
-        {
-            cli_print_invalid_input();
-        }
-        else
-        {
-            drv_uart_set_log_level((log_level_t)(level - 1U));
-        }
-    }
 }
 static inline void cli_cmd_function_reset(void)
 {
@@ -2275,21 +2242,6 @@ static inline void cli_cmd_function_id601_efuse(void)
     }
     id601_set_efuse_burn_enable(2U == enable);
 }
-static inline void cli_cmd_function_id601_crc(void)
-{
-    const uint32_t enable = gt_cli_request.val_1;
-    if (0U == enable)
-    {
-        cli_print_command_usage(CLI_CMD_ID601_CRC);
-        return;
-    }
-    if (enable > 2U)
-    {
-        cli_print_invalid_input();
-        return;
-    }
-    id601_set_crc_enable(2U == enable);
-}
 static inline void cli_cmd_function_ld_buff(void)
 {
     const uint32_t daisy = gt_cli_request.val_1;
@@ -2416,11 +2368,6 @@ static void cli_command_execute(void)
             cli_cmd_function_jig_help();
             break;
         }
-        case CLI_CMD_LOG_LV:
-        {
-            cli_cmd_function_log_lv();
-            break;
-        }
         case CLI_CMD_RESET:
         {
             cli_cmd_function_reset();
@@ -2519,11 +2466,6 @@ static void cli_command_execute(void)
         case CLI_CMD_ID601_EFUSE:
         {
             cli_cmd_function_id601_efuse();
-            break;
-        }
-        case CLI_CMD_ID601_CRC:
-        {
-            cli_cmd_function_id601_crc();
             break;
         }
         case CLI_CMD_LD_BUFF:
