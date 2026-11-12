@@ -49,6 +49,32 @@ typedef thread_step_handler_t test_step_handler_t;
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* USER CODE BEGIN EFP */
+
+extern bool drv_id601_set_hvs_flag(bool hvs_flag);
+extern bool drv_id601_get_hvs_flag(void);
+
+extern bool id601_test_setup_idds1(void);
+extern bool id601_test_setup_iddd1(void);
+extern bool id601_test_setup_iref1(void);
+extern bool id601_test_setup_iref2(void);
+extern bool id601_test_setup_ldo_det(void);
+extern bool id601_test_setup_ldo_dig(void);
+extern bool id601_test_setup_ldo_dac(void);
+extern bool id601_test_setup_ldo_fll(void);
+extern bool id601_test_setup_bgr1(void);
+extern bool id601_test_setup_bgr2(void);
+extern bool id601_test_setup_osc(void);
+extern bool id601_test_setup_fll1(void);
+extern bool id601_test_setup_fll2(void);
+extern bool id601_test_setup_fll3(void);
+extern bool id601_test_setup_iout_3p(void);
+extern bool id601_test_setup_iout_sweep(void);
+extern bool id601_test_setup_iout_vref_sweep(void);
+
+extern bool id601_test_setup_iout_3p_x(uint8_t ph);
+extern bool id601_test_setup_iout_sweep_x(uint8_t ph);
+extern bool id601_test_setup_iout_vref_sweep_x(uint16_t vref);
+
 extern void test_set_vref_sweep_enable(bool enable);
 extern void id601_test_clear_parameters(thread_data_t *td);
 extern void id601_test_start(thread_data_t *td);

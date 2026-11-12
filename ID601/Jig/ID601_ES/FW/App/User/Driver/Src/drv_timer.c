@@ -289,7 +289,9 @@ bool drv_tim_capture_serial(uint16_t* p_rise, uint16_t* p_fall, uint16_t length,
             LL_TIM_DisableCounter(TIM2);
             gb_tim2_capture_dma_active[TIM2_CAPTURE_RISE] = false;
             gb_tim2_capture_dma_active[TIM2_CAPTURE_FALL] = false;
-            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM2 Capture Serialize timeout");
+            uint32_t remaining_rise = LL_DMA_GetDataLength(TIM2_CAPTURE_RISE_DMA_BASE, TIM2_CAPTURE_RISE_DMA_STREAM);
+            uint32_t remaining_fall = LL_DMA_GetDataLength(TIM2_CAPTURE_FALL_DMA_BASE, TIM2_CAPTURE_FALL_DMA_STREAM);
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] TIM2 Capture Serialize timeout %u, %u", remaining_rise, remaining_fall);
             return false;
         }
     }

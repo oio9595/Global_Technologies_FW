@@ -710,7 +710,10 @@ static inline void cli_cmd_function_trim_start(void)
 }
 static inline void cli_cmd_function_trim_result(void)
 {
-    id601_trim_display_search_registers();
+    for (uint16_t addr = 0U; addr < ID601_ADDR_MIRROR_MAX_COUNT; ++addr)
+    {
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Mirror register: addr 0x%02X search=%u", addr, id601_get_trim_search_mirror_reg(addr));
+    }
 }
 static inline void cli_cmd_help_trim_manual(void)
 {
@@ -899,7 +902,7 @@ static inline void cli_cmd_function_trim_manual(void)
 
             if (ch > 0U && ch <= ID601_CH_MAX)
             {
-                id601_trim_setup_current_chx((uint16_t)(ch - 1U));
+                id601_set_current_chx((uint16_t)(ch - 1U));
             }
             else
             {
@@ -931,7 +934,7 @@ static inline void cli_cmd_function_trim_manual(void)
 
             if (ch > 0U && ch <= ID601_CH_MAX)
             {
-                id601_trim_setup_current_chx((uint16_t)(ch - 1U));
+                id601_set_current_chx((uint16_t)(ch - 1U));
             }
             else
             {
