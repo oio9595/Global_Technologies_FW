@@ -32,7 +32,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef void (*drv_tim_vsync_irq_task_func_t)(void);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -54,23 +54,29 @@
 #define TIM5_CAPTURE_SIZE               (256U)
 #define TIM5_CAPTURE_TIMEOUT            (1000U)
 
-#define TIM3_FREQ                       (90000000UL) // 90MHz
+#define TIM3_FREQ                       (45000000UL) // 45MHz
 #define TIM8_FREQ                       (180000000UL / 50U) // 3.6MHz
 
-#define SVSYNC_PHASE_RED                (1U)
-#define SVSYNC_PHASE_GREEN              (2U)
-#define SVSYNC_PHASE_BLUE               (0U)
+#define VSYNC_HZ                        (60U)
 
 #define SVSYNC_VSYNC_MASK_H_US          (4U)
 #define SVSYNC_VSYNC_MASK_L_US          (4U)
 #define SVSYNC_GATING_TIME_US           (10U)
-#define SVSYNC_CYCLE                    (3U)
+#define SVSYNC_CYCLE                    (SVSYNC_CYCLE_DEFAULT)
 #define SVSYNC_SIZE                     (ID601_SV_NO_DEFAULT)
-#define SVSYNC_TOTAL_CYCLE              (SVSYNC_CYCLE * SVSYNC_SIZE)
 
-#define SVSYNC_RED_FREQ                 (3840U)
-#define SVSYNC_GREEN_FREQ               (6400U)
-#define SVSYNC_BLUE_FREQ                (9600U)
+#define SVSYNC_PHASE_COLOR1             (1U)
+#define SVSYNC_PHASE_COLOR2             (2U)
+#define SVSYNC_PHASE_COLOR3             (0U)
+
+#define SVSYNC_RATIO_COLOR1             (4U)
+#define SVSYNC_RATIO_COLOR2             (2U)
+#define SVSYNC_RATIO_COLOR3             (1U)
+#define SVSYNC_RATIO_SUM                (SVSYNC_RATIO_COLOR1 + SVSYNC_RATIO_COLOR2 + SVSYNC_RATIO_COLOR3)
+
+#define SVSYNC_FREQ_COLOR1_DEFAULT      ((VSYNC_HZ * SVSYNC_SIZE * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR1)
+#define SVSYNC_FREQ_COLOR2_DEFAULT      ((VSYNC_HZ * SVSYNC_SIZE * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR2)
+#define SVSYNC_FREQ_COLOR3_DEFAULT      ((VSYNC_HZ * SVSYNC_SIZE * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR3)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -90,11 +96,22 @@ extern osThreadId_t VsyncTaskHandle;
 extern osThreadId_t VsyncTestTaskHandle;
 
 static uint16_t gn_svsync_count = 0U;
+
+static uint16_t gn_svsync_cycle;
+static uint16_t gn_svsync_size;
+static uint16_t gn_svsync_vmask_ccr;
+
+static uint32_t gn_svsync_freq_color1;
+static uint32_t gn_svsync_freq_color2;
+static uint32_t gn_svsync_freq_color3;
+
+static drv_tim_vsync_irq_task_func_t drv_tim_vsync_irq_task_func = NULL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+static void drv_tim_vsync_irq_task_w_syncgen(void);
+static void drv_tim_vsync_irq_task_wo_syncgen(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -143,6 +160,16 @@ void drv_tim_init(void)
 
     LL_DMA_SetPeriphAddress(TIM5_CAPTURE_FREQ_DMA_BASE, TIM5_CAPTURE_FREQ_DMA_STREAM, (uint32_t)(&(TIM5->CCR1)));
     LL_DMA_SetMemoryAddress(TIM5_CAPTURE_FREQ_DMA_BASE, TIM5_CAPTURE_FREQ_DMA_STREAM, (uint32_t)gn_tim5_capture_ccr_buff);
+
+    gn_svsync_cycle = SVSYNC_CYCLE;
+    gn_svsync_size = SVSYNC_SIZE;
+    gn_svsync_vmask_ccr = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_VSYNC_MASK_H_US);
+
+    gn_svsync_freq_color1 = SVSYNC_FREQ_COLOR1_DEFAULT;
+    gn_svsync_freq_color2 = SVSYNC_FREQ_COLOR2_DEFAULT;
+    gn_svsync_freq_color3 = SVSYNC_FREQ_COLOR3_DEFAULT;
+
+    drv_tim_vsync_irq_task_func = drv_tim_vsync_irq_task_w_syncgen;
 
     drv_uart_printf(LOG_LV_DEBUG, "\r\n    [MCU] Timer initialized successfully.");
 }
@@ -450,7 +477,7 @@ static void drv_tim_svsync_start(void)
     LL_TIM_SetAutoReload(TIM3, (CONST_Hz_to_MHz(TIM3_FREQ) * (SVSYNC_VSYNC_MASK_H_US + SVSYNC_VSYNC_MASK_L_US) - 1U));
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_EnableIT_UPDATE(TIM3);
-    LL_TIM_OC_SetCompareCH1(TIM3, (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_VSYNC_MASK_H_US));
+    LL_TIM_OC_SetCompareCH1(TIM3, gn_svsync_vmask_ccr);
     LL_TIM_EnableCounter(TIM3);
 
     gn_svsync_count = 0U;
@@ -471,25 +498,25 @@ void drv_tim_svsync_irq_handler(void)
 
     ++gn_svsync_count;
 
-    uint32_t phase = (gn_svsync_count % SVSYNC_CYCLE);
+    uint32_t phase = (gn_svsync_count % gn_svsync_cycle);
 
     switch(phase)
     {
-        case SVSYNC_PHASE_RED:
+        case SVSYNC_PHASE_COLOR1:
         {
-            period = ((TIM3_FREQ / SVSYNC_RED_FREQ) - 1U);
+            period = ((TIM3_FREQ / gn_svsync_freq_color1) - 1U);
             CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
             break;
         }
-        case SVSYNC_PHASE_GREEN:
+        case SVSYNC_PHASE_COLOR2:
         {
-            period = ((TIM3_FREQ / SVSYNC_GREEN_FREQ) - 1U);
+            period = ((TIM3_FREQ / gn_svsync_freq_color2) - 1U);
             CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
             break;
         }
-        case SVSYNC_PHASE_BLUE:
+        case SVSYNC_PHASE_COLOR3:
         {
-            period = ((TIM3_FREQ / SVSYNC_BLUE_FREQ) - 1U);
+            period = ((TIM3_FREQ / gn_svsync_freq_color3) - 1U);
             CompareValue = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_GATING_TIME_US);
             break;
         }
@@ -503,15 +530,46 @@ void drv_tim_svsync_irq_handler(void)
     LL_TIM_SetAutoReload(TIM3, period);
     LL_TIM_OC_SetCompareCH1(TIM3, CompareValue);
 
-    if ((SVSYNC_TOTAL_CYCLE) == gn_svsync_count)
+    if ((gn_svsync_cycle * gn_svsync_size) == gn_svsync_count)
     {
         drv_tim_delay_us(SVSYNC_GATING_TIME_US + 2U); //SVSYNC_GATING_TIME_US + margin
         drv_tim_svsync_stop();
     }
 }
-
 void drv_tim_vsync_start(void)
 {
+    const id601_ld_control_reg_t* p_ld_control = id601_get_ld_control();
+    if (1U == p_ld_control->ld_type)
+    {
+        gn_svsync_cycle = 3U;
+    }
+    else
+    {
+        gn_svsync_cycle = 2U;
+    }
+    gn_svsync_size = p_ld_control->sv_no;
+    if (1U == p_ld_control->syncmode)
+    {
+        gn_svsync_vmask_ccr = (CONST_Hz_to_MHz(TIM3_FREQ) * SVSYNC_VSYNC_MASK_H_US);
+    }
+    else
+    {
+        gn_svsync_vmask_ccr = 0U;
+    }
+
+    gn_svsync_freq_color1 = (VSYNC_HZ * gn_svsync_size * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR1;
+    gn_svsync_freq_color2 = (VSYNC_HZ * gn_svsync_size * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR2;
+    gn_svsync_freq_color3 = (VSYNC_HZ * gn_svsync_size * SVSYNC_RATIO_SUM) / SVSYNC_RATIO_COLOR3;
+
+    if (0U == p_ld_control->syncmode)
+    {
+        drv_tim_vsync_irq_task_func = drv_tim_vsync_irq_task_w_syncgen;
+    }
+    else
+    {
+        drv_tim_vsync_irq_task_func = drv_tim_vsync_irq_task_wo_syncgen;
+    }
+
     LL_TIM_SetCounter(TIM8, 0U);
     LL_TIM_OC_SetCompareCH2(TIM8, (CONST_Hz_to_MHz(TIM8_FREQ) * 10U)); // 10us
     LL_TIM_CC_EnableChannel(TIM8, LL_TIM_CHANNEL_CH2);
@@ -528,14 +586,26 @@ void drv_tim_vsync_stop(void)
     LL_TIM_CC_DisableChannel(TIM8, LL_TIM_CHANNEL_CH2);
     LL_TIM_SetCounter(TIM8, 0U);
 }
+static void drv_tim_vsync_irq_task_w_syncgen(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM8);
+    const id601_ld_control_reg_t* p_ld_control = id601_get_ld_control();
+    id601_sync_gen_wo_mutex(drv_id601_get_crc_func());
+    drv_tim_svsync_start();
+    osThreadFlagsSet(VsyncTaskHandle, VSYNC_DIMMING_FLAG);
+}
+static void drv_tim_vsync_irq_task_wo_syncgen(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM8);
+    const id601_ld_control_reg_t* p_ld_control = id601_get_ld_control();
+    drv_tim_svsync_start();
+    osThreadFlagsSet(VsyncTaskHandle, VSYNC_DIMMING_FLAG);
+}
 void drv_tim_vsync_irq_handler(void)
 {
     if (true == LL_TIM_IsActiveFlag_UPDATE(TIM8))
     {
-        LL_TIM_ClearFlag_UPDATE(TIM8);
-        id601_sync_gen_wo_mutex(drv_id601_get_crc_func());
-        drv_tim_svsync_start();
-        osThreadFlagsSet(VsyncTaskHandle, VSYNC_DIMMING_FLAG);
+        drv_tim_vsync_irq_task_func();
     }
 }
 /* USER CODE END 0 */
