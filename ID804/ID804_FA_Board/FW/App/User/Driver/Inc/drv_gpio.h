@@ -91,6 +91,7 @@ extern bool drv_gpio_buffer_output_disable(void);
 
 extern bool drv_gpio_id804_tm0_to_GND(void);
 extern bool drv_gpio_id804_tm0_to_VDD(void);
+extern bool drv_gpio_id804_tm0_to_OPEN(void);
 
 extern bool drv_gpio_id804_tm1_to_GND(void);
 extern bool drv_gpio_id804_tm1_to_VDD(void);

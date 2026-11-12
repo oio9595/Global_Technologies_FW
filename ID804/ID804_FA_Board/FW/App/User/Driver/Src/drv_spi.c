@@ -323,4 +323,88 @@ bool drv_spi_receive_dma(uint8_t *p_data, uint16_t length)
     gn_spi_dma_flag[SPI1_RX_FLAG_INDEX] = SPI_DMA_DONE;
     return true;
 }
+
+bool drv_spi_clock_speed_change(uint16_t baud_rate_mhz)
+{
+    const uint32_t pll_m[3] = {   5U,   4U,   5U }; // 1.8MHz, 2.0MHz, 2.2MHz
+    const uint32_t pll_n[3] = { 144U, 128U, 176U }; // 1.8MHz, 2.0MHz, 2.2MHz
+
+    // default 2Mhz
+    uint32_t set_pll_m = 4U;
+    uint32_t set_pll_n = 128U;
+
+    switch (baud_rate_mhz)
+    {
+        case BAUDRATE_1P8MHz:
+        {
+            set_pll_m = pll_m[BAUDRATE_1P8MHz];
+            set_pll_n = pll_n[BAUDRATE_1P8MHz];
+            break;
+        }
+        case BAUDRATE_2P0MHz:
+        {
+            set_pll_m = pll_m[BAUDRATE_2P0MHz];
+            set_pll_n = pll_n[BAUDRATE_2P0MHz];
+            break;
+        }
+        case BAUDRATE_2P2MHz:
+        {
+            set_pll_m = pll_m[BAUDRATE_2P2MHz];
+            set_pll_n = pll_n[BAUDRATE_2P2MHz];
+            break;
+        }
+        default:
+        {
+            return false;
+        }
+    }
+
+    RCC_OscInitTypeDef osc = {0};
+    osc.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    osc.HSIState = RCC_HSI_ON;
+    osc.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    osc.PLL.PLLState = RCC_PLL_NONE;
+    if (HAL_RCC_OscConfig(&osc) != HAL_OK)
+    {
+        return false;
+    }
+    LL_USART_Disable(USART2);
+
+    RCC_ClkInitTypeDef clock = {0};
+    clock.ClockType = RCC_CLOCKTYPE_SYSCLK;
+    clock.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+    if (HAL_RCC_ClockConfig(&clock, FLASH_LATENCY_4) != HAL_OK)
+    {
+        Error_Handler();
+        return false;
+    }
+
+    osc = (RCC_OscInitTypeDef){0};
+    osc.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    osc.HSEState = RCC_HSE_ON;
+    osc.PLL.PLLState = RCC_PLL_ON;
+    osc.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    osc.PLL.PLLM = set_pll_m;
+    osc.PLL.PLLN = set_pll_n;
+    osc.PLL.PLLP = RCC_PLLP_DIV2;
+    osc.PLL.PLLQ = 2U;
+    osc.PLL.PLLR = 2U;
+    if (HAL_RCC_OscConfig(&osc) != HAL_OK)
+    {
+        Error_Handler();
+        return false;
+    }
+
+    clock.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    if (HAL_RCC_ClockConfig(&clock, FLASH_LATENCY_4) != HAL_OK)
+    {
+        Error_Handler();
+        return false;
+    }
+
+    const uint32_t pclk1_hz = HAL_RCC_GetPCLK1Freq();
+    LL_USART_SetBaudRate(USART2, pclk1_hz, LL_USART_OVERSAMPLING_16, 115200U);
+    LL_USART_Enable(USART2);
+    return true;
+}
 /* USER CODE END 0 */

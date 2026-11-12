@@ -28,6 +28,10 @@ extern "C" {
 /* USER CODE BEGIN Private defines */
 #define SPI_DMA_DONE        (true)
 #define SPI_DMA_BUSY        (false)
+
+#define BAUDRATE_1P8MHz     (0U)
+#define BAUDRATE_2P0MHz     (1U)
+#define BAUDRATE_2P2MHz     (2U)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -57,6 +61,8 @@ extern bool drv_spi_receive_direct(uint8_t *p_data, uint16_t length);
 
 extern bool drv_spi_transmit_dma(const uint8_t *p_data, uint16_t length);
 extern bool drv_spi_receive_dma(uint8_t *p_data, uint16_t length);
+
+extern bool drv_spi_clock_speed_change(uint16_t baud_rate_mhz);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

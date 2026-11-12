@@ -73,6 +73,11 @@ typedef enum tag_CLI_CMD_LIST
     CLI_CMD_ID804_TEST_DEEPSLEEP,
     CLI_CMD_ID804_TEST_SLEEP,
     CLI_CMD_ID804_TEST_ACTIVE,
+
+    CLI_CMD_ID804_TEST_POR,
+    CLI_CMD_ID804_TEST_PROTOCOL_1P8_MHZ,
+    CLI_CMD_ID804_TEST_PROTOCOL_2P0_MHZ,
+    CLI_CMD_ID804_TEST_PROTOCOL_2P2_MHZ,
     CLI_CMD_ID804_TEST_PROTOCOL_CAN,
     CLI_CMD_ID804_TEST_PROTOCOL_LVDS,
 
@@ -177,6 +182,11 @@ static const cli_cmd_entry_t gt_cli_command[] =
     { "deep_sleep_test",        CLI_CMD_ID804_TEST_DEEPSLEEP,           "ID804 Deep Sleep Test"                                                                     },
     { "sleep_test",             CLI_CMD_ID804_TEST_SLEEP,               "ID804 Sleep Test"                                                                          },
     { "active_test",            CLI_CMD_ID804_TEST_ACTIVE,              "ID804 Active Test"                                                                         },
+
+    { "por_test",               CLI_CMD_ID804_TEST_POR,                 "ID804 POR Test"                                                                            },
+    { "protocol_mcu_1p8_test",  CLI_CMD_ID804_TEST_PROTOCOL_1P8_MHZ,    "ID804 Protocol MCU 1.8MHz Test"                                                            },
+    { "protocol_mcu_2p0_test",  CLI_CMD_ID804_TEST_PROTOCOL_2P0_MHZ,    "ID804 Protocol MCU 2.0MHz Test"                                                            },
+    { "protocol_mcu_2p2_test",  CLI_CMD_ID804_TEST_PROTOCOL_2P2_MHZ,    "ID804 Protocol MCU 2.2MHz Test"                                                            },
     { "protocol_can_test",      CLI_CMD_ID804_TEST_PROTOCOL_CAN,        "ID804 Protocol CAN Test"                                                                   },
     { "protocol_lvds_test",     CLI_CMD_ID804_TEST_PROTOCOL_LVDS,       "ID804 Protocol LVDS Test"                                                                  },
 
@@ -634,6 +644,9 @@ static void cli_command_execute(void)
 
             drv_gpio_id804_sio2_lvds(ID804_IO_CON);
             drv_uart_printf("\r\n    ID804 SIO2 LVDS set to ENABLE.");
+
+            drv_gpio_buffer_output_disable();
+            drv_gpio_id804_tm0_to_OPEN();
             break;
         }
         case CLI_CMD_ID804_TEST_V_TEMP_SEN:
@@ -780,7 +793,7 @@ static void cli_command_execute(void)
 
             dev_addr = ID804_DEV_ADDR_DUMMY;
             target = 0x0FU;
-            data = 0xE93U;
+            data = 0xBA3U;
             comm_result = id804_write(dev_addr, target, data);
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
 
@@ -831,7 +844,7 @@ static void cli_command_execute(void)
 
             dev_addr = ID804_DEV_ADDR_DUMMY;
             target = 0x0FU;
-            data = 0xE93U;
+            data = 0xBA3U;
             comm_result = id804_write(dev_addr, target, data);
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
 
@@ -882,7 +895,7 @@ static void cli_command_execute(void)
 
             dev_addr = ID804_DEV_ADDR_DUMMY;
             target = 0x0FU;
-            data = 0xE93U;
+            data = 0xBA3U;
             comm_result = id804_write(dev_addr, target, data);
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
 
@@ -944,6 +957,88 @@ static void cli_command_execute(void)
             cli_print_id804_comm_result(comm_result, 0U, ID804_CMD_GOACTIVE, 0U);
             break;
         }
+        case CLI_CMD_ID804_TEST_POR:
+        {
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+            drv_uart_printf("\r\n    Repeat \"id804_initbidir 1\" while response is received.");
+            break;
+        }
+        case CLI_CMD_ID804_TEST_PROTOCOL_1P8_MHZ:
+        {
+            drv_spi_clock_speed_change(BAUDRATE_1P8MHz);
+            drv_uart_printf("\r\n    ID804 Change SPI clock speed to 1.8MHz.");
+
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint64_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            uint16_t dev_addr = 1U;
+            uint16_t target = 0x41U;
+            uint64_t data = 0x00U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL MCU 1.8MHz Result: ");
+            for (uint16_t i = 0; i < 6; ++i)
+            {
+                drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
+            }
+            drv_spi_clock_speed_change(BAUDRATE_2P0MHz);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_PROTOCOL_2P0_MHZ:
+        {
+            drv_spi_clock_speed_change(BAUDRATE_2P0MHz);
+            drv_uart_printf("\r\n    ID804 Change SPI clock speed to 2.0MHz.");
+
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint64_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            uint16_t dev_addr = 1U;
+            uint16_t target = 0x41U;
+            uint64_t data = 0x00U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL MCU 2.0MHz Result: ");
+            for (uint16_t i = 0; i < 6; ++i)
+            {
+                drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
+            }
+            drv_spi_clock_speed_change(BAUDRATE_2P0MHz);
+            break;
+        }
+        case CLI_CMD_ID804_TEST_PROTOCOL_2P2_MHZ:
+        {
+            drv_spi_clock_speed_change(BAUDRATE_2P2MHz);
+            drv_uart_printf("\r\n    ID804 Change SPI clock speed to 2.2MHz.");
+
+            id804_boot_me();
+            drv_uart_printf("\r\n    ID804 boot with \"SINGLE MCU\" executed.");
+
+            uint64_t dummy = 0U;
+            comm_result = id804_read(1U, ID804_CMD_INITBIDIR, &dummy);
+            cli_print_id804_comm_result(comm_result, 1U, ID804_CMD_INITBIDIR, dummy);
+
+            uint16_t dev_addr = 1U;
+            uint16_t target = 0x41U;
+            uint64_t data = 0x00U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL MCU 2.2MHz Result: ");
+            for (uint16_t i = 0; i < 6; ++i)
+            {
+                drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
+            }
+            drv_spi_clock_speed_change(BAUDRATE_2P0MHz);
+            break;
+        }
         case CLI_CMD_ID804_TEST_PROTOCOL_CAN:
         {
             id804_boot_can(ID804_COMM_FORWARD);
@@ -958,7 +1053,18 @@ static void cli_command_execute(void)
             uint64_t data = 0x00U;
             comm_result = id804_read(dev_addr, target, &data);
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
-            drv_uart_printf("\r\n    [ID804] PROTOCOL CAN Result: ", data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL CAN ID804 2nd Result: ");
+            for (uint16_t i = 0; i < 6; ++i)
+            {
+                drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
+            }
+
+            dev_addr = 1U;
+            target = 0x41U;
+            data = 0x00U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL CAN ID804 1st Result: ");
             for (uint16_t i = 0; i < 6; ++i)
             {
                 drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
@@ -979,7 +1085,18 @@ static void cli_command_execute(void)
             uint64_t data = 0x00U;
             comm_result = id804_read(dev_addr, target, &data);
             cli_print_id804_comm_result(comm_result, dev_addr, target, data);
-            drv_uart_printf("\r\n    [ID804] PROTOCOL LVDS Result: ", data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL LVDS ID804 2nd Result: ");
+            for (uint16_t i = 0; i < 6; ++i)
+            {
+                drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
+            }
+
+            dev_addr = 1U;
+            target = 0x41U;
+            data = 0x00U;
+            comm_result = id804_read(dev_addr, target, &data);
+            cli_print_id804_comm_result(comm_result, dev_addr, target, data);
+            drv_uart_printf("\r\n    [ID804] PROTOCOL LVDS ID804 1st Result: ");
             for (uint16_t i = 0; i < 6; ++i)
             {
                 drv_uart_printf("%02X ", (uint8_t)(data >> (40 - i * 8)) & 0xFFU);
