@@ -140,6 +140,18 @@ const char* drv_uart_get_log_level(void)
 {
     return gp_log_msgs[gt_log_level];
 }
+void drv_uart_set_log_level(log_level_t level)
+{
+    if (level < LOG_LV_MAX)
+    {
+        gt_log_level = level;
+        drv_uart_printf(LOG_LV_INFO, "\r\n    [MCU] Log level set to %s.", gp_log_msgs[gt_log_level]);
+    }
+    else
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [MCU] Invalid log level: %u.", (unsigned)level);
+    }
+}
 void drv_uart_make_mutex(void)
 {
     uart_tx_mutex = osMutexNew(NULL);

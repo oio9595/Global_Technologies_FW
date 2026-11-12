@@ -725,6 +725,10 @@ static bool id601_read_receive_command(uint16_t* p_data, id601_crc_func_t p_crc_
                 drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: CRC check failed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
                 return false;
             }
+            else
+            {
+                drv_uart_printf(LOG_LV_TRACE, "\r\n    [ID601] %s: CRC check passed. recv_crc: 0x%02X, calc_crc: 0x%02X", __func__, recv_crc, calc_crc);
+            }
         }
 
         command = id601_get_field(payload, ID601_READ_RECV_COMMAND_Msk, ID601_READ_RECV_COMMAND_Pos);
@@ -2251,6 +2255,38 @@ bool id601_compare_initial_code(void)
     }
     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Mirror registers match initial values");
 
+    return true;
+}
+
+bool id601_set_crc_enable(bool enable)
+{
+    const uint16_t daisy_length = drv_id601_get_daisy_length();
+    if (false == id601_read_register(ID601_REGISTER_BANK_MIRROR, ID601_BROADCAST, ID601_ADDR_GENERAL_FAULT_CONFIGURATION, gp_id601_crc_func, NULL))
+    {
+        return false;
+    }
+    for (uint16_t device_index = 0U; device_index < daisy_length; ++device_index)
+    {
+        uint16_t _r18 = gn_id601_general_regs[ID601_ADDR_GENERAL_FAULT_CONFIGURATION][device_index];
+        _r18 = id601_set_field(_r18, ID601_FAULT_CONFIGURATION_CRC_EN_Msk, ID601_FAULT_CONFIGURATION_CRC_EN_Pos, (enable) ? 1U : 0U);
+        if (false == id601_write_fault_configuration((device_index + 1U),
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_CRC_EN_Msk, ID601_FAULT_CONFIGURATION_CRC_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_WD_DIMM_EN_Msk, ID601_FAULT_CONFIGURATION_WD_DIMM_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_WD_TIMECFG_Msk, ID601_FAULT_CONFIGURATION_WD_TIMECFG_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_WD_EN_Msk, ID601_FAULT_CONFIGURATION_WD_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_VS_MISS_DIMM_EN_Msk, ID601_FAULT_CONFIGURATION_VS_MISS_DIMM_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_VS_MISS_EN_Msk, ID601_FAULT_CONFIGURATION_VS_MISS_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_CH_CTRL_MISMATCH_EN_Msk, ID601_FAULT_CONFIGURATION_CH_CTRL_MISMATCH_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_VREF_OVUV_OFF_EN_Msk, ID601_FAULT_CONFIGURATION_VREF_OVUV_OFF_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_VREF_OVUV_EN_Msk, ID601_FAULT_CONFIGURATION_VREF_OVUV_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_OSC_LDO_OVUV_EN_Msk, ID601_FAULT_CONFIGURATION_OSC_LDO_OVUV_EN_Pos), \
+            id601_get_field(_r18, ID601_FAULT_CONFIGURATION_LDO_OVUV_EN_Msk, ID601_FAULT_CONFIGURATION_LDO_OVUV_EN_Pos)))
+        {
+            return false;
+        }
+    }
+    gp_id601_crc_func = (enable) ? (id601_calculate_crc) : (NULL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] %s: CRC %s", __func__, enable ? "enabled" : "disabled");
     return true;
 }
 
