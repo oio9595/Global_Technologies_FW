@@ -1217,7 +1217,7 @@ static inline void cli_cmd_function_id601_read(void)
         return;
     }
 
-    uint16_t read_data = 0xFFF;
+    uint16_t read_data = 0xFFFU;
     if (false == id601_read_register(bank, ic_num, addr, drv_id601_get_crc_func(), &read_data))
     {
         drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");

@@ -366,7 +366,7 @@ static uint16_t id601_encode_ccr_buffer_from_serial(uint32_t serial, uint16_t* p
         return 0U;
     }
     uint16_t count = 0U;
-    for (uint16_t i = 0; i < length; i++)
+    for (uint16_t i = 0U; i < length; ++i)
     {
         uint16_t shift_amount = (length - i) - 1U;
         if ((serial >> shift_amount) & 0x01U)

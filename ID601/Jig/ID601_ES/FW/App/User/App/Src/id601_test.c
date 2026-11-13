@@ -793,14 +793,14 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] %s: ID601 Analog Test Mode Failed", __func__);
                 return false;
             }
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, drv_id601_get_crc_func()))
+            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00AU, drv_id601_get_crc_func()))
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to write to ID601 register.");
                 return false;
             }
             else
             {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, 0x00A);
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00AU, 0x00AU);
             }
             break;
         }
@@ -815,22 +815,22 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
             {
                 case 1U:
                 {
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00D, drv_id601_get_crc_func()))
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00DU, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to write to ID601 register.");
                         return false;
                     }
                     else
                     {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00D, 0x00D);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00DU, 0x00DU);
                     }
                     break;
                 }
                 case 2U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00D, 0x00A };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00DU, 0x00AU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -847,8 +847,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 case 3U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00D, 0x009 };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00DU, 0x009U };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -882,22 +882,22 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
             {
                 case 1U:
                 {
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00E, drv_id601_get_crc_func()))
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00EU, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to write to ID601 register.");
                         return false;
                     }
                     else
                     {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00E, 0x00E);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00EU, 0x00EU);
                     }
                     break;
                 }
                 case 2U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00E, 0x00E };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00EU, 0x00EU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -914,8 +914,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 case 3U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00E, 0x00D };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00EU, 0x00DU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -949,22 +949,22 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
             {
                 case 1U:
                 {
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00F, drv_id601_get_crc_func()))
+                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00FU, drv_id601_get_crc_func()))
                     {
                         drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to write to ID601 register.");
                         return false;
                     }
                     else
                     {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00F, 0x00F);
+                        drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00FU, 0x00FU);
                     }
                     break;
                 }
                 case 2U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00F, 0x00B };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00FU, 0x00BU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -981,8 +981,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 case 3U:
                 {
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_TEST_MODE0 };
-                    const uint16_t setting_data[3] = { 0x86C, 0x00F, 0x00C };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x86CU, 0x00FU, 0x00CU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1018,8 +1018,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     }
 
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL };
-                    const uint16_t setting_data[3] = { 0x844, 0x019, 0x03C };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x844U, 0x019U, 0x03CU };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1043,8 +1043,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     }
 
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
-                    const uint16_t setting_data[3] = { 0x044, 0x03C, (1U << (option2 - 1U)) };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x044U, 0x03CU, (1U << (option2 - 1U)) };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1057,11 +1057,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         }
                     }
 
-                    for (uint16_t ch = 0; ch < 12; ++ch)
+                    for (uint16_t ch = 0U; ch < 12U; ++ch)
                     {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
+                        id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 2U, 16383U);
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1079,8 +1079,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
 
                     const uint16_t ch_enable_data = (1U << (option2 - 1U));
                     const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
-                    const uint16_t setting_data[3] = { 0x044, 0x03D, ch_enable_data };
-                    for (uint16_t i = 0; i < 3U; i++)
+                    const uint16_t setting_data[3] = { 0x044U, 0x03DU, ch_enable_data };
+                    for (uint16_t i = 0U; i < 3U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1093,11 +1093,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         }
                     }
 
-                    for (uint16_t ch = 0; ch < 12; ++ch)
+                    for (uint16_t ch = 0U; ch < 12U; ++ch)
                     {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
+                        id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 2U, 16383U);
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1129,8 +1129,8 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     const uint16_t fb_level_data = ((option4 << 6U) | (option4 << 3U) | (option4 << 0U));
                     const uint16_t ch_enable_data = (1U << (option2 - 1U));
                     const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
-                    const uint16_t setting_data[5] = { 0x844, ch_enable_data, 0x03C, fb_level_data, (0x015U + option3) };
-                    for (uint16_t i = 0; i < 5U; i++)
+                    const uint16_t setting_data[5] = { 0x844U, ch_enable_data, 0x03CU, fb_level_data, (0x015U + option3) };
+                    for (uint16_t i = 0U; i < 5U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1158,12 +1158,12 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         return false;
                     }
 
-                    const uint32_t op_mode_data = (0x804 | (option3 << 6U));
+                    const uint32_t op_mode_data = (0x804U | (option3 << 6U));
                     const uint16_t ch_enable_data = (1U << (option2 - 1U));
                     const uint16_t fb_level_data = ((option4 << 6U) | (option4 << 3U) | (option4 << 0U));
                     const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
-                    const uint16_t setting_data[5] = { op_mode_data, ch_enable_data, 0x03C, fb_level_data, (0x015U + option3) };
-                    for (uint16_t i = 0; i < 5U; i++)
+                    const uint16_t setting_data[5] = { op_mode_data, ch_enable_data, 0x03CU, fb_level_data, (0x015U + option3) };
+                    for (uint16_t i = 0U; i < 5U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1176,11 +1176,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         }
                     }
 
-                    for (uint16_t ch = 0; ch < 12; ++ch)
+                    for (uint16_t ch = 0U; ch < 12U; ++ch)
                     {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
+                        id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 2U, 16383U);
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1211,7 +1211,7 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     const uint16_t short_level_data = ((option3 << 6U) | (option3 << 3U) | (option3 << 0U));
                     const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_SHORT_LEVEL };
                     const uint16_t setting_data[4] = { 0x844U, 0x01AU, 0x03CU, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
+                    for (uint16_t i = 0U; i < 4U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1238,7 +1238,7 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     const uint16_t short_level_data = ((option3 << 6U) | (option3 << 3U) | (option3 << 0U));
                     const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
                     const uint16_t setting_data[4] = { 0x044U, 0x03CU, ch_enable_data, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
+                    for (uint16_t i = 0U; i < 4U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1251,11 +1251,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         }
                     }
 
-                    for (uint16_t ch = 0; ch < 12; ++ch)
+                    for (uint16_t ch = 0U; ch < 12U; ++ch)
                     {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
+                        id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 2U, 16383U);
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1275,7 +1275,7 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                     const uint16_t short_level_data = ((option3 << 6U) | (option3 << 3U) | (option3 << 0U));
                     const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
                     const uint16_t setting_data[4] = { 0x044U, 0x03EU, ch_enable_data, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
+                    for (uint16_t i = 0U; i < 4U; ++i)
                     {
                         if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                         {
@@ -1288,11 +1288,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                         }
                     }
 
-                    for (uint16_t ch = 0; ch < 12; ++ch)
+                    for (uint16_t ch = 0U; ch < 12U; ++ch)
                     {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
+                        id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                        id601_set_ld_buffer(0U, ch, 2U, 16383U);
                     }
                     drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1316,10 +1316,10 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 return false;
             }
 
-            const uint32_t op_mode_data = (0x824 | (option1 << 6U));
+            const uint32_t op_mode_data = (0x824U | (option1 << 6U));
             const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL };
             const uint16_t setting_data[4] = { op_mode_data, 0xFFFU, 0x03CU, 0x16DU };
-            for (uint16_t i = 0; i < 4U; i++)
+            for (uint16_t i = 0U; i < 4U; ++i)
             {
                 if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
                 {
@@ -1332,11 +1332,11 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
                 }
             }
 
-            for (uint16_t ch = 0; ch < 12; ++ch)
+            for (uint16_t ch = 0U; ch < 12U; ++ch)
             {
-                id601_set_ld_buffer(0, ch, 0, 16383);
-                id601_set_ld_buffer(0, ch, 1, 16383);
-                id601_set_ld_buffer(0, ch, 2, 16383);
+                id601_set_ld_buffer(0U, ch, 0U, 16383U);
+                id601_set_ld_buffer(0U, ch, 1U, 16383U);
+                id601_set_ld_buffer(0U, ch, 2U, 16383U);
             }
             drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LD Buffer: All Channels Set To Max");
 
@@ -1354,7 +1354,7 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
             }
 
             const uint16_t setting_addr[2] = { ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_BIST };
-            const uint16_t setting_data[2] = { 0x000, 0x800 };
+            const uint16_t setting_data[2] = { 0x000U, 0x800U };
             for (uint16_t i = 0; i < 2U; i++)
             {
                 if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
@@ -1370,7 +1370,7 @@ bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t opti
 
             drv_tim_delay_us(50U);
 
-            uint16_t read_data = 0xFFF;
+            uint16_t read_data = 0xFFFU;
             if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_BIST, drv_id601_get_crc_func(), &read_data))
             {
                 drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to read from ID601 register.");
