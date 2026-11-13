@@ -34,6 +34,24 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef thread_step_handler_t trim_step_handler_t;
+
+typedef enum tag_TRIM_LIST_T
+{
+    TRIM_LIST_NONE     = 0U,
+    TRIM_LIST_IREF1    = 1U,
+    TRIM_LIST_IREF2    = 2U,
+    TRIM_LIST_LDO_DET  = 3U,
+    TRIM_LIST_LDO_DIG  = 4U,
+    TRIM_LIST_LDO_DAC  = 5U,
+    TRIM_LIST_LDO_FLL  = 6U,
+    TRIM_LIST_OFS_TEMP = 7U,
+    TRIM_LIST_OSC_RCTL = 8U,
+    TRIM_LIST_GAIN     = 9U,
+    TRIM_LIST_OFFSET   = 10U,
+    TRIM_LIST_MAX      = 11U,
+    TRIM_LIST_BGR1     = 11U,
+    TRIM_LIST_BGR2     = 12U,
+} trim_list_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -72,6 +90,9 @@ extern bool id601_trim_setup_gain_vref2(void);
 extern bool id601_trim_setup_offset_vref1(void);
 extern bool id601_trim_setup_offset_vref2(void);
 
+extern bool id601_trim_setup_bgr1(void);
+extern bool id601_trim_setup_bgr2(void);
+
 extern uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_iref2(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_ldo_det(uint16_t ch, uint16_t trim_code);
@@ -84,6 +105,9 @@ extern uint16_t id601_trim_apply_gain(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_offset(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_bgr1_tc(uint16_t ch, uint16_t trim_code);
 extern uint16_t id601_trim_apply_bgr2_tc(uint16_t ch, uint16_t trim_code);
+
+extern bool id601_manual_trim_setup(uint16_t trim_list, uint16_t p1p2, uint16_t channel);
+extern bool id601_manual_trim_write(uint16_t trim_list, uint16_t channel, uint16_t trim_code);
 
 extern void id601_trim_clear_parameters(thread_data_t *td);
 extern void id601_trim_start(thread_data_t *td);

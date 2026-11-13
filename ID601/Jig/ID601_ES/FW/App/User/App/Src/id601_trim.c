@@ -59,22 +59,6 @@ typedef enum tag_TRIM_STEP_T
     TRIM_STEP_MAX,
 } trim_step_t;
 
-typedef enum tag_TRIM_LIST_T
-{
-    TRIM_LIST_NONE = 0U,
-    TRIM_LIST_IREF1,
-    TRIM_LIST_IREF2,
-    TRIM_LIST_LDO_DET,
-    TRIM_LIST_LDO_DIG,
-    TRIM_LIST_LDO_DAC,
-    TRIM_LIST_LDO_FLL,
-    TRIM_LIST_OFS_TEMP,
-    TRIM_LIST_OSC_RCTL,
-    TRIM_LIST_GAIN,
-    TRIM_LIST_OFFSET,
-    TRIM_LIST_MAX,
-} trim_list_t;
-
 typedef struct
 {
     bool initialized;
@@ -722,6 +706,54 @@ bool id601_trim_setup_offset_vref2(void)
     }
     return true;
 }
+bool id601_trim_setup_bgr1(void)
+{
+    USER_ASSERT(1U == drv_id601_get_daisy_length());
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
+
+    const uint16_t _r3F_TEST_EN = 1U;
+    const uint16_t _r3F_SW_SEL = 1U;
+    const uint16_t _r3F_PWMOUT_FULL = 1U;
+    const uint16_t _r3F_MCLK64_O = 0U;
+    const uint16_t _r3F_DTEST_MUX_EN = 0U;
+    const uint16_t _r3F_RD_EN = 1U;
+    const uint16_t _r3F_EXT_CLKIN = 0U;
+    const uint16_t _r3F_ADDR_EXT = 0U;
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
+}
+bool id601_trim_setup_bgr2(void)
+{
+    USER_ASSERT(1U == drv_id601_get_daisy_length());
+    if (false == id601_write_test_ana_en(1U, ID601_TEST_ANA_VREF2_TEST))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write TEST_ANA_EN.", __func__);
+        return false;
+    }
+
+    const uint16_t _r3F_TEST_EN = 1U;
+    const uint16_t _r3F_SW_SEL = 1U;
+    const uint16_t _r3F_PWMOUT_FULL = 1U;
+    const uint16_t _r3F_MCLK64_O = 0U;
+    const uint16_t _r3F_DTEST_MUX_EN = 0U;
+    const uint16_t _r3F_RD_EN = 1U;
+    const uint16_t _r3F_EXT_CLKIN = 0U;
+    const uint16_t _r3F_ADDR_EXT = 0U;
+    if (false == id601_write_op_mode(1U, _r3F_TEST_EN, _r3F_SW_SEL, _r3F_PWMOUT_FULL, _r3F_MCLK64_O, _r3F_DTEST_MUX_EN, _r3F_RD_EN, _r3F_EXT_CLKIN, _r3F_ADDR_EXT))
+    {
+        drv_uart_printf(LOG_LV_WARN, "\r\n    [ID601] %s: Failed to Write OP_MODE.", __func__);
+        return false;
+    }
+    return true;
+}
 
 uint16_t id601_trim_apply_iref1(uint16_t ch, uint16_t trim_code)
 {
@@ -1277,6 +1309,224 @@ static bool id601_trim_compare_search_registers(void)
         {
             drv_uart_printf(LOG_LV_INFO,  "\r\n    [ID601] OTP MATCH:    addr 0x%02X reboot=0x%03X saved=0x%03X", addr, actual, expected);
         }
+    }
+    return result;
+}
+
+bool id601_manual_trim_setup(uint16_t trim_list, uint16_t p1p2, uint16_t channel)
+{
+    USER_ASSERT(1U == drv_id601_get_daisy_length());
+    bool result = true;
+
+    switch (trim_list)
+    {
+        case TRIM_LIST_IREF1:
+        {
+            result = id601_trim_setup_iref1();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] IREF1 Setup");
+            break;
+        }
+        case TRIM_LIST_IREF2:
+        {
+            result = id601_trim_setup_iref2();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] IREF2 Setup");
+            break;
+        }
+        case TRIM_LIST_LDO_DET:
+        {
+            result = id601_trim_setup_ldo_det();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DET Setup");
+            break;
+        }
+        case TRIM_LIST_LDO_DIG:
+        {
+            result = id601_trim_setup_ldo_dig();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DIG Setup");
+            break;
+        }
+        case TRIM_LIST_LDO_DAC:
+        {
+            result = id601_trim_setup_ldo_dac();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DAC Setup");
+            break;
+        }
+        case TRIM_LIST_LDO_FLL:
+        {
+            result = id601_trim_setup_ldo_fll();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_FLL Setup");
+            break;
+        }
+        case TRIM_LIST_OFS_TEMP:
+        {
+            result = id601_trim_setup_ofs_temp();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFS_TEMP Setup");
+            if (1U == p1p2)
+            {
+                result = id601_trim_setup_ofs_temp_o1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFS_TEMP V1 Setup");
+            }
+            else if (2U == p1p2)
+            {
+                result = id601_trim_setup_ofs_temp_o2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFS_TEMP V2 Setup");
+            }
+            break;
+        }
+        case TRIM_LIST_OSC_RCTL:
+        {
+            result = id601_trim_setup_osc_rctl();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OSC_RCTL Setup");
+            break;
+        }
+        case TRIM_LIST_GAIN:
+        {
+            result = id601_trim_setup_gain();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] GAIN Setup");
+            if (1U == p1p2)
+            {
+                result = id601_trim_setup_gain_vref1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] GAIN VREF1 Setup");
+            }
+            else if (2U == p1p2)
+            {
+                result = id601_trim_setup_gain_vref2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] GAIN VREF2 Setup");
+            }
+            result = id601_set_current_chx((uint16_t)(channel - 1U));
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] GAIN CHANNEL %u Setup", channel);
+            break;
+        }
+        case TRIM_LIST_OFFSET:
+        {
+            result = id601_trim_setup_offset();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFFSET Setup");
+            if (1U == p1p2)
+            {
+                result = id601_trim_setup_offset_vref1();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFFSET VREF1 Setup");
+            }
+            else if (2U == p1p2)
+            {
+                result = id601_trim_setup_offset_vref2();
+                drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFFSET VREF2 Setup");
+            }
+            result = id601_set_current_chx((uint16_t)(channel - 1U));
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFFSET CHANNEL %u Setup", channel);
+            break;
+        }
+        case TRIM_LIST_BGR1:
+        {
+            result = id601_trim_setup_bgr1();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] BGR1 Setup");
+            break;
+        }
+        case TRIM_LIST_BGR2:
+        {
+            result = id601_trim_setup_bgr2();
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] BGR2 Setup");
+            break;
+        }
+        default:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Invalid trim list: %u", (unsigned)trim_list);
+            result = false;
+            break;
+        }
+    }
+    return result;
+}
+
+bool id601_manual_trim_write(uint16_t trim_list, uint16_t channel, uint16_t trim_code)
+{
+    USER_ASSERT(1U == drv_id601_get_daisy_length());
+    bool result = true;
+    uint16_t reg = 0xFFFFU;
+
+    switch (trim_list)
+    {
+        case TRIM_LIST_IREF1:
+        {
+            reg = id601_trim_apply_iref1(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] IREF1, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_IREF2:
+        {
+            reg = id601_trim_apply_iref2(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] IREF2, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_LDO_DET:
+        {
+            reg = id601_trim_apply_ldo_det(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DET, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_LDO_DIG:
+        {
+            reg = id601_trim_apply_ldo_dig(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DIG, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_LDO_DAC:
+        {
+            reg = id601_trim_apply_ldo_dac(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_DAC, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_LDO_FLL:
+        {
+            reg = id601_trim_apply_ldo_fll(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] LDO_FLL, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_OFS_TEMP:
+        {
+            reg = id601_trim_apply_ofs_temp(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFS_TEMP, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_OSC_RCTL:
+        {
+            reg = id601_trim_apply_osc_rctl(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OSC_RCTL, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_GAIN:
+        {
+            reg = id601_trim_apply_gain((uint16_t)(channel - 1U), trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] GAIN, Ch:%u, Code:%4u, Reg:%4u", channel, trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_OFFSET:
+        {
+            reg = id601_trim_apply_offset((uint16_t)(channel - 1U), trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] OFFSET, Ch:%u, Code:%4u, Reg:%4u", channel, trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_BGR1:
+        {
+            reg = id601_trim_apply_bgr1_tc(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] BGR1, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        case TRIM_LIST_BGR2:
+        {
+            reg = id601_trim_apply_bgr2_tc(0U, trim_code);
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] BGR2, Code:%4u, Reg:%4u", trim_code, reg);
+            break;
+        }
+        default:
+        {
+            drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Invalid trim list: %u", (unsigned)trim_list);
+            result = false;
+            break;
+        }
+    }
+    if (0xFFFFU == reg)
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [ID601] Failed to write trim code: %u", trim_code);
+        result = false;
     }
     return result;
 }

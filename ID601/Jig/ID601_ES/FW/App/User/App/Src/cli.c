@@ -52,7 +52,7 @@ typedef enum tag_CLI_CMD_LIST
 
     CLI_CMD_TRIM_START,
     CLI_CMD_TRIM_RESULT,
-    CLI_CMD_TRIM_MANUAL,
+    CLI_CMD_TRIM_MANUAL_SETUP,
     CLI_CMD_TRIM_MANUAL_WRITE,
     CLI_CMD_TEST_START,
     CLI_CMD_TEST_IOUT_MONITOR,
@@ -76,42 +76,6 @@ typedef enum tag_CLI_CMD_LIST
 
     CLI_CMD_MAX
 } cli_cmd_list_t;
-
-typedef enum tag_MANUAL_TRIM_LIST
-{
-    MANUAL_TRIM_NONE = 0U,
-    MANUAL_TRIM_IREF1,
-    MANUAL_TRIM_IREF2,
-    MANUAL_TRIM_LDO_DET,
-    MANUAL_TRIM_LDO_DIG,
-    MANUAL_TRIM_LDO_DAC,
-    MANUAL_TRIM_LDO_FLL,
-    MANUAL_TRIM_OFS_TEMP,
-    MANUAL_TRIM_OSC_RCTL,
-    MANUAL_TRIM_GAIN,
-    MANUAL_TRIM_OFFSET,
-    MANUAL_TRIM_BGR1,
-    MANUAL_TRIM_BGR2,
-    MANUAL_TRIM_MAX
-} manual_trim_list_t;
-
-typedef enum tag_MANUAL_TEST_LIST
-{
-    MANUAL_TEST_NONE = 0U,
-    MANUAL_TEST_DRIVING_VOLTAGE,
-    MANUAL_TEST_UV_VDD,
-    MANUAL_TEST_UVOV_LDO,
-    MANUAL_TEST_UVOV_DAC,
-    MANUAL_TEST_UVOV_OSC,
-    MANUAL_TEST_OPEN_DETECTOR,
-    MANUAL_TEST_FB_DETECTOR,
-    MANUAL_TEST_SHORT_DETECTOR,
-    MANUAL_TEST_FAULT_FLAG,
-    MANUAL_TEST_BIST,
-    MANUAL_TEST_HVS,
-
-    MANUAL_TEST_MAX
-} manual_test_list_t;
 
 typedef struct tag_CLI_CMD_ENTRY
 {
@@ -203,7 +167,7 @@ static const cli_cmd_entry_t gt_cli_command[] =
         "Start trim"
     },
     {
-        CLI_CMD_TRIM_MANUAL,
+        CLI_CMD_TRIM_MANUAL_SETUP,
         "trim_manual",
         "trim_manual <test>"
         "\r\n    0/omitted=list"
@@ -715,67 +679,61 @@ static inline void cli_cmd_function_trim_result(void)
         drv_uart_printf(LOG_LV_INFO, "\r\n    [ID601] Mirror register: addr 0x%02X search=%u", addr, id601_get_trim_search_mirror_reg(addr));
     }
 }
-static inline void cli_cmd_help_trim_manual(void)
+static inline void cli_cmd_help_trim_manual_setup(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Trim Manual Help:");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF1", MANUAL_TRIM_IREF1);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF2", MANUAL_TRIM_IREF2);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DET", MANUAL_TRIM_LDO_DET);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DIG", MANUAL_TRIM_LDO_DIG);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DAC", MANUAL_TRIM_LDO_DAC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL", MANUAL_TRIM_LDO_FLL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <option 1:V1, 2:V2>", MANUAL_TRIM_OFS_TEMP);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL", MANUAL_TRIM_OSC_RCTL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <option 1:P1, 2:P2> <ch:1-12>", MANUAL_TRIM_GAIN);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <option 1:P3, 2:P4> <ch:1-12>", MANUAL_TRIM_OFFSET);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1", MANUAL_TRIM_BGR1);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2", MANUAL_TRIM_BGR2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF1", TRIM_LIST_IREF1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF2", TRIM_LIST_IREF2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DET", TRIM_LIST_LDO_DET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DIG", TRIM_LIST_LDO_DIG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DAC", TRIM_LIST_LDO_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL", TRIM_LIST_LDO_FLL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <option 1:V1, 2:V2>", TRIM_LIST_OFS_TEMP);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL", TRIM_LIST_OSC_RCTL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <option 1:P1, 2:P2> <ch:1-12>", TRIM_LIST_GAIN);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <option 1:P3, 2:P4> <ch:1-12>", TRIM_LIST_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1", TRIM_LIST_BGR1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2", TRIM_LIST_BGR2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    Ex) \"trim_manual 10 1 12\"");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    TM Entry and Analog Test Mode required (refer to \"id601_init\", \"id601_mode\")");
 }
-static inline void cli_cmd_function_trim_manual(void)
+static inline void cli_cmd_function_trim_manual_setup(void)
 {
-    const uint32_t test = gt_cli_request.val_1;
+    const uint32_t list = gt_cli_request.val_1;
     const uint32_t option = gt_cli_request.val_2;
     const uint32_t ch = gt_cli_request.val_3;
     bool param_valid = false;
 
-    if ((0U == test))
+    if ((0U == list))
     {
-        cli_cmd_help_trim_manual();
+        cli_cmd_help_trim_manual_setup();
         return;
     }
 
-    switch (test)
+    switch (list)
     {
-        case MANUAL_TRIM_IREF1:
-        case MANUAL_TRIM_IREF2:
-        case MANUAL_TRIM_LDO_DET:
-        case MANUAL_TRIM_LDO_DIG:
-        case MANUAL_TRIM_LDO_DAC:
-        case MANUAL_TRIM_LDO_FLL:
-        case MANUAL_TRIM_OSC_RCTL:
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
+        case TRIM_LIST_OSC_RCTL:
+        case TRIM_LIST_BGR1:
+        case TRIM_LIST_BGR2:
         {
             param_valid = (1U == gn_cli_argument_count);
             break;
         }
-        case MANUAL_TRIM_OFS_TEMP:
+        case TRIM_LIST_OFS_TEMP:
         {
             param_valid = ((2U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U));
             break;
         }
-        case MANUAL_TRIM_GAIN:
-        case MANUAL_TRIM_OFFSET:
+        case TRIM_LIST_GAIN:
+        case TRIM_LIST_OFFSET:
         {
             param_valid = ((3U == gn_cli_argument_count) && (option >= 1U) && (option <= 2U) && (ch >= 1U) && (ch <= ID601_CH_MAX));
-            break;
-        }
-        case MANUAL_TRIM_BGR1:
-        {
-            param_valid = (1U == gn_cli_argument_count);
-            break;
-        }
-        case MANUAL_TRIM_BGR2:
-        {
-            param_valid = (1U == gn_cli_argument_count);
             break;
         }
         default:
@@ -789,223 +747,57 @@ static inline void cli_cmd_function_trim_manual(void)
         cli_print_invalid_input();
         return;
     }
-
-    drv_gpio_clear_id601();
-    drv_gpio_id601_vcc(ID601_VCC_3V3);
-
-    if (false == id601_init_tm_entry_mode())
+    if (false == id601_manual_trim_setup(list, option, ch))
     {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-        return;
-    }
-
-    if (false == id601_compare_initial_code())
-    {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Initial Code Compare Failed.", __func__);
-        //return;
-    }
-
-    if (false == id601_set_analog_test_mode())
-    {
-        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-        return;
-    }
-
-    switch (test)
-    {
-        case MANUAL_TRIM_IREF1:
-        {
-            id601_trim_setup_iref1();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF1 Setup");
-            break;
-        }
-        case MANUAL_TRIM_IREF2:
-        {
-            id601_trim_setup_iref2();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF2 Setup");
-            break;
-        }
-        case MANUAL_TRIM_LDO_DET:
-        {
-            id601_trim_setup_ldo_det();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DET Setup");
-            break;
-        }
-        case MANUAL_TRIM_LDO_DIG:
-        {
-            id601_trim_setup_ldo_dig();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DIG Setup");
-            break;
-        }
-        case MANUAL_TRIM_LDO_DAC:
-        {
-            id601_trim_setup_ldo_dac();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DAC Setup");
-            break;
-        }
-        case MANUAL_TRIM_LDO_FLL:
-        {
-            id601_trim_setup_ldo_fll();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_FLL Setup");
-            break;
-        }
-        case MANUAL_TRIM_OFS_TEMP:
-        {
-            const uint32_t option = gt_cli_request.val_2;
-            id601_trim_setup_ofs_temp();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP Setup");
-            if (1U == option)
-            {
-                id601_trim_setup_ofs_temp_o1();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP V1 Setup");
-            }
-            else if (2U == option)
-            {
-                id601_trim_setup_ofs_temp_o2();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP V2 Setup");
-            }
-            else
-            {
-                cli_print_invalid_input();
-            }
-            break;
-        }
-        case MANUAL_TRIM_OSC_RCTL:
-        {
-            id601_trim_setup_osc_rctl();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OSC_RCTL Setup");
-            break;
-        }
-        case MANUAL_TRIM_GAIN:
-        {
-            const uint32_t option = gt_cli_request.val_2;
-            const uint32_t ch = gt_cli_request.val_3;
-
-            id601_trim_setup_gain();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN Setup");
-
-            if (1U == option)
-            {
-                id601_trim_setup_gain_vref1();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN VREF1 Setup");
-            }
-            else if (2U == option)
-            {
-                id601_trim_setup_gain_vref2();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN VREF2 Setup");
-            }
-            else
-            {
-                cli_print_invalid_input();
-                break;
-            }
-
-            if (ch > 0U && ch <= ID601_CH_MAX)
-            {
-                id601_set_current_chx((uint16_t)(ch - 1U));
-            }
-            else
-            {
-                cli_print_invalid_input();
-            }
-            break;
-        }
-        case MANUAL_TRIM_OFFSET:
-        {
-            const uint32_t option = gt_cli_request.val_2;
-            const uint32_t ch = gt_cli_request.val_3;
-            id601_trim_setup_offset();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET Setup");
-            if (1U == option)
-            {
-                id601_trim_setup_offset_vref1();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET VREF1 Setup");
-            }
-            else if (2U == option)
-            {
-                id601_trim_setup_offset_vref2();
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET VREF2 Setup");
-            }
-            else
-            {
-                cli_print_invalid_input();
-                break;
-            }
-
-            if (ch > 0U && ch <= ID601_CH_MAX)
-            {
-                id601_set_current_chx((uint16_t)(ch - 1U));
-            }
-            else
-            {
-                cli_print_invalid_input();
-            }
-            break;
-        }
-        case MANUAL_TRIM_BGR1:
-        {
-            id601_test_setup_bgr1();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR1 Setup");
-            break;
-        }
-        case MANUAL_TRIM_BGR2:
-        {
-            id601_test_setup_bgr2();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR2 Setup");
-            break;
-        }
-        default:
-        {
-            cli_print_invalid_input();
-            return;
-        }
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Manual trim setup failed. (%u, %u, %u)", list, option, ch);
     }
 }
 static inline void cli_cmd_help_trim_manual_write(void)
 {
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Trim Manual Write Help:");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF1    <dummy>   <val>", MANUAL_TRIM_IREF1);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF2    <dummy>   <val>", MANUAL_TRIM_IREF2);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DET  <dummy>   <val>", MANUAL_TRIM_LDO_DET);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DIG  <dummy>   <val>", MANUAL_TRIM_LDO_DIG);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DAC  <dummy>   <val>", MANUAL_TRIM_LDO_DAC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL  <dummy>   <val>", MANUAL_TRIM_LDO_FLL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <dummy>   <val>", MANUAL_TRIM_OFS_TEMP);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL <dummy>   <val>", MANUAL_TRIM_OSC_RCTL);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <ch:1-12> <val>", MANUAL_TRIM_GAIN);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <ch:1-12> <val>", MANUAL_TRIM_OFFSET);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1     <dummy>   <val>", MANUAL_TRIM_BGR1);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2     <dummy>   <val>", MANUAL_TRIM_BGR2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF1    <0>       <val>", TRIM_LIST_IREF1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: IREF2    <0>       <val>", TRIM_LIST_IREF2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DET  <0>       <val>", TRIM_LIST_LDO_DET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DIG  <0>       <val>", TRIM_LIST_LDO_DIG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_DAC  <0>       <val>", TRIM_LIST_LDO_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: LDO_FLL  <0>       <val>", TRIM_LIST_LDO_FLL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFS_TEMP <0>       <val>", TRIM_LIST_OFS_TEMP);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OSC_RCTL <0>       <val>", TRIM_LIST_OSC_RCTL);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: GAIN     <ch:1-12> <val>", TRIM_LIST_GAIN);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OFFSET   <ch:1-12> <val>", TRIM_LIST_OFFSET);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR1     <0>       <val>", TRIM_LIST_BGR1);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BGR2     <0>       <val>", TRIM_LIST_BGR2);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    Ex) \"trim_manual_write 9 7 56\"");
 }
 static inline void cli_cmd_function_trim_manual_write(void)
 {
-    const uint32_t test = gt_cli_request.val_1;
+    const uint32_t list = gt_cli_request.val_1;
     const uint32_t ch = gt_cli_request.val_2;
     const uint32_t val = gt_cli_request.val_3;
     bool param_valid = false;
 
-    if ((0U == test))
+    if ((0U == list))
     {
         cli_cmd_help_trim_manual_write();
         return;
     }
 
-    switch (test)
+    switch (list)
     {
-        case MANUAL_TRIM_IREF1:
-        case MANUAL_TRIM_IREF2:
-        case MANUAL_TRIM_LDO_DET:
-        case MANUAL_TRIM_LDO_DIG:
-        case MANUAL_TRIM_LDO_DAC:
-        case MANUAL_TRIM_LDO_FLL:
-        case MANUAL_TRIM_OSC_RCTL:
-        case MANUAL_TRIM_OFS_TEMP:
-        case MANUAL_TRIM_BGR1:
-        case MANUAL_TRIM_BGR2:
+        case TRIM_LIST_IREF1:
+        case TRIM_LIST_IREF2:
+        case TRIM_LIST_LDO_DET:
+        case TRIM_LIST_LDO_DIG:
+        case TRIM_LIST_LDO_DAC:
+        case TRIM_LIST_LDO_FLL:
+        case TRIM_LIST_OSC_RCTL:
+        case TRIM_LIST_OFS_TEMP:
+        case TRIM_LIST_BGR1:
+        case TRIM_LIST_BGR2:
             param_valid = ((3U == gn_cli_argument_count) && (ch == 0U));
             break;
-        case MANUAL_TRIM_GAIN:
-        case MANUAL_TRIM_OFFSET:
+        case TRIM_LIST_GAIN:
+        case TRIM_LIST_OFFSET:
         {
             param_valid = ((3U == gn_cli_argument_count) && (ch >= 1U) && (ch <= ID601_CH_MAX));
             break;
@@ -1021,87 +813,9 @@ static inline void cli_cmd_function_trim_manual_write(void)
         cli_print_invalid_input();
         return;
     }
-
-    uint16_t reg = 0xFFFFU;
-    switch (test)
+    if (false == id601_manual_trim_write(list, ch, val))
     {
-        case MANUAL_TRIM_IREF1:
-        {
-            reg = id601_trim_apply_iref1(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF1, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_IREF2:
-        {
-            reg = id601_trim_apply_iref2(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] IREF2, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_LDO_DET:
-        {
-            reg = id601_trim_apply_ldo_det(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DET, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_LDO_DIG:
-        {
-            reg = id601_trim_apply_ldo_dig(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DIG, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_LDO_DAC:
-        {
-            reg = id601_trim_apply_ldo_dac(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_DAC, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_LDO_FLL:
-        {
-            reg = id601_trim_apply_ldo_fll(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] LDO_FLL, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_OFS_TEMP:
-        {
-            reg = id601_trim_apply_ofs_temp(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFS_TEMP, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_OSC_RCTL:
-        {
-            reg = id601_trim_apply_osc_rctl(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OSC_RCTL, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_GAIN:
-        {
-            reg = id601_trim_apply_gain((uint16_t)(ch - 1U), (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] GAIN, Ch:%u, Data:%4u(0x%03X)", ch, reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_OFFSET:
-        {
-            reg = id601_trim_apply_offset((uint16_t)(ch - 1U), (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] OFFSET, Ch:%u, Data:%4u(0x%03X)", ch, reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_BGR1:
-        {
-            reg = id601_trim_apply_bgr1_tc(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR1, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        case MANUAL_TRIM_BGR2:
-        {
-            reg = id601_trim_apply_bgr2_tc(0U, (uint16_t)val);
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Trim Manual] BGR2, Data:%4u(0x%03X)", reg, reg);
-            break;
-        }
-        default:
-        {
-            cli_print_invalid_input();
-            return;
-        }
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Manual trim write failed. (%u, %u, %u)", list, ch, val);
     }
 }
 static inline void cli_cmd_function_test_start(void)
@@ -1126,29 +840,50 @@ static inline void cli_cmd_function_test_iout_monitor(void)
     const uint32_t channel = gt_cli_request.val_2;
     const uint32_t max_curr_lvl = gt_cli_request.val_3;
     const uint32_t vref = gt_cli_request.val_4;
+    bool param_valid = false;
 
     if (0U == option)
     {
         cli_print_command_usage(CLI_CMD_TEST_IOUT_MONITOR);
         return;
     }
-    if (option > 2U)
+    else if (1U == option)
+    {
+        param_valid = (1U == gn_cli_argument_count);
+    }
+    else
+    {
+        param_valid = ((4U == gn_cli_argument_count) && (channel >= 1U) && (channel <= ID601_CH_MAX) && (max_curr_lvl <= 0x0FU) && (vref <= 4095U));
+    }
+
+    if (false == param_valid)
     {
         cli_print_invalid_input();
         return;
     }
-    if ((gn_cli_argument_count != 4U) || (channel < 1U) || (channel > ID601_CH_MAX) ||
-        (max_curr_lvl > 0x0FU) || (vref > 4095U))
-    {
-        cli_print_invalid_input();
-        return;
-    }
+
     if (1U == option)
     {
         id601_test_iout_monitor_stop();
     }
     else
     {
+        drv_gpio_clear_id601();
+        drv_gpio_id601_vcc(ID601_VCC_3V3);
+
+        if (false == id601_init_tm_entry_mode())
+        {
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
+            id601_test_iout_monitor_stop();
+            return;
+        }
+
+        if (false == id601_set_analog_test_mode())
+        {
+            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
+            id601_test_iout_monitor_stop();
+            return;
+        }
         id601_test_iout_monitor_start((uint16_t)(channel - 1U), (uint16_t)max_curr_lvl, (uint16_t)vref);
     }
 }
@@ -1157,780 +892,96 @@ static inline void cli_cmd_help_test_manual(void)
     drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Test Manual Help:");
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: Driving Voltage <ch:1-12>", MANUAL_TEST_DRIVING_VOLTAGE);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV VDD", MANUAL_TEST_UV_VDD);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV LDO      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV DAC      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV OSC      <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OPEN DETECTOR  <option> <ch>", MANUAL_TEST_OPEN_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FB DETECTOR    <option> <ch> <fbx> <fb_lvl>", MANUAL_TEST_FB_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:LEVEL, 2:HYS");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        fbx: 1-3");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        fb_lvl: 0-7");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: SHORT DETECTOR <option> <ch> <sh_lvl>", MANUAL_TEST_SHORT_DETECTOR);
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        ch: 1-12");
-    drv_uart_printf(LOG_LV_INFO, "\r\n                        sh_lvl: 0-7");
-    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FAULT FLAG     <fbx:1-3> ", MANUAL_TEST_FAULT_FLAG);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV LDO       <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_LDO);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV DAC       <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_DAC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: UV/OV OSC       <option 1:INIT, 2:UV, 3:OV>", MANUAL_TEST_UVOV_OSC);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: OPEN DETECTOR   <option> <ch>", MANUAL_TEST_OPEN_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FB DETECTOR     <option> <ch> <fbx> <fb_lvl>", MANUAL_TEST_FB_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         option: 1:LEVEL, 2:HYS");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         fbx: 1-3");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         fb_lvl: 0-7");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: SHORT DETECTOR  <option> <ch> <sh_lvl>", MANUAL_TEST_SHORT_DETECTOR);
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         option: 1:VREF, 2:LEVEL, 3:HYS, 4:Function");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         ch: 1-12");
+    drv_uart_printf(LOG_LV_INFO, "\r\n                         sh_lvl: 0-7");
+    drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: FAULT FLAG      <fbx:1-3> ", MANUAL_TEST_FAULT_FLAG);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: BIST", MANUAL_TEST_BIST);
     drv_uart_printf(LOG_LV_INFO, "\r\n    %2u: HVS", MANUAL_TEST_HVS);
+    drv_uart_printf(LOG_LV_INFO, "\r\n    Ex) \"test_manual 7 1 1 1 0\"");
 }
 static inline void cli_cmd_function_test_manual(void)
 {
-    const uint32_t test = gt_cli_request.val_1;
+    const uint32_t list = gt_cli_request.val_1;
+    const uint32_t option1 = gt_cli_request.val_2;
+    const uint32_t option2 = gt_cli_request.val_3;
+    const uint32_t option3 = gt_cli_request.val_4;
+    const uint32_t option4 = gt_cli_request.val_5;
+    bool param_valid = false;
 
-    if ((0U == test))
+    if ((0U == list))
     {
         cli_cmd_help_test_manual();
         return;
     }
 
-    switch (test)
+    switch (list)
     {
         case MANUAL_TEST_DRIVING_VOLTAGE:
         {
-            const uint32_t ch = gt_cli_request.val_2;
-            if (ch < 1U || ch > ID601_CH_MAX)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            id601_test_iout_monitor_start((uint16_t)(ch - 1U), 1U, 4095U);
+            param_valid = ((2U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= ID601_CH_MAX));
             break;
         }
         case MANUAL_TEST_UV_VDD:
         {
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00A, 0x00A);
-            }
+            param_valid = (1U == gn_cli_argument_count);
             break;
         }
         case MANUAL_TEST_UVOV_LDO:
         {
-            const uint32_t option = gt_cli_request.val_2;
-            if (option < 1U || option > 3U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00D, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00D, 0x00D);
-            }
-            switch (option)
-            {
-                case 1U:
-                    break;
-                case 2U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00A, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x00A, 0x00A);
-                    }
-                    break;
-                case 3U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x009, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x009, 0x009);
-                    }
-                    break;
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
+            param_valid = ((2U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 3U));
             break;
         }
         case MANUAL_TEST_UVOV_DAC:
         {
-            const uint32_t option = gt_cli_request.val_2;
-            if (option < 1U || option > 3U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00E, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00E, 0x00E);
-            }
-            switch (option)
-            {
-                case 1U:
-                    break;
-                case 2U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00E, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x00E, 0x00E);
-                    }
-                    break;
-                case 3U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00D, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x00D, 0x00D);
-                    }
-                    break;
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
+            param_valid = ((2U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 3U));
             break;
         }
         case MANUAL_TEST_UVOV_OSC:
         {
-            const uint32_t option = gt_cli_request.val_2;
-            if (option < 1U || option > 3U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00F, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_ANA_EN, 0x00F, 0x00F);
-            }
-            switch (option)
-            {
-                case 1U:
-                    break;
-                case 2U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x00B, 0x00B);
-                    }
-                    break;
-                case 3U:
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_OP_MODE, 0x86C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_OP_MODE, 0x86C, 0x86C);
-                    }
-
-                    if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, drv_id601_get_crc_func()))
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                    }
-                    else
-                    {
-                        drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_TEST_MODE0, 0x00C, 0x00C);
-                    }
-                    break;
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
+            param_valid = ((2U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 3U));
             break;
         }
         case MANUAL_TEST_OPEN_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2; // VREF, LEVEL, HYS, FUNCTION
-            const uint32_t ch = gt_cli_request.val_3;
-            if (option < 1U || option > 4U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (option > 1U)
-            {
-                if (ch < 1U || ch > ID601_CH_MAX)
-                {
-                    cli_print_invalid_input();
-                    return;
-                }
-            }
-            drv_tim_vsync_stop();
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            switch (option)
-            {
-                case 1U:
-                {
-                    if (false == id601_set_analog_test_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                        return;
-                    }
-
-                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL };
-                    const uint16_t setting_data[3] = { 0x844, 0x019, 0x03C };
-                    for (uint16_t i = 0; i < 3U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-                    break;
-                }
-                case 2U:
-                case 3U:
-                {
-                    if (false == id601_set_dimming_type1_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
-                        return;
-                    }
-
-                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
-                    const uint16_t setting_data[3] = { 0x044, 0x03C, (1U << (ch - 1U)) };
-                    for (uint16_t i = 0; i < 3U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-
-                    for (uint16_t ch = 0; ch < 12; ++ch)
-                    {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
-                    }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-                    drv_tim_vsync_start();
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-                    break;
-                }
-                case 4U:
-                {
-                    if (false == id601_set_dimming_type1_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
-                        return;
-                    }
-                    const uint16_t ch_enable_data = (1U << (ch - 1U));
-                    const uint16_t setting_addr[3] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE };
-                    const uint16_t setting_data[3] = { 0x044, 0x03D, ch_enable_data };
-                    for (uint16_t i = 0; i < 3U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-
-                    for (uint16_t ch = 0; ch < 12; ++ch)
-                    {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
-                    }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-                    drv_tim_vsync_start();
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-                    break;
-                }
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
+            param_valid = ((3U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 4U) && (option2 >= 1U) && (option2 <= ID601_CH_MAX));
             break;
         }
         case MANUAL_TEST_FB_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2; // LEVEL, HYS
-            const uint32_t ch = gt_cli_request.val_3; // 1-12
-            const uint32_t fbx = gt_cli_request.val_4; // 1-3
-            const uint32_t fb_lvl = gt_cli_request.val_5; // 0-7
-            if (option < 1U || option > 2U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (ch < 1U || ch > ID601_CH_MAX)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (fbx < 1U || fbx > 3)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (fb_lvl > 7U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            drv_tim_vsync_stop();
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-            switch (option)
-            {
-                case 1U:
-                {
-                    const uint16_t fb_level_data = ((fb_lvl << 6U) | (fb_lvl << 3U) | (fb_lvl << 0U));
-                    const uint16_t ch_enable_data = (1U << (ch - 1U));
-                    const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
-                    const uint16_t setting_data[5] = { 0x844, ch_enable_data, 0x03C, fb_level_data, (0x015U + fbx) };
-                    for (uint16_t i = 0; i < 5U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-                    break;
-                }
-                case 2U:
-                {
-                    if (false == id601_set_dimming_type1_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Set Dimming Type1 Mode Failed", __func__);
-                        return;
-                    }
-                    const uint32_t op_mode_data = (0x804 | (fbx << 6U));
-                    const uint16_t ch_enable_data = (1U << (ch - 1U));
-                    const uint16_t fb_level_data = ((fb_lvl << 6U) | (fb_lvl << 3U) | (fb_lvl << 0U));
-                    const uint16_t setting_addr[5] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL, ID601_ADDR_GENERAL_TEST_ANA_EN };
-                    const uint16_t setting_data[5] = { op_mode_data, ch_enable_data, 0x03C, fb_level_data, (0x015U + fbx) };
-                    for (uint16_t i = 0; i < 5U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-
-                    for (uint16_t ch = 0; ch < 12; ++ch)
-                    {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
-                    }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-                    drv_tim_vsync_start();
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-                    break;
-                }
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
+            param_valid = ((5U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 2U) && (option2 >= 1U) && (option2 <= ID601_CH_MAX) && (option3 >= 1U) && (option3 <= 3U) && (option4 <= 7U));
             break;
         }
         case MANUAL_TEST_SHORT_DETECTOR:
         {
-            const uint32_t option = gt_cli_request.val_2; // VREF, LEVEL, HYS, FUNCTION
-            const uint32_t ch = gt_cli_request.val_3; // 1-12
-            const uint32_t short_lvl = gt_cli_request.val_4; // 0-7
-            if (option < 1U || option > 4U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (option > 1U)
-            {
-                if (ch < 1U || ch > ID601_CH_MAX)
-                {
-                    cli_print_invalid_input();
-                    return;
-                }
-                if (short_lvl > 7U)
-                {
-                    cli_print_invalid_input();
-                    return;
-                }
-            }
-            drv_tim_vsync_stop();
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            switch (option)
-            {
-                case 1U:
-                {
-                    if (false == id601_set_analog_test_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                        return;
-                    }
-
-                    const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_TEST_ANA_EN, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_SHORT_LEVEL };
-                    const uint16_t setting_data[4] = { 0x844U, 0x01AU, 0x03CU, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-                    break;
-                }
-                case 2U:
-                case 3U:
-                {
-                    if (false == id601_set_dimming_type1_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
-                        return;
-                    }
-
-                    const uint16_t ch_enable_data = (1U << (ch - 1U));
-                    const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
-                    const uint16_t setting_data[4] = { 0x044U, 0x03CU, ch_enable_data, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-
-                    for (uint16_t ch = 0; ch < 12; ++ch)
-                    {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
-                    }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-                    drv_tim_vsync_start();
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-                    break;
-                }
-                case 4U:
-                {
-                    if (false == id601_set_dimming_type1_mode())
-                    {
-                        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
-                        return;
-                    }
-
-                    const uint16_t ch_enable_data = (1U << (ch - 1U));
-                    const uint16_t short_level_data = ((short_lvl << 6U) | (short_lvl << 3U) | (short_lvl << 0U));
-                    const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_SHORT_LEVEL };
-                    const uint16_t setting_data[4] = { 0x044U, 0x03EU, ch_enable_data, short_level_data };
-                    for (uint16_t i = 0; i < 4U; i++)
-                    {
-                        if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                        {
-                            drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                        }
-                        else
-                        {
-                            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                        }
-                    }
-
-                    for (uint16_t ch = 0; ch < 12; ++ch)
-                    {
-                        id601_set_ld_buffer(0, ch, 0, 16383);
-                        id601_set_ld_buffer(0, ch, 1, 16383);
-                        id601_set_ld_buffer(0, ch, 2, 16383);
-                    }
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-                    drv_tim_vsync_start();
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-                    break;
-                }
-                default:
-                    cli_print_invalid_input();
-                    return;
-            }
-            break;
+            param_valid = ((4U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 4U) && (option2 >= 1U) && (option2 <= ID601_CH_MAX) && (option3 <= 7U));
             break;
         }
         case MANUAL_TEST_FAULT_FLAG:
         {
-            const uint32_t option = gt_cli_request.val_2; // INIT, OPEN, FB, SHORT
-            const uint32_t fbx = gt_cli_request.val_3;
-            if (option < 1U || option > 4U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            if (fbx < 1U || fbx > 3U)
-            {
-                cli_print_invalid_input();
-                return;
-            }
-            drv_tim_vsync_stop();
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_dimming_type1_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Dimming Type1 Mode Failed", __func__);
-                return;
-            }
-
-            const uint32_t op_mode_data = (0x824 | (fbx << 6U));
-            const uint16_t setting_addr[4] = { ID601_ADDR_GENERAL_OP_MODE, ID601_ADDR_GENERAL_CHANNEL_ENABLE, ID601_ADDR_GENERAL_FAULT_CONTROL, ID601_ADDR_GENERAL_FB_LEVEL };
-            const uint16_t setting_data[4] = { op_mode_data, 0xFFFU, 0x03CU, 0x16DU };
-            for (uint16_t i = 0; i < 4U; i++)
-            {
-                if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, setting_addr[i], setting_data[i], drv_id601_get_crc_func()))
-                {
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                }
-                else
-                {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", setting_addr[i], setting_data[i], setting_data[i]);
-                }
-            }
-
-            for (uint16_t ch = 0; ch < 12; ++ch)
-            {
-                id601_set_ld_buffer(0, ch, 0, 16383);
-                id601_set_ld_buffer(0, ch, 1, 16383);
-                id601_set_ld_buffer(0, ch, 2, 16383);
-            }
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] LD Buffer: All Channels Set To Max");
-
-            drv_tim_vsync_start();
-            drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] Vsync started");
-
+            param_valid = ((2U == gn_cli_argument_count) && (option1 >= 1U) && (option1 <= 3U));
             break;
         }
         case MANUAL_TEST_BIST:
         {
-            drv_gpio_clear_id601();
-            drv_gpio_id601_vcc(ID601_VCC_3V3);
-            if (false == id601_init_tm_entry_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 TM Entry Mode Failed", __func__);
-                return;
-            }
-            if (false == id601_set_analog_test_mode())
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] %s: ID601 Analog Test Mode Failed", __func__);
-                return;
-            }
-
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_FAULT_CONTROL, 0x000, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                return;
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_FAULT_CONTROL, 0x000, 0x000);
-            }
-
-            if (false == id601_write_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_BIST, 0x800, drv_id601_get_crc_func()))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to write to ID601 register.");
-                return;
-            }
-            else
-            {
-                drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [Write] [General]: Addr:0x%02X, Data:%4u(0x%03X)", ID601_ADDR_GENERAL_BIST, 0x800, 0x800);
-            }
-
-            drv_tim_delay_us(50U);
-
-            uint16_t read_data = 0xFFF;
-            if (false == id601_read_register(ID601_REGISTER_BANK_GENERAL, 1U, ID601_ADDR_GENERAL_BIST, drv_id601_get_crc_func(), &read_data))
-            {
-                drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Failed to read from ID601 register.");
-            }
-            else
-            {
-                if (0x02U == read_data)
-                {
-                    drv_uart_printf(LOG_LV_INFO, "\r\n    [CLI] [BIST] Addr:0x%02X, Data:%4u(0x%03X) (PASS)", ID601_ADDR_GENERAL_BIST, read_data, read_data);
-                }
-                else
-                {
-                    drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] [BIST] Addr:0x%02X, Data:%4u(0x%03X) (FAIL)", ID601_ADDR_GENERAL_BIST, read_data, read_data);
-                }
-            }
+            param_valid = (1U == gn_cli_argument_count);
             break;
         }
         case MANUAL_TEST_HVS:
         {
-            drv_id601_set_hvs_flag(true);
-            test_set_vref_sweep_enable(false);
-            osThreadFlagsSet(ID601TestTaskHandle, TEST_START_FLAG);
+            param_valid = (1U == gn_cli_argument_count);
             break;
         }
         default:
@@ -1938,6 +989,16 @@ static inline void cli_cmd_function_test_manual(void)
             cli_print_invalid_input();
             return;
         }
+    }
+
+    if (false == param_valid)
+    {
+        cli_print_invalid_input();
+        return;
+    }
+    if (false == id601_manual_test_setup(list, option1, option2, option3, option4))
+    {
+        drv_uart_printf(LOG_LV_ERROR, "\r\n    [CLI] Manual test setup failed. (%u, %u, %u, %u, %u)", list, option1, option2, option3, option4);
     }
 }
 static inline void cli_cmd_function_id601_power(void)
@@ -2454,9 +1515,9 @@ static void cli_command_execute(void)
             cli_cmd_function_trim_result();
             break;
         }
-        case CLI_CMD_TRIM_MANUAL:
+        case CLI_CMD_TRIM_MANUAL_SETUP:
         {
-            cli_cmd_function_trim_manual();
+            cli_cmd_function_trim_manual_setup();
             break;
         }
         case CLI_CMD_TRIM_MANUAL_WRITE:

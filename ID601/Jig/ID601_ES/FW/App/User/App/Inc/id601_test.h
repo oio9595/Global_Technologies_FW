@@ -34,6 +34,23 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef thread_step_handler_t test_step_handler_t;
+
+typedef enum tag_MANUAL_TEST_LIST
+{
+    MANUAL_TEST_NONE = 0U,
+    MANUAL_TEST_DRIVING_VOLTAGE,
+    MANUAL_TEST_UV_VDD,
+    MANUAL_TEST_UVOV_LDO,
+    MANUAL_TEST_UVOV_DAC,
+    MANUAL_TEST_UVOV_OSC,
+    MANUAL_TEST_OPEN_DETECTOR,
+    MANUAL_TEST_FB_DETECTOR,
+    MANUAL_TEST_SHORT_DETECTOR,
+    MANUAL_TEST_FAULT_FLAG,
+    MANUAL_TEST_BIST,
+    MANUAL_TEST_HVS,
+    MANUAL_TEST_MAX
+} manual_test_list_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -74,6 +91,8 @@ extern bool id601_test_setup_iout_vref_sweep(void);
 extern bool id601_test_setup_iout_3p_x(uint8_t ph);
 extern bool id601_test_setup_iout_sweep_x(uint8_t ph);
 extern bool id601_test_setup_iout_vref_sweep_x(uint16_t vref);
+
+extern bool id601_manual_test_setup(uint16_t test_list, uint16_t option1, uint16_t option2, uint16_t option3, uint16_t option4);
 
 extern void test_set_vref_sweep_enable(bool enable);
 extern void id601_test_clear_parameters(thread_data_t *td);
