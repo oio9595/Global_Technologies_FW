@@ -99,7 +99,7 @@ typedef struct tag_CLI_REQUEST
 /* USER CODE BEGIN PD */
 #define CLI_CLEAR_SCREEN    "\033[2J\033[H"
 
-#define CLI_MAX_TOKENS      (6)
+#define CLI_MAX_TOKENS      (6) // cmd + 5 args
 
 #define STR_MATCH           (0)
 #define STR_MISMATCH        (1)
@@ -278,9 +278,9 @@ static const cli_cmd_entry_t gt_cli_command[] =
         CLI_CMD_LD_BUFF,
         "ld_buff",
         "ld_buff <ic> <ch> <led> <value>"
-        "\r\n    IC: 1 ~ daisy length"
-        "\r\n    Ch: 1 ~ channel size"
-        "\r\n    Led: 1 ~ led per channel"
+        "\r\n    IC: 0 ~ daisy length, 0=all ICs"
+        "\r\n    Ch: 0 ~ channel size, 0=all channels"
+        "\r\n    Led: 0 ~ led per channel, 0=all LEDs"
         "\r\n    Value: 0x000-0xFFFF (decimal or 0x hex, depending on pwm_res)"
     },
     {
@@ -1366,7 +1366,11 @@ static inline void cli_cmd_function_ld_buff(void)
     const uint16_t led_per_ch = drv_id601_get_led_per_ch();
     const uint16_t ld_size_max = id601_get_ld_size_max();
 
-    if ((0U == daisy) || (0U == ch) || (0U == led))
+    bool all_daisy = (0U == daisy);
+    bool all_ch = (0U == ch);
+    bool all_led = (0U == led);
+
+    if (0U == gn_cli_argument_count)
     {
         cli_print_command_usage(CLI_CMD_LD_BUFF);
         return;
@@ -1376,7 +1380,78 @@ static inline void cli_cmd_function_ld_buff(void)
         cli_print_invalid_input();
         return;
     }
-    id601_set_ld_buffer(daisy - 1U, ch - 1U, led - 1U, (uint16_t)value);
+
+    if (false == all_daisy)
+    {
+        if (false == all_ch)
+        {
+            if (false == all_led)
+            {
+                id601_set_ld_buffer(daisy - 1U, ch - 1U, led - 1U, (uint16_t)value);
+            }
+            else
+            {
+                for (uint16_t l = 0U; l < led_per_ch; ++l)
+                {
+                    id601_set_ld_buffer(daisy - 1U, ch - 1U, l, (uint16_t)value);
+                }
+            }
+        }
+        else
+        {
+            for (uint16_t c = 0U; c < ch_size; ++c)
+            {
+                if (false == all_led)
+                {
+                    id601_set_ld_buffer(daisy - 1U, c, led - 1U, (uint16_t)value);
+                }
+                else
+                {
+                    for (uint16_t l = 0U; l < led_per_ch; ++l)
+                    {
+                        id601_set_ld_buffer(daisy - 1U, c, l, (uint16_t)value);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        for (uint16_t d = 0U; d < daisy_length; ++d)
+        {
+            if (false == all_ch)
+            {
+                if (false == all_led)
+                {
+                    id601_set_ld_buffer(d, ch - 1U, led - 1U, (uint16_t)value);
+                }
+                else
+                {
+                    for (uint16_t l = 0U; l < led_per_ch; ++l)
+                    {
+                        id601_set_ld_buffer(d, ch - 1U, l, (uint16_t)value);
+                    }
+                }
+            }
+            else
+            {
+                for (uint16_t c = 0U; c < ch_size; ++c)
+                {
+                    if (false == all_led)
+                    {
+                        id601_set_ld_buffer(d, c, led - 1U, (uint16_t)value);
+                    }
+                    else
+                    {
+                        for (uint16_t l = 0U; l < led_per_ch; ++l)
+                        {
+                            id601_set_ld_buffer(d, c, l, (uint16_t)value);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 static inline void cli_cmd_function_ld_config_fault_read_enable(void)
 {
