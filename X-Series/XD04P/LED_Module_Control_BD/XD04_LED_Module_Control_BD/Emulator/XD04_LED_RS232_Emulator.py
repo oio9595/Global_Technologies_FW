@@ -166,7 +166,7 @@ class MacroApp(QWidget):
         data_ver_layout = QVBoxLayout()
         data_ver_layout.addWidget(QLabel("DATA [Decimal]"))
         self.data_spin = QSpinBox()
-        self.data_spin.setRange(0, 128)
+        self.data_spin.setRange(0, 255)
         self.data_spin.setValue(0)
         data_ver_layout.addWidget(self.data_spin)
 
