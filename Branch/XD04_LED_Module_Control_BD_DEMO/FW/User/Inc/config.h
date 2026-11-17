@@ -23,17 +23,19 @@ extern "C" {
 
 #define XD_DAISY_SIZE               (2U)
 #define XD_CH_SIZE                  (4U)
-#define XC_CH_ENABLE_SIZE           (4U)
-#define TOTAL_BLOCK_SIZE            (XD_CH_SIZE * XD_DAISY_SIZE * XC_CH_ENABLE_SIZE)
+#define XC_CH_ENABLE_SIZE           (10U)
 
-#define BLK_ROW_SIZE                (4U)
-#define BLK_COL_SIZE                (8U)
+#define BLK_ROW_SIZE                (3U)
+#define BLK_COL_SIZE                (10U)
 
-#define XC_SERIAL_CLK_CNT_LOW       (8U)
-#define XC_SERIAL_CLK_CNT_HIGH      (17U)
+#define TOTAL_BLOCK_SIZE            (BLK_ROW_SIZE * BLK_COL_SIZE)
+#define SPI_LD_BUFF_SIZE            (1U + XD_CH_SIZE * XD_DAISY_SIZE * XC_CH_ENABLE_SIZE)
 
-#define XD_SERIAL_CLK_CNT_LOW       (13U)
-#define XD_SERIAL_CLK_CNT_HIGH      (26U)
+#define XC_SERIAL_CLK_CNT_LOW       (10U)
+#define XC_SERIAL_CLK_CNT_HIGH      (21U)
+
+#define XD_SERIAL_CLK_CNT_LOW       (16U)
+#define XD_SERIAL_CLK_CNT_HIGH      (32U)
 
 #define SERIAL_CMD_SIZE             (4U)
 #define SERIAL_ID_SIZE              (5U)
@@ -100,10 +102,10 @@ typedef struct tag_XDIC_REG_INFO_T
 
 typedef enum tag_PATTERN
 {
-    PATTERN_01 = 0U,
+    PATTERN_NONE = 0U,
+    PATTERN_01,
     PATTERN_02,
     PATTERN_03,
-    PATTERN_NONE,
     PATTERN_MAX,
 } pattern_t;
 

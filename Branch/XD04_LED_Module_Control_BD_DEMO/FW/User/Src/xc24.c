@@ -23,7 +23,7 @@
 static SPI_TypeDef *g_hSPIx;
 volatile uint8_t gn_xc_spi_timeout;
 
-static uint16_t gn_spi_ld_buffer[1 + TOTAL_BLOCK_SIZE] = { 0 };
+static uint16_t gn_spi_ld_buffer[SPI_LD_BUFF_SIZE] = { 0 };
 
 static bool gb_xc24_init_done = false;
 
@@ -469,7 +469,16 @@ void XC24_Init(void)
                 break;
             case XC24_ADDR_DAISY_SIZE2 :
                 gt_xc24_general_regs._r31.daisy_size_ch4 = XD_DAISY_SIZE;
+                gt_xc24_general_regs._r31.daisy_size_ch5 = XD_DAISY_SIZE;
+                gt_xc24_general_regs._r31.daisy_size_ch6 = XD_DAISY_SIZE;
                 break;
+            case XC24_ADDR_DAISY_SIZE3 :
+                gt_xc24_general_regs._r32.daisy_size_ch7 = XD_DAISY_SIZE;
+                gt_xc24_general_regs._r32.daisy_size_ch8 = XD_DAISY_SIZE;
+                gt_xc24_general_regs._r32.daisy_size_ch9 = XD_DAISY_SIZE;
+                break;
+            case XC24_ADDR_DAISY_SIZE4 :
+                gt_xc24_general_regs._r33.daisy_size_ch10 = XD_DAISY_SIZE;
                 break;
             case XC24_ADDR_BLOCK_SIZE1 :
                 gt_xc24_general_regs._r38.block_size_ch1 = block_size;
@@ -479,14 +488,32 @@ void XC24_Init(void)
                 gt_xc24_general_regs._r39.block_size_ch3 = block_size;
                 gt_xc24_general_regs._r39.block_size_ch4 = block_size;
                 break;
+            case XC24_ADDR_BLOCK_SIZE3 :
+                gt_xc24_general_regs._r3A.block_size_ch5 = block_size;
+                gt_xc24_general_regs._r3A.block_size_ch6 = block_size;
+                break;
+            case XC24_ADDR_BLOCK_SIZE4 :
+                gt_xc24_general_regs._r3B.block_size_ch7 = block_size;
+                gt_xc24_general_regs._r3B.block_size_ch8 = block_size;
+                break;
+            case XC24_ADDR_BLOCK_SIZE5 :
+                gt_xc24_general_regs._r3C.block_size_ch9 = block_size;
+                gt_xc24_general_regs._r3C.block_size_ch10 = block_size;
+                break;
             case XC24_ADDR_CHANNEL_ENABLE1 :
                 gt_xc24_general_regs._r45.ch1_en = 1U;
                 gt_xc24_general_regs._r45.ch2_en = 1U;
                 gt_xc24_general_regs._r45.ch3_en = 1U;
                 gt_xc24_general_regs._r45.ch4_en = 1U;
+                gt_xc24_general_regs._r45.ch5_en = 1U;
+                gt_xc24_general_regs._r45.ch6_en = 1U;
+                gt_xc24_general_regs._r45.ch7_en = 1U;
+                gt_xc24_general_regs._r45.ch8_en = 1U;
+                gt_xc24_general_regs._r45.ch9_en = 1U;
+                gt_xc24_general_regs._r45.ch10_en = 1U;
                 break;
             case XC24_ADDR_CHANNEL_ENABLE2 :
-                gt_xc24_general_regs._r46.ld_size = 4U;
+                gt_xc24_general_regs._r46.ld_size = 10U;
                 gt_xc24_general_regs._r46.ld_width = 3U;
                 break;
             default :
@@ -500,7 +527,7 @@ void XC24_Init(void)
     XC24_Write_Register(XC24_MIRROR_ADDR_OTP_RD_PROG, 2U);
 
     print(LOG_PC, "\r\n ...XC24 Initial Done...\r\n\n\rJIG> \0");
-    //XC24_Read_Register_All();
+    // XC24_Read_Register_All();
 }
 
 void XC24_DeInit(void)
@@ -580,12 +607,16 @@ void XC24_IF_Write_XDIC(uint8_t in_XDIC_addr, uint16_t in_XDIC_data)
 
 uint8_t find_idx(uint8_t x)
 {
-    return (uint8_t)(
-        (((x >> 2) ^ 1U) & 1U) * 16U
-        + (((x >> 1) ^ x) & 1U) * 8U
-        + (((x >> 2) ^ (x >> 1)) & 1U) * 4U
-        + ((x >> 3) & 3U)
-    );
+    static const uint32_t offset[5] = {0U, 20U, 70U, 60U, 40U};
+    const uint32_t group = x / 10U;
+    const uint32_t pos = x % 10U;
+
+    if (pos < 5U)
+    {
+        return group + offset[pos];
+    }
+
+    return group + offset[9U - pos] + 3U;
 }
 
 void XC24_IF_Write_LD(uint16_t* p_ld_buff)
@@ -604,7 +635,7 @@ void XC24_IF_Write_LD(uint16_t* p_ld_buff)
         gn_spi_ld_buffer[1 + ld_idx] = p_ld_buff[map_idx];
     }
 
-    SPI_Write(g_hSPIx, gn_spi_ld_buffer, 1U + TOTAL_BLOCK_SIZE);
+    SPI_Write(g_hSPIx, gn_spi_ld_buffer, SPI_LD_BUFF_SIZE);
     us_delay(XDIC_LD_TRANS_DELAY);
 }
 

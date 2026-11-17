@@ -193,7 +193,7 @@ void XDIC_Param_Init(void)
     gf_xd_mclk = XD_MCLK;
     gf_vsync_out = VSYNC;
 
-    gn_xd_pwm_res = XD_PWM_RES_12BIT;
+    gn_xd_pwm_res = XD_PWM_RES_14BIT;
     gn_xd_scan_no = 0U;
 
     if (gn_xd_pwm_res == XD_PWM_RES_12BIT)

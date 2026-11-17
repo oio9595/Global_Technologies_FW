@@ -13,12 +13,17 @@
 #include "xc24.h"
 #include "config.h"
 
-#define XDIC_LD_MAX                 (4095U)
+#define XDIC_LD_MAX                 (16383U)
 
 #define XDIC_PWM_DUTY_MAX           (100.0f)
 #define XDIC_CURRENT_MAX            (128.0f)
 #define XDIC_CURRENT_DEFAULT        (64.0f)
-#define PATTERN_CHANGE_FRAME_CNT    (120U)
+
+#define PATT_CHANGE_5S_FRAME_CNT    (5 * 120U)
+#define PATT_CHANGE_1S_FRAME_CNT    (120U)
+
+#define BLK_ON_LD_VALUE             (0x3FFFU)
+#define BLK_OFF_LD_VALUE            (0x0054U)
 
 static bool gb_led_vsync_flag;
 
@@ -121,26 +126,39 @@ void LED_Generate_Pattern(uint8_t in_pattern)
         case PATTERN_01:
         {
             static uint8_t off_col = 0U;
+            static bool direction = false;
             for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
             {
                 const uint8_t row = i / BLK_COL_SIZE;
                 const uint8_t col = i % BLK_COL_SIZE;
                 if (off_col == col)
                 {
-                    gn_led_ld_buffer[i] = 0x000U;
+                    gn_led_ld_buffer[i] = BLK_OFF_LD_VALUE;
                 }
                 else
                 {
-                    gn_led_ld_buffer[i] = 0xFFFU;
+                    gn_led_ld_buffer[i] = BLK_ON_LD_VALUE;
                 }
             }
 
-            if (gn_vsync_tick % PATTERN_CHANGE_FRAME_CNT == 0U)
+            if (gn_vsync_tick % PATT_CHANGE_1S_FRAME_CNT == 0U)
             {
-                ++off_col;
-                if (off_col >= BLK_COL_SIZE)
+                if (false == direction)
                 {
-                    off_col = 0U;
+                    ++off_col;
+                    if (off_col >= BLK_COL_SIZE)
+                    {
+                        off_col = BLK_COL_SIZE - 1U;
+                        direction = true;
+                    }
+                }
+                else
+                {
+                    --off_col;
+                    if (off_col == 0U)
+                    {
+                        direction = false;
+                    }
                 }
                 gn_vsync_tick = 0U;
             }
@@ -149,26 +167,38 @@ void LED_Generate_Pattern(uint8_t in_pattern)
         case PATTERN_02:
         {
             static uint8_t off_row = 0U;
+            static bool direction = false;
             for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
             {
                 const uint8_t row = i / BLK_COL_SIZE;
                 const uint8_t col = i % BLK_COL_SIZE;
                 if (off_row == row)
                 {
-                    gn_led_ld_buffer[i] = 0x000U;
+                    gn_led_ld_buffer[i] = BLK_OFF_LD_VALUE;
                 }
                 else
                 {
-                    gn_led_ld_buffer[i] = 0xFFFU;
+                    gn_led_ld_buffer[i] = BLK_ON_LD_VALUE;
                 }
             }
 
-            if (gn_vsync_tick % PATTERN_CHANGE_FRAME_CNT == 0U)
+            if (gn_vsync_tick % PATT_CHANGE_1S_FRAME_CNT == 0U)
             {
-                ++off_row;
-                if (off_row >= BLK_ROW_SIZE)
+                if (false == direction)
                 {
-                    off_row = 0U;
+                    ++off_row;
+                    if (off_row == BLK_ROW_SIZE - 1U)
+                    {
+                        direction = true;
+                    }
+                }
+                else
+                {
+                    --off_row;
+                    if (off_row == 0U)
+                    {
+                        direction = false;
+                    }
                 }
                 gn_vsync_tick = 0U;
             }
@@ -176,9 +206,50 @@ void LED_Generate_Pattern(uint8_t in_pattern)
         }
         case PATTERN_03:
         {
-            for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
+            static uint16_t step = 0U;
+            static uint16_t frame_count = 0U;
+            static bool moving_back = false;
+
+            const uint16_t anchor_rows = BLK_ROW_SIZE - 1U;
+            const uint16_t last_step = anchor_rows * BLK_COL_SIZE - 1U;
+
+            const uint16_t row = step / BLK_COL_SIZE;
+            const uint16_t pos = step % BLK_COL_SIZE;
+            const uint16_t col = ((row % 2U) == 0U)
+                                ? pos
+                                : (BLK_COL_SIZE - 1U - pos);
+
+            const uint16_t top_idx = row * BLK_COL_SIZE + col;
+            const uint16_t bottom_idx = top_idx + BLK_COL_SIZE;
+
+            for (uint16_t i = 0U; i < TOTAL_BLOCK_SIZE; ++i)
             {
-                gn_led_ld_buffer[i] = 0xFFFU;
+                gn_led_ld_buffer[i] = BLK_OFF_LD_VALUE;
+            }
+
+            gn_led_ld_buffer[top_idx] = BLK_ON_LD_VALUE;
+            gn_led_ld_buffer[bottom_idx] = BLK_ON_LD_VALUE;
+
+            if (++frame_count >= PATT_CHANGE_5S_FRAME_CNT)
+            {
+                frame_count = 0U;
+
+                if (moving_back)
+                {
+                    --step;
+                    if (step == 0U)
+                    {
+                        moving_back = false;
+                    }
+                }
+                else
+                {
+                    ++step;
+                    if (step == last_step)
+                    {
+                        moving_back = true;
+                    }
+                }
             }
             break;
         }
@@ -191,9 +262,9 @@ void LED_Generate_Pattern(uint8_t in_pattern)
 
 void LED_Change_Pattern(uint8_t in_pattern)
 {
-    if (in_pattern > PATTERN_NONE)
+    if (in_pattern >= PATTERN_MAX)
     {
-        print(LOG_PC, "\r\n    Input Pattern(%u) is limited to %u", in_pattern, PATTERN_NONE);
+        print(LOG_PC, "\r\n    Input Pattern(%u) is limited to %u", in_pattern, PATTERN_MAX - 1U);
         in_pattern = PATTERN_NONE;
     }
     gn_pattern_idx = in_pattern;
@@ -239,7 +310,7 @@ void LED_Change_Pattern_to_None(void)
     gn_pattern_idx = PATTERN_NONE;
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gn_led_ld_buffer[i] = 0xFFFU;
+        gn_led_ld_buffer[i] = BLK_ON_LD_VALUE;
     }
     gn_vsync_tick = 1U;
     print(LOG_PC, "\r\n    Set Pattern to %u", gn_pattern_idx);
@@ -249,7 +320,7 @@ void LED_System_Init(void)
 {
     for (uint8_t i = 0U ; i < TOTAL_BLOCK_SIZE ; ++i)
     {
-        gn_led_ld_buffer[i] = 0xFFFU;
+        gn_led_ld_buffer[i] = BLK_ON_LD_VALUE;
     }
     gn_pattern_idx = PATTERN_NONE;
 

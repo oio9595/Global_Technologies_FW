@@ -351,6 +351,37 @@ static void Uart_Task(void)
             }
             print(LOG_PC, "%s", gp_msg_prompt);
         }
+        else if(Command_Param_is_("bar", "%u %u", &u32_recv_param[0], &u32_recv_param[1]))
+        {
+            if (u32_recv_param[0] <= 6)
+            {
+                uint8_t led_pat = LED_Get_Pattern();
+                if (PATTERN_NONE == led_pat)
+                {
+                    if (u32_recv_param[0] == 0U)
+                    {
+                        LED_BLK_Set_LD(0U, (uint16_t)u32_recv_param[1]);
+                    }
+                    else
+                    {
+                        for (uint16_t i = 0U; i < 5U; ++i)
+                        {
+                            LED_BLK_Set_LD(1U + (5 * (u32_recv_param[0] - 1U)) + i, (uint16_t)u32_recv_param[1]);
+                        }
+                    }
+                }
+                else
+                {
+                    print(LOG_PC, "\r\n    This command is valid on pattern none");
+
+                }
+            }
+            else
+            {
+                FATAL_INVALID_INPUT(u32_recv_param[0]);
+            }
+            print(LOG_PC, "%s", gp_msg_prompt);
+        }
         else if(Command_Param_is_("current", "%u", &u32_recv_param[0]))
         {
             if (u32_recv_param[0] <= 128U)
@@ -438,7 +469,7 @@ static void Key_Task(void)
                 gt_key_info[key_list].prev_state = gt_key_info[key_list].now_state;
             }
             else
-            { 
+            {
                 if (gt_key_info[key_list].now_state == 0U)
                 {
                     ++gt_key_info[key_list].press_cnt;
