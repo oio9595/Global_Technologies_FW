@@ -81,6 +81,13 @@ const osThreadAttr_t VsyncTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for BTNTask */
+osThreadId_t BTNTaskHandle;
+const osThreadAttr_t BTNTask_attributes = {
+  .name = "BTNTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -106,6 +113,7 @@ void StartID601TestTask(void *argument);
 void StartCLITask(void *argument);
 void StartID601TrimTask(void *argument);
 void StartVsyncTask(void *argument);
+void StartBTNTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -203,6 +211,9 @@ int main(void)
 
   /* creation of VsyncTask */
   VsyncTaskHandle = osThreadNew(StartVsyncTask, NULL, &VsyncTask_attributes);
+
+  /* creation of BTNTask */
+  BTNTaskHandle = osThreadNew(StartBTNTask, NULL, &BTNTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1488,6 +1499,25 @@ void StartVsyncTask(void *argument)
       id601_vsync_dimming_task();
   }
   /* USER CODE END StartVsyncTask */
+}
+
+/* USER CODE BEGIN Header_StartBTNTask */
+/**
+* @brief Function implementing the BTNTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartBTNTask */
+void StartBTNTask(void *argument)
+{
+  /* USER CODE BEGIN StartBTNTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    drv_gpio_btn_task();
+    osDelay(BTN_B1_DETECT_INTERVAL_MS);
+  }
+  /* USER CODE END StartBTNTask */
 }
 
 /**

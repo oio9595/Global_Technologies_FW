@@ -484,4 +484,44 @@ void drv_gpio_ic603_nINT_FAULT_irq_handler(void)
 {
 
 }
+
+void drv_gpio_btn_task(void)
+{
+    static uint32_t prev_pin_state = 1U;
+    static uint32_t btn_cnt = 0U;
+    static bool long_key_flag = false;
+    uint32_t now_pin_state = LL_GPIO_IsInputPinSet(B1_GPIO_Port, B1_Pin);
+
+    if (now_pin_state != prev_pin_state)
+    {
+        if (1U == now_pin_state)
+        {
+            if (btn_cnt < 50) //500ms
+            {
+                if (false == long_key_flag)
+                {
+                    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [GPIO] B1 Short Key");
+                }
+            }
+            btn_cnt = 0;
+            long_key_flag = false;
+        }
+    }
+    else
+    {
+        if (0U == now_pin_state)
+        {
+            ++btn_cnt;
+            if (btn_cnt > 50)
+            {
+                if (!(btn_cnt % 50))
+                {
+                    drv_uart_printf(LOG_LV_DEBUG, "\r\n    [GPIO] B1 Long Key");
+                    long_key_flag = true;
+                }
+            }
+        }
+    }
+    prev_pin_state = now_pin_state;
+}
 /* USER CODE END 0 */

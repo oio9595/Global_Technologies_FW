@@ -29,6 +29,8 @@ extern "C" {
 /* USER CODE BEGIN Private defines */
 #define BOARD_TYPE_GT               (0)
 #define BOARD_TYPE_MOBIS            (1)
+
+#define BTN_B1_DETECT_INTERVAL_MS   (10)
 /* USER CODE END Private defines */
 
 /* Exported types ------------------------------------------------------------*/
@@ -118,6 +120,8 @@ extern bool drv_gpio_counter_reset(bool state);
 
 extern void drv_gpio_ic603_nINT_LD_irq_handler(void);
 extern void drv_gpio_ic603_nINT_FAULT_irq_handler(void);
+
+extern void drv_gpio_btn_task(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
