@@ -988,20 +988,6 @@ void xd12_reset(void)
     xd12_write_by_type(XD12R_RESET_ID, _r1->ALL[XD12R_RESET_ID], XD12R_ADDR_TYPE_GENERAL);
 
     us_delay(10U);
-#if 0
-    {
-        _r1->reg._r2B.ALL = 0x000U;
-        xd12_write_by_type(XD12R_CLOCK_GATE_EN, _r1->ALL[XD12R_CLOCK_GATE_EN], XD12R_ADDR_TYPE_GENERAL);
-
-        _r1->reg._r2B.ALL = 0x017U;
-        xd12_write_by_type(XD12R_CLOCK_GATE_EN, _r1->ALL[XD12R_CLOCK_GATE_EN], XD12R_ADDR_TYPE_GENERAL);
-    }
-#endif
-    _r3->reg._r3F.ALL = 0x800U;
-    xd12_write_by_type(XD12R_OP_MODE + XD12R_OTP_CTRL_BASE, _r3->ALL[XD12R_OP_MODE], XD12R_ADDR_TYPE_GENERAL);
-
-    _r3->reg._r3F.ALL = 0x000U;
-    xd12_write_by_type(XD12R_OP_MODE + XD12R_OTP_CTRL_BASE, _r3->ALL[XD12R_OP_MODE], XD12R_ADDR_TYPE_GENERAL);
 }
 
 void xd12_idgen(void)
